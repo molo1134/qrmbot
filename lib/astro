@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # Calculate Sun and Moon position, calculate EME conditions.
 # License: GPLv3
 
@@ -504,7 +504,7 @@ sub coord {
   my $cb2 = sqrt(1.0 - $sb2**2);
 
   #   B2=atan(SB2/CB2)
-  my $b2 = atan($sb2/$cb2);
+  $b2 = atan($sb2/$cb2);
 
   #   SAA=sin(AP-A1)*CB1/CB2
   my $saa = sin($ap-$a1)*$cb1/$cb2;

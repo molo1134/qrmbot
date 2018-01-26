@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 #
 # APRS Query using aprs.fi   2-clause BSD license.
 #
@@ -8,9 +8,10 @@
 #
 # $apikey = "12345.xxxxxxxxxxxxxxxx";
 
+use strict;
+use utf8;
 use POSIX qw(floor strftime);
 use Math::Round;
-use utf8;
 binmode STDOUT, ":utf8";
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
@@ -59,13 +60,13 @@ my $url = "http://api.aprs.fi/api/get?name=${targetcall}&what=loc&apikey=${apike
 
 my %vals;
 
-%vals = getvals($url, %vals);
+getvals($url, \%vals);
 
 #foreach my $key (keys(%vals)) {
 #  print "$key = $vals{$key}\n";
 #}
 
-if ($vals{found} != 1) {
+if (defined $vals{found} and $vals{found} != 1) {
   print "not found: $targetcall\n";
   exit 0;
 }
@@ -73,9 +74,7 @@ if ($vals{found} != 1) {
 if ($vals{type} eq "w") {
   # get weather fields
   $url = "http://api.aprs.fi/api/get?name=${targetcall}&what=wx&apikey=${apikey}&format=json";
-  my %wxvals = getvals($url, %vals);
-  #@vals{keys %wxvals} = values %wxvals;
-  %vals = (%vals, %wxvals);
+  getvals($url, \%vals);
 
   $vals{temp_c} = round($vals{temp}) if defined $vals{temp};
   $vals{temp_f} = round($vals{temp} * 1.8 + 32) if defined $vals{temp};
@@ -157,8 +156,8 @@ print " $vals{heading}°" if defined($vals{heading});
 print " $vals{course}°" if defined($vals{course});
 
 if (defined($vals{altitude})) {
-  $alt_m = floor($vals{altitude});
-  $alt_ft = floor($alt_m * 3.2808399);
+  my $alt_m = floor($vals{altitude});
+  my $alt_ft = floor($alt_m * 3.2808399);
   print " alt ${alt_m}m/${alt_ft}ft";
 }
 
@@ -186,29 +185,31 @@ exit 0;
 
 sub getvals {
   my $url = shift;
-  my %vals = shift;
+  my $valref = shift;
 
   #print "$url\n";
   open(HTTP, '-|', "curl -A \"$useragent\" -s \"$url\"");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
     # "found":1,"entries":[{"class":"a"
-    s/:(\d+),/:\1 , /g;
+    s/:(\d+),/:$1 , /g;
     s/","/" , "/g;
     s/{"/{\n"/g;
     #print;
-    @fields = split / , /;
+    my @fields = split / , /;
     foreach my $field (@fields) {
-      if ($field =~ /"?([^"]+)"?\s*:\s*"?([^"]+)"?/) {
-	$key = $1;
-	$val = $2;
-	$vals{$key} = $val;
+      if ($field =~ /"?([^"]+)"?\s*:\s*"?([^"]+)"?,?/) {
+	my $key = $1;
+	my $val = $2;
+	$val =~ s/,$//;
+	$$valref{$key} = $val;
+	#print "$key = $val\n";
       }
     }
   }
   close (HTTP);
 
-  return %vals;
+  return $valref;
 }
 
 sub geolocate {

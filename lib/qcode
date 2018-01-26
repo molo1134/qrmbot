@@ -1,7 +1,9 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # Lookup Q codes.  2-clause BSD license.
 
 # Copyright 2018 /u/molo1134. All rights reserved.
+
+use strict;
 
 # change this to 0 to always exit with success
 my $exitnonzeroonerror = 0;
@@ -376,8 +378,8 @@ my %qcodes = (
 
 
 if (uc($ARGV[0]) =~ /\w+/) {
-  $code = uc($ARGV[0]);
-  $desc = $qcodes{$code} || "not found";
+  my $code = uc($ARGV[0]);
+  my $desc = $qcodes{$code} || "not found";
   print "$bold$code$unbold: $desc\n";
 }
 

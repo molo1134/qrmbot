@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # WUnderground API client -- current conditions.  2-clause BSD license.
 
 # Copyright 2018 /u/molo1134. All rights reserved.
@@ -7,8 +7,7 @@
 #
 # $apikey = "0123456789abcdef";
 
-
-#use strict;
+use strict;
 use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
@@ -158,7 +157,7 @@ while (<HTTP>) {
   if (/"(\w+)":\s*(-?\d+|"[^"]*")/) {
     my $key = $1;
     my $val = $2;
-    $val =~ s/^"(.*)"$/\1/;
+    $val =~ s/^"(.*)"$/$1/;
     if ($in_disp_loc == 1) {
       $key = "disp_$key";
     } elsif ($in_obs_loc == 1) {
@@ -219,7 +218,7 @@ print "Weather for $bold$rec{'disp_full'}$unbold";
 
 #full
 print " ($lat,$lon)  Elev: $elev\n" if ($full == 1);
-if ($rec{'estimated'} == 1) {
+if (defined($rec{'estimated'}) and $rec{'estimated'} == 1) {
   print " *estimated ";
   print "conditions only\n" if ($full == 1);
 } else {
@@ -289,7 +288,7 @@ my $end = 0;
 my $zone = undef;
 my $europe = 0;
 
-my $url = "http://api.wunderground.com/api/$apikey/alerts/q/$encodedloc.json";
+$url = "http://api.wunderground.com/api/$apikey/alerts/q/$encodedloc.json";
 #print "$url\n";
 open(HTTP, '-|', "curl -s -L --insecure '$url'");
 binmode(HTTP, ":utf8");
@@ -303,7 +302,7 @@ while (<HTTP>) {
   if (/"(\w+)":\s*(-?\d+|"[^"]*")/) {
     my $key = $1;
     my $val = $2;
-    $val =~ s/^"(.*)"$/\1/;
+    $val =~ s/^"(.*)"$/$1/;
     #print "$key = $val\n";
 
     if (/meteoalarm/) {

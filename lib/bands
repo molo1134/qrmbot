@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # Report band conditions.  2-clause BSD license.
 
 # Copyright 2018 /u/molo1134. All rights reserved.
@@ -59,7 +59,7 @@ $solarflux = colorSfi($solarflux);
 $aindex = colorAIndex($aindex);
 $kindex = colorKIndex($kindex);
 
-if ($ARGV[0] eq "-q") {
+if (defined($ARGV[0]) and $ARGV[0] eq "-q") {
   print "Conditions as of $updated: SFI=$solarflux SN=$sunspots A=$aindex K=$kindex\n";
   exit 0;
 }

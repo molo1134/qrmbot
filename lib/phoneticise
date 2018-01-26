@@ -1,11 +1,13 @@
-#!/usr/bin/perl
-# Convert text to random phonetics based on system dictionary.
+#!/usr/bin/perl -w
+# Convert a word to random phonetics based on system dictionary.
 # 2-clause BSD license.
 
 # Copyright 2018 /u/molo1134. All rights reserved.
 
+use strict;
+
 my $target = shift;
-$target =~ s/\s*(\w+).*$/\1/;
+$target =~ s/\s*(\w+).*$/$1/;
 my %words;
 
 open (DICT, "<", "/usr/share/dict/words");

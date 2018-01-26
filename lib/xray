@@ -1,8 +1,9 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # Retrieve solar x-ray data.  2-clause BSD license.
 
 # Copyright 2018 /u/molo1134. All rights reserved.
 
+use strict;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $highlight="vt220";
@@ -14,7 +15,7 @@ my %data;
 
 open (HTTP, '-|', "curl -s $url");
 while (<HTTP>) {
-  @entries = split /,/;
+  my @entries = split /,/;
   foreach my $e (@entries) {
     $e =~ s/^{//;
     $e =~ s/}$//;

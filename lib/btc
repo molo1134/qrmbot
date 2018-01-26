@@ -1,8 +1,9 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # Report cryptocurrency prices.  2-clause BSD license.
 
 # Copyright 2018 /u/molo1134. All rights reserved.
 
+use strict;
 use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
@@ -19,6 +20,7 @@ my $fiat = undef;
 
 my $crypto = undef;
 
+my $i = 0;
 while ($i <= $#ARGV) {
   # list comes from here: https://coinmarketcap.com/api/
   if (uc($ARGV[$i]) =~ /(AUD|BRL|CAD|CHF|CLP|CNY|CZK|DKK|EUR|GBP|HKD|HUF|IDR|ILS|INR|JPY|KRW|MXN|MYR|NOK|NZD|PHP|PKR|PLN|RUB|SEK|SGD|THB|TRY|TWD|USD|ZAR)/) {
@@ -163,16 +165,19 @@ my $target = lc($fiat);
 
 my $volume = commify(int($results{"24h_volume_$target"}));
 my $qty = int ($results{"24h_volume_$target"} / $results{"price_$target"}) || 0;
-$results{"price_$target"} = commify($results{"price_$target"});
-$results{volume_btc} = commify($results{volume_btc});
+$results{"price_$target"} = commify($results{"price_$target"}) if defined($results{"price_$target"});
+$results{volume_btc} = commify($results{volume_btc}) if defined($results{volume_btc});
 
 my $trendsymbol;
 my $trend = $results{percent_change_24h};
 $trendsymbol = green("↑") if $trend > 0;
 $trendsymbol = red("↓") if $trend < 0;
 $trendsymbol = "·" if !defined $trendsymbol;
-$trend = red($trend) if $trend < 0;
-$trend = green("+$trend") if $trend > 0;
+if ($trend < 0) {
+  $trend = red($trend);
+} elsif ($trend > 0) {
+  $trend = green("+$trend");
+}
 
 print bold("$crypto$fiat"). " $trendsymbol" . $results{"price_$target"} . " $trend% qty $qty $crypto/24h ($volume $fiat/24h)\n";
 #print "$crypto$fiat $results{"price_$target"} qty $results{volume_btc} BTC/24h ($volume $currency/24h)\n";

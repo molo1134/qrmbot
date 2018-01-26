@@ -4,7 +4,7 @@
 
 # Copyright 2018 /u/molo1134. All rights reserved.
 
-#use strict;
+use strict;
 
 use File::Temp qw(tempfile);
 
@@ -104,9 +104,7 @@ while (<CTYDAT>) {
       my $length;
       my $prefix;
       my $pattern;
-      my $itu;
-      my $cq;
-      my $dxcc;
+      my ($itu, $cq, $dxcc, $name, $cont, $lat, $lon, $tz);
 
       if (/\[(\d+)\]/) {
 	$itu = $1;
@@ -245,7 +243,7 @@ foreach my $rec (@records) {
     #print "FOUND: $pattern\n";
     #print "$rec\n";
 
-    $match = $term;
+    my $match = $term;
     $match =~ s/$pattern/$bold$&$unbold/;
 
     print "$match: $bold$name$unbold";
@@ -274,7 +272,7 @@ sub scrapeMW {
   while(<HTTP>) {
     chomp;
     if ( /<p><table>/ ) {
-      @rows = split /<tr>/i;
+      my @rows = split /<tr>/i;
       foreach my $row (@rows) {
 	#print "$row\n";
 	if ($row =~ /<td>([0-9]+)\.<\/td><td>([^<]+)<\/td><td><a href='mostwanted2.php\?dxcc=[0-9]+'>([^<]+)<\/a><\/td><\/tr>/i) {

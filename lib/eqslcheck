@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # Lookup callsign on eQSL.  2-clause BSD license.
 
 # Copyright 2018 /u/molo1134. All rights reserved.
@@ -122,10 +122,10 @@ if ($found == 0) {
 
 print "$bold$call$unbold: ";
 print "$bold(AG)$unbold " if $ag == 1;
-print yellow("✪") . " "	    if $member eq "Au";
-print lightGrey("✪") . " "  if $member eq "Ag";
-print grey("✪") . " "	    if $member eq "Pt";
-print darkYellow("✪") . " " if $member eq "bronze";
+print yellow("✪") . " "	    if defined($member) and $member eq "Au";
+print lightGrey("✪") . " "  if defined($member) and $member eq "Ag";
+print grey("✪") . " "	    if defined($member) and $member eq "Pt";
+print darkYellow("✪") . " " if defined($member) and $member eq "bronze";
 print "$grid" if defined $grid;
 print "; last login: $lastlogin" if defined $lastlogin;
 print "\n";

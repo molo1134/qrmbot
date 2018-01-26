@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # Lookup contest calendar.  2-clause BSD license.
 
 # Copyright 2018 /u/molo1134. All rights reserved.

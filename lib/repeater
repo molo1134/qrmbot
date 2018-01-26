@@ -1,8 +1,9 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # Lookup a repeater on repeaterbook.com.  2-clause BSD license.
 
 # Copyright 2018 /u/molo1134. All rights reserved.
 
+use strict;
 use URI::Escape;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
@@ -86,9 +87,11 @@ if (defined($band)) {
 
 my %vals;
 
+my ($freq, $offset, $squelch, $location, $state, $county, $callsign);
 #print "$url\n";
 open (HTTP, '-|', "curl --insecure -L -s \"$url\"");
-binmode(HTTP, ":cp1252");
+#binmode(HTTP, ":cp1252");
+binmode(HTTP, ":encoding(cp1252)");
 while (<HTTP>) {
 	#print;
   if (/error/) {
@@ -172,10 +175,10 @@ close(HTTP);
 $havemany = 0;
 $haveone = 0;
 
-foreach $e (sort { $a <=> $b } keys %vals) {
-  ($f, undef) = split /,/, $e;
+foreach my $e (sort { (split(/,/,$a))[0] <=> (split(/,/,$b))[0] } keys %vals) {
+  my ($f, undef) = split /,/, $e;
+  #print "$e\n";
   if ($f >= $minfreq && $f <= $maxfreq) {
-	  #print "$e\n";
     if ($haveone == 0) {
       $haveone = 1;
       ($freq, $offset, $squelch, $location, $state, $county, $callsign) =
