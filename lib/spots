@@ -1,0 +1,657 @@
+#!/usr/bin/perl -w
+
+# ham spots lookup, using pskreporter, reverse beacon network and dxwatch.
+# 2-clause BSD license.
+
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+
+use strict;
+use POSIX qw(floor strftime);
+use Text::CSV;
+use DateTime::Format::Strptime;
+use Math::Trig;
+use Math::Trig 'great_circle_distance';
+use Switch;
+use v5.10;
+
+# configuration
+my $exitnonzeroonerror = 0;
+my $timestampfile = $ENV{'HOME'}.'/.spottimestamps';
+my $hamspotloginfile = $ENV{'HOME'}.'/.hamspotlogin';
+
+my $defaultSpots = 10;
+my $defaultSpotsForEggdrop = 3;
+
+# end config
+
+# TODO: unicode support?
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !spots [--dxw] [--rbn] [--psk] [--ham] <callsign> [limit]\n";
+  } else {
+    print "usage: $0 [--dxw] [--rbn] [--psk] [--ham] <callsign> [limit]\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $callsign = undef;
+my $i = 0;
+my $monitor = 0;
+
+my $limit;
+if ($username eq 'eggdrop') {
+  $limit = $defaultSpotsForEggdrop;
+} else {
+  $limit = $defaultSpots;
+}
+
+my $psk = 0;
+my $dxw = 0;
+my $rbn = 0;
+my $ham = 0;
+
+# when calling from eggdrop, parameters may be packed into first parameter.
+if ($#ARGV == 0 && $ARGV[0] =~ m/ /) {
+  @ARGV = split / /, $ARGV[0];
+}
+
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /--mon/) {
+    $monitor = 1;
+    $i++; next;
+  }
+  if ($ARGV[$i] =~ /--dxw/) {
+    $dxw = 1;
+    $i++; next;
+  }
+  if ($ARGV[$i] =~ /--rbn/) {
+    $rbn = 1;
+    $i++; next;
+  }
+  if ($ARGV[$i] =~ /--psk/) {
+    $psk = 1;
+    $i++; next;
+  }
+  if ($ARGV[$i] =~ /--ham/) {
+    $ham = 1;
+    $i++; next;
+  }
+  if (!defined($callsign)) {
+    $callsign = uc $ARGV[$i];
+    $i++; next;
+  }
+  if (defined($callsign) && $ARGV[$i] =~ /^\d+$/) {
+    $limit = $ARGV[$i];
+  }
+  $i++;
+}
+
+if ($dxw == 0 && $rbn == 0 && $psk == 0 && $ham == 0) {
+  $dxw = 1;
+  $rbn = 1;
+  $psk = 1;
+  $ham = 1;
+}
+
+$callsign = "" unless defined $callsign;
+
+if (!($callsign =~ m/^([A-Z0-9]+[0-9]?\/)?[A-Z0-9]+[0-9][A-Z]+(\/[A-Z0-9]+)?$/)) {
+  print "invalid callsign: $callsign\n";
+  exit $exitnonzeroonerror;
+}
+
+my $lasttimestamp = 0;
+my %lasttimes;
+
+if (-e $timestampfile) {
+  open (TIMESTAMPS, "<", $timestampfile);
+  while (<TIMESTAMPS>) {
+    chomp;
+    my @data = split /,/;
+    $lasttimes{$data[0]} = $data[1];
+    if ($data[0] eq $callsign) {
+      $lasttimestamp = $data[1];
+      #print "last from file: $lasttimestamp\n";
+    }
+  }
+  close TIMESTAMPS;
+}
+
+my $lastspot = 0;
+my @spots;
+
+doPSKreporter() unless $psk == 0;
+doDXWatch(0) unless $dxw == 0;	  # dx watch
+doDXWatch(1) unless $rbn == 0;	  # reverse beacon network
+doHamspots() unless $ham == 0;
+
+my @sortedspots = sort { $b->{ts} <=> $a->{ts} } @spots;  # descending
+
+show(\@sortedspots);
+updatelast();
+
+exit 0;
+
+##############################################################
+
+sub doPSKreporter
+{
+
+  my $url = "https://www.pskreporter.info/cgi-bin/pskquery5.pl?encap=0&callback=doNothing&statistics=0&noactive=1&nolocator=1&senderCallsign=$callsign";
+
+# output:
+#{"receiverCallsign":"JA8HZL","receiverLocator":"QN02TP","senderCallsign":"JA2HOL","senderLocator":"PM95ie20rh","frequency":10139114,"flowStartSeconds":1461063164,"mode":"JT65","isSender":1,"isReceiver":0,"senderDXCC":"Japan","senderDXCCCode":"JA","senderDXCCLocator":"PM96","senderLotwUpload":"2016-04-10","senderEqslAuthGuar":"A","sNR":-4},
+
+  # using IPv4 because I got greedy and got banned using ipv6.
+#  print "curl -4 --max-time 4 --retry 1 -s '$url'\n";
+  open (HTTP, '-|', "curl -4 -k --max-time 4 --retry 1 -s '$url'");
+  while (<HTTP>) {
+    chomp;
+    if (/The storm clouds are gathering/) {
+      print "warning: pskreporter error\n";
+      last;
+    }
+    if (/Your IP has made too many requests for the same data too often/) {
+      print "warning: pskreporter throttled\n";
+      last;
+    }
+    #if (/<lastSequenceNumber\s+value="(\d+)"/) {
+      #print "lastseqnum: $1\n";
+    #}
+
+    if (/"receiverCallsign"/) {
+      my @data = split /,/;
+      my %rec;
+      foreach my $attrs (@data) {
+	if ($attrs =~ /"(\w+)":("[^"]*"|-?\d+)/) {
+	  my $tag = $1;
+	  my $val = $2;
+	  $val =~ s/"(.*)"/$1/;
+	  $rec{$tag} = $val;
+	  #print "$tag = $val\n";
+	}
+      }
+
+      if (%rec) {
+	$rec{frequency} = 0 unless defined $rec{frequency};
+	$rec{mode} = "?" unless defined $rec{mode};
+	$rec{flowStartSeconds} = 0 unless defined $rec{flowStartSeconds};
+
+	my $msg = "";
+	$msg .= "$rec{mode} " if defined $rec{mode};
+	$msg .= "$rec{sNR} dB " if defined $rec{sNR};
+	if (defined($rec{receiverLocator}) && defined($rec{senderLocator})) {
+	  $msg .= "($rec{receiverLocator} " .
+		  sprintf("%.0f km)",
+		    gridDist($rec{senderLocator}, $rec{receiverLocator}));
+
+	} elsif (defined $rec{receiverLocator}) {
+	  $msg .= "from $rec{receiverLocator}";
+	}
+
+	push (@spots, {ts => $rec{flowStartSeconds},
+		        src => "p",
+			de => $rec{receiverCallsign},
+			dx => $rec{senderCallsign},
+			f => floor($rec{frequency}/1000),
+			msg => $msg});
+#	printf "%-7s %-7s %5d %-28s %s\n",
+#		$rec{receiverCallsign},
+#		$rec{senderCallsign},
+#		floor($rec{frequency}/1000),
+#		$rec{mode} . " " . $rec{sNR},
+#		strftime("%H%Mz %d %b", gmtime($rec{flowStartSeconds}));
+
+  #      print "$rec{receiverCallsign}\t$rec{senderCallsign}\t" .
+  #	    floor($rec{frequency}/1000)."\t$rec{mode} $rec{sNR}\t" .
+  #	    strftime("%H:%Mz %b %d", gmtime($rec{flowStartSeconds})) . "\n";
+	$lastspot = $rec{flowStartSeconds} unless
+	      ($rec{flowStartSeconds} < $lastspot);
+      }
+    }
+  }
+  close HTTP;
+}
+
+
+sub doDXWatch
+{
+  my $rb = shift;
+  if (!defined($rb)) {
+    $rb = 0;
+  }
+
+  my $url;
+  if ($rb == 0) {
+    $url = 'https://www.dxwatch.com/dxsd1/s.php?s=0&r=50&cdx=' . $callsign;
+  } else {
+    $url = 'http://www.reversebeacon.net/dxsd1/sk.php?s=0&r=15&cdx=' . $callsign;
+  }
+
+  my $modes_ref = {
+    1 => "cw",
+    2 => "phone",
+    10 => "psk31",
+    11 => "rtty",
+    12 => "bpsk",
+    13 => "gmsk",
+    14 => "fsk",
+    15 => "sstv",
+    16 => "mfsk",
+    17 => "qpsk",
+    21 => "jt65",
+    22 => "hell",
+    23 => "dominoex",
+    24 => "mt63",
+    25 => "rttym",
+    26 => "thor",
+    27 => "throb",
+    28 => "olivia",
+    29 => "contestia",
+    30 => "?"};
+  my %modes = %$modes_ref;
+
+  my $csv = Text::CSV->new({ sep_char => ',' });
+  my $dtparser = DateTime::Format::Strptime->new(
+    #see strftime
+    pattern => '%H%Mz %d %b %Y',
+    time_zone => 'UTC',
+    on_error => 'undef');
+
+  my $maxdate = 0;
+  #open (HTTP, '-|', "cat dxwatch-$callsign.json");
+  #open (HTTP, '-|', "cat rb-N7XM.json");
+  #print "$url\n";
+#  print "curl -k --max-time 4 --retry 1 -s '$url'";
+  open (HTTP, '-|', "curl -k --max-time 4 --retry 1 -s '$url'");
+  while (<HTTP>) {
+    s/},"fname".*$//;
+    s/{"s":{//;
+    s/],"/]\n"/g;
+
+    my @data = split /\n/;
+    my %rec;
+    foreach my $line (@data) {
+      if (/This filter returned no spot/) {
+	last;
+      }
+      $line =~ /"(\d+)":\[(.*)\]/;
+      #say $line;
+      my $num = $1;
+      my $vals = $2;
+      #print "num: $num  --  vals: $vals\n";
+      if (!defined($vals)) {
+	next;
+      }
+
+      my ($de, $freq, $dx, $snr, $wpm, $datetime, $age, $x, $y, $cmt, $mode);
+      if ($rb eq 1) {
+	$vals =~ s/"//g;
+	$vals =~ s/\\\//\//g;
+	#say $vals;
+	($de, $freq, $dx, $snr, $wpm, $datetime, $age, $x, $y, $mode) = split /,/,$vals;
+	$cmt = "$snr dB, $wpm wpm";
+	#print "$mode\n";
+    	$cmt = $modes{$mode} . " " . $cmt unless !defined $mode;
+      } else {
+	$vals =~ s/\\\//\//g;
+	$vals =~ s/(\\)?\\'/'/g;
+	$vals =~ s/\\"/""/g;		# two quotes is an escaped quote
+	#say $vals;
+	$csv->parse($vals) or say "unable to parse csv: $vals";
+	($de, $freq, $dx, $cmt, $datetime, $age, $x, $y) = $csv->fields();
+	$cmt =~ s/&lt;/</g;
+	$cmt =~ s/&gt;/>/g;
+	$cmt =~ s/&amp;/&/g;
+      }
+
+      my ($ts, $dt);
+
+      if (defined $age && $age > 0) {
+	$ts = time() - $age;
+      } else {
+	$datetime =~ /.*\s(\d+)\s+(\w+)$/;
+	$dt = $dtparser->parse_datetime(
+	    $datetime . " " . getyearformonthday($2, $1));
+
+	$ts = $dt->epoch();
+      }
+
+      if (defined($ts)) {
+	#say "timestamp: $ts";
+	$lastspot = $ts unless ($ts < $lastspot);
+      }
+
+      push (@spots, {ts => $ts,
+		      src => (($rb == 1) ? "r" : "d"),
+		      de => $de,
+		      dx => $dx,
+		      f => $freq,
+		      msg => substr($cmt, 0, 28)}
+		    );
+
+      #printf "%-7s %-7s %5d %-28s %s\n", $de, $dx, $freq, substr($cmt, 0, 28), $datetime;
+    }
+  }
+  close HTTP;
+}
+
+sub getyearformonthday
+{
+  my ($monthabbr, $day) = @_;
+  my $num;
+  switch ($monthabbr) {
+    case "Jan" { $num = 1 }
+    case "Feb" { $num = 2 }
+    case "Mar" { $num = 3 }
+    case "Apr" { $num = 4 }
+    case "May" { $num = 5 }
+    case "Jun" { $num = 6 }
+    case "Jul" { $num = 7 }
+    case "Aug" { $num = 8 }
+    case "Sep" { $num = 9 }
+    case "Oct" { $num = 10 }
+    case "Nov" { $num = 11 }
+    case "Dec" { $num = 12 }
+    else       { say "unknown month: $monthabbr" }
+  }
+  my $now = DateTime->now(time_zone => 'UTC');
+  my $currmonthnum = $now->month();
+  if ($num < $now->month() ||
+      ($num == $now->month() && $day <= $now->day())) {
+    return $now->year();
+  } else {
+    return $now->year() - 1;
+  }
+}
+
+sub doHamspots
+{
+  my $baseurl = "http://hamspots.net/";
+  our $historyurl = $baseurl . "history";
+  our $cookiefile = $ENV{'HOME'}."/.hamspotcookies";
+
+  my $needlogin = 0;
+  my $token;
+
+  if (!-e $cookiefile) {
+    doHamspotsLogin();
+  }
+
+getHistory:
+  #print "getHistory: $historyurl\n";
+#  open(HTTP, '-|', "wget --timeout=4 -t 1 -q -O - --keep-session-cookies " .
+#		    "--save-cookies $cookiefile --load-cookies $cookiefile " .
+#		    "'$historyurl'");
+  open(HTTP, '-|', "curl --max-time 4 --retry 1 -s --cookie-jar $cookiefile " .
+	  "--cookie $cookiefile " .
+	  "--user-agent 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2718.0 Safari/537.36' " .
+	  "'$historyurl'");
+  while (<HTTP>) {
+    chomp;
+    #print;
+    if (/You must be logged in/) {
+      $needlogin = 1;
+    }
+  }
+  close HTTP;
+
+  if ($needlogin != 0) {
+    doHamspotsLogin();
+    $needlogin = 0;
+    goto getHistory;
+  }
+
+  my $bands_ref = {
+    2200 => 137,
+    630 => 470,
+    600 => 470,
+    160 => 1800,
+    80 => 3500,
+    60 => 5300,
+    40 => 7000,
+    30 => 10100,
+    20 => 14000,
+    17 => 18068,
+    15 => 21000,
+    12 => 24890,
+    10 => 28000,
+    6 => 50000,
+    2 => 144000};
+  my %freqs = %$bands_ref;
+
+  #print "get: $historyurl\n";
+  open(HTTP, '-|', "curl --max-time 4 -s --cookie-jar $cookiefile " .
+	  "--cookie $cookiefile --referer $historyurl " .
+	  "--data 'a=call_data&hist_call_1=$callsign&submit_call=Search' " .
+	  "--user-agent 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2718.0 Safari/537.36' " .
+	  "'$historyurl'");
+  #open(HTTP, '-|', "wget --timeout=4 -t 1 -q -O - --keep-session-cookies " .
+  #  "--post-data 'a=call_data&hist_call_1=$callsign&submit_call=Search' " .
+  #  "--referer=$historyurl " .
+  #  "--save-cookies $cookiefile --load-cookies $cookiefile '$historyurl'");
+
+#  curl 'http://hamspots.net/history/' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' -H 'Accept-Encoding: gzip, deflate' -H 'Accept-Language: en-US,en;q=0.5' -H 'Connection: keep-alive' -H 'Cookie: PHPSESSID=49fa035286fe901952cce444f8ff8287; uid=1f21e6475cfc7687d390446c7d23c027' -H 'DNT: 1' -H 'Host: hamspots.net' -H 'Referer: http://hamspots.net/history/' -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:40.0) Gecko/20100101 Firefox/40.0 Iceweasel/40.0.3' -H 'Content-Type: application/x-www-form-urlencoded' --data 'hist_call_1=IK5PVX&submit_call=Search&a=call_data'
+
+  my $inSpottedBy = 0;
+  my $now = time();
+  while (<HTTP>) {
+    #chomp;
+    #print;
+    if (/Spotted by/) {
+      $inSpottedBy = 1;
+    }
+    if ( $inSpottedBy == 1 && /tr class="(odd|evn)"/ ) {
+      #print;
+      my ($src, $age, $de, $st, $ctry, $band, $mode, $sig, $delta) =
+        m/<td>(.*?)<\/td><td>(\+?.*?[mshd])<\/td><td.*?>(.*?)<\/td><td>(.*?)<\/td><td class="l">(.*?)<\/td><td>(\d*)<\/td><td>(.*?)<\/td><td>([-+0-9]*)<\/td><td>(.*?)<\/td><\/tr>/;
+      #print "src:$src age:$age de:$de ctry:$ctry st:$st band:$band sig:$sig mode:$mode delta:$delta\n" if defined($src);
+      #print "$_\n" unless defined($src);
+
+      $st = ""	  if defined($st)     && $st    =~ /nbsp/;
+      $delta = "" if defined($delta)  && $delta =~ /nbsp/;
+      $sig = ""   if defined($sig)    && $sig   =~ /nbsp/;
+
+      my $ts;
+      if (defined($age)) {
+	if ($age =~ /(\d+)s/) {
+	  $age = $1;
+	} elsif ($age =~ /(\d+)m/) {
+	  $age = $1;
+	  $age *= 60;
+	} elsif ($age =~ /(\d+)h/) {
+	  $age = $1;
+	  $age *= 60 * 60;
+	} elsif ($age =~ /(\d+)d/) {
+	  $age = $1;
+	  $age *= 60 * 60 * 24;
+	}
+	$ts = $now - $age;
+	$lastspot = $ts unless ($ts < $lastspot);
+      }
+
+      if (defined ($sig) && $sig eq "&nbsp;") {
+	$sig = undef;
+      }
+      my $msg = "";
+
+      $msg .= "$mode" unless !defined($mode);
+      $msg .= " $sig dB" if (defined($sig) && length($sig) > 0);
+      $msg .= " DT $delta" if (defined($delta) && length($delta) > 0);
+      $msg .= " ($st)" if (defined($st) && length($st) > 0);
+
+      if (defined($de) && defined($ts) && defined($band)) {
+	push (@spots, {ts => $ts,
+		      src => "h",
+		      de => $de,
+		      dx => $callsign,
+		      f => $freqs{$band},
+		      msg => $msg }
+		  );
+      }
+    }
+  }
+  close HTTP;
+}
+
+sub doHamspotsLogin
+{
+  our $cookiefile;
+  our $historyurl;
+  our $login_callsign = undef;
+  our $login_password = undef;
+
+  if (-e ($hamspotloginfile)) {
+	  #chmod 0600, $hamspotloginfile;
+    require($hamspotloginfile);
+  } else {
+    say "warning: unable to read file $hamspotloginfile"
+  }
+
+  #print "login: $historyurl\n";
+#  open(HTTP, '-|', "wget --timeout=4 -t 1 -q -O - --keep-session-cookies " .
+#    "--post-data " .
+#    "'loginCall=$login_callsign&loginPass=$login_password&a=login&p=history' " .
+#    "--save-cookies $cookiefile '$historyurl'");
+  open(HTTP, '-|', "curl --max-time 4 --retry 1 -s --cookie-jar $cookiefile " .
+	  "--cookie $cookiefile " .
+	  "--data 'loginCall=$login_callsign&loginPass=$login_password&a=login&p=history&submit=Log+In' " .
+	  "--user-agent 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2718.0 Safari/537.36' " .
+	  "'$historyurl'");
+  while (<HTTP>) {
+    #print;
+  }
+  close HTTP;
+}
+
+sub show
+{
+  my ($array) = @_;
+  my $i = 0;
+  if ((scalar @$array) == 0 and $monitor == 0) {
+    say "no spots found for $callsign";
+  }
+  foreach my $spotref (@$array) {
+    my %spot = %$spotref;
+    if ($monitor == 1 and $spot{ts} <= $lasttimestamp) {
+      #print "skipping: ";
+      #printf "%-7s %-7s %5d %-28s %s %s\n", $spot{de}, $spot{dx}, $spot{f}, $spot{msg}, strftime("%H%Mz %d %b", gmtime($spot{ts})), $spot{src};
+      next;
+    }
+    #printf "debug: %d, %d: %s\n", $lasttimestamp, $spot{ts}, strftime("%H%Mz %d %b", gmtime($spot{ts}));
+    printf "%-7s %-7s %5d %-28s %s %s\n", $spot{de}, $spot{dx}, $spot{f}, $spot{msg}, strftime("%H%Mz %d %b", gmtime($spot{ts})), $spot{src};
+    if (++$i >= $limit) {
+      last;
+    }
+  }
+}
+
+sub updatelast
+{
+  #print "lastspot: $lastspot\n";
+  open (TIMESTAMPS, ">", $timestampfile);
+
+  foreach my $call (sort keys %lasttimes) {
+    if ($call ne $callsign) {
+      print TIMESTAMPS "$call,$lasttimes{$call}\n";
+    }
+  }
+
+  $lastspot = 0 unless defined $lastspot;
+  $lasttimes{$callsign} = 0 unless defined $lasttimes{$callsign};
+
+  $lastspot = ($lastspot < $lasttimes{$callsign}) ?
+			  $lasttimes{$callsign} : $lastspot;
+  print TIMESTAMPS "$callsign,$lastspot\n";
+  close TIMESTAMPS;
+}
+
+sub gridToCoord {
+  my $gridstr = shift;
+
+  if (not $gridstr =~ /^[A-R]{2}[0-9]{2}([A-X]{2})?/i ) {
+    print "invalid grid: $gridstr\n";
+    return undef;
+  }
+
+  my @grid = split (//, uc($gridstr));
+
+  if ($#grid < 3) {
+    return undef;
+  }
+
+  my $lat;
+  my $lon;
+  my $formatter;
+
+  $lon = ((ord($grid[0]) - ord('A')) * 20) - 180;
+  $lat = ((ord($grid[1]) - ord('A')) * 10) - 90;
+  $lon += ((ord($grid[2]) - ord('0')) * 2);
+  $lat += ((ord($grid[3]) - ord('0')) * 1);
+
+  if ($#grid >= 5) {
+    $lon += ((ord($grid[4])) - ord('A')) * (5/60);
+    $lat += ((ord($grid[5])) - ord('A')) * (5/120);
+    # move to center of subsquare
+    $lon += (5/120);
+    $lat += (5/240);
+    # not too precise
+    $formatter = "%.4f";
+  } else {
+    # move to center of square
+    $lon += 1;
+    $lat += 0.5;
+    # even less precise
+    $formatter = "%.1f";
+  }
+
+  # not too precise
+  $lat = sprintf($formatter, $lat);
+  $lon = sprintf($formatter, $lon);
+
+  return join(',', $lat, $lon);
+}
+
+# Notice the 90 - latitude: phi zero is at the North Pole.
+# Example: my @London = NESW( -0.5, 51.3); # (51.3N 0.5W)
+# Example: my @Tokyo  = NESW(139.8, 35.7); # (35.7N 139.8E)
+sub NESW {
+  deg2rad($_[0]), deg2rad(90 - $_[1])
+}
+
+sub gridDist {
+  # convert fromg grids to coords
+  my $origCoords = gridToCoord(shift);
+  my $foreignCoords = gridToCoord(shift);
+
+  if (!defined($origCoords) || !defined($foreignCoords)) {
+    return -1;
+  }
+
+  # convert to radians
+  my ($origLat, $origLon) = split(/,/, $origCoords);
+  my ($foreignLat, $foreignLon) = split(/,/, $foreignCoords);
+  my @origin = NESW($origLon, $origLat);
+  my @foreign = NESW($foreignLon, $foreignLat);
+
+  my $dist;
+
+  # disable "experimental" warning on smart match operator use
+  no if $] >= 5.018, warnings => "experimental::smartmatch";
+
+  if (@origin ~~ @foreign) {	  # smart match operator - equality comparison
+    $dist = 0;
+    #$bearing = 0;
+  } else {
+    $dist = great_circle_distance(@origin, @foreign, 6378.1);
+    #$bearing = rad2deg(great_circle_bearing(@origin, @foreign));
+  }
+
+  return $dist;
+}
+
+
+# vim: set ts=8 sw=2 sts=2

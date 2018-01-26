@@ -1,0 +1,83 @@
+#!/usr/bin/perl
+# Convert from morse code symbols to text.  2-clause BSD license.
+
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+my %unmorse;
+
+$unmorse{".-"} = "A";
+$unmorse{"-..."} = "B";
+$unmorse{"-.-."} = "C";
+$unmorse{"-.."} = "D";
+$unmorse{"."} = "E";
+$unmorse{"..-."} = "F";
+$unmorse{"--."} = "G";
+$unmorse{"...."} = "H";
+$unmorse{".."} = "I";
+$unmorse{".---"} = "J";
+$unmorse{"-.-"} = "K";
+$unmorse{".-.."} = "L";
+$unmorse{"--"} = "M";
+$unmorse{"-."} = "N";
+$unmorse{"---"} = "O";
+$unmorse{".--."} = "P";
+$unmorse{"--.-"} = "Q";
+$unmorse{".-."} = "R";
+$unmorse{"..."} = "S";
+$unmorse{"-"} = "T";
+$unmorse{"..-"} = "U";
+$unmorse{"...-"} = "V";
+$unmorse{".--"} = "W";
+$unmorse{"-..-"} = "X";
+$unmorse{"-.--"} = "Y";
+$unmorse{"--.."} = "Z";
+$unmorse{".----"} = "1";
+$unmorse{"..---"} = "2";
+$unmorse{"...--"} = "3";
+$unmorse{"....-"} = "4";
+$unmorse{"....."} = "5";
+$unmorse{"-...."} = "6";
+$unmorse{"--..."} = "7";
+$unmorse{"---.."} = "8";
+$unmorse{"----."} = "9";
+$unmorse{"-----"} = "0";
+$unmorse{"   "} = " ";
+$unmorse{".-.-.-"} = ".";
+$unmorse{"--..--"} = ",";
+$unmorse{"..--.."} = "?";
+$unmorse{".----."} = "'";
+$unmorse{"-.-.--"} = "!";
+$unmorse{"-..-."} = "/";
+$unmorse{"-.--."} = "(";
+$unmorse{"-.--.-"} = ")";
+$unmorse{".-..."} = "&";
+$unmorse{"---..."} = ":";
+$unmorse{"-.-.-."} = ";";
+$unmorse{"-...-"} = "=";
+$unmorse{".-.-."} = "+";
+$unmorse{"-....-"} = "-";
+$unmorse{".-..-."} = "\"";
+$unmorse{".--.-."} = "@";
+$unmorse{".-.-"} = "Ä";
+$unmorse{"..-.."} = "É";
+$unmorse{"--.--"} = "Ñ";
+$unmorse{"---."} = "Ö";
+$unmorse{"..--"} = "Ü";
+$unmorse{"----"} = "Š";
+$unmorse{"/"} = " ";
+
+# eggdrop doesn't split args on spaces
+my $args = join(' ', @ARGV);
+$args =~ s/   / \/ /g;
+@ARGV=split(' ', $args);
+
+my $target;
+while ($target = shift(@ARGV)) {
+  if (!defined($unmorse{$target})) {
+    print $target;
+  } else {
+    print $unmorse{$target};
+  }
+}
+print "\n";
+exit 0;

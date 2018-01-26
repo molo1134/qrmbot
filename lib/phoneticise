@@ -1,0 +1,35 @@
+#!/usr/bin/perl
+# Convert text to random phonetics based on system dictionary.
+# 2-clause BSD license.
+
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+my $target = shift;
+$target =~ s/\s*(\w+).*$/\1/;
+my %words;
+
+open (DICT, "<", "/usr/share/dict/words");
+while (<DICT>) {
+  chomp;
+  next if (/[^A-Za-z]/);
+  my $index = substr($_, 0, 1);
+  push(@{$words{$index}}, $_);
+}
+close DICT;
+
+foreach my $val (split('', $target)) {
+  print phoneticise($val), " ";
+}
+print "\n";
+exit 0;
+
+sub phoneticise {
+  my $letter = shift;
+  return $letter if ($letter =~ /[0-9]/);
+  my $num = scalar @{$words{$letter}};
+  my $index = int(rand($num + 1));
+  my $word = @{$words{$letter}}[$index];
+  #print "$letter - $num - $word\n";
+  return $word;
+}
+

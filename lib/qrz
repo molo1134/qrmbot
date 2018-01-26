@@ -1,0 +1,828 @@
+#!/usr/bin/perl -w
+
+# qrz.com callsign lookup.  2-clause BSD license.
+
+# Copyright 2017 /u/molo1134. All rights reserved.
+
+# in order to retrieve info from qrz.com, you need to put these two lines in
+# $HOME/.qrzlogin:
+
+# $login_callsign="YOURCALL";
+# $login_password="yourpass";
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+use Math::Trig;
+use Math::Trig 'great_circle_distance';
+use Math::Trig 'great_circle_bearing';
+use Encode qw(decode);
+use I18N::Langinfo qw(langinfo CODESET);
+use URI::Escape;
+use POSIX qw(strftime);
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+# change this to set the preferred method of terminal highlighting
+#our $highlight="none";
+#our $highlight="irc";
+our $highlight="vt100";
+$highlight = "none" if ! -t STDOUT;
+$highlight = "irc" if $username eq 'eggdrop';
+
+# change to user agent string to avoid using the default wget or curl user agent
+#my $useragent = undef;
+our $useragent = "Mozilla/5.0 (X11; U; Linux i686 (x86_64); en-US; rv:1.9.2) Gecko/20100115 Firefox/3.6";
+
+# in order to calculate distance and bearing to the other station, set origin
+# latitude and longitude here, or in $HOME/.qrzlogin:
+#our $mylat=40.7655;
+#our $mylon=-73.9742;
+our $mylat = undef;
+our $mylon = undef;
+
+
+# you can use your choice of wget or curl
+our $httptool = "curl";
+#our $httptool = "wget";
+
+
+# optionally skip the local CA store check for https
+#our $skipCA = 0;
+our $skipCA = 1;
+
+## end config options
+
+
+our $login_callsign = undef;
+our $login_password = undef;
+my $loginfile = $ENV{'HOME'} . "/.qrzlogin";
+my $cookiefile = $ENV{'HOME'} . "/.qrzcookies";
+my $baseurl = "https://www.qrz.com";
+
+if (-e ($loginfile)) {
+  chmod 0600, $loginfile;
+  require($loginfile);
+} else {
+  die "error: unable to read file \$HOME/.qrzlogin"
+}
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !qrz <callsign>|<name>|<grid>|<qth>\n";
+  } else {
+    print "usage: $0 <callsign>|<name>|<grid>|<qth>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $call = undef;
+my $type = undef;
+my $i = 0;
+my $compact = 0;
+
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /--geo/) {
+    my $latlon = $ARGV[$i+1];
+    if ($latlon =~ /^-?\d+\.\d+,-?\d+\.\d+$/) {
+      ($mylat, $mylon) = split(',', $latlon);
+      #print "lat: $mylat\tlon: $mylon\n";
+    }
+    $i += 2;
+    next;
+  }
+  if ($ARGV[$i] =~ /--compact/) {
+    $compact = 1;
+    $i++;
+    next;
+  }
+  if (defined($call)) {
+    $call = $call ." ". $ARGV[$i];
+  } else {
+    $call = $ARGV[$i];
+  }
+  $i++;
+}
+
+# decode command line from locale-specified codeset
+my $codeset = langinfo(CODESET);
+$call = decode($codeset, $call);
+
+die "no callsign." unless defined $call;
+
+if ($call =~ /^(grid:)? ?([A-R]{2}[0-9]{2}([a-x]{2})?$)/i) {
+  $call = $2;
+  $type = "grid";
+} elsif ($call =~ /^\s*(\d?[a-z]{1,2}[0-9Øø]{1,4}[a-z]{1,4})\s*$/i) {
+  $call = $1;
+  $type = "callsign";
+} elsif ($call =~ /^\s*([a-z0-9]*\*[a-z0-9]*)\s*$/i) {	# wildcards
+	$call = $1;
+	$type = "callsign";
+} else {
+  $call =~ s/^\s*(.*\S)\s*$/$1/;
+  $type = "name";
+}
+
+#my @vals = split //,$call;
+#@vals = map(ord, @vals);
+#print "type: $type: $call @vals\n";
+
+if ($type eq "callsign") {
+  $call =~ s/[Øø]/0/g;
+}
+
+my $bold = "";
+my $unbold = "";
+
+if ($highlight eq "vt100") {
+  $bold = "\e[1m";
+  $unbold = "\e[0m";
+} elsif ($highlight eq "irc" ) {
+  $bold = "\002";
+  $unbold = "\002";
+}
+
+our $url;
+
+my $encodedcall = uri_escape_utf8($call);
+$encodedcall =~ s/%20/+/g;
+$url = "$baseurl/lookup/?query=$encodedcall&mode=$type";
+
+our $useragentoption = "";
+if (defined($useragent)) {
+  if ($httptool eq "wget") {
+    $useragentoption = "-U \"$useragent\"";
+  } elsif ($httptool eq "curl") {
+    $useragentoption = "-A \"$useragent\"";
+  } else {
+    die "unknown http tool: $httptool";
+  }
+}
+ 
+our $httptool_base = undef;
+our $httptool_savecookies = undef;
+our $httptool_loadcookies = undef;
+our $httptool_postdata = undef;
+our $httptool_timeout = undef;
+if ($httptool eq "wget") {
+  $httptool_base = "wget -q -O - $useragentoption";
+  $httptool_base .= " --no-check-certificate" if $skipCA == 1;
+  $httptool_savecookies = "--keep-session-cookies --save-cookies $cookiefile";
+  $httptool_loadcookies = "--load-cookies $cookiefile";
+  $httptool_postdata = "--post-data";
+  $httptool_timeout = "--timeout=";
+} elsif ($httptool eq "curl") {
+  $httptool_base = "curl -s $useragentoption";
+  $httptool_base .= " --insecure" if $skipCA == 1;
+  $httptool_savecookies = "--cookie-jar $cookiefile";
+  $httptool_loadcookies = "--cookie $cookiefile";
+  $httptool_postdata = "--data";
+  $httptool_timeout = "--max-time ";
+} else {
+  die "unknown http tool: $httptool";
+}
+ 
+if (!-e $cookiefile) {
+  #print "no cookie file -- doing login.\n";
+  doLogin();
+}
+
+# note: this code depends on the netscape cookie format (used by wget and curl)
+my $needlogin = 0;
+open (COOKIES, "<", $cookiefile);
+while (<COOKIES>) {
+  if (/^\.qrz\.com.*FALSE\t([0-9]+)/) {
+    my $cookietime = $1;
+    if ($cookietime <= time()) {
+      $needlogin = 1;
+    }
+  }
+}
+close COOKIES;
+if ($needlogin) {
+  #print "cookies expired -- doing login.\n";
+  doLogin();
+}
+
+our ($retcall, $country, $name, $sk, $class, $mail, $grid, $lat, $lon, $geosrc,
+			$born, @prevcalls, $email, $codes, $website, $iota, $lotw, $eqsl,
+			$mailqsl, $qsl, $expiration, @othercalls, $trustee, $incomplete);
+
+getAndParseData();
+
+our ($vanity, $individual, $club, $military, $races, $primarypref, $clubpref,
+			$formerprimary, $closerelative, $formerclub, $clubwithconsent,
+			$codetext);
+
+if (defined($codes)) {
+  parsecodes();
+}
+
+if (!defined($country) and
+    !defined($mail) and
+    !defined($retcall) and
+    !defined($name)) {
+
+  print uc($call), " not found\n";
+  exit $exitnonzeroonerror;
+}
+
+
+if (!defined($country)) {
+  $country = "unknown country";
+}
+if (!defined($mail)) {
+  $mail="no address on file";
+}
+
+if (!defined($name)) {
+  $name="no name on file";
+}
+
+print "$bold$retcall$unbold: $country: $name";
+if (defined($expiration) && ($expiration lt strftime("%Y-%m-%d", gmtime))) {
+  print " ${bold}\[EXPIRED\]${unbold}";
+}
+if (defined($sk) && $sk ne 0) {
+  print " ${bold}\[SK\]${unbold}";
+}
+if (defined($incomplete) && $incomplete ne 0) {
+  print " ${bold}\[INCOMPLETE\]${unbold}";
+}
+if (defined($email)) {
+  print " -- $email";
+}
+if (defined($born)) {
+  print " -- born $born";
+}
+if (defined($class)) {
+  print " -- $class class";
+}
+if (defined($iota)) {
+  print " -- IOTA: $iota";
+}
+if (defined($codes) && $compact ne 1) {
+  print " -- codes: $codes $codetext";
+}
+if (@prevcalls) {
+  print " -- prev " . join(", ", @prevcalls);
+}
+if (@othercalls) {
+  print " -- aliases: " . join(", ", @othercalls);
+}
+if (defined($trustee)) {
+  print " -- trustee: $trustee";
+}
+if (defined($website)) {
+  print " -- $website";
+}
+if (defined($qsl) or defined($lotw) or defined($eqsl) or defined ($mailqsl)) {
+  my $qslflags = "";
+  my $qsltext = "";
+  $qsltext = $qsl unless !defined($qsl);
+  if (defined($lotw) and $lotw =~ /Yes/i) {
+    $qslflags .= "L";
+  }
+  if (defined($eqsl) and $eqsl =~ /Yes/i) {
+    $qslflags .= "E";
+  }
+  if (defined($mailqsl) and $mailqsl =~ /Yes/i) {
+    $qslflags .= "M";
+  }
+  if (length($qsltext) gt 0) {
+    $qsltext .= " ";
+  }
+  if (length($qslflags) gt 0) {
+    $qsltext .= "[$qslflags]";
+  }
+  if (length($qsltext) gt 0) {
+    print " -- QSL: $qsltext";
+  }
+}
+if ($compact eq 0) {
+  print "\n";
+  print "$mail\n";
+} else {
+  print " -- $mail";
+}
+
+$geosrc = "?" unless defined($geosrc);
+
+if (defined($lat) and not defined($grid)) {
+  $grid = coordToGrid($lat, $lon);
+
+  if ($geosrc eq "dxcc") {
+    # limited accuracy
+    $grid = substr($grid, 0, 2);
+  }
+}
+if (defined($grid) and "$grid" ne "bogus") {
+  if ($compact eq 1) {
+    print " -- ";
+  }
+  print "$grid";
+
+  if (not defined($lat)) {
+    gridToCoord($grid);
+    print " [approx]:";
+  }
+  if ($geosrc eq "dxcc") {
+    print " [approx]:";
+  }
+}
+if (defined($lat)) {
+  print " $lat, $lon" unless $compact eq 1;
+
+  if (defined($geosrc)) {
+    print " [src: $geosrc]";
+  }
+
+  if (defined($mylat)) {
+
+    # convert to radians
+    my @origin = NESW($mylon, $mylat);
+    my @foreign = NESW($lon, $lat);
+    my ($dist, $bearing);
+
+    # disable "experimental" warning on smart match operator use
+    no if $] >= 5.018, warnings => "experimental::smartmatch";
+
+    if (@origin ~~ @foreign) {	  # smart match operator - equality comparison
+      $dist = 0;
+      $bearing = 0;
+    } else {
+      $dist = great_circle_distance(@origin, @foreign, 6378.1); # earth radius
+      $bearing = rad2deg(great_circle_bearing(@origin, @foreign));
+    }
+    my $localgrid = coordToGrid($mylat, $mylon);
+
+    printf(" -- %.1f km, %.0f° from %s", $dist, $bearing, $localgrid);
+  }
+}
+if (defined($grid) or defined($lat) or $compact eq 1) {
+  print "\n";
+}
+
+exit 0;
+
+
+
+
+
+
+
+
+sub doLogin {
+
+  my $logoutgeturl = "$baseurl/logout/";
+  my $logingeturl = "$baseurl/login/";
+  my $nojs;
+
+  open (HTTP, '-|', "$httptool_base $httptool_savecookies $logingeturl");
+  binmode(HTTP, ":utf8");
+  while (<HTTP>) {
+    #print;
+    chomp;
+    if (!defined($nojs) and /value="([0-9a-f]+)" name="nojs">/) {
+      $nojs = $1;
+      #print "nojs: $nojs\n";
+      next;
+    }
+  }
+  close(HTTP);
+
+  if (!defined($nojs)) {
+    die "failed to get login information.";
+  }
+
+  open (HTTP, '-|', "$httptool_base $httptool_savecookies $httptool_postdata " .
+		    "'nojs=${nojs}&username=${login_callsign}&password=${login_password}&flush=1' " .
+		    "'$logingeturl'");
+  binmode(HTTP, ":utf8");
+  my $fail = 0;
+  while (<HTTP>) {
+    #print $_;
+    if (/<div class="alert alert-(warning|danger)" role="alert">([^<]*)<\/div>/) {
+      print "$2\n";
+      $fail = 1;
+    }
+  }
+  close (HTTP);
+
+  # technically this is a race condition, but not sure anyone cares
+  chmod 0600, $cookiefile;
+
+  if ($fail != 0) {
+    exit $exitnonzeroonerror;
+  }
+}
+
+
+
+
+sub getAndParseData {
+
+  my $calldata = 0;
+  my $detail = 0;
+
+  #print "$url\n";
+  open (HTTP, '-|', "$httptool_base ${httptool_timeout}15 " .
+		    "$httptool_loadcookies '$url'");
+  binmode(HTTP, ":utf8");
+  while (<HTTP>) {
+    #print;
+    chomp;
+
+    if (/matches for:/) {
+      if ($type eq "name") {
+	print $call, ": possible matches:\n";
+      } elsif ($type eq "grid") {
+	print $call, " matches:\n";
+      }
+      my $count = 0;
+      my $limit = 5;
+      my $resultcall = undef;
+      my $resultdetail = undef;
+      my $matches = 0;
+
+      if (/([0-9]+) matches/) {
+	$matches = $1;
+      }
+
+      while (<HTTP>) {
+	chomp;
+	if (/<td class="[^"]*"><a href="[^"]*">([^<]*)<\/a><\/td>/) {
+	  $resultcall = $1;
+	  my $matchcall = $call;
+	  $matchcall =~ s/^\*//g;
+	  $matchcall =~ s/\*$//g;
+	  $matchcall =~ s/\*/.*/g;
+	  $resultcall =~ s/($matchcall)/$bold$1$unbold/ig;
+	  $resultdetail = undef;
+	}
+	if (/<td style="padding-left:4px;">(.*?)<\/td>/) {
+	  $resultdetail = $1;
+
+	  if (/<span class="[^"]*red[^"]*"/g) {
+	    $resultdetail =~ s/<span class="[^"]*red[^"]*" *(style="[^"]*")?>/$bold/g;
+	    $resultdetail =~ s/<\/span>/$unbold/g;
+	  } else {
+	    my $matchcall = $call;
+	    $matchcall =~ s/\*/.*/g;
+	    $resultdetail =~ s/($matchcall)/$bold$1$unbold/ig;
+	  }
+
+	  if (++$count < $limit) {
+	    print "$resultcall: $resultdetail\n";
+	    #} else {
+	    #print ".. results truncated. see $url\n";
+	    #exit $exitnonzeroonerror;
+	  }
+	}
+      }
+      if ($matches >= $limit) {
+	print "truncated. $matches matches found. see $url\n";
+      }
+      exit $exitnonzeroonerror;
+    }
+
+    if (/The search for <.*> produced no result/) {
+      while(<HTTP>) {
+	if (/looks like a callsign from <[^>]*>([^<]+)</) {
+	  print uc($call), " not found -- $1?\n";
+	  exit $exitnonzeroonerror;
+	}
+      }
+      print uc($call), " not found\n";
+      exit $exitnonzeroonerror;
+    }
+
+    if (/No result data was available for:/) {
+      print uc($call), " not found\n";
+      exit $exitnonzeroonerror;
+    }
+
+    if (/Service limit exceeded/) {
+      print "Service limit exceeded. Too many lookups. See $url\n";
+      exit $exitnonzeroonerror;
+    }
+
+    if (/This call sign record has incomplete details/) {
+      $incomplete = 1;
+    }
+
+    if (/begin calldata/) {
+      $calldata = 1;
+    }
+
+    if ($calldata and /Not listed by QRZ/) {
+      print "Not listed by QRZ.\n";
+      exit $exitnonzeroonerror;
+    }
+
+    if ($calldata and /\/atlas.*<span style="position:relative;top[^>]*>([^<]*)</) {
+      $country = $1;
+      #next;
+    }
+    if ($calldata and /span class="csgnl[^"]*">,?\s*([A-Z0-9]+)</ ) {
+      $retcall = $1;
+      #next;
+    }
+    if (/Login is required for additional detail./) {
+      # For some reason it times out a login even though the cookies have not
+      # yet expired.
+      close(HTTP);
+      #print "Login required\n";
+      doLogin();
+      getAndParseData();
+      return;
+    }
+    if (/<p style="color:black;font-weight:bold;">SILENT KEY/ or 
+	/<span style="color:white">SILENT KEY/) {
+
+      $sk = 1;
+    }
+    if (defined($retcall) and length($retcall) > 0 and $calldata and !defined($name) and /^<p class="m0">([^<]+)<span[^>]*>[^<]*<\/span><br *\/>(.*)$/) {
+      $name = $1;
+      $mail = $2;
+      $mail =~ s/<br *\/>/; /g;
+      $mail =~ s/<\/p>//g;
+      next;
+    }
+    if (/<b>QSL:<\/b>\s*([^<]+)\s*</) {
+      $qsl = $1;
+    }
+    if (/var qmail='([^']+)'/) {
+      my $qmail = $1;
+      my $cl = "";
+      my $dem ="";
+      my ($i, $x);
+      # decode email
+      for ($i = (length($qmail) - 1); $i > 0; $i--) {
+	my $c = substr($qmail, $i, 1);
+	if ($c ne "!") {
+	  $cl = $cl . $c;
+	} else {
+	  last;
+	}
+      }
+      $i--;
+
+      for ($x = 0; $x < $cl; $x++) {
+	$dem = $dem . substr($qmail, $i, 1);
+	$i = $i - 2;
+      }
+
+      $email = $dem;
+    }
+    if ($calldata and /end calldata/) {
+      $calldata = 0;
+    }
+
+    if (/begin detail/) {
+      $detail = 1;
+      next;
+    }
+    if ($detail and /td class="dh">([^<]+)<\/td><td class="d[iw]">(<[^>]+>)?\s*([^<]+)\s*</) {
+      my $key = $1;
+      my $val = $3;
+      $val =~ s/^\s+//;
+      $val =~ s/\s+$//;
+      # print "$key = $val\n";
+
+      if ($key =~ /Latitude/) {
+	$lat = $val;
+	next;
+      }
+      if ($key =~ /Longitude/) {
+	$lon = $val;
+	next;
+      }
+      if ($key =~ /Grid Square/) {
+	$grid = $val;
+	if ($grid =~ /AA00/ or $grid =~ /JJ00/) {
+	  $grid = "bogus";
+	  $lat = undef;
+	  $lon = undef;
+	}
+	next;
+      }
+      if ($key =~ /Geo Source/) {
+	if ($val =~ /Geocoded Address/) {
+	  $geosrc = "addr";
+	} elsif ($val =~ /User supplied/) {
+	  $geosrc = "user";
+	} elsif ($val =~ /Zip Code/) {
+	  $geosrc = "zip";
+	} elsif ($val =~ /From DXCC/) {
+	  $geosrc = "dxcc";
+	} elsif ($val =~ /From Grid/) {
+	  $geosrc = "grid";
+	  $lat = undef;
+	  $lon = undef;
+	} elsif ($val =~ /Unknown/) {
+	  $geosrc = "?";
+	} elsif ($val =~ /none/) {
+	  $geosrc = $val;
+	  $grid = "bogus";
+	  $lat = undef;
+	  $lon = undef;
+	} else {
+	  $geosrc = $val;
+	}
+      }
+      if ($key =~ /Expires/) {
+	#print "Expires: $val\n";
+	$expiration = $val;
+	next;
+      }
+      if ($key =~ /Class/) {
+	$class = $val;
+	if ( /Codes:<\/b>\s*([A-Z]+)\s*</ ) {
+	  $codes = $1;
+	}
+	next;
+      }
+      if ($key =~ /Trustee/) {
+	$trustee = $val;
+	if ( /https?:\/\/www.qrz.com\/db\/([A-Z0-9]+)/ ) {
+	  $trustee = $1;
+	}
+	#print "trustee: $trustee\n";
+      }
+      if ($key =~ /Born/) {
+	$born = $val;
+	next;
+      }
+      if ($key =~ /QSL Info/) {
+	$qsl = $val;
+	next;
+      }
+      if ($key =~ /Previous/) {
+	push @prevcalls, $val;
+	next;
+      }
+      if ($key =~ /Web Page/) {
+	$website = $val;
+	next;
+      }
+      if ($key =~ /IOTA/) {
+	$iota = $val;
+	next;
+      }
+      if ($key =~ /Uses LOTW/) {
+	$lotw = $val;
+	next;
+      }
+      if ($key =~ /QSL by eQSL/) {
+	$eqsl = $val;
+	next;
+      }
+      if ($key =~ /QSL by Mail/) {
+	$mailqsl = $val;
+	next;
+      }
+    }
+    if ($detail and 
+      /td class="ha"><a href="[^"]*">([A-Z0-9]+)<\/a><\/td><td class="hc">(.*)<\/td><\/tr>/) {
+
+      #print "$1: $2\n";
+      my $alias = $1;
+      if ($2 =~ /Previous callsign/i) {
+	push @prevcalls, $alias;
+      } else {
+	push @othercalls, $alias;
+      }
+    }
+    if (not defined($lat) and /var cs_lat = "\s*([0-9.-]+)";/ ) {
+      $lat = $1;
+    }
+    if (not defined($lon) and /var cs_lon = "\s*([0-9.-]+)";/ ) {
+      $lon = $1;
+    }
+    if (/end detail/) {
+      $detail = 0;
+      next;
+    }
+  }
+  close(HTTP);
+
+  if (defined($geosrc) and $geosrc =~ /grid/) {
+    $lat = undef;
+    $lon = undef;
+  }
+}
+
+
+sub parsecodes {
+  if ($codes =~ /^H[VA]I/) {
+    $individual = 1;
+    $codetext="indiv.";
+  } elsif ($codes =~ /^H[VA]B/) {
+    $club = 1;
+    $codetext="club";
+  } elsif ($codes =~ /^HAM/) {
+    $military = 1;
+    $codetext="mil";
+  } elsif ($codes =~ /^HAR/) {
+    $races = 1;
+    $codetext="races";
+  }
+
+  if ($codes =~ /^HV/) {
+    $vanity = 1;
+    $codetext = "$codetext/vanity";
+    if ($codes =~ /^HVIE/) {
+      $primarypref = 1;
+      $codetext = "$codetext/pri. pref list";
+    } elsif ($codes =~ /^HVBF/) {
+      $clubpref = 1;
+      $codetext = "$codetext/club pref list";
+    } elsif ($codes =~ /^HVIA/) {
+      $formerprimary = 1;
+      $codetext = "$codetext/former primary";
+    } elsif ($codes =~ /^HVIB/) {
+      $closerelative = 1;
+      $codetext = "$codetext/relative";
+    } elsif ($codes =~ /^HVBC/) {
+      $formerclub = 1;
+      $codetext = "$codetext/former club";
+    } elsif ($codes =~ /^HVBD/) {
+      $clubwithconsent = 1;
+      $codetext = "$codetext/relative";
+    }
+  }
+  if (!defined($codetext)) {
+    $codetext = "?";
+  }
+  $codetext = "($codetext)"
+}
+
+# Notice the 90 - latitude: phi zero is at the North Pole.
+# Example: my @London = NESW( -0.5, 51.3); # (51.3N 0.5W)
+# Example: my @Tokyo  = NESW(139.8, 35.7); # (35.7N 139.8E)
+sub NESW {
+  deg2rad($_[0]), deg2rad(90 - $_[1])
+}
+
+sub gridToCoord {
+  my $gridstr = shift;
+
+  if (not $gridstr =~ /^[A-R]{2}[0-9]{2}([A-X]{2})?/i ) {
+    print "\ninvalid grid\n";
+    return;
+  }
+
+  my @grid = split (//, uc($gridstr));
+
+  if ($#grid < 3) {
+    return;
+  }
+
+  $lon = ((ord($grid[0]) - ord('A')) * 20) - 180;
+  $lat = ((ord($grid[1]) - ord('A')) * 10) - 90;
+  $lon += ((ord($grid[2]) - ord('0')) * 2);
+  $lat += ((ord($grid[3]) - ord('0')) * 1);
+
+  if ($#grid >= 5) {
+    $lon += ((ord($grid[4])) - ord('A')) * (5/60);
+    $lat += ((ord($grid[5])) - ord('A')) * (5/120);
+    # move to center of subsquare
+    $lon += (5/120);
+    $lat += (5/240);
+  } else {
+    # move to center of square
+    $lon += 1;
+    $lat += 0.5;
+  }
+
+  # not too precise
+  $lat = sprintf("%.5f", $lat);
+  $lon = sprintf("%.5f", $lon);
+}
+
+sub coordToGrid {
+  my $lat = shift;
+  my $lon = shift;
+  my $grid = "";
+
+  $lon = $lon + 180;
+  $lat = $lat + 90;
+
+  $grid .= chr(ord('A') + int($lon / 20));
+  $grid .= chr(ord('A') + int($lat / 10));
+  $grid .= chr(ord('0') + int(($lon % 20)/2));
+  $grid .= chr(ord('0') + int(($lat % 10)/1));
+  $grid .= chr(ord('a') + int(($lon - (int($lon/2)*2)) / (5/60)));
+  $grid .= chr(ord('a') + int(($lat - (int($lat/1)*1)) / (2.5/60)));
+
+  return $grid;
+}
+
+# vim: set ts=8 sw=2 sts=2

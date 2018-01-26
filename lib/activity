@@ -1,0 +1,179 @@
+#!/usr/bin/perl -w
+# Report band activity level from pskreporter.info.  2-clause BSD license.
+
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+use Math::Trig;
+use Math::Trig 'great_circle_distance';
+use Math::Trig 'great_circle_bearing';
+use URI::Escape;
+binmode(STDOUT, ":utf8");
+
+# change this to set the preferred method of terminal highlighting
+my $highlight="vt100";
+$highlight = "none" if ! -t STDOUT;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+$highlight="irc" if $username eq "eggdrop";
+
+our %megacycles;
+$megacycles{1} = "160m";
+$megacycles{3} = "80m";
+$megacycles{5} = "60m";
+$megacycles{7} = "40m";
+$megacycles{10} = "30m";
+$megacycles{14} = "20m";
+$megacycles{18} = "17m";
+$megacycles{21} = "15m";
+$megacycles{24} = "12m";
+$megacycles{26} = "11m";
+$megacycles{27} = "11m";
+$megacycles{28} = "10m";
+$megacycles{29} = "10m";
+$megacycles{50} = "6m";
+$megacycles{51} = "6m";
+$megacycles{52} = "6m";
+$megacycles{53} = "6m";
+$megacycles{69} = "4m";
+$megacycles{70} = "4m";
+$megacycles{144} = "2m";
+$megacycles{145} = "2m";
+$megacycles{146} = "2m";
+$megacycles{147} = "2m";
+$megacycles{220} = "1.25m";
+$megacycles{221} = "1.25m";
+$megacycles{222} = "1.25m";
+$megacycles{223} = "1.25m";
+$megacycles{224} = "1.25m";
+$megacycles{432} = "0.70m";
+$megacycles{902} = "0.33m";
+$megacycles{1296} = "0.23m";
+
+my $bold = "";
+my $unbold = "";
+
+if ($highlight eq "vt100") {
+  $bold = "\e[1m";
+  $unbold = "\e[0m";
+} elsif ($highlight eq "irc" ) {
+  $bold = "\002";
+  $unbold = "\002";
+}
+
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !activity [mode] <grid>\n";
+  } else {
+    print "usage: $0 [mode] <grid>\n";
+  }
+  exit 0;
+}
+
+my $mode="";
+my $grid="FN";
+my $time=180; # 30 minutes * 6
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /^[A-R]{2}[0-9]{2}[a-x]{2}$/i) {
+    print "grid too precise: $ARGV[$i]\n";
+    exit 0;
+  }
+  if ($ARGV[$i] =~ /^[A-R]{2}([0-9]{2})?$/i) {
+    $grid = $ARGV[$i];
+    #print "grid: $grid\n";
+  } else {
+    $mode = $ARGV[$i];
+    #print "mode: $mode\n";
+  }
+  $i++;
+  next;
+}
+
+my $url="https://pskreporter.info/cgi-bin/psk-freq.pl?mode=$mode&grid=$grid&time=$time";
+
+my %scores;
+
+open (HTTP, '-|', "curl --insecure -4 -s '$url'");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+  #print;
+  chomp;
+
+  if (/The storm clouds are gathering/i) {
+    print "error retrieving data from $url\n";
+    exit 0
+  }
+
+  next if /^#/;
+  my ($freq, $score, undef, undef, undef) = split /\s+/;
+  next if $freq < 135000;
+  my $band = freq2band($freq);
+  #print "$freq $score $band\n";
+  #print "$band $score\n";
+  $scores{$band} += ($score || 0) unless $band eq "";
+}
+close HTTP;
+
+my $max = (sort {$b <=> $a} (values %scores))[0];
+#print "max: $max\n";
+#print join (" ", sort {$b <=> $a} values %scores), "\n";
+
+$mode = "all" if $mode eq "";
+
+print uc $mode, " from grid ", uc $grid, ": ";
+
+$i = 0;
+foreach my $key (sort {($a =~ s/c?m//r) <=> ($b =~ s/c?m//r)} (keys %scores)) {
+#foreach my $key (sort {(print $a) <=> (print $b)} (keys %scores)) {
+  if ($scores{$key} == 0) {
+    $i++;
+    next;
+  }
+
+  print $bold if $scores{$key} == $max;
+  print $key, '⇒', $scores{$key};
+  print $unbold if $scores{$key} == $max;
+  print ", " unless ++$i == keys %scores;
+}
+
+if ($i == 0) {
+  print "no data available";
+}
+
+print "\n";
+
+exit 0;
+
+
+
+sub freq2band {
+  my $freq = shift;
+  my $band;
+  our %megacycles;
+
+  if ($freq > 1000000) {
+    my $mc = int ($freq / 1000000);
+    #print "MC: $freq $mc\n";
+    $band = $megacycles{$mc};
+  } else {
+    my $kc = $freq / 1000;
+    if (470 <= $kc and $kc <= 510) {
+      $band = "630m";
+    } elsif (130 <= $kc and $kc <= 140) {
+      $band = "2200m";
+    }
+  }
+
+  if (!defined $band) {
+    #print "unknown band for frequency: $freq\n";
+    return "";
+  }
+  return $band;
+}

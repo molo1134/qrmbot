@@ -1,0 +1,203 @@
+#!/usr/bin/perl
+# Report band conditions.  2-clause BSD license.
+
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+my $highlight="vt220";
+$highlight = "none" if ! -t STDOUT;
+$highlight = "irc" if $username eq "eggdrop";
+
+my $url = "http://www.hamqsl.com/solarxml.php";
+
+my ($updated, $aindex, $kindex, $solarflux, $sunspots);
+my @bands;
+my @phenom;
+
+open (HTTP, '-|', "curl -s $url");
+while (<HTTP>) {
+  chomp;
+  if (/Warning/) {
+    print "error in source data";
+    exit 0;
+  }
+  if (/<updated>\s*([^<]+)<\/updated>/) {
+    $updated = $1;
+  }
+  if (/<aindex>\s*([^<]+)<\/aindex>/) {
+    $aindex = $1;
+  }
+  if (/<kindex>\s*([^<]+)<\/kindex>/) {
+    $kindex = $1;
+  }
+  if (/<solarflux>\s*([^<]+)<\/solarflux>/) {
+    $solarflux = $1;
+  }
+  if (/<sunspots>\s*([^<]+)<\/sunspots>/) {
+    $sunspots = $1;
+  }
+  if (/<band name="([^"]*)" time="([^"]*)".*>([^<]*)<.*$/) {
+    push(@bands, join(',', $1,$2,$3));
+  }
+  if (/<phenomenon name="([^"]*)" location="([^"]*)".*>([^<]*)<.*$/) {
+    push(@phenom, join(',', $1,$2,$3));
+  }
+}
+close(HTTP);
+
+if ($kindex > 4) {
+  # s/Poor/Shit/ for @bands
+  s/Poor/Shit/ for @bands;
+}
+
+$solarflux = colorSfi($solarflux);
+$aindex = colorAIndex($aindex);
+$kindex = colorKIndex($kindex);
+
+if ($ARGV[0] eq "-q") {
+  print "Conditions as of $updated: SFI=$solarflux SN=$sunspots A=$aindex K=$kindex\n";
+  exit 0;
+}
+
+print "Bands as of $updated: SFI=$solarflux SN=$sunspots A=$aindex K=$kindex\n";
+
+@bands = sort { $a cmp $b } @bands;
+
+foreach my $band (@bands) {
+  my ($b, $t, $c) = split(/,/, $band);
+  $c = colorCondx($c);
+  print "| $b | $t: $c " if $t eq "day";
+  print "| $t: $c |\n" if $t eq "night";
+}
+
+foreach my $p (@phenom) {
+  #print "$p\n";
+  my ($n, $l, $c) = split(/,/, $p);
+  print " $n: $l $c;" if ! $c =~ /Closed/i;
+}
+print "\n";
+
+sub colorCondx {
+  $_ = shift;
+  $_ = red($_) if $_ eq "Poor" or $_ eq "Shit";
+  $_ = yellow($_) if $_ eq "Fair";
+  $_ = green($_) if $_ eq "Good";
+  return $_;
+}
+
+
+# SFI   < 80: dark red
+# SFI  81-94: red
+# SFI 95-119: yellow
+# SFI  > 120: green
+sub colorSfi {
+  $_ = shift;
+  if ($_ < 81) {
+    $_ = darkRed($_);
+  } elsif ($_ < 95) {
+    $_ = red($_);
+  } elsif ($_ < 120) {
+    $_ = yellow($_);
+  } else {
+    $_ = green($_);
+  }
+  return $_;
+}
+
+#   colors from: http://www.swpc.noaa.gov/products/station-k-and-indices
+# Kindex < 4: green
+# Kindex = 5: yellow
+# Kindex 6-7: red
+# Kindex > 7: light blue
+sub colorKIndex {
+  $_ = shift;
+  if ($_ < 4) {
+    $_ = green($_);
+  } elsif ($_ < 5) {
+    $_ = yellow($_);
+  } elsif ($_ < 8) {
+    $_ = red($_);
+  } else {
+    $_ = lightblue($_);
+    print "error: ionosphere on fire\n";
+  }
+  return $_;
+}
+
+#   colors from: http://www.swpc.noaa.gov/products/station-k-and-indices
+# Aindex  < 20: green
+# Aindex 20-29: yellow
+# Aindex 30-49: red
+# Aindex 50-99: dark red
+# Aindex > 100: light blue
+sub colorAIndex {
+  $_ = shift;
+  if ($_ < 20) {
+    $_ = green($_);
+  } elsif ($_ < 30) {
+    $_ = yellow($_);
+  } elsif ($_ < 50) {
+    $_ = red($_);
+  } elsif ($_ < 100) {
+    $_ = darkRed($_);
+  } else {
+    $_ = lightblue($_);
+  }
+  return $_;
+}
+
+sub darkRed {
+  my $s = shift;
+  if ($highlight eq "irc") {
+    return "\x035\x02\x02$s\x03"
+  } elsif ($highlight eq "vt220") {
+    return "\e[31m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+sub red {
+  my $s = shift;
+  if ($highlight eq "irc") {
+    return "\x034\x02\x02$s\x03"
+  } elsif ($highlight eq "vt220") {
+    return "\e[1;31m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+sub yellow {
+  my $s = shift;
+  if ($highlight eq "irc") {
+    return "\x038\x02\x02$s\x03"
+  } elsif ($highlight eq "vt220") {
+    return "\e[1;33m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+sub green {
+  my $s = shift;
+  if ($highlight eq "irc") {
+    return "\x033\x02\x02$s\x03"
+  } elsif ($highlight eq "vt220") {
+    return "\e[32m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+sub lightblue {
+  my $s = shift;
+  if ($highlight eq "irc") {
+    return "\x0312\x02\x02$s\x03"
+  } elsif ($highlight eq "vt220") {
+    return "\e[1;34m$s\e[0m"
+  } else {
+    return $s;
+  }
+}

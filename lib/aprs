@@ -1,0 +1,287 @@
+#!/usr/bin/perl
+#
+# APRS Query using aprs.fi   2-clause BSD license.
+#
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+# requires an API key from aprs.fi.  Place into the file $HOME/.aprs.fi as follows:
+#
+# $apikey = "12345.xxxxxxxxxxxxxxxx";
+
+use POSIX qw(floor strftime);
+use Math::Round;
+use utf8;
+binmode STDOUT, ":utf8";
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !aprs <callsign or object>\n";
+  } else {
+    print "usage: $0 <callsign or object>\n";
+  }
+  exit 0;
+}
+
+our $apikey = undef;
+my $apikeyfile = $ENV{'HOME'} . "/.aprs.fi";
+if (-e ($apikeyfile)) {
+  require($apikeyfile);
+} else {
+  die "error: unable to read file $apikeyfile"
+}
+die "error: no API key set" unless defined($apikey);
+
+my $useragent = "molo1134Query/0.0.1 (+http://reddit.com/r/amateurradio/w/qrmbot)";
+
+my $highlight = "vt100";
+$highlight = "none" if ! -t STDOUT;
+$highlight = "irc" if $username eq 'eggdrop';
+
+my $bold = "";
+my $unbold = "";
+if ($highlight eq "vt100") {
+  $bold = "\e[1m";
+  $unbold = "\e[0m";
+} elsif ($highlight eq "irc" ) {
+  $bold = "\002";
+  $unbold = "\002";
+}
+
+#my $targetcall = "N2WNU-5";
+my $targetcall = $ARGV[0];
+# only allow alphanumeric and "." and "-"
+$targetcall =~ s/[^A-Za-z0-9.-]//g;
+
+my $url = "http://api.aprs.fi/api/get?name=${targetcall}&what=loc&apikey=${apikey}&format=json";
+
+#print "$url\n";
+
+my %vals;
+
+%vals = getvals($url, %vals);
+
+#foreach my $key (keys(%vals)) {
+#  print "$key = $vals{$key}\n";
+#}
+
+if ($vals{found} != 1) {
+  print "not found: $targetcall\n";
+  exit 0;
+}
+
+if ($vals{type} eq "w") {
+  # get weather fields
+  $url = "http://api.aprs.fi/api/get?name=${targetcall}&what=wx&apikey=${apikey}&format=json";
+  my %wxvals = getvals($url, %vals);
+  #@vals{keys %wxvals} = values %wxvals;
+  %vals = (%vals, %wxvals);
+
+  $vals{temp_c} = round($vals{temp}) if defined $vals{temp};
+  $vals{temp_f} = round($vals{temp} * 1.8 + 32) if defined $vals{temp};
+  $vals{wind_calm} = 1 if (defined($vals{wind_speed}) and $vals{wind_speed} == 0);
+  $vals{wind_speed_kph} = round($vals{wind_speed} * 3.6) if defined($vals{wind_speed});
+  $vals{wind_speed_mph} = round($vals{wind_speed} * 2.2369363) if defined($vals{wind_speed});
+  $vals{wind_gust_kph} = round($vals{wind_gust} * 3.6) if defined($vals{wind_gust});
+  $vals{wind_gust_mph} = round($vals{wind_gust} * 2.2369363) if defined($vals{wind_gust});
+
+  $vals{rain_1h_inch} = round($vals{rain_1h} * 0.039370079 * 100)/100;
+  $vals{rain_24h_inch} = round($vals{rain_24h} * 0.039370079 * 100)/100;
+  $vals{rain_midnight_inch} = round($vals{rain_mn} * 0.039370079 * 100)/100;
+
+  my $dir = $vals{wind_direction};
+  if (defined($dir)) {
+    $vals{wind_dir} = "N"   if $dir > 348.75 || $dir < 11.25;
+    $vals{wind_dir} = "NNE" if $dir > 11.25 && $dir < 33.75;
+    $vals{wind_dir} = "NE"  if $dir > 33.75 && $dir < 56.25;
+    $vals{wind_dir} = "ENE" if $dir > 56.25 && $dir < 78.75;
+    $vals{wind_dir} = "E"   if $dir > 78.75 && $dir < 101.25;
+    $vals{wind_dir} = "ESE" if $dir > 101.25 && $dir < 123.75;
+    $vals{wind_dir} = "SE"  if $dir > 123.75 && $dir < 146.25;
+    $vals{wind_dir} = "SSE" if $dir > 146.25 && $dir < 168.75;
+    $vals{wind_dir} = "S"   if $dir > 168.75 && $dir < 191.25;
+    $vals{wind_dir} = "SSW" if $dir > 191.25 && $dir < 213.75;
+    $vals{wind_dir} = "SW"  if $dir > 213.75 && $dir < 236.25;
+    $vals{wind_dir} = "WSW" if $dir > 236.25 && $dir < 258.75;
+    $vals{wind_dir} = "W"   if $dir > 258.75 && $dir < 281.25;
+    $vals{wind_dir} = "WNW" if $dir > 281.25 && $dir < 303.75;
+    $vals{wind_dir} = "NW"  if $dir > 303.75 && $dir < 326.25;
+    $vals{wind_dir} = "NNW" if $dir > 326.25 && $dir < 348.75;
+  }
+  $vals{pressure_inhg} = round($vals{pressure} * 0.029529983 * 100)/100;
+}
+
+print "${bold}$vals{name}${unbold}";
+print " (de $vals{srccall})" unless $vals{name} eq $vals{srccall} || !defined($vals{srccall});
+print " (WX)" if $vals{type} eq "w";
+print ": " . geolocate($vals{lat}, $vals{lng});
+
+# wx station vals
+print "  Temp: $bold$vals{temp_c}°C/$vals{temp_f}°F$unbold" if defined ($vals{temp});
+print "  Humidity: $vals{humidity}%" if defined ($vals{humidity});
+
+if (defined($vals{wind_calm}) and $vals{wind_calm} == 1) {
+    print "  Wind: $vals{wind_dir} calm";
+    #print " $vals{wind_direction}°" if defined ($vals{wind_direction});
+} elsif (defined $vals{wind_speed}) {
+  print "  Wind: $vals{wind_dir} at $vals{wind_speed_kph}kph/$vals{wind_speed_mph}mph";
+}
+print " (gust $vals{wind_gust_kph}kph/$vals{wind_gust_mph}mph)" if defined ($vals{wind_gust}) && $vals{wind_gust} > 0;
+print "  Pressure: $vals{pressure}mb/$vals{pressure_inhg}inHg" if defined ($vals{pressure});
+print "  Precipitation:"
+	if (defined($vals{rain_1h}) || defined($vals{rain_24h}) || defined($vals{rain_mn}))
+	  and ($vals{rain_1h} > 0 || $vals{rain_24h} > 0 || $vals{rain_mn} > 0);
+	;
+print " last hour: $vals{rain_1h}mm/$vals{rain_1h_inch}in"
+	if defined$vals{rain_1h} and $vals{rain_1h} > 0;
+print " last 24h: $vals{rain_24h}mm/$vals{rain_24h_inch}in"
+	if defined$vals{rain_24h} and $vals{rain_24h} > 0;
+print " today: $vals{rain_mn}mm/$vals{rain_midnight_inch}in"
+	if defined$vals{rain_mn} and $vals{rain_mn} > 0;
+
+
+print " " if $vals{type} eq "w";
+# unused fields:
+#   rain_1h - Rainfall over past 1 hour, in millimeters
+#   rain_24h - Rainfall over past 24 hours, in mm
+#   rain_mn - Rainfall since midnight, in mm
+#   luminosity - Luminosity, watts / square meter (W/m^2)
+
+if (defined($vals{speed})) {
+  my $kph = floor($vals{speed});
+  my $mph = floor($vals{speed} * 0.62137119);
+  print " @ ${kph}kph/${mph}mph";
+}
+
+print " $vals{heading}°" if defined($vals{heading});
+print " $vals{course}°" if defined($vals{course});
+
+if (defined($vals{altitude})) {
+  $alt_m = floor($vals{altitude});
+  $alt_ft = floor($alt_m * 3.2808399);
+  print " alt ${alt_m}m/${alt_ft}ft";
+}
+
+my $ts = undef;
+if ($vals{type} eq "w" and defined $vals{"time"}) {
+  $ts = $vals{"time"};
+} elsif (defined $vals{lasttime}) {
+  $ts = $vals{lasttime};
+}
+
+print " at " . strftime("%Y-%m-%d %H:%Mz", gmtime($ts)) if defined($ts);
+
+if (defined($vals{comment})) {
+  $vals{comment} =~ s/\\\//\//g;
+  print " ($vals{comment})";
+}
+print " via ($vals{path})" if defined($vals{path});
+print "\n";
+
+exit 0;
+
+#phg = 2533
+#result = ok
+#symbol = S#
+
+sub getvals {
+  my $url = shift;
+  my %vals = shift;
+
+  #print "$url\n";
+  open(HTTP, '-|', "curl -A \"$useragent\" -s \"$url\"");
+  binmode(HTTP, ":utf8");
+  while (<HTTP>) {
+    # "found":1,"entries":[{"class":"a"
+    s/:(\d+),/:\1 , /g;
+    s/","/" , "/g;
+    s/{"/{\n"/g;
+    #print;
+    @fields = split / , /;
+    foreach my $field (@fields) {
+      if ($field =~ /"?([^"]+)"?\s*:\s*"?([^"]+)"?/) {
+	$key = $1;
+	$val = $2;
+	$vals{$key} = $val;
+      }
+    }
+  }
+  close (HTTP);
+
+  return %vals;
+}
+
+sub geolocate {
+  my $lat = shift;
+  my $lon = shift;
+
+  my $url = "http://maps.googleapis.com/maps/api/geocode/xml?latlng=$lat,$lon&sensor=false";
+
+  my $newResult = 0;
+  my $getnextaddr = 0;
+  my $addr = undef;
+  my $type = undef;
+
+  my %results;
+
+  open(GMAP, '-|', "curl -s \"$url\"");
+  binmode(GMAP, ":utf8");
+  while (<GMAP>) {
+    #print;
+    chomp;
+
+    if (/<result>/) {
+      $newResult = 1;
+      next;
+    }
+
+    if ($newResult == 1 and /<type>([^<]+)</) {
+      $type = $1;
+      $getnextaddr = 1;
+      $newResult = 0;
+      next;
+    }
+
+    if ($getnextaddr == 1 and /<formatted_address>([^<]+)</) {
+      #print "$type => $1\n";
+      $results{$type} = $1;
+      $getnextaddr = 0;
+      next;
+    }
+  }
+  close GMAP;
+
+  if (defined($results{"neighborhood"})) {
+    $addr = $results{"neighborhood"};
+  } elsif (defined($results{"locality"})) {
+    $addr = $results{"locality"};
+  } elsif (defined($results{"administrative_area_level_3"})) {
+    $addr = $results{"administrative_area_level_3"};
+  } elsif (defined($results{"postal_town"})) {
+    $addr = $results{"postal_town"};
+  } elsif (defined($results{"political"})) {
+    $addr = $results{"political"};
+  } elsif (defined($results{"postal_code"})) {
+    $addr = $results{"postal_code"};
+  } elsif (defined($results{"administrative_area_level_2"})) {
+    $addr = $results{"administrative_area_level_2"};
+  } elsif (defined($results{"administrative_area_level_1"})) {
+    $addr = $results{"administrative_area_level_1"};
+  } elsif (defined($results{"country"})) {
+    $addr = $results{"country"};
+  } elsif (defined($results{"sublocality"})) {
+    $addr = $results{"sublocality"};
+  } elsif (defined($results{"sublocality_level_3"})) {
+    $addr = $results{"sublocality_level_3"};
+  } elsif (defined($results{"sublocality_level_4"})) {
+    $addr = $results{"sublocality_level_4"};
+  }
+
+  if (!defined($addr)) {
+    $lat =~ s/0*$//;
+    $lon =~ s/0*$//;
+    $addr = "$lat,$lon";
+  }
+
+  return $addr;
+}

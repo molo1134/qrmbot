@@ -1,0 +1,115 @@
+#!/usr/bin/perl
+# Lookup contest calendar.  2-clause BSD license.
+
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+use Encode qw(decode);
+use I18N::Langinfo qw(langinfo CODESET);
+use URI::Escape;
+use Math::Round;
+use Time::Piece ();
+
+my $url = "http://www.contestcalendar.com//weeklycontcustom.ics";
+my $in_event = 0;
+my ($start, $end, $summary, $conturl);
+
+my $i = 0;
+my %contests;
+my $now = time();
+
+open(HTTP, '-|', "curl -s '$url'");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+  #print;
+  chomp;
+  s/\r//g;
+  if (/^BEGIN:VEVENT/) {
+    $in_event = 1;
+    $start = undef;
+    $end = undef;
+    $summary = undef;
+    $conturl = undef;
+  }
+  if (/^END:VEVENT/) {
+    $in_event = 0;
+    #print "start $start\n";
+    #print "end: $end\n";
+    #print "summary: $summary\n";
+    #print "conturl: $conturl\n";
+    #print("$summary -- $start -- $now -- $end\n");
+    $contests{$i} = join("::", $start, $end, $summary, $conturl);
+    $i++;
+  }
+  if ($in_event == 1 and /DT(START|END):(\d{8})T(\d{6})Z/) {
+    #print "$2-$3 UTC\n";
+    #my $ts = Time::Piece->strptime("$2-$3 UTC", "%Y%m%d-%H%M%S %Z")->epoch;
+    my $ts = Time::Piece->strptime("$2-$3", "%Y%m%d-%H%M%S")->epoch;
+    #print "$ts $_\n";
+    if ($1 eq "START") {
+      $start = $ts;
+    } elsif ($1 eq "END") {
+      $end = $ts;
+    }
+  }
+  if ($in_event == 1 and /^SUMMARY:(.*)$/) {
+    $summary = $1;
+  }
+  if ($in_event == 1 and /^URL(.*)$/) {
+    $conturl = $1;
+  }
+}
+#print "end here!\n";
+close(HTTP);
+
+$i = 0;
+my (undef,undef,undef,undef,undef,undef,$dow,$jdate,undef) = gmtime $now;
+#print "dow $dow\n";
+#print "jdate: $jdate\n";
+
+my @current;
+my @weekend;
+
+while (defined $contests{$i}) {
+  ($start, $end, $summary, $conturl) = split("::", $contests{$i});
+
+  if ($start < $now and $now < $end) {
+    #print("now: $summary -- $start -- $now -- $end\n");
+    push @current, $summary;
+  }
+
+  # TODO: this weekend versus next weekend? -- use $jdate, $yday, $wday
+  my $weekend = 0;
+  my (undef,undef,undef,undef,undef,undef,$wday,$yday,undef) = gmtime $start;
+  $weekend = 1 if ($wday == 5 || $wday == 6) and $start > $now;
+  (undef,undef,undef,undef,undef,undef,$wday,$yday,undef) = localtime $start;
+  $weekend = 1 if ($wday == 5 || $wday == 6) and $start > $now;
+
+  #print "$summary $weekend " . ($end-$start) . "\n";
+
+  # starts on friday or saturday and duration is at least 12 hours.
+  # 43100 seconds = 11 hours + 58 minutes + 20 seconds
+  #print("this weekend: $summary\n") if $weekend == 1 and ($end-$start) > 43100;
+  push @weekend, $summary if $weekend == 1 and ($end-$start) > 43100;
+
+  $i++;
+}
+
+if (@current) {
+  print "now: ";
+  print join ("; ", @current);
+  print "\n";
+}
+
+if (@weekend) {
+  print "this weekend: ";
+  print join ("; ", @weekend);
+  print "\n";
+}
+
+if (!@current and !@weekend) {
+  print "no current contests and no major contests found.\n";
+}

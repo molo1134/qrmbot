@@ -1,0 +1,102 @@
+#!/usr/bin/perl
+# Lookup callsign in LoTW usage data.  2-clause BSD license.
+
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+# config
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+my $cachefile = $ENV{'HOME'} . "/.lotw-dates.txt";
+
+my $exitnonzeroonerror = 0;
+my $highlight = "vt100";
+$highlight = "none" if ! -t STDOUT;
+$highlight = "irc" if $username eq 'eggdrop';
+
+my $url = "https://lotw.arrl.org/lotw-user-activity.csv";
+my $maxage=172800; # 2 days:
+
+my $bold = "";
+my $unbold = "";
+
+if ($highlight eq "vt100") {
+  $bold = "\e[1m";
+  $unbold = "\e[0m";
+} elsif ($highlight eq "irc" ) {
+  $bold = "\002";
+  $unbold = "\002";
+}
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !lotw <callsign>\n";
+  } else {
+    print "usage: $0 <callsign>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+# when calling from eggdrop, parameters may be packed into first parameter.
+if ($#ARGV == 0 && $ARGV[0] =~ m/ /) {
+  @ARGV = split / /, $ARGV[0];
+}
+
+my $call = uc $ARGV[0];
+$call =~ s/[^A-Z0-9\/\$\^]//g;
+
+if ( ! -r $cachefile ) {
+	#print "system 1\n";
+  system "/usr/bin/curl -s -k -o $cachefile '$url'";
+}
+
+if ( ! -r $cachefile ) {
+  print "error: unable to read $cachefile\n";
+  exit $exitnonzeroonerror;
+}
+
+my $now = time;
+
+
+my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $cachefile;
+
+my $age = $now - $mtime;
+
+if ($age > $maxage or $size == 0) {
+	#print "system 2\n";
+  system "/usr/bin/curl -s -k -o $cachefile '$url'";
+}
+
+my $i = 0;
+if (-r $cachefile) {
+  open (INPUT, "<", $cachefile) or die "Can't open cache: $!";
+  while (<INPUT>) {
+    #print;
+    chomp;
+    my ($dxcall, $d, $t) = split(/,/);
+    if ($dxcall =~ /$call/) {
+      $dxcall =~ s/$call/$bold$&$unbold/;
+      print "$dxcall: $d $t\n";
+      $i++;
+    }
+    last if $i > 5 and $username eq "eggdrop";
+  }
+  close(INPUT);
+} else {
+  print "unable to read cache: $cachefile";
+}
+
+if ($i == 0) {
+  print "$bold$call$unbold: not found\n";
+  exit $exitnonzeroonerror;
+}
+
+if ($i > 5 and $username eq "eggdrop") {
+  print "(truncated. see $url )\n";
+}
+
+exit 0;
+

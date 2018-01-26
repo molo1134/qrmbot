@@ -1,0 +1,279 @@
+#!/usr/bin/perl
+# Lookup MUF by station.  Performs OCR on imagess.  2-clause BSD license.
+
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+# dependency: gocr
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+  if ($username eq 'eggdrop') {
+    print "usage: !muf2 <station>  --or--  !muf2 list (use /msg)\n";
+  } else {
+    print "usage: $0 <station>  --or--  $0 list\n";
+  }
+  exit 0
+}
+
+my $bold = "";
+my $unbold = "";
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+my $highlight = "vt100";
+$highlight = "none" if ! -t STDOUT;
+$highlight = "irc" if $username eq "eggdrop";
+
+if ($highlight eq "vt100") {
+  $bold = "\e[1m";
+  $unbold = "\e[0m";
+} elsif ($highlight eq "irc" ) {
+  $bold = "\002";
+  $unbold = "\002";
+}
+
+my $stationUrl = "https://lgdc.uml.edu/common/DIDBFastStationList";
+
+my $place = join(' ', @ARGV);
+$place=~tr/ /_/;
+$place=~s/[^A-Za-z_]//g;
+$place=~s/_([a-z])/_\U$1\E/g;
+$place=~s/^([a-z])/\U$1\E/;
+
+#print "place: $place\n";
+
+my $ursiCode = undef;
+my $station;
+my $list = "";
+
+my %stationCodes = (
+  "Ahmedabad" => "AH223",
+  "Alpena" => "AL945",
+  "Anyang" => "AN438",
+  "Ascension_Island" => "AS00Q",
+  "Athens" => "AT138",
+  "Austin" => "AU930",
+  "Beijing" => "BP440",
+  "Belem" => "BLJ03",
+  "Bermuda" => "BJJ32",
+  "Boa_Vista" => "BVJ03",
+  "Boulder" => "BC840",
+  "Brisbane" => "BR52P",
+  "Bundoora" => "BV53Q",
+  "Cachimbo" => "CXM9B",
+  "Cachoeira_Paulista" => "CAJ2M",
+  "Camden" => "CN53L",
+  "Campo_Grande" => "CGK21",
+  "Canberra" => "CB53N",
+  "Cherry" => "CH833",
+  "Chilton" => "RL052",
+  "Cocos_Island" => "CS31K",
+  "College_Ak" => "CO764",
+  "Colorado_Springs" => "CS839",
+  "Darwin" => "DW41K",
+  "Dourbes" => "DB049",
+  "Dyess_Afb" => "DS932",
+  "Eglin_Afb" => "EG931",
+  "Eielson" => "EI764",
+  "El_Arenosillo" => "EA036",
+  "Fairford" => "FF051",
+  "Fortaleza" => "FZA0M",
+  "Gadanki" => "GA313",
+  "Gakona" => "GA762",
+  "Gibilmanna" => "GM037",
+  "Goose_Bay" => "GSJ53",
+  "Grahamstown" => "GR13L",
+  "Guam" => "GU513",
+  "Hainan" => "HA419",
+  "Hanscom_Afb" => "HAJ43",
+  "Hermanus" => "HE13N",
+  "Hobart" => "HO54K",
+  "Icheon" => "IC437",
+  "Idaho_National_Lab" => "AC843",
+  "Idaho_National_Lab" => "IF843",
+  "Ilorin" => "IL008",
+  "Irkutsk" => "IR352",
+  "Jeju" => "JJ433",
+  "Jicamarca" => "JI91J",
+  "Juliusruh" => "JR055",
+  "King_Salmon" => "KS759",
+  "Kirtland" => "KR835",
+  "Kokubunji" => "TO535",
+  "Kwajalein" => "KJ609",
+  "Laverton" => "LA42Q",
+  "Learmonth" => "LM42B",
+  "Louisvale" => "LV12P",
+  "Lualualei" => "LL721",
+  "Madimbo" => "MU12K",
+  "Melrose" => "ME929",
+  "Millstone_Hill" => "MHJ45",
+  "Mohe" => "MH453",
+  "Moscow" => "MO155",
+  "Multan" => "MU230",
+  "Munyo" => "MU834",
+  "Narssarssuaq" => "NQJ61",
+  "Nicosia" => "NI135",
+  "Niue" => "ND61R",
+  "Nord_Greenland" => "NDA81",
+  "Norilsk" => "NO369",
+  "Okinawa" => "OK426",
+  "Olsztyn" => "OL246",
+  "Osan_Ab" => "SN437",
+  "Perth" => "PE43K",
+  "Port_Stanley" => "PSJ5J",
+  "Pruhonice" => "PQ052",
+  "Pt_Arguello" => "PA836",
+  "Qaanaaq" => "THJ77",
+  "Ramey" => "PRJ18",
+  "Rome" => "RM041",
+  "Rome" => "RO041",
+  "Roquetes" => "EB040",
+  "San_Vito" => "VT139",
+  "Santa_Maria" => "SMK29",
+  "Sanya" => "SA418",
+  "Saoluis" => "SAA0K",
+  "Sondrestrom" => "SMJ67",
+  "Squirt" => "SQ832",
+  "Townsville" => "TV51R",
+  "Trivandrum" => "TM308",
+  "Tromso" => "TR169",
+  "Tucuman" => "TUJ2O",
+  "Tucuman_Aisingv" => "TNJ20",
+  "Wallops_Is" => "WP937",
+  "Warsaw" => "MZ152",
+  "Wuhan" => "WU430",
+  "Xinxiang_China" => "XI434",
+  "Yakutsk" => "YA462",
+  "Zhigansk" => "ZH466",
+  "Zhong_Shan" => "ZS36R",
+);
+
+$ursiCode = $stationCodes{$place};
+
+if (!defined $ursiCode and not $place eq "list") {
+  foreach my $e ( keys %stationCodes ) {
+    if (lc($place) eq lc($e) or $e =~ /^$place/) {
+      $ursiCode = $stationCodes{$e};
+    }
+  }
+}
+
+if (!defined $ursiCode or $place eq "list") {
+
+  open (STATIONS, '-|', "curl -s -k --max-time 4 --retry 1 \"${stationUrl}\"");
+  while (<STATIONS>) {
+    if (/^<td.*">([A-Z0-9]+)<\/a><\/big>.*?<big>([^<]*)<\/big>/) {
+      my $code = $1;
+      $station = $2;
+      $station=~tr/ /_/;
+      $station=~s/[^A-Za-z_]//g;
+      $station=lc $station;
+      $station=~s/_([a-z])/_\U$1\E/g;
+      $station=~s/^([a-z])/\U$1\E/;
+      #print "$code $station\n";
+
+      if (lc($place) eq "list") {
+	if (length $list > 400) {
+	  print "$list\n";
+	  $list = "";
+	}
+	$list = $list . "$station ";
+      }
+
+      if (lc($place) eq lc($station) or $station =~ /^$place/) {
+	#print "$code $station\n";
+	$ursiCode = $code;
+      }
+    }
+  }
+  close STATIONS;
+
+  my $stationMap = "Map: http://giro.uml.edu/img/giro-map.gif";
+
+  if (lc($place) eq "list") {
+    print "$list-- $stationMap\n";
+    exit 0;
+  }
+
+  print "Station not found: $place\n" if !defined($ursiCode);
+  exit 0 if !defined($ursiCode);
+}
+
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
+$year += 1900;
+$mon++;
+
+my $indexUrl = "https://lgdc.uml.edu/common/DIDBDayStationStatistic?ursiCode=${ursiCode}&year=${year}&month=${mon}&day=${mday}";
+
+my $mid = undef;
+my $utc;
+my $lat;
+my $lon;
+
+#print "$indexUrl\n";
+open (INDEX, '-|', "curl -s -k --max-time 4 --retry 1 \"${indexUrl}\"");
+while (<INDEX>) {
+#  print;
+  chomp;
+  if (/DIDBase statistic for (.*), [0-9]/) {
+    $station = $1;
+  }
+  if (/mid=([0-9]+)/) {
+    $mid = $1;
+  }
+  if (/ShowIonogramPage.*">[0-9.]+ \([0-9]+\) ([0-9][0-9]):([0-9][0-9])/) {
+    $utc = "$1$2";
+  }
+  if (/Lat: ([0-9.-]+)/) {
+    $lat = $1;
+  }
+  if (/Long: ([0-9.-]+)/) {
+    $lon = $1;
+    if ($lon > 180) {
+      $lon = $lon - 360;
+    }
+  }
+}
+close INDEX;
+
+#print "$mid\n";
+
+print "No ionograms found for $station ($ursiCode)\n" if !defined($mid);
+exit 0 if !defined($mid);
+
+my $ionogramUrl = "https://lgdc.uml.edu/common/ShowIonogram?mid=${mid}";
+#print "$ionogramUrl\n";
+
+my $ionogramFile = "/tmp/ionogram.${mid}.png";
+
+system "curl -s -k --max-time 4 --retry 1 \"${ionogramUrl}\" -o ${ionogramFile}";
+
+my $ocrdbpath = $ENV{'HOME'}. "/.ionosonde.db/";
+my $muf = undef;
+
+# run:
+open (GOCR, '-|', "gocr -p $ocrdbpath -m 258 $ionogramFile");
+# train:
+#open (GOCR, '-|', "gocr -p $ocrdbpath -m 386 $ionogramFile");
+while (<GOCR>) {
+  #print;
+  #print if /MUF/;
+  chomp;
+  if (/MUF.*\(D\)\s*([0-9.]+|N\/A)/) {
+    $muf = $1;
+  }
+  if (!defined($muf) and /MUF.*?([0-9.]+) \[MHz\]/) {
+    $muf = $1;
+  }
+}
+close GOCR;
+
+$mon = sprintf("%02u", $mon);
+$mday = sprintf("%02u", $mday);
+
+print "$bold$station$unbold ($lat, $lon): MUF @ $year-$mon-$mday ${utc}z: $bold$muf MHz$unbold\n";

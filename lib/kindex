@@ -1,0 +1,133 @@
+#!/usr/bin/perl
+# Lookup K index prediction and display graph.  2-clause BSD license.
+
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+my $highlight="vt220";
+$highlight = "none" if ! -t STDOUT;
+$highlight = "irc" if $username eq "eggdrop";
+
+my $url="http://services.swpc.noaa.gov/text/3-day-forecast.txt";
+my $datestamp;
+my $kpindex = 0;
+my ($d1, $d2, $d3);
+my (@l1, @l2, @l3);
+my $numblank = 0;
+
+open (HTTP, '-|', "curl -s $url");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+  chomp;
+
+  if (/^:Issued: (.*)\w*$/) {
+    $datestamp = $1;
+    #print "date: $datestamp\n";
+  }
+
+  if (/NOAA Kp index breakdown/) {
+    $kpindex = 1;
+  }
+
+  if ($kpindex == 1 and /^\s+(\w+ \d+)\s+(\w+ \d+)\s+(\w+ \d+)/) {
+    $d1 = $1;
+    $d2 = $2;
+    $d3 = $3;
+    #print "dates: $d1 $d2 $d3\n";
+  }
+
+  if ($kpindex and /^\s*$/) {
+    if (++$numblank >= 2) {
+      #print"done\n";
+      last;
+    }
+  }
+
+  if ($kpindex == 1 and /^\d\d-\d\dUT\s+(\d+).+\s(\d+).+\s(\d+)/) {
+    #print "$1 $2 $3\n";
+    my ($t1, $t2, $t3) = ($1, $2, $3);
+    $t1 = 9 if ($t1 > 9);
+    $t2 = 9 if ($t2 > 9);
+    $t3 = 9 if ($t3 > 9);
+    #$t1 =~ s/6/8/g;
+    $t1 =~ tr/0123456789/ ▁▂▃▄▅▆▇█↑/;
+    $t2 =~ tr/0123456789/ ▁▂▃▄▅▆▇█↑/;
+    $t3 =~ tr/0123456789/ ▁▂▃▄▅▆▇█↑/;
+
+    push @l1, $t1;
+    push @l2, $t2;
+    push @l3, $t3;
+  }
+}
+close HTTP;
+
+my $plot = join("", @l1). "|". join("", @l2). "|". join("", @l3);
+
+# colorize for irc
+my $result = "";
+foreach my $char (split(//, $plot)) {
+  if ($char =~ /[123▁▂▃]/) {
+    $result .= green($char);
+  } elsif ($char =~ /[4▄]/) {
+    $result .= yellow($char);
+  } elsif ($char =~ /[56▅▆]/) {
+    $result .= red($char);
+  } elsif ($char =~ /[789▇█↑]/) {
+    $result .= lightblue($char);
+  } else {
+    $result .= $char;
+  }
+}
+$plot = $result;
+
+print "Kp index prediction as of $datestamp:\n";
+print "$d1|$d2|$d3: $plot\n";
+#print "$d1: ", (join( "", @l1), "\n");
+#print "$d2: ", (join( "", @l2), "\n");
+#print "$d3: ", (join( "", @l3), "\n");
+
+sub red {
+  my $s = shift;
+  if ($highlight eq "irc") {
+    return "\x034\x02\x02$s\x03"
+  } elsif ($highlight eq "vt220") {
+    return "\e[1;31m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+sub yellow {
+  my $s = shift;
+  if ($highlight eq "irc") {
+    return "\x038\x02\x02$s\x03"
+  } elsif ($highlight eq "vt220") {
+    return "\e[1;33m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+sub green {
+  my $s = shift;
+  if ($highlight eq "irc") {
+    return "\x033\x02\x02$s\x03"
+  } elsif ($highlight eq "vt220") {
+    return "\e[32m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+sub lightblue {
+  my $s = shift;
+  if ($highlight eq "irc") {
+    return "\x0312\x02\x02$s\x03"
+  } elsif ($highlight eq "vt220") {
+    return "\e[1;34m$s\e[0m"
+  } else {
+    return $s;
+  }
+}

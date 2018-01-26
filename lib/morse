@@ -1,0 +1,90 @@
+#!/usr/bin/perl
+# Convert text to morse code symbols.  2-clause BSD license.
+
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+my %morse;
+
+$morse{A} = ".-";
+$morse{B} = "-...";
+$morse{C} = "-.-.";
+$morse{D} = "-..";
+$morse{E} = ".";
+$morse{F} = "..-.";
+$morse{G} = "--.";
+$morse{H} = "....";
+$morse{I} = "..";
+$morse{J} = ".---";
+$morse{K} = "-.-";
+$morse{L} = ".-..";
+$morse{M} = "--";
+$morse{N} = "-.";
+$morse{O} = "---";
+$morse{P} = ".--.";
+$morse{Q} = "--.-";
+$morse{R} = ".-.";
+$morse{S} = "...";
+$morse{T} = "-";
+$morse{U} = "..-";
+$morse{V} = "...-";
+$morse{W} = ".--";
+$morse{X} = "-..-";
+$morse{Y} = "-.--";
+$morse{Z} = "--..";
+$morse{1} = ".----";
+$morse{2} = "..---";
+$morse{3} = "...--";
+$morse{4} = "....-";
+$morse{5} = ".....";
+$morse{6} = "-....";
+$morse{7} = "--...";
+$morse{8} = "---..";
+$morse{9} = "----.";
+$morse{0} = "-----";
+$morse{" "} = "   ";
+$morse{"."} = ".-.-.-";
+$morse{","} = "--..--";
+$morse{"?"} = "..--..";
+$morse{"'"} = ".----.";
+$morse{"!"} = "-.-.--";
+$morse{"/"} = "-..-.";
+$morse{"("} = "-.--.";
+$morse{")"} = "-.--.-";
+$morse{"&"} = ".-...";
+$morse{":"} = "---...";
+$morse{";"} = "-.-.-.";
+$morse{"="} = "-...-";
+$morse{"+"} = ".-.-.";
+$morse{"-"} = "-....-";
+$morse{"\""} = ".-..-.";
+$morse{"@"} = ".--.-.";
+$morse{"Ä"} = ".-.-";
+$morse{"Å"} = ".-.-";
+$morse{"Ą"} = ".-.-";
+$morse{"Æ"} = ".-.-";
+$morse{"É"} = "..-..";
+$morse{"Ñ"} = "--.--";
+$morse{"Ö"} = "---.";
+$morse{"Ü"} = "..--";
+$morse{"Š"} = "----";
+
+# eggdrop doesn't split args on spaces
+my $args = join(' ', @ARGV);
+$args =~ s/   / \/ /g;
+@ARGV=split(' ', $args);
+
+my $target;
+while ($target = shift(@ARGV)) {
+  foreach my $val (split('', $target)) {
+    print morse($val), " ";
+  }
+  print "  ";
+}
+print "\n";
+exit 0;
+
+sub morse {
+  return $morse{uc(shift)};
+}
+
+

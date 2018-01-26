@@ -1,0 +1,225 @@
+#!/usr/bin/perl
+# Report cryptocurrency prices.  2-clause BSD license.
+
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+my $highlight="vt220";
+$highlight = "none" if ! -t STDOUT;
+$highlight = "irc" if $username eq "eggdrop";
+
+my $fiat = undef;
+
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $crypto = undef;
+
+while ($i <= $#ARGV) {
+  # list comes from here: https://coinmarketcap.com/api/
+  if (uc($ARGV[$i]) =~ /(AUD|BRL|CAD|CHF|CLP|CNY|CZK|DKK|EUR|GBP|HKD|HUF|IDR|ILS|INR|JPY|KRW|MXN|MYR|NOK|NZD|PHP|PKR|PLN|RUB|SEK|SGD|THB|TRY|TWD|USD|ZAR)/) {
+    $fiat = $1;
+  } else {
+    $crypto = uc($ARGV[$i]);
+  }
+  $i++;
+}
+
+$crypto = "BTC" unless defined($crypto);
+$fiat = "USD" unless defined($fiat);
+
+# list comes from here: https://api.coinmarketcap.com/v1/ticker/
+my %ids = (
+  "BTC" => "bitcoin",
+  "ETH" => "ethereum",
+  "BCH" => "bitcoin-cash",
+  "XRP" => "ripple",
+  "BTG" => "bitcoin-gold",
+  "LTC" => "litecoin",
+  "DASH" => "dash",
+  "MIOTA" => "iota",
+  "NEO" => "neo",
+  "XMR" => "monero",
+  "XEM" => "nem",
+  "ETC" => "ethereum-classic",
+  "LSK" => "lisk",
+  "QTUM" => "qtum",
+  "EOS" => "eos",
+  "HSR" => "hshare",
+  "ZEC" => "zcash",
+  "OMG" => "omisego",
+  "ADA" => "cardano",
+  "BCC" => "bitconnect",
+  "USDT" => "tether",
+  "WAVES" => "waves",
+  "PPT" => "populous",
+  "STRAT" => "stratis",
+  "ARK" => "ark",
+  "XLM" => "stellar",
+  "ARDR" => "ardor",
+  "BTS" => "bitshares",
+  "KMD" => "komodo",
+  "STEEM" => "steem",
+  "BCN" => "bytecoin-bcn",
+  "REP" => "augur",
+  "VERI" => "veritaseum",
+  "DCR" => "decred",
+  "MAID" => "maidsafecoin",
+  "GNT" => "golem-network-tokens",
+  "SALT" => "salt",
+  "PAY" => "tenx",
+  "FCT" => "factom",
+  "PIVX" => "pivx",
+  "VTC" => "vertcoin",
+  "MONA" => "monacoin",
+  "GAS" => "gas",
+  "BAT" => "basic-attention-token",
+  "BNB" => "binance-coin",
+  "DOGE" => "dogecoin",
+  "DGD" => "digixdao",
+  "GBYTE" => "byteball",
+  "TRX" => "tron",
+  "KNC" => "kyber-network",
+  "BTCD" => "bitcoindark",
+  "WTC" => "walton",
+  "SC" => "siacoin",
+  "GAME" => "gamecredits",
+  "PURA" => "pura",
+  "ETP" => "metaverse",
+  "SYS" => "syscoin",
+  "BTM" => "bytom",
+  "BLOCK" => "blocknet",
+  "RDN" => "raiden-network-token",
+  "BQX" => "bitquence",
+  "CVC" => "civic",
+  "SNT" => "status",
+  "ICN" => "iconomi",
+  "MTL" => "metal",
+  "AE" => "aeternity",
+  "ZRX" => "0x",
+  "LKK" => "lykke",
+  "XVG" => "verge",
+  "GXS" => "gxshares",
+  "ZSC" => "zeusshield",
+  "DGB" => "digibyte",
+  "POWR" => "power-ledger",
+  "OTN" => "open-trading-network",
+  "B3" => "b3coin",
+  "VEN" => "vechain",
+  "XZC" => "zcoin",
+  "BNT" => "bancor",
+  "SNGLS" => "singulardtv",
+  "GNO" => "gnosis-gno",
+  "PART" => "particl",
+  "ATM" => "attention-token-of-media",
+  "NXT" => "nxt",
+  "STORJ" => "storj",
+  "FUN" => "funfair",
+  "BAY" => "bitbay",
+  "KCS" => "kucoin-shares",
+  "LINK" => "chainlink",
+  "MCO" => "monaco",
+  "FAIR" => "faircoin",
+  "CNX" => "cryptonex",
+  "ZEN" => "zencash",
+  "ADX" => "adx-net",
+  "EDG" => "edgeless",
+  "RCN" => "ripio-credit-network",
+  "NAV" => "nav-coin",
+  "NXS" => "nexus",
+  "NEBL" => "neblio",
+  "BDL" => "bitdeal",
+  "UBQ" => "ubiq",
+  "MGO" => "mobilego",
+);
+my $id = $ids{$crypto};
+
+if (!defined($id)) {
+  print "undefined crypto: $crypto\n";
+  exit 0;
+}
+
+my $url = "https://api.coinmarketcap.com/v1/ticker/$id/?convert=$fiat";
+my %results;
+
+open(HTTP, '-|', "curl --max-time 5 -s -k '$url'");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+  #print;
+  chomp;
+  if (/"(\w+)":\s*"?(.*?)"?,?\s*$/) {
+    my ($key, $value) = ($1, $2);
+    $results{$key} = $value;
+    #print "$key :: $value\n";
+  }
+}
+close(HTTP);
+
+my $target = lc($fiat);
+
+my $volume = commify(int($results{"24h_volume_$target"}));
+my $qty = int ($results{"24h_volume_$target"} / $results{"price_$target"}) || 0;
+$results{"price_$target"} = commify($results{"price_$target"});
+$results{volume_btc} = commify($results{volume_btc});
+
+my $trendsymbol;
+my $trend = $results{percent_change_24h};
+$trendsymbol = green("↑") if $trend > 0;
+$trendsymbol = red("↓") if $trend < 0;
+$trendsymbol = "·" if !defined $trendsymbol;
+$trend = red($trend) if $trend < 0;
+$trend = green("+$trend") if $trend > 0;
+
+print bold("$crypto$fiat"). " $trendsymbol" . $results{"price_$target"} . " $trend% qty $qty $crypto/24h ($volume $fiat/24h)\n";
+#print "$crypto$fiat $results{"price_$target"} qty $results{volume_btc} BTC/24h ($volume $currency/24h)\n";
+
+exit 0;
+
+
+
+sub commify {
+  my $num = shift;
+  my ($whole, $frac);
+  if ($num =~ /\./) {
+    ($whole, $frac) = split(/\./, $num, 2);
+    $num = $whole;
+  }
+  $num =~ s/(\d)(?=(\d{3})+(\D|$|\.\d*))/$1\,/g;
+  $num = "$num.$frac" if defined($frac);
+  return $num;
+}
+
+sub red {
+  my $s = shift;
+  if ($highlight eq "irc") {
+    return "\x034\x02\x02$s\x03\x02\x02";
+  } elsif ($highlight eq "vt220") {
+    return "\e[1;31m$s\e[0m";
+  } else {
+    return $s;
+  }
+}
+sub green {
+  my $s = shift;
+  if ($highlight eq "irc") {
+    return "\x033\x02\x02$s\x03\x02\x02"
+  } elsif ($highlight eq "vt220") {
+    return "\e[32m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+sub bold {
+  my $s = shift;
+  if ($highlight eq "irc") {
+    return "\002$s\002"
+  } elsif ($highlight eq "vt220") {
+    return "\e[1m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
