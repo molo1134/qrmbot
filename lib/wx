@@ -59,6 +59,8 @@ while ($i <= $#ARGV) {
   $i++;
 }
 
+$full = 1 if $username ne 'eggdrop';
+
 # decode command line from locale-specified codeset
 my $codeset = langinfo(CODESET);
 $loc = decode($codeset, $loc);
