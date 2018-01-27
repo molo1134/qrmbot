@@ -9,9 +9,9 @@ use URI::Escape;
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq 'eggdrop') {
-    print "usage: !repeater <callsign> [band]\n";
+    print "usage: !repeater [--world] <search terms> [band]\n";
   } else {
-    print "usage: $0 <callsign> [band]\n";
+    print "usage: $0 [--world] <search terms> [band]\n";
   }
   exit 0;
 }
@@ -19,8 +19,30 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 # eggdrop doesn't split args on spaces
 @ARGV=split(' ', join(' ',@ARGV));
 
-my $searchterm = $ARGV[0];
-my $band = $ARGV[1];
+my $world = 0;
+my $searchterm = undef;
+my $band = undef;
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /--world/) {
+    $world = 1;
+    $i++;
+    next;
+  }
+  if ($ARGV[$i] =~ /^((10|6|4|2|1\.25)m)|((70|33|23)cm)$/) {
+    $band = $ARGV[$i];
+    $i++;
+    next;
+  }
+  if (defined $searchterm) {
+    $searchterm .= " " . $ARGV[$i];
+  } else {
+    $searchterm = $ARGV[$i];
+  }
+  $i++;
+}
+
 my $encoded = uri_escape($searchterm);
 my $url = "https://repeaterbook.com/repeaters/keyword.php?func=result&keyword=${encoded}&state_id=0";
 #print "$url\n";
@@ -84,6 +106,9 @@ if (defined($band)) {
 my %vals;
 
 my ($freq, $offset, $squelch, $location, $state, $county, $callsign);
+
+goto WORLD if $world == 1;
+
 #print "$url\n";
 open (HTTP, '-|', "curl --max-time 5 --retry 1 --insecure -L -s \"$url\"");
 binmode(HTTP, ":encoding(cp1252)");
