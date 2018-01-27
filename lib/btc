@@ -8,10 +8,9 @@ use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
-my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
-my $highlight="vt220";
-$highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq "eggdrop";
+use File::Basename;
+use lib dirname (__FILE__);
+use Colors;
 
 my $fiat = undef;
 
@@ -196,35 +195,4 @@ sub commify {
   $num =~ s/(\d)(?=(\d{3})+(\D|$|\.\d*))/$1\,/g;
   $num = "$num.$frac" if defined($frac);
   return $num;
-}
-
-sub red {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x034\x02\x02$s\x03\x02\x02";
-  } elsif ($highlight eq "vt220") {
-    return "\e[1;31m$s\e[0m";
-  } else {
-    return $s;
-  }
-}
-sub green {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x033\x02\x02$s\x03\x02\x02"
-  } elsif ($highlight eq "vt220") {
-    return "\e[32m$s\e[0m"
-  } else {
-    return $s;
-  }
-}
-sub bold {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\002$s\002"
-  } elsif ($highlight eq "vt220") {
-    return "\e[1m$s\e[0m"
-  } else {
-    return $s;
-  }
 }

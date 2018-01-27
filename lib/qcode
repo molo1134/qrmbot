@@ -5,15 +5,15 @@
 
 use strict;
 
+use File::Basename;
+use lib dirname (__FILE__);
+use Colors;
+
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
 my $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
-
-my $highlight="vt100";
-$highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq "eggdrop";
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 
@@ -23,17 +23,6 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
     print "usage: $0 <code>|<search term>\n";
   }
   exit $exitnonzeroonerror;
-}
-
-my $bold = "";
-my $unbold = "";
-
-if ($highlight eq "vt100") {
-  $bold = "\e[1m";
-  $unbold = "\e[0m";
-} elsif ($highlight eq "irc" ) {
-  $bold = "\002";
-  $unbold = "\002";
 }
 
 my %qcodes = (
@@ -382,6 +371,6 @@ my %qcodes = (
 if (uc($ARGV[0]) =~ /\w+/) {
   my $code = uc($ARGV[0]);
   my $desc = $qcodes{$code} || "not found";
-  print "$bold$code$unbold: $desc\n";
+  print bold($code), ": $desc\n";
 }
 

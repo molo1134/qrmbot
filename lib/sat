@@ -16,6 +16,10 @@ use Math::Trig;
 use POSIX qw(floor strftime);
 binmode(STDOUT, ":utf8");
 
+use File::Basename;
+use lib dirname (__FILE__);
+use Colors;
+
 my $tleurl="http://www.amsat.org/amsat/ftp/keps/current/nasabare.txt";
 
 # potential changes:
@@ -54,11 +58,6 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 # change this to 0 to always exit with success
 my $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
-
-
-my $highlight="vt220";
-$highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq "eggdrop";
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   #print "usage: $0 <sat> <grid>|<qth> [<elev>ft|<elev>m]\n";
@@ -377,64 +376,3 @@ sub coordToGrid {
   return $grid;
 }
 
-
-sub bold {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x02$s\x02"
-  } elsif ($highlight eq "vt220") {
-    return "\e[1m$s\e[0m"
-  } else {
-    return $s;
-  }
-}
-sub darkRed {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x035\x02\x02$s\x03"
-  } elsif ($highlight eq "vt220") {
-    return "\e[31m$s\e[0m"
-  } else {
-    return $s;
-  }
-}
-sub red {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x034\x02\x02$s\x03"
-  } elsif ($highlight eq "vt220") {
-    return "\e[1;31m$s\e[0m"
-  } else {
-    return $s;
-  }
-}
-sub yellow {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x038\x02\x02$s\x03"
-  } elsif ($highlight eq "vt220") {
-    return "\e[1;33m$s\e[0m"
-  } else {
-    return $s;
-  }
-}
-sub green {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x033\x02\x02$s\x03"
-  } elsif ($highlight eq "vt220") {
-    return "\e[32m$s\e[0m"
-  } else {
-    return $s;
-  }
-}
-sub lightblue {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x0312\x02\x02$s\x03"
-  } elsif ($highlight eq "vt220") {
-    return "\e[1;34m$s\e[0m"
-  } else {
-    return $s;
-  }
-}

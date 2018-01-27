@@ -14,23 +14,9 @@ my $cachefile = $ENV{'HOME'} . "/.lotw-dates.txt";
 
 my $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
-my $highlight = "vt100";
-$highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq 'eggdrop';
 
 my $url = "https://lotw.arrl.org/lotw-user-activity.csv";
 my $maxage=172800; # 2 days:
-
-my $bold = "";
-my $unbold = "";
-
-if ($highlight eq "vt100") {
-  $bold = "\e[1m";
-  $unbold = "\e[0m";
-} elsif ($highlight eq "irc" ) {
-  $bold = "\002";
-  $unbold = "\002";
-}
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq 'eggdrop') {
@@ -79,7 +65,7 @@ if (-r $cachefile) {
     chomp;
     my ($dxcall, $d, $t) = split(/,/);
     if ($dxcall =~ /$call/) {
-      $dxcall =~ s/$call/$bold$&$unbold/;
+      $dxcall =~ s/$call/bold($&)/e;
       print "$dxcall: $d $t\n";
       $i++;
     }
@@ -91,7 +77,7 @@ if (-r $cachefile) {
 }
 
 if ($i == 0) {
-  print "$bold$call$unbold: not found\n";
+  print bold($call), ": not found\n";
   exit $exitnonzeroonerror;
 }
 

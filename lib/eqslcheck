@@ -7,26 +7,18 @@ use strict;
 use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use lib dirname (__FILE__);
+use Colors;
+
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # configuration
 my $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
-my $highlight = "vt220";
-$highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq 'eggdrop';
+
 my $baseurl = "http://www.eqsl.cc/Member.cfm?";
-
-my $bold = "";
-my $unbold = "";
-
-if ($highlight eq "vt220") {
-  $bold = "\e[1m";
-  $unbold = "\e[0m";
-} elsif ($highlight eq "irc" ) {
-  $bold = "\002";
-  $unbold = "\002";
-}
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq 'eggdrop') {
@@ -114,15 +106,15 @@ if (!defined($found)) {
 }
 
 if ($found == 0) {
-  print "$bold$call$unbold: not registered with eQSL\n";
+  print bold($call), ": not registered with eQSL\n";
   exit 0;
 } elsif ($found == 2) {
-  print "$bold$call$unbold: no longer registered with eQSL\n";
+  print bold($call), ": no longer registered with eQSL\n";
   exit 0;
 }
 
-print "$bold$call$unbold: ";
-print "$bold(AG)$unbold " if $ag == 1;
+print bold($call), ": ";
+print bold("(AG)"), " " if $ag == 1;
 print yellow("✪") . " "	    if defined($member) and $member eq "Au";
 print lightGrey("✪") . " "  if defined($member) and $member eq "Ag";
 print grey("✪") . " "	    if defined($member) and $member eq "Pt";
@@ -133,43 +125,3 @@ print "\n";
 
 exit 0;
 
-sub yellow {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x038\x02\x02$s\x03"
-  } elsif ($highlight eq "vt220") {
-    return "\e[1;33m$s\e[0m"
-  } else {
-    return $s;
-  }
-}
-sub darkYellow {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x035\x02\x02$s\x03"
-  } elsif ($highlight eq "vt220") {
-    return "\e[33m$s\e[0m"
-  } else {
-    return $s;
-  }
-}
-sub lightGrey {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x0315\x02\x02$s\x03"
-  } elsif ($highlight eq "vt220") {
-    return "\e[37m$s\e[0m"
-  } else {
-    return $s;
-  }
-}
-sub grey {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x0314\x02\x02$s\x03"
-  } elsif ($highlight eq "vt220") {
-    return "\e[1;30m$s\e[0m"
-  } else {
-    return $s;
-  }
-}

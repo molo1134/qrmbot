@@ -10,6 +10,10 @@ use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
+use File::Basename;
+use lib dirname (__FILE__);
+use Colors;
+
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
@@ -19,22 +23,6 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
     print "usage: $0 <station>  --or--  $0 list\n";
   }
   exit 0
-}
-
-my $bold = "";
-my $unbold = "";
-
-my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
-my $highlight = "vt100";
-$highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq "eggdrop";
-
-if ($highlight eq "vt100") {
-  $bold = "\e[1m";
-  $unbold = "\e[0m";
-} elsif ($highlight eq "irc" ) {
-  $bold = "\002";
-  $unbold = "\002";
 }
 
 my $stationUrl = "https://lgdc.uml.edu/common/DIDBFastStationList";
@@ -276,4 +264,4 @@ close GOCR;
 $mon = sprintf("%02u", $mon);
 $mday = sprintf("%02u", $mday);
 
-print "$bold$station$unbold ($lat, $lon): MUF @ $year-$mon-$mday ${utc}z: $bold$muf MHz$unbold\n";
+print bold($station), " ($lat, $lon): MUF @ $year-$mon-$mday ${utc}z: ", bold("$muf MHz"), "\n";

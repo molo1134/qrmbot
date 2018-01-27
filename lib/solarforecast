@@ -11,10 +11,9 @@ use POSIX qw(strftime);
 use DateTime::Format::Strptime;
 binmode(STDOUT, ":utf8");
 
-my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
-my $highlight="vt220";
-$highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq "eggdrop";
+use File::Basename;
+use lib dirname (__FILE__);
+use Colors;
 
 my $url="http://services.swpc.noaa.gov/text/27-day-outlook.txt";
 
@@ -138,57 +137,6 @@ sub sfiToColorBlocks {
     }
   } @_;
   return @_;
-}
-
-sub darkRed {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x035\x02\x02$s\x03"
-  } elsif ($highlight eq "vt220") {
-    return "\e[31m$s\e[0m"
-  } else {
-    return $s;
-  }
-}
-sub red {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x034\x02\x02$s\x03"
-  } elsif ($highlight eq "vt220") {
-    return "\e[1;31m$s\e[0m"
-  } else {
-    return $s;
-  }
-}
-sub yellow {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x038\x02\x02$s\x03"
-  } elsif ($highlight eq "vt220") {
-    return "\e[1;33m$s\e[0m"
-  } else {
-    return $s;
-  }
-}
-sub green {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x033\x02\x02$s\x03"
-  } elsif ($highlight eq "vt220") {
-    return "\e[32m$s\e[0m"
-  } else {
-    return $s;
-  }
-}
-sub lightblue {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x0312\x02\x02$s\x03"
-  } elsif ($highlight eq "vt220") {
-    return "\e[1;34m$s\e[0m"
-  } else {
-    return $s;
-  }
 }
 
 sub monthNameToNum {

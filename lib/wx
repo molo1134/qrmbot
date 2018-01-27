@@ -19,6 +19,10 @@ use POSIX qw(strftime);
 use POSIX qw(tzset);
 use Time::Piece ();
 
+use File::Basename;
+use lib dirname (__FILE__);
+use Colors;
+
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # grid performs geo lookup using google API
@@ -26,9 +30,6 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $gridpath = "./grid";
 
 our $apikey = undef;
-our $highlight = "vt100";
-$highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq 'eggdrop';
 
 # change this to 0 to always exit with success
 my $exitnonzeroonerror = 1;
@@ -73,17 +74,6 @@ if (defined($loc)) {
 if (!defined($loc) or length($loc) == 0) {
   print "usage: $0 <location>\n";
   exit $exitnonzeroonerror;
-}
-
-my $bold = "";
-my $unbold = "";
-
-if ($highlight eq "vt100") {
-  $bold = "\e[1m";
-  $unbold = "\e[0m";
-} elsif ($highlight eq "irc" ) {
-  $bold = "\002";
-  $unbold = "\002";
 }
 
 my $geo = `$gridpath --raw "$loc"`;
@@ -218,7 +208,7 @@ $pressure_trend =~ s/0/·/;
 
 $elev = "${elev}m/" . nearest(1, $elev * 3.2808399) . "ft";
 
-print "Weather for $bold$rec{'disp_full'}$unbold";
+print "Weather for ", bold($rec{'disp_full'});
 
 #full
 print " ($lat,$lon)  Elev: $elev\n" if ($full == 1);
@@ -230,7 +220,7 @@ if (defined($rec{'estimated'}) and $rec{'estimated'} == 1) {
 }
 
 #short
-print " conditions: $bold$rec{'weather'}$unbold  Temp: $bold$rec{'temp_c'}°C/$rec{'temp_f'}°F$unbold  Humidity: $rec{'relative_humidity'}";
+print " conditions: ", bold($rec{'weather'}), "  Temp: ", bold("$rec{'temp_c'}°C/$rec{'temp_f'}°F"), "  Humidity: $rec{'relative_humidity'}";
 print " " if ($full == 0);
 
 # feelslike for full, or if sufficiently different for short
@@ -341,7 +331,7 @@ while (<HTTP>) {
     tzset;
     $end = strftime("%a %H:%M %Z", localtime($end)); # e.g. Sun 11:00 PDT
 
-    print " ${bold}Alert${unbold}: ${bold}${description}${unbold} until $end";
+    print " ", bold("Alert"), ": ", bold(${description}), " until $end";
     print "\n" if $full == 1;
     print " " if $full == 0;
 

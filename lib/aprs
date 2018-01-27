@@ -14,6 +14,10 @@ use POSIX qw(floor strftime);
 use Math::Round;
 binmode STDOUT, ":utf8";
 
+use File::Basename;
+use lib dirname (__FILE__);
+use Colors;
+
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq 'eggdrop') {
@@ -38,16 +42,6 @@ my $useragent = "molo1134Query/0.0.1 (+http://reddit.com/r/amateurradio/w/qrmbot
 my $highlight = "vt100";
 $highlight = "none" if ! -t STDOUT;
 $highlight = "irc" if $username eq 'eggdrop';
-
-my $bold = "";
-my $unbold = "";
-if ($highlight eq "vt100") {
-  $bold = "\e[1m";
-  $unbold = "\e[0m";
-} elsif ($highlight eq "irc" ) {
-  $bold = "\002";
-  $unbold = "\002";
-}
 
 #my $targetcall = "N2WNU-5";
 my $targetcall = $ARGV[0];
@@ -110,13 +104,13 @@ if ($vals{type} eq "w") {
   $vals{pressure_inhg} = round($vals{pressure} * 0.029529983 * 100)/100;
 }
 
-print "${bold}$vals{name}${unbold}";
+print bold($vals{name});
 print " (de $vals{srccall})" unless $vals{name} eq $vals{srccall} || !defined($vals{srccall});
 print " (WX)" if $vals{type} eq "w";
 print ": " . geolocate($vals{lat}, $vals{lng});
 
 # wx station vals
-print "  Temp: $bold$vals{temp_c}°C/$vals{temp_f}°F$unbold" if defined ($vals{temp});
+print "  Temp: " . bold("$vals{temp_c}°C/$vals{temp_f}°F") if defined ($vals{temp});
 print "  Humidity: $vals{humidity}%" if defined ($vals{humidity});
 
 if (defined($vals{wind_calm}) and $vals{wind_calm} == 1) {

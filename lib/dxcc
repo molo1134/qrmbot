@@ -8,6 +8,10 @@ use strict;
 
 use File::Temp qw(tempfile);
 
+use File::Basename;
+use lib dirname (__FILE__);
+use Colors;
+
 # Retrieve from here: http://www.country-files.com/big-cty/
 my $ctydat=$ENV{'HOME'} . "/.cty.dat";
 
@@ -22,11 +26,6 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 # change this to 0 to always exit with success
 my $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
-
-# change this to set the preferred method of terminal highlighting
-my $highlight="vt100";
-$highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq 'eggdrop';
 
 ## end config options
 
@@ -46,17 +45,6 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 my $term = uc $ARGV[0];
 $term =~ s/^\s*//;
 $term =~ s/\s*$//;
-
-my $bold = "";
-my $unbold = "";
-
-if ($highlight eq "vt100") {
-  $bold = "\e[1m";
-  $unbold = "\e[0m";
-} elsif ($highlight eq "irc" ) {
-  $bold = "\002";
-  $unbold = "\002";
-}
 
 my $now = time;
 my $needCTY = 0;
@@ -203,7 +191,7 @@ SKIPMW:
 if (defined $dxccmap{$term}) {
   my ($length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz) = split /\|/,$dxccmap{$term};
 
-  print "$bold$term$unbold: $bold$name$unbold";
+  print bold($term), ": ", bold($name);
   print ": $cont CQ:$cq ITU:$itu";
   my $mw = $mostwantedByPrefix{uc($dxcc)} || $mostwantedByName{uc($name)};
   print " MW:" . $mw unless (!defined $mw);
@@ -217,7 +205,7 @@ if (length($term) >= 3) {
     my ($length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz) = split /\|/,$rec;
 
     if ($name =~ m/$term/i) {
-      print "$bold$dxcc$unbold: $bold$name$unbold";
+      print bold($dxcc), ": ", bold($name);
       print ": $cont CQ:$cq ITU:$itu";
       my $mw = $mostwantedByPrefix{uc($dxcc)} || $mostwantedByName{uc($name)};
       print " MW:" . $mw unless (!defined $mw);
@@ -244,9 +232,9 @@ foreach my $rec (@records) {
     #print "$rec\n";
 
     my $match = $term;
-    $match =~ s/$pattern/$bold$&$unbold/;
+    $match =~ s/$pattern/bold($&)/e;
 
-    print "$match: $bold$name$unbold";
+    print "$match: " . bold($name);
     print " ($dxcc)" unless $term eq $dxcc;
     print ": $cont CQ:$cq ITU:$itu";
     my $mw = $mostwantedByPrefix{uc($dxcc)} || $mostwantedByName{uc($name)};

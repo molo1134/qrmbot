@@ -8,6 +8,10 @@ use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
+use File::Basename;
+use lib dirname (__FILE__);
+use Colors;
+
 my $url = 'ftp://ftp.swpc.noaa.gov/pub/lists/iono_day/';
 my $stationMap = 'KML map: http://pastebin.com/Ni9tRV7N -- gmap: https://google.com/maps/d/viewer?mid=1WE9jrQtwL1KYdsN-_lx1jf2i5JWRK__u';
 
@@ -20,22 +24,6 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
     print "usage: $0 <station>  --or--  $0 list\n";
   }
   exit 0
-}
-
-my $bold = "";
-my $unbold = "";
-
-my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
-my $highlight = "vt100";
-$highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq "eggdrop";
-
-if ($highlight eq "vt100") {
-  $bold = "\e[1m";
-  $unbold = "\e[0m";
-} elsif ($highlight eq "irc" ) {
-  $bold = "\002";
-  $unbold = "\002";
 }
 
 if ($ARGV[0] eq "list") {
@@ -155,5 +143,5 @@ if (!defined $lastmuf) {
 #$muf3 = int($muf3 * 10) / 10;
 
 #print "$place ($lat,$lon) MUF @ $y-$m-$d ${t}z: h:${h}km d:${D}km foF2:$fof2 fMUF:$fmuf calc1:$muf calc2:$muf2 calc3:$muf3\n";
-print "$bold$place$unbold ($lat,$lon) MUF @ $lasttime: $bold$lastmuf MHz$unbold; recent high: $high at ${hightime}z; low: $low at ${lowtime}z\n";
+print bold($place), " ($lat,$lon) MUF @ $lasttime: ", bold("$lastmuf MHz"), "; recent high: $high at ${hightime}z; low: $low at ${lowtime}z\n";
 
