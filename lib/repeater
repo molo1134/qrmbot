@@ -22,7 +22,6 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 my $searchterm = $ARGV[0];
 my $band = $ARGV[1];
 my $encoded = uri_escape($searchterm);
-#my $url = "https://repeaterbook.com/repeaters/keyResult.php?keyword=${encoded}&state_id=0";
 my $url = "https://repeaterbook.com/repeaters/keyword.php?func=result&keyword=${encoded}&state_id=0";
 #print "$url\n";
 
@@ -31,9 +30,6 @@ my $inloc = 0;
 my $instate = 0;
 my $incounty = 0;
 my $incall = 0;
-
-my $haveone = 0;
-my $havemany = 0;
 
 my $highlight = "vt100";
 $highlight = "none" if ! -t STDOUT;
@@ -90,7 +86,6 @@ my %vals;
 my ($freq, $offset, $squelch, $location, $state, $county, $callsign);
 #print "$url\n";
 open (HTTP, '-|', "curl --insecure -L -s \"$url\"");
-#binmode(HTTP, ":cp1252");
 binmode(HTTP, ":encoding(cp1252)");
 while (<HTTP>) {
 	#print;
@@ -103,17 +98,7 @@ while (<HTTP>) {
 
   chomp;
 
-#  if ($havemany == 1) {
-#    next;
-#  }
   if (/<!-- freq -->/) {
-    if ($haveone == 1) {
-      $havemany = 1;
-      #next; # we could do last; here, but then curl throws errors w/ pipe broken
-    } else {
-      $haveone = 1;
-      #print "infreq\n";
-    }
     $infreq = 1;
   }
   if ($infreq == 1 && />([0-9.]+)([-+xs])/) {
@@ -166,65 +151,60 @@ while (<HTTP>) {
   if (/<!-- Use -->/) {
     $incall = 0;
     $vals{"$freq,$location"} = join("::", $freq, $offset, $squelch, $location, $state, $county, $callsign);
+    $freq = $offset = $squelch = $location = $state = $county = $callsign = undef;
     #print "added $freq: " . $vals{"$freq,$location"} . "\n";
   }
 
 }
 close(HTTP);
 
-$havemany = 0;
-$haveone = 0;
+my $found = 0;
 
+# sort by frequency
 foreach my $e (sort { (split(/,/,$a))[0] <=> (split(/,/,$b))[0] } keys %vals) {
   my ($f, undef) = split /,/, $e;
   #print "$e\n";
   if ($f >= $minfreq && $f <= $maxfreq) {
-    if ($haveone == 0) {
-      $haveone = 1;
-      ($freq, $offset, $squelch, $location, $state, $county, $callsign) =
-	split(/::/, $vals{$e});
-    } else {
-      $havemany = 1;
+    ($freq, $offset, $squelch, $location, $state, $county, $callsign) =
+      split(/::/, $vals{$e});
+    $found++;
+    if ($username eq "eggdrop" and $found == 2) {
+      print " -- truncated, see: $url";
+      exit 0;
+    }
+    print "${bold}$callsign${unbold}: ${bold}$freq$unbold ($offset) ";
+    print "$squelch PL " if length($squelch) > 0;
+    print "@ $location";
+    print ", $county County" if length($county) > 0;
+    print ", $state";
+    if ($username ne "eggdrop") {
+      print "\n";
     }
   }
 }
 
-if ($haveone == 1) {
-  print "${bold}$callsign${unbold}: ${bold}$freq$unbold ($offset) ";
-  print "$squelch PL " if length($squelch) > 0;
-  print "@ $location";
-  print ", $county County" if length($county) > 0;
-  print ", $state"
-}
-if ($havemany == 1) {
-  print " -- truncated, see: $url";
-}
-
-if ($haveone) {
-  print "\n";
+if ($found > 0) {
   exit 0;
 }
 
-#$url = "http://repeaterbook.com/row_repeaters/msResult.php?call=${encoded}";
+WORLD:
+
+$freq = $offset = $squelch = $location = $state = $county = $callsign = undef;
+%vals = ();
+
+my $haveone = 0;
+my $havemany = 0;
+
 $url = "https://www.repeaterbook.com/row_repeaters/keyResult.php?keyword=${encoded}&state_id=0";
 
 #print "$url\n";
 open (HTTP, '-|', "curl --insecure -L -s \"$url\"");
-binmode(HTTP, ":cp1252");
+binmode(HTTP, ":encoding(cp1252)");
 while (<HTTP>) {
 	#print;
   chomp;
-  if ($havemany == 1) {
-    next;
-  }
   if (/<!-- freq -->/) {
-    if ($haveone == 1) {
-      $havemany = 1;
-      next; # we could do last; here, but then curl throws errors w/ pipe broken
-    } else {
-      $haveone = 1;
-      $infreq = 1;
-    }
+    $infreq = 1;
   }
   if ($infreq == 1 && />([0-9.]+)</) {
     $freq = $1;
@@ -260,22 +240,36 @@ while (<HTTP>) {
 
   if (/<!-- Use -->/) {
     $incall = 0;
+    $squelch = "" if !defined($squelch);
+    $vals{"$freq,$location"} = join("::", $freq, $squelch, $location, $state, $callsign);
+    #print "added $freq: " . $vals{"$freq,$location"} . "\n";
+    $freq = $offset = $squelch = $location = $state = $county = $callsign = undef;
   }
 }
 close(HTTP);
 
-if ($haveone == 1) {
-  print "${bold}$callsign${unbold}: ${bold}$freq${unbold} ";
-  print "($offset) " if length($offset) > 0;
-  print "$squelch PL " if length($squelch) > 0;
-  print "@ $location";
-  print ", $county County" if length($county) > 0;
-  print ", $state\n"
-} else {
-  print "not found\n";
-}
-if ($havemany == 1) {
-  print "truncated, see: $url\n";
+$found = 0;
+
+# sort by frequency
+foreach my $e (sort { (split(/,/,$a))[0] <=> (split(/,/,$b))[0] } keys %vals) {
+  my ($f, undef) = split /,/, $e;
+  #print "$e\n";
+  if ($f >= $minfreq && $f <= $maxfreq) {
+    ($freq, $squelch, $location, $state, $callsign) =
+      split(/::/, $vals{$e});
+    $found++;
+    if ($username eq "eggdrop" and $found == 2) {
+      print " -- truncated, see: $url";
+      exit 0;
+    }
+    print "${bold}$callsign${unbold}: ${bold}$freq${unbold} ";
+    print "$squelch PL " if length($squelch) > 0;
+    print "@ $location";
+    print ", $state";
+    if ($username ne "eggdrop") {
+      print "\n";
+    }
+  }
 }
 
 exit 0;
