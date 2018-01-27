@@ -297,4 +297,8 @@ foreach my $e (sort { (split(/,/,$a))[0] <=> (split(/,/,$b))[0] } keys %vals) {
   }
 }
 
+if ($found == 0) {
+  print "not found\n";
+}
+
 exit 0;
