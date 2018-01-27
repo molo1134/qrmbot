@@ -445,7 +445,7 @@ sub degredationQuality {
     return yellow("Fair");
   }
   if ($degd > 4.0 && $degd <= 5.5) {
-    reutrn red("Poor");
+    return red("Poor");
   }
   if ($degd > 5.5) {
     return darkRed("Very Poor");
