@@ -20,10 +20,11 @@ use Math::Trig;
 use POSIX qw(floor strftime);
 binmode(STDOUT, ":utf8");
 
-# change this to 0 to always exit with success
-our $exitnonzeroonerror = 0;
-
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+my $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   print "usage: $0 [--moon] [--eme] [--sun] [--graves] \\\n\t<grid>|<qth> [<elev>ft|<elev>m]\n";

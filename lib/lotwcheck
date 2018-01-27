@@ -12,7 +12,8 @@ binmode(STDOUT, ":utf8");
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $cachefile = $ENV{'HOME'} . "/.lotw-dates.txt";
 
-my $exitnonzeroonerror = 0;
+my $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
 my $highlight = "vt100";
 $highlight = "none" if ! -t STDOUT;
 $highlight = "irc" if $username eq 'eggdrop';

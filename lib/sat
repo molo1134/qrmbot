@@ -22,9 +22,6 @@ my $tleurl="http://www.amsat.org/amsat/ftp/keps/current/nasabare.txt";
 # 1) parameter for number of passes / length of time?
 # 2) parameter for minimum elevation (default 5 deg)?
 
-# change this to 0 to always exit with success
-our $exitnonzeroonerror = 0;
-
 my %aliases = (
   # lowercase key
   "ao-7" => "AO-07",
@@ -53,6 +50,12 @@ my %aliases = (
 );
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+my $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+
 my $highlight="vt220";
 $highlight = "none" if ! -t STDOUT;
 $highlight = "irc" if $username eq "eggdrop";

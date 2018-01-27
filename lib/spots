@@ -15,8 +15,12 @@ use Math::Trig 'great_circle_distance';
 use Switch;
 use v5.10;
 
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
 # configuration
-my $exitnonzeroonerror = 0;
+my $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
 my $timestampfile = $ENV{'HOME'}.'/.spottimestamps';
 my $hamspotloginfile = $ENV{'HOME'}.'/.hamspotlogin';
 
@@ -27,7 +31,6 @@ my $defaultSpotsForEggdrop = 3;
 
 # TODO: unicode support?
 
-my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq 'eggdrop') {
     print "usage: !spots [--dxw] [--rbn] [--psk] [--ham] <callsign> [limit]\n";
