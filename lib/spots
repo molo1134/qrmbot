@@ -10,10 +10,12 @@ use strict;
 use POSIX qw(floor strftime);
 use Text::CSV;
 use DateTime::Format::Strptime;
-use Math::Trig;
-use Math::Trig 'great_circle_distance';
 use Switch;
 use v5.10;
+
+use File::Basename;
+use lib dirname (__FILE__);
+use Location;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
@@ -572,61 +574,8 @@ sub updatelast
   close TIMESTAMPS;
 }
 
-sub gridToCoord {
-  my $gridstr = shift;
-
-  if (not $gridstr =~ /^[A-R]{2}[0-9]{2}([A-X]{2})?/i ) {
-    print "invalid grid: $gridstr\n";
-    return undef;
-  }
-
-  my @grid = split (//, uc($gridstr));
-
-  if ($#grid < 3) {
-    return undef;
-  }
-
-  my $lat;
-  my $lon;
-  my $formatter;
-
-  $lon = ((ord($grid[0]) - ord('A')) * 20) - 180;
-  $lat = ((ord($grid[1]) - ord('A')) * 10) - 90;
-  $lon += ((ord($grid[2]) - ord('0')) * 2);
-  $lat += ((ord($grid[3]) - ord('0')) * 1);
-
-  if ($#grid >= 5) {
-    $lon += ((ord($grid[4])) - ord('A')) * (5/60);
-    $lat += ((ord($grid[5])) - ord('A')) * (5/120);
-    # move to center of subsquare
-    $lon += (5/120);
-    $lat += (5/240);
-    # not too precise
-    $formatter = "%.4f";
-  } else {
-    # move to center of square
-    $lon += 1;
-    $lat += 0.5;
-    # even less precise
-    $formatter = "%.1f";
-  }
-
-  # not too precise
-  $lat = sprintf($formatter, $lat);
-  $lon = sprintf($formatter, $lon);
-
-  return join(',', $lat, $lon);
-}
-
-# Notice the 90 - latitude: phi zero is at the North Pole.
-# Example: my @London = NESW( -0.5, 51.3); # (51.3N 0.5W)
-# Example: my @Tokyo  = NESW(139.8, 35.7); # (35.7N 139.8E)
-sub NESW {
-  deg2rad($_[0]), deg2rad(90 - $_[1])
-}
-
 sub gridDist {
-  # convert fromg grids to coords
+  # convert from grids to coords
   my $origCoords = gridToCoord(shift);
   my $foreignCoords = gridToCoord(shift);
 
@@ -637,21 +586,8 @@ sub gridDist {
   # convert to radians
   my ($origLat, $origLon) = split(/,/, $origCoords);
   my ($foreignLat, $foreignLon) = split(/,/, $foreignCoords);
-  my @origin = NESW($origLon, $origLat);
-  my @foreign = NESW($foreignLon, $foreignLat);
 
-  my $dist;
-
-  # disable "experimental" warning on smart match operator use
-  no if $] >= 5.018, warnings => "experimental::smartmatch";
-
-  if (@origin ~~ @foreign) {	  # smart match operator - equality comparison
-    $dist = 0;
-    #$bearing = 0;
-  } else {
-    $dist = great_circle_distance(@origin, @foreign, 6378.1);
-    #$bearing = rad2deg(great_circle_bearing(@origin, @foreign));
-  }
+  my ($dist, undef) = distBearing($origLat, $origLon, $foreignLat, $foreignLon);
 
   return $dist;
 }

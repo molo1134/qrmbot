@@ -10,15 +10,14 @@ use Astro::Coord::ECI;
 use Astro::Coord::ECI::TLE;
 use Astro::Coord::ECI::TLE::Set;
 #use Astro::Coord::ECI::Utils qw{deg2rad rad2deg};
-use URI::Escape;
-use Math::Round;
 use Math::Trig;
-use POSIX qw(floor strftime);
+use POSIX qw(strftime);
 binmode(STDOUT, ":utf8");
 
 use File::Basename;
 use lib dirname (__FILE__);
 use Colors;
+use Location;
 
 my $tleurl="http://www.amsat.org/amsat/ftp/keps/current/nasabare.txt";
 
@@ -102,7 +101,12 @@ if (length($query) == 0 && $sat ne "list") {
 
 my ($lat, $lon) = (0, 0);
 
-($lat, $lon) = split(',', argToCoords($query)) unless $query eq '';
+my $geo = argToCoords($query);
+if (!defined($geo)) {
+  print "error: not found: $query\n";
+  exit $exitnonzeroonerror;
+}
+($lat, $lon) = split(',', $geo) if $query ne '';
 #print ("$lat, $lon\n");
 
 my $now = time();
@@ -239,140 +243,5 @@ foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
     #  exit 0;
     #}
   }
-}
-
-
-
-
-sub argToCoords {
-  my $arg = shift;
-  my $type;
-
-  if ($arg =~ /^(grid:)? ?([A-R]{2}[0-9]{2}([a-x]{2})?)/i) {
-    $arg = $2;
-    $type = "grid";
-  } elsif ($arg =~ /^(geo:)? ?([-+]?\d+(.\d+)?,\s?[-+]?\d+(.\d+)?)/i) {
-    $arg = $2;
-    $type = "geo";
-  } else {
-    $type = "qth";
-  }
-
-  my $lat = undef;
-  my $lon = undef;
-  my $grid = undef;
-
-  if ($type eq "grid") {
-    $grid = $arg;
-  } elsif ($type eq "geo") {
-    ($lat, $lon) = split(',', $arg);
-  } elsif ($type eq "qth") {
-    my $ret = qthToCoords($arg);
-    if (!defined($ret)) {
-      print "'$arg' not found.\n";
-      exit $exitnonzeroonerror;
-    }
-    ($lat, $lon) = split(',', $ret);
-  }
-
-  if (defined($grid)) {
-    ($lat, $lon) = split(',', gridToCoord(uc($grid)));
-  }
-
-  return join(',', $lat, $lon);
-}
-
-sub qthToCoords {
-  my $place = uri_escape_utf8(shift);
-  my $lat = undef;
-  my $lon = undef;
-  my $url = "http://maps.googleapis.com/maps/api/geocode/xml?address=$place&sensor=false";
-
-  open (HTTP, '-|', "curl -s '$url'");
-  binmode(HTTP, ":utf8");
-  GET: while (<HTTP>) {
-    #print;
-    chomp;
-    if (/<lat>([+-]?\d+.\d+)<\/lat>/) {
-      $lat = $1;
-    }
-    if (/<lng>([+-]?\d+.\d+)<\/lng>/) {
-      $lon = $1;
-    }
-    if (defined($lat) and defined($lon)) {
-      last GET;
-    }
-  }
-  close HTTP;
-
-  if (defined($lat) and defined($lon)) {
-    return "$lat,$lon";
-  } else {
-    return undef;
-  }
-}
-
-sub gridToCoord {
-  my $gridstr = shift;
-
-  if (not $gridstr =~ /^[A-R]{2}[0-9]{2}([A-X]{2})?/i ) {
-    print "\ninvalid grid\n";
-    return undef;
-  }
-
-  my @grid = split (//, uc($gridstr));
-
-  if ($#grid < 3) {
-    return undef;
-  }
-
-  my $lat;
-  my $lon;
-  my $formatter;
-
-  $lon = ((ord($grid[0]) - ord('A')) * 20) - 180;
-  $lat = ((ord($grid[1]) - ord('A')) * 10) - 90;
-  $lon += ((ord($grid[2]) - ord('0')) * 2);
-  $lat += ((ord($grid[3]) - ord('0')) * 1);
-
-  if ($#grid >= 5) {
-    $lon += ((ord($grid[4])) - ord('A')) * (5/60);
-    $lat += ((ord($grid[5])) - ord('A')) * (5/120);
-    # move to center of subsquare
-    $lon += (5/120);
-    $lat += (5/240);
-    # not too precise
-    $formatter = "%.4f";
-  } else {
-    # move to center of square
-    $lon += 1;
-    $lat += 0.5;
-    # even less precise
-    $formatter = "%.1f";
-  }
-
-  # not too precise
-  $lat = sprintf($formatter, $lat);
-  $lon = sprintf($formatter, $lon);
-
-  return join(',', $lat, $lon);
-}
-
-sub coordToGrid {
-  my $lat = shift;
-  my $lon = shift;
-  my $grid = "";
-
-  $lon = $lon + 180;
-  $lat = $lat + 90;
-
-  $grid .= chr(ord('A') + int($lon / 20));
-  $grid .= chr(ord('A') + int($lat / 10));
-  $grid .= chr(ord('0') + int(($lon % 20)/2));
-  $grid .= chr(ord('0') + int(($lat % 10)/1));
-  $grid .= chr(ord('a') + int(($lon - (int($lon/2)*2)) / (5/60)));
-  $grid .= chr(ord('a') + int(($lat - (int($lat/1)*1)) / (2.5/60)));
-
-  return $grid;
 }
 

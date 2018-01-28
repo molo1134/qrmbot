@@ -22,6 +22,7 @@ use Time::Piece ();
 use File::Basename;
 use lib dirname (__FILE__);
 use Colors;
+use Location;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
@@ -68,6 +69,9 @@ if (!defined($loc)) {
 
 $loc =~ s/^\s*//;
 $loc =~ s/\s*$//;
+my $geo = argToCoords($loc);
+$loc = $geo if defined $geo;
+
 $loc =~ s/\s/_/g;
 my $encodedloc = uri_escape($loc);
 

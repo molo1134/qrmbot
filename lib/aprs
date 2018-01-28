@@ -17,6 +17,7 @@ binmode STDOUT, ":utf8";
 use File::Basename;
 use lib dirname (__FILE__);
 use Colors;
+use Location;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
@@ -206,77 +207,3 @@ sub getvals {
   return $valref;
 }
 
-sub geolocate {
-  my $lat = shift;
-  my $lon = shift;
-
-  my $url = "http://maps.googleapis.com/maps/api/geocode/xml?latlng=$lat,$lon&sensor=false";
-
-  my $newResult = 0;
-  my $getnextaddr = 0;
-  my $addr = undef;
-  my $type = undef;
-
-  my %results;
-
-  open(GMAP, '-|', "curl -s \"$url\"");
-  binmode(GMAP, ":utf8");
-  while (<GMAP>) {
-    #print;
-    chomp;
-
-    if (/<result>/) {
-      $newResult = 1;
-      next;
-    }
-
-    if ($newResult == 1 and /<type>([^<]+)</) {
-      $type = $1;
-      $getnextaddr = 1;
-      $newResult = 0;
-      next;
-    }
-
-    if ($getnextaddr == 1 and /<formatted_address>([^<]+)</) {
-      #print "$type => $1\n";
-      $results{$type} = $1;
-      $getnextaddr = 0;
-      next;
-    }
-  }
-  close GMAP;
-
-  if (defined($results{"neighborhood"})) {
-    $addr = $results{"neighborhood"};
-  } elsif (defined($results{"locality"})) {
-    $addr = $results{"locality"};
-  } elsif (defined($results{"administrative_area_level_3"})) {
-    $addr = $results{"administrative_area_level_3"};
-  } elsif (defined($results{"postal_town"})) {
-    $addr = $results{"postal_town"};
-  } elsif (defined($results{"political"})) {
-    $addr = $results{"political"};
-  } elsif (defined($results{"postal_code"})) {
-    $addr = $results{"postal_code"};
-  } elsif (defined($results{"administrative_area_level_2"})) {
-    $addr = $results{"administrative_area_level_2"};
-  } elsif (defined($results{"administrative_area_level_1"})) {
-    $addr = $results{"administrative_area_level_1"};
-  } elsif (defined($results{"country"})) {
-    $addr = $results{"country"};
-  } elsif (defined($results{"sublocality"})) {
-    $addr = $results{"sublocality"};
-  } elsif (defined($results{"sublocality_level_3"})) {
-    $addr = $results{"sublocality_level_3"};
-  } elsif (defined($results{"sublocality_level_4"})) {
-    $addr = $results{"sublocality_level_4"};
-  }
-
-  if (!defined($addr)) {
-    $lat =~ s/0*$//;
-    $lon =~ s/0*$//;
-    $addr = "$lat,$lon";
-  }
-
-  return $addr;
-}
