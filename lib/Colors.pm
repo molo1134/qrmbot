@@ -1,6 +1,8 @@
 #!/usr/bin/perl -w
 #
-# Color
+# Terminal color/bold and IRC color/bold output.  2-clause BSD license.
+#
+# Copyright 2018 /u/molo1134. All rights reserved.
 
 package Colors;
 require Exporter;
