@@ -382,7 +382,12 @@ sub doHamspots
   my $needlogin = 0;
   my $token;
 
-  if (!-e $cookiefile) {
+  if (! -e ($hamspotloginfile)) {
+    print "warning: hamspots disabled\n";
+    return;
+  }
+
+  if (! -e $cookiefile) {
     doHamspotsLogin();
   }
 
@@ -513,7 +518,8 @@ sub doHamspotsLogin
 	  #chmod 0600, $hamspotloginfile;
     require($hamspotloginfile);
   } else {
-    say "warning: unable to read file $hamspotloginfile"
+    say "warning: unable to read file $hamspotloginfile";
+    return;
   }
 
   #print "login: $historyurl\n";
