@@ -65,6 +65,9 @@ if ($#ARGV == 0 && $ARGV[0] =~ m/ /) {
 
 while ($i <= $#ARGV) {
   if ($ARGV[$i] =~ /--mon/) {
+    # WARNING: monitor mode puts a heavy load on these services.  This will
+    # likely get your IP banned if you do it for any length of time.  This is
+    # undocumented for a reason.
     $monitor = 1;
     $i++; next;
   }
