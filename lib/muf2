@@ -241,8 +241,14 @@ my $ionogramFile = "/tmp/ionogram.${mid}.png";
 
 system "curl -s -k --max-time 4 --retry 1 \"${ionogramUrl}\" -o ${ionogramFile}";
 
-my $ocrdbpath = $ENV{'HOME'}. "/.ionosonde.db/";
 my $muf = undef;
+my $ocrdbpath = $ENV{'HOME'}. "/.ionosonde.db/";
+
+if (! -e $ocrdbpath) {
+  $ocrdbpath = dirname (__FILE__) . "/ionosonde.ocr.db/";
+}
+
+die "unable to find OCR DB path: $ocrdbpath" if (! -e $ocrdbpath);
 
 # run:
 open (GOCR, '-|', "gocr -p $ocrdbpath -m 258 $ionogramFile");
