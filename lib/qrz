@@ -458,9 +458,7 @@ sub getAndParseData {
 	  $resultdetail = $1;
 
 	  if (/<span class="[^"]*red[^"]*"/g) {
-#	    print "$_\n";  TODO FIXME XXX
-#	    $resultdetail =~ s/<span class="[^"]*red[^"]*" *(style="[^"]*")?>/$bold/g;
-#	    $resultdetail =~ s/<\/span>/$unbold/g;
+	    $resultdetail =~ s/<span class="[^"]*red[^"]*" *(style="[^"]*")?>(.*?)<\/span>/bold($2)/eg;
 	  } else {
 	    my $matchcall = $call;
 	    $matchcall =~ s/\*/.*/g;
