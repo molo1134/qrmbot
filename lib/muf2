@@ -11,7 +11,8 @@ use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
 use File::Basename;
-use lib dirname (__FILE__);
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
 use Colors;
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
@@ -245,7 +246,7 @@ my $muf = undef;
 my $ocrdbpath = $ENV{'HOME'}. "/.ionosonde.db/";
 
 if (! -e $ocrdbpath) {
-  $ocrdbpath = dirname (__FILE__) . "/ionosonde.ocr.db/";
+  $ocrdbpath = dirname(realpath(__FILE__)) . "/ionosonde.ocr.db/";
 }
 
 die "unable to find OCR DB path: $ocrdbpath" if (! -e $ocrdbpath);

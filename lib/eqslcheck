@@ -9,7 +9,8 @@ use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
 use File::Basename;
-use lib dirname (__FILE__);
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
 use Colors;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);

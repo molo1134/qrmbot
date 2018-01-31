@@ -14,7 +14,8 @@ use Switch;
 use v5.10;
 
 use File::Basename;
-use lib dirname (__FILE__);
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
 use Location;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);

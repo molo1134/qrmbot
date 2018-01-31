@@ -22,8 +22,9 @@ use I18N::Langinfo qw(langinfo CODESET);
 use URI::Escape;
 use POSIX qw(strftime);
 
+use Cwd 'realpath';
 use File::Basename;
-use lib dirname (__FILE__);
+use lib dirname(realpath(__FILE__));
 use Colors;
 #use Location;
 
