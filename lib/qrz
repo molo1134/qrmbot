@@ -26,7 +26,7 @@ use Cwd 'realpath';
 use File::Basename;
 use lib dirname(realpath(__FILE__));
 use Colors;
-#use Location;
+use Location;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
@@ -333,21 +333,7 @@ if (defined($lat)) {
 
   if (defined($mylat)) {
 
-    # convert to radians
-    my @origin = NESW($mylon, $mylat);
-    my @foreign = NESW($lon, $lat);
-    my ($dist, $bearing);
-
-    # disable "experimental" warning on smart match operator use
-    no if $] >= 5.018, warnings => "experimental::smartmatch";
-
-    if (@origin ~~ @foreign) {	  # smart match operator - equality comparison
-      $dist = 0;
-      $bearing = 0;
-    } else {
-      $dist = great_circle_distance(@origin, @foreign, 6378.1); # earth radius
-      $bearing = rad2deg(great_circle_bearing(@origin, @foreign));
-    }
+    my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
     my $localgrid = coordToGrid($mylat, $mylon);
 
     printf(" -- %.1f km, %.0f° from %s", $dist, $bearing, $localgrid);
@@ -749,67 +735,6 @@ sub parsecodes {
     $codetext = "?";
   }
   $codetext = "($codetext)"
-}
-
-# Notice the 90 - latitude: phi zero is at the North Pole.
-# Example: my @London = NESW( -0.5, 51.3); # (51.3N 0.5W)
-# Example: my @Tokyo  = NESW(139.8, 35.7); # (35.7N 139.8E)
-sub NESW {
-  deg2rad($_[0]), deg2rad(90 - $_[1])
-}
-
-sub gridToCoord {
-  my $gridstr = shift;
-
-  if (not $gridstr =~ /^[A-R]{2}[0-9]{2}([A-X]{2})?/i ) {
-    print "\ninvalid grid\n";
-    return;
-  }
-
-  my @grid = split (//, uc($gridstr));
-
-  if ($#grid < 3) {
-    return;
-  }
-
-  $lon = ((ord($grid[0]) - ord('A')) * 20) - 180;
-  $lat = ((ord($grid[1]) - ord('A')) * 10) - 90;
-  $lon += ((ord($grid[2]) - ord('0')) * 2);
-  $lat += ((ord($grid[3]) - ord('0')) * 1);
-
-  if ($#grid >= 5) {
-    $lon += ((ord($grid[4])) - ord('A')) * (5/60);
-    $lat += ((ord($grid[5])) - ord('A')) * (5/120);
-    # move to center of subsquare
-    $lon += (5/120);
-    $lat += (5/240);
-  } else {
-    # move to center of square
-    $lon += 1;
-    $lat += 0.5;
-  }
-
-  # not too precise
-  $lat = sprintf("%.5f", $lat);
-  $lon = sprintf("%.5f", $lon);
-}
-
-sub coordToGrid {
-  my $lat = shift;
-  my $lon = shift;
-  my $grid = "";
-
-  $lon = $lon + 180;
-  $lat = $lat + 90;
-
-  $grid .= chr(ord('A') + int($lon / 20));
-  $grid .= chr(ord('A') + int($lat / 10));
-  $grid .= chr(ord('0') + int(($lon % 20)/2));
-  $grid .= chr(ord('0') + int(($lat % 10)/1));
-  $grid .= chr(ord('a') + int(($lon - (int($lon/2)*2)) / (5/60)));
-  $grid .= chr(ord('a') + int(($lat - (int($lat/1)*1)) / (2.5/60)));
-
-  return $grid;
 }
 
 # vim: set ts=8 sw=2 sts=2
