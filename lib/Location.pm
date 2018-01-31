@@ -143,7 +143,7 @@ sub geolocate {
     chomp;
 
     if (/OVER_QUERY_LIMIT/) {
-      print "warning: over query limit\n" unless $raw == 1;
+      print "warning: over query limit\n" unless defined($raw) and $raw == 1;
       close(HTTP);
       exit $exitnonzeroonerror if $tries > 3;
       goto RESTART;
