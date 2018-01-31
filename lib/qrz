@@ -417,7 +417,8 @@ sub getAndParseData {
 	print $call, " matches:\n";
       }
       my $count = 0;
-      my $limit = 5;
+      my $limit = 100000;
+      $limit = 5 if $username eq 'eggdrop';
       my $resultcall = undef;
       my $resultdetail = undef;
       my $matches = 0;
