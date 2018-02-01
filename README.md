@@ -1,4 +1,11 @@
-# qrm IRC bot
+# qrm IRC bot and command line tools
+
+A collection of command line tools and wrapper scripts for the eggdrop IRC bot.
+
+## Usage
+
+See [the /r/amateurradio wiki page for qrm
+bot](https://www.reddit.com/r/amateurradio/wiki/qrmbot).
 
 ## Dependencies
 
@@ -19,12 +26,12 @@ As tested on Debian:
 ### Building `libastro-satpass-perl`
 
 ```
-sudo apt-get install git dh-make-perl
-git clone 'https://github.com/trwyant/perl-Astro-Coord-ECI.git'
-cd perl-Astro-Coord-ECI
-git checkout 'v00.077'
-dh-make-perl --vcs none --build
-sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
+$ sudo apt-get install git dh-make-perl
+$ git clone 'https://github.com/trwyant/perl-Astro-Coord-ECI.git'
+$ cd perl-Astro-Coord-ECI
+$ git checkout 'v00.077'
+$ dh-make-perl --vcs none --build
+$ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 ```
 
 ## Configuration files
@@ -47,5 +54,22 @@ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.hamspotcookies` -- HTTP cookies for hamspots.net session
 * `$HOME/.qrzcookies` -- HTTP cookies for qrz.com session
 * `$HOME/.lotw-dates.txt` -- cached LOTW upload dates
-* `$HOME/.spottimestamps` -- used for spots monitor mode
+* `$HOME/.spottimestamps` -- used for spots monitor mode; safe to remove
+
+## Security
+
+Reasonable precautions have been made to filter out or escape shell special
+characters and so forth, but this is not foolproof.  I suggest running the bot
+inside a minimal chroot without any setuid binaries, or a suitable VM, as
+needed.
+
+## TODO
+
+1. Clean up and modularize TCL scripts
+2. Add TCL scripts
+3. Document how to use and configure TCL scripts
+4. Clarify this week/next week for `contests`
+5. Accept other formats for `!setgeo`
+6. Use geo grid for `!activity`
+7. Cleanup needed in `qrz` script
 
