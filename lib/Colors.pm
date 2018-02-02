@@ -19,7 +19,7 @@ BEGIN {
 sub darkRed {
   my $s = shift;
   if ($highlight eq "irc") {
-    return "\x035\x02\x02$s\x03"
+    return "\x035\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
     return "\e[31m$s\e[0m"
   } else {
@@ -29,7 +29,7 @@ sub darkRed {
 sub red {
   my $s = shift;
   if ($highlight eq "irc") {
-    return "\x034\x02\x02$s\x03"
+    return "\x034\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
     return "\e[1;31m$s\e[0m"
   } else {
@@ -39,7 +39,7 @@ sub red {
 sub yellow {
   my $s = shift;
   if ($highlight eq "irc") {
-    return "\x038\x02\x02$s\x03"
+    return "\x038\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
     return "\e[1;33m$s\e[0m"
   } else {
@@ -49,7 +49,7 @@ sub yellow {
 sub green {
   my $s = shift;
   if ($highlight eq "irc") {
-    return "\x033\x02\x02$s\x03"
+    return "\x033\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
     return "\e[32m$s\e[0m"
   } else {
@@ -59,7 +59,7 @@ sub green {
 sub lightblue {
   my $s = shift;
   if ($highlight eq "irc") {
-    return "\x0312\x02\x02$s\x03"
+    return "\x0312\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
     return "\e[1;34m$s\e[0m"
   } else {
@@ -69,7 +69,7 @@ sub lightblue {
 sub bold {
   my $s = shift;
   if ($highlight eq "irc") {
-    return "\002$s\002"
+    return "\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
     return "\e[1m$s\e[0m"
   } else {
@@ -79,7 +79,7 @@ sub bold {
 sub darkYellow {
   my $s = shift;
   if ($highlight eq "irc") {
-    return "\x035\x02\x02$s\x03"
+    return "\x035\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
     return "\e[33m$s\e[0m"
   } else {
@@ -89,7 +89,7 @@ sub darkYellow {
 sub lightGrey {
   my $s = shift;
   if ($highlight eq "irc") {
-    return "\x0315\x02\x02$s\x03"
+    return "\x0315\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
     return "\e[37m$s\e[0m"
   } else {
@@ -99,7 +99,7 @@ sub lightGrey {
 sub grey {
   my $s = shift;
   if ($highlight eq "irc") {
-    return "\x0314\x02\x02$s\x03"
+    return "\x0314\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
     return "\e[1;30m$s\e[0m"
   } else {
