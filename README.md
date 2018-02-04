@@ -2,6 +2,13 @@
 
 A collection of command line tools and wrapper scripts for the eggdrop IRC bot.
 
+## License
+
+All original code is 2-clause BSD licensed.  See [LICENSE](LICENSE) file.
+
+The [`astro`](lib/astro) program has portions derived from K1JT Joe Taylor's
+wsjt program and is GPLv3 licensed.  See [COPYING](COPYING) file.
+
 ## Usage
 
 See [the /r/amateurradio wiki page for qrm
