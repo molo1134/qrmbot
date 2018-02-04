@@ -64,7 +64,11 @@ my $codeset = langinfo(CODESET);
 $loc = decode($codeset, $loc);
 
 if (!defined($loc)) {
-  print "usage: $0 <location>\n";
+  if ($username eq 'eggdrop') {
+    print "usage: !wxf <location>";
+  } else {
+    print "usage: $0 <location>\n";
+  }
   exit $exitnonzeroonerror;
 }
 

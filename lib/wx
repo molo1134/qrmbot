@@ -70,7 +70,11 @@ if (defined($loc)) {
 }
 
 if (!defined($loc) or length($loc) == 0) {
-  print "usage: $0 <location>\n";
+  if ($username eq 'eggdrop') {
+    print "usage: !wx <location>\n";
+  } else {
+    print "usage: $0 <location>\n";
+  }
   exit $exitnonzeroonerror;
 }
 
