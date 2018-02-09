@@ -109,7 +109,7 @@ if ($vals{type} eq "w") {
 print bold($vals{name});
 print " (de $vals{srccall})" unless $vals{name} eq $vals{srccall} || !defined($vals{srccall});
 print " (WX)" if $vals{type} eq "w";
-print ": " . geolocate($vals{lat}, $vals{lng});
+print ": " . (geolocate($vals{lat}, $vals{lng}) || coordToGrid($vals{lat}, $vals{lng}));
 
 # wx station vals
 print "  Temp: " . bold("$vals{temp_c}°C/$vals{temp_f}°F") if defined ($vals{temp});
