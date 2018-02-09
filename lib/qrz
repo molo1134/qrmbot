@@ -201,6 +201,8 @@ our ($retcall, $country, $name, $sk, $class, $mail, $grid, $lat, $lon, $geosrc,
 
 getAndParseData();
 
+my ($redditid, $ircnick) = getUserInfo($retcall);
+
 our ($vanity, $individual, $club, $military, $races, $primarypref, $clubpref,
 			$formerprimary, $closerelative, $formerclub, $clubwithconsent,
 			$codetext);
@@ -288,6 +290,16 @@ if (defined($qsl) or defined($lotw) or defined($eqsl) or defined ($mailqsl)) {
   }
   if (length($qsltext) gt 0) {
     print " -- QSL: $qsltext";
+  }
+}
+if (defined($ircnick) and length($ircnick) gt 0) {
+  print " -- IRC: $ircnick";
+}
+if (defined($redditid) and length($redditid) gt 0) {
+  if ($redditid =~ /^\/u\//) {
+    print " -- $redditid";
+  } else {
+    print " -- /u/$redditid";
   }
 }
 if ($compact eq 0) {
@@ -733,6 +745,31 @@ sub parsecodes {
     $codetext = "?";
   }
   $codetext = "($codetext)"
+}
+
+# Read from an IRC and reddit nicks index file, if present.
+# The file is CSV in the format: <callsign>,<ircnick>,<redditID>
+# This is completely optional.
+sub getUserInfo {
+  my $call = shift;
+  if (! defined $call) {
+    return;
+  }
+  my ($userid, $ircnick) = (undef, undef);
+  my $nickfile = "~/.nicks.csv";
+  if (-e $nickfile) {
+    open (NICKFILE, "<", $nickfile);
+    while (<NICKFILE>) {
+      chomp;
+      next if /^\s*#/;
+      if (/^$call,/) {
+	(undef, $ircnick, $userid) = split /,/;
+	last;
+      }
+    }
+    close(NICKFILE);
+  }
+  return ($userid, $ircnick);
 }
 
 # vim: set ts=8 sw=2 sts=2
