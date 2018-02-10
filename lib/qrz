@@ -757,6 +757,9 @@ sub getUserInfo {
   }
   my ($userid, $ircnick) = (undef, undef);
   my $nickfile = "$ENV{'HOME'}/.nicks.csv";
+  if (! -e $nickfile) {
+    $nickfile = dirname(realpath(__FILE__)) . "/nicks.csv";
+  }
   if (-e $nickfile) {
     open (NICKFILE, "<", $nickfile);
     while (<NICKFILE>) {
