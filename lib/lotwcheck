@@ -8,6 +8,11 @@ use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+
 # config
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $cachefile = $ENV{'HOME'} . "/.lotw-dates.txt";
