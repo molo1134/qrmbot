@@ -51,6 +51,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
   [qrz.com](http://qrz.com/) lookup
 * `$HOME/.wunderground` -- required API key for
   [WUnderground](http://wundergound.com/) weather lookup
+* `$HOME/.nicks.csv` -- irc and reddit nicknames -- optional, will override repository data
 
 ## Cache files / state
 
