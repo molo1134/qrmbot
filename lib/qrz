@@ -802,6 +802,12 @@ sub getCallForRedditId {
       my ($c, undef, $userid) = split /,/;
       if (lc $id eq lc $userid) {
 	close NICKFILE;
+	  if ($id=~ /benstwhite/) {
+	    my $c = "ZL4BEN"
+	  }
+	  if ($id=~ /dangazzz/) {
+	    my $c = "VK3DAN"
+	  }
 	return $c;
       }
     }
