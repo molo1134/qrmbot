@@ -791,6 +791,13 @@ sub getCallForRedditId {
     exit $exitnonzeroonerror;
   }
 
+  # because some people have multiple calls and their alias calls come first in the CSV.
+  my %hardcoded = (
+	  '/u/benstwhite' => "ZL4BEN",
+	  '/u/dangazzz'   => "VK3DAN",
+  );
+  return $hardcoded{lc $id} if defined $hardcoded{lc $id};
+
   my $nickfile = "$ENV{'HOME'}/.nicks.csv";
   if (! -e $nickfile) {
     $nickfile = dirname(realpath(__FILE__)) . "/nicks.csv";
