@@ -143,7 +143,7 @@ my $lossdiff = round(($loss2m - $minloss2m)*10)/10;
 my ($phase, $illum) = $moon->phase($now);
 $phase = rad2deg($phase);
 my ($phasetext, $phaseunicode) = phaseText($phase);
-$phaseunicode = undef if $username eq "eggdrop";
+$phaseunicode = "" if $username eq "eggdrop";
 $phasetext = red($phasetext)
     if ($doEme == 1 && $phasetext eq "new moon");
 
@@ -485,16 +485,16 @@ sub phaseText {
     $text = "wax. gibb.";
     $unicode = "🌔";
     #$unicode = "\xF0\x9F\x8C\x94"; # 🌔  -- U+1F314 is outside of tcl range
-  } elsif (157.5 <= $phase && $phase < 202.5) { 
+  } elsif (157.5 <= $phase && $phase < 202.5) {
     $text = "full moon";
     $unicode = "🌕";
-  } elsif (202.5 <= $phase && $phase < 247.5) { 
+  } elsif (202.5 <= $phase && $phase < 247.5) {
     $text = "wan. gibb.";
     $unicode = "🌔";
-  } elsif (247.5 <= $phase && $phase < 292.5) { 
+  } elsif (247.5 <= $phase && $phase < 292.5) {
     $text = "3rd qrtr.";
     $unicode = "🌓";
-  } elsif (292.5 <= $phase && $phase < 337.5) { 
+  } elsif (292.5 <= $phase && $phase < 337.5) {
     $text = "wan. cres.";
     $unicode = "🌘";
   }
