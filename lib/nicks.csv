@@ -5,6 +5,7 @@
 2E1EPQ,,/u/2E1EPQ
 AA4IO,,/u/nvertedflyer
 AA6RV,,/u/aa6rv
+AA7AQ,,/u/aa7aq
 AA7AS,,/u/fyngyrz
 AB0JT,ab0jt,
 AB1JX,,/u/ab1jx
@@ -18,7 +19,7 @@ AC4JD,AC4JD,
 AC8JO,,/u/ac8jo
 AC8YZ,,/u/Zorb750
 AC9GT,,/u/AC9GT
-AC9OH,AC9OH,
+AC9OH,AC9OH,/u/aaronosaur
 AC9QP,,/u/AC9QP
 AD0JN,,/u/hotwatersuicide
 AD0NE,,/u/AD0NE
@@ -42,14 +43,17 @@ CS7AJS,,/u/V1ld0r_
 DB9MAT,,/u/mathiss
 DJ5TD,DJ5TD,
 ES4TIX,,/u/es4tix
+F4GRX,,/u/f4grx
 G3ZPF,,/u/G3ZPF
 HA5VSA,,/u/dn3t
 HB3YMB,HB3YMB,
 HB9FRV,MrCircuitMatt,/u/megapapo
 IK5PVX,,/u/ik5pvx
+IU6ASS,,/u/GeneraleRusso
 JR2TTS,JR2TTS,/u/the2belo
 K0AUG,,/u/cdwilliams1
 K0PIR,,/u/k0pir
+K0SJK,,/u/samkusnetz
 K0STK,K0STK,/u/K0STK
 K1BCN,k1bcn,
 K1FM,,/u/k1fm
@@ -89,6 +93,7 @@ K6BCT,,/u/HAR1F
 K6CPO,,/u/K6CPO
 K6CRJ,,/u/Nikpounder
 K6LCM,,/u/k6lcm
+K6PC,,/u/k6pc
 K6UDA,,/u/K6uda
 K6ZHS,k6zhs,
 K7ADD,k7add,/u/verygeeky
@@ -98,6 +103,7 @@ K7DXS,,/u/virtualdxs
 K7FLE,,/u/tedder42
 K7LAG,,/u/K7LAG
 K7LEE,,/u/K7LEE
+K7LMD,,/u/LD_in_MT
 K7MGG,,/u/K7MGG
 K7XPO,,/u/brien
 K7ZCZ,,/u/mikeblas
@@ -107,12 +113,15 @@ K8TEK,,/u/k8tek
 K8WTF,,/u/mattopia1
 K8WX,K8WX,
 K9BUK,k9buk,
+K9HAX,,/u/indrora
 K9JDO,,/u/K9JDO
+K9JIZ,,/u/K9JIZ
 K9LUP,,/u/bites
 KA8VIT,,/u/KA8VIT
 KA9UCN,,/u/ka9ucn
 KB1HQS,,/u/KB1HQS
 KB1LQD,,/u/kb1lqd
+KB1WKI,,/u/BlackCow
 KB2NEA,,/u/fongaboo
 KB2USN,kb2usn,
 KB3PXR,,/u/kb3pxr
@@ -170,7 +179,7 @@ KD2HLE,KD2HLE,
 KD2IUA,kd2iua,
 KD2IWW,KD2IWW,
 KD2IXL,,/u/KD2IXL
-KD2JRT,KD2JRT,
+KD2JRT,KD2JRT,/u/NCommander
 KD2LNP,,/u/zeroblitzt
 KD2NYT,,/u/CounterfeitCactus
 KD2OFU,,/u/Tomytom99
@@ -219,8 +228,10 @@ KE6HEP,KE6HEP,
 KE6MT,,/u/rexingtron
 KE7DUX,,/u/d3sl91
 KE7MAP,KE7MAP,
+KE7ZLY,,/u/fossum_13
 KE8EZZ,,/u/troublemaker74
 KE8GBF,,/u/yummypurplestuf
+KE8HVA,,/u/KE8HVA
 KE8ITR,,/u/icode2skrillex
 KF4FYS,,/u/KF4FYS
 KF4MDV,,/u/matir
@@ -233,6 +244,7 @@ KF5SAB,,/u/gorkish
 KF5WAY,,/u/sasimpson
 KF5ZQE,,/u/nvahalik
 KF6NMZ,KF6NMZ,
+KF6VCH,,/u/chilehead
 KF7ZDE,,/u/kf7zde
 KF8IV,,/u/passing_gas
 KG4AKV,,/u/JBstrikesagain
@@ -337,6 +349,7 @@ KX9X,,/u/KX9X
 LB5QG,,/u/langlo94
 LB5SH,,/u/skurk
 M0HZH,,/u/YO9IRF
+M0NTM,,/u/mrafinch
 M0VKG,ve7cxz,/u/amsams
 M6XGT,,/u/M6XGT
 MD6YAU,,/u/spectrumero
@@ -380,6 +393,7 @@ N5IQ,N5IQ,
 N5JLD,,/u/n5jld
 N5KHM,,/u/dandantheman
 N5KRC,N5KRC,
+N5MAV,,/u/MattsWorldoWonders
 N5PER,N5PER,
 N5UKZ,,/u/CousinWoot
 N5WE,,/u/TDChuckM
@@ -485,6 +499,7 @@ W0JLT,,/u/w0jlt
 W0MBO,W0MBO-0,/u/DPErny
 W0NY,w0ny,
 W0ODJ,,/u/WoodJRx
+W0OFN,,/u/W0OFN
 W1EUJ,,/u/W1EUJ
 W1GIV,,/u/W1GIV
 W1PAC,,/u/autistic_psycho
@@ -523,6 +538,7 @@ W8TAM,w8tam,/u/tamitall
 W9CR,,/u/W9CR
 W9GIL,,/u/w9gil
 W9KM,W9KM`,/u/w9km
+W9RDC,,/u/Geek_Verve
 WA1DEC,,/u/WA1DEC
 WA1TE,WA1TE,/u/MyrddinWylit
 WA1VTA,,/u/wa1vta
