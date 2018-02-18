@@ -34,7 +34,7 @@ my %results;
 # load nicks
 my $nickfile = "$ENV{'HOME'}/.nicks.csv";
 $nickfile = dirname(realpath(__FILE__)) . "/nicks.csv" if (! -e $nickfile);
-my @headers;
+my @headers; 	# keep headers for when we rewrite the nicks.csv file.
 if (-e $nickfile) {
   open (NICKFILE, "<", $nickfile);
   while (<NICKFILE>) {
@@ -111,25 +111,8 @@ foreach my $baseurl (@baseurls) {
 }
 
 foreach my $k (keys %results) {
-  next if $k eq "R0WLA";	# these look like callsigns, but are not.
-  next if $k eq "RV49ER";
-  next if $k eq "T90FAN";
-  next if $k eq "L33TGOY";
-  next if $k eq "K24G";
-  next if $k eq "DN3T";
-  next if $k eq "FO0BAT";
-  next if $k eq "FX34ME";
-  next if $k eq "JN75OT";  # is grid, not a callsign
-  next if $k eq "4N6KID";
-  next if $k eq "CR500GUY";
-  next if $k eq "EM00GUY";
-  next if $k eq "F3REAL";
-  next if $k eq "MR2FAN";
-  next if $k eq "R08SHAW";
-  next if $k eq "R0LFO";
-  next if $k eq "RJ45JACK";
-  next if $k eq "S1EDOG";
-  next if $k eq "T1PHIL";
+  next if $k eq "4N6KID";	# these look like callsigns, but are not.
+  next if $k eq "A1AMAN";
   next if $k eq "AC316SCU";
   next if $k eq "AM3ON";
   next if $k eq "AR3N";
@@ -141,15 +124,25 @@ foreach my $k (keys %results) {
   next if $k eq "CH00F";
   next if $k eq "CH4QA";
   next if $k eq "CR0CKER";
+  next if $k eq "CR500GUY";
   next if $k eq "D3JAKE";
+  next if $k eq "DN3T";
   next if $k eq "DV82XL";
+  next if $k eq "EM00GUY";
+  next if $k eq "F3REAL";
+  next if $k eq "FO0BAT";
+  next if $k eq "FX34ME";
   next if $k eq "G0JIRA";
   next if $k eq "H6DTR";
   next if $k eq "HA1156W";
   next if $k eq "J1986EG";
   next if $k eq "JK3US";
+  next if $k eq "JN75OT";  # is grid, not a callsign
+  next if $k eq "K24G";
   next if $k eq "L2NP";
+  next if $k eq "L33TGOY";
   next if $k eq "M0LE";
+  next if $k eq "MR2FAN";
   next if $k eq "OS2REXX";
   next if $k eq "P42O";
   next if $k eq "P4NTZ";
@@ -157,11 +150,19 @@ foreach my $k (keys %results) {
   next if $k eq "PE5ER";
   next if $k eq "PH00P";
   next if $k eq "Q00P";
+  next if $k eq "R08SHAW";
+  next if $k eq "R0LFO";
+  next if $k eq "R0WLA";
+  next if $k eq "RJ45JACK";
+  next if $k eq "RV49ER";
   next if $k eq "S0LAR";
+  next if $k eq "S1EDOG";
   next if $k eq "SG92I";
   next if $k eq "SK4P";
   next if $k eq "ST33P";
+  next if $k eq "T1PHIL";
   next if $k eq "T3H";
+  next if $k eq "T90FAN";
   next if $k eq "TV8TONY";
   next if $k eq "V1CTOR";
   next if $k eq "V8FTW";
@@ -170,7 +171,6 @@ foreach my $k (keys %results) {
   next if $k eq "W33DAR";
   next if $k eq "XG33KX";
   next if $k eq "Z3US";
-  next if $k eq "A1AMAN";
 
   next if $k eq "";
 
