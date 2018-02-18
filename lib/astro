@@ -308,7 +308,7 @@ sub degredation {
   }
 
   # t144=nt144(longecl_half)
-  my $t144 = $nt144[$longecl_half];
+  my $t144 = $nt144[$longecl_half - 1];
 
   # tsky=(t144-2.7)*(144.0d6/freq8)**2.6 + 2.7      !Tsky for obs freq
   my $tsky = ($t144 - 2.7) * (144.0 / $freq) ** 2.6 + 2.7;
