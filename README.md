@@ -74,7 +74,7 @@ needed.
 ## TODO
 
 1. Clean up and modularize TCL scripts
-2. Add TCL scripts
+2. ~~Add TCL scripts~~
 3. Document how to use and configure TCL scripts
 4. Clarify this week/next week for `contests`
 5. Accept other formats for `!setgeo`
