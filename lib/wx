@@ -230,17 +230,21 @@ if ($full == 1) {
   print " Visibility: $rec{'visibility_km'}km/$rec{'visibility_mi'}mi\n" unless $rec{'visibility_km'} eq "" or $rec{'visibility_km'} eq "N/A";
 }
 
-#short
-my $wind;
-if ($rec{'wind_mph'} == 0) {
-  $wind = "calm";
+if ($rec{'wind_mph'} == -9999) {
+  print " Wind: no data ";
 } else {
-  #$wind = "at $rec{'wind_mph'}mph/$rec{'wind_kph'}kph";
-  $wind = "at $rec{'wind_kph'}kph/$rec{'wind_mph'}mph";
-}
-print " Wind: $rec{'wind_dir'} $wind ";
+  #short
+  my $wind;
+  if ($rec{'wind_mph'} == 0) {
+    $wind = "calm";
+  } else {
+    #$wind = "at $rec{'wind_mph'}mph/$rec{'wind_kph'}kph";
+    $wind = "at $rec{'wind_kph'}kph/$rec{'wind_mph'}mph";
+  }
+  print " Wind: $rec{'wind_dir'} $wind ";
 
-print "(gust $rec{'wind_gust_kph'}kph/$rec{'wind_gust_mph'}mph) " unless $rec{'wind_gust_mph'} == 0 or $rec{'wind_gust_mph'} eq "NA";
+  print "(gust $rec{'wind_gust_kph'}kph/$rec{'wind_gust_mph'}mph) " unless $rec{'wind_gust_mph'} == 0 or $rec{'wind_gust_mph'} eq "NA";
+}
 
 #full
 print " Pressure: $rec{'pressure_mb'}mb/$rec{'pressure_in'}inHg ($pressure_trend)" if ($full == 1 and $rec{'pressure_in'} ne "");
