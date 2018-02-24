@@ -80,4 +80,5 @@ needed.
 5. Accept other formats for `!setgeo`
 6. Use geo grid for `!activity`
 7. Cleanup needed in `qrz` script
+8. Add a preferred wx station in addition to `!setgeo` geo coords
 
