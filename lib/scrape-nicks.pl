@@ -69,10 +69,13 @@ foreach my $baseurl (@baseurls) {
     binmode(HTTP, ":utf8");
     while(<HTTP>) {
     #  print STDERR "$_\n";
-      @_ = split ", ";
+      $_ =~ s/{/{\n/g;
+      $_ =~ s/", "/"\n"/g;
+      $_ =~ s/(\d|true|false|null), /$1\n/g;
+      @_ = split "\n";
       foreach my $e (@_) {
     #    print STDERR "$e\n";
-	if ($e =~ /"(\w+)": (null|"[^"]+")/) {
+	if ($e =~ /"(\w+)": (-?[\d.]+|null|true|false|".+"$)/) {
 	  my ($k, $v) = ($1, $2);
 	  $v =~ s/^"(.*)"$/$1/;
     #      print STDERR "$k => $v\n";
