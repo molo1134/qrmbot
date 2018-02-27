@@ -56,8 +56,8 @@ foreach my $baseurl (@baseurls) {
   my $after = undef;
 
   # number of pages to traverse
-  my $count = 5;
-  $count = 10 if $url =~ /comments/;
+  my $count = 10;
+  $count = 20 if $url =~ /comments/;
 
   for ( ; $count > 0; $count--) {
 
