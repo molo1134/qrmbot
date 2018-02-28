@@ -260,7 +260,13 @@ sub doDXWatch
     27 => "throb",
     28 => "olivia",
     29 => "contestia",
-    30 => "?"};
+    30 => "psk63",
+    31 => "psk125",
+    32 => "jt9",
+    33 => "opera",
+    34 => "ft8",
+    35 => "?",
+    };
   my %modes = %$modes_ref;
 
   my $csv = Text::CSV->new({ sep_char => ',' });
