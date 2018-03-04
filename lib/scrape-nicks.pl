@@ -144,6 +144,7 @@ foreach my $k (keys %results) {
   next if $k eq "K24G";
   next if $k eq "L2NP";
   next if $k eq "L33TGOY";
+  next if $k eq "M01E";
   next if $k eq "M0LE";
   next if $k eq "MR2FAN";
   next if $k eq "N00F";
