@@ -172,6 +172,7 @@ foreach my $k (keys %results) {
   next if $k eq "V1CTOR";
   next if $k eq "V3KI";
   next if $k eq "V8FTW";
+  next if $k eq "VT2NC";
   next if $k eq "W00TAH";
   next if $k eq "W0153R";
   next if $k eq "W33DAR";
