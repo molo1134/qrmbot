@@ -8,6 +8,7 @@
 use strict;
 use utf8;
 use feature 'unicode_strings';
+use List::Util 'any';
 binmode(STDOUT, ":utf8");
 
 use Cwd 'realpath';
@@ -33,6 +34,28 @@ foreach my $subreddit (@subreddits) {
 
 our %nicks;
 our %results;
+our @blacklist = (
+  # these look like callsigns, but are not.
+  "0X03F", "4N6KID", "6L6GC", "7K60FXD", "9N388GV", "A11EN", "A1AMAN", "A31XX",
+  "A5MYTH", "A66AUTO", "AC316SCU", "AJ308WIN", "AM3ON", "AR0B", "AR3N", "AX0N",
+  "B0073D", "B0BITH", "B0ZZ", "B3TAL", "B4Q", "B5GEEK", "B95CSF", "BA0TH",
+  "BE2VT", "C41N", "CH00F", "CH3X", "CH4QA", "CN89LA", "CP4R", "CQ2QC",
+  "CR0CKER", "CR500GUY", "D03BOY", "D333D", "D3JAKE", "DC12V", "DE3L",
+  "DH1021X", "DI0DEX", "DI1UTED", "DN3T", "DT2G", "DV82XL", "EF3S", "EM00GUY",
+  "EN82JJ", "F15SIM", "F1699BBS", "F3REAL", "FB0M", "FF0000IT", "FO0BAT",
+  "FR3QQ", "FX34ME", "G00PIX", "G0JIRA", "GO3TEAM", "GR0TESK", "H3LIX",
+  "H6DTR", "HA1156W", "HB3B", "HE3RD", "IG88J", "J1986EG", "JA450N", "JH0N",
+  "JK3US", "JN75OT", "K1DOWN", "K240DF", "K24G", "L0RAN", "L10L", "L2NP",
+  "L33R", "L33TGOY", "L3STAN", "M00DAWG", "M01E", "M05Y", "M0LE", "M101X",
+  "M3US", "MD5SUMO", "MK2JA", "MR2FAN", "MS4SMAN", "N00F", "N00MIN", "N00TZ",
+  "N221UA", "N5CORP", "N71FS", "N734LQ", "N7E", "NY3JRON", "OP00TO", "OS2REXX",
+  "OZ0SH", "P0RKS", "P1MRX", "P3PPR", "P42O", "P4DDY", "P4NTZ", "P8M", "P9K",
+  "PE5ER", "PH00P", "PI4ATE", "PL8ER", "PR0TEAN", "Q00P", "R08SHAW", "R08ZY",
+  "R0LFO", "R0WLA", "RJ45JACK", "RJ61X", "RV49ER", "S0LAR", "S1EDOG", "SC04AT",
+  "SG92I", "SH0NUFF", "SK00MA", "SK4P", "SL3RM", "SP00NIX", "ST33P", "T0PSKI",
+  "T1PHIL", "T3H", "T90FAN", "TH4AB", "TS830S", "TV8TONY", "UP2LATE", "V1CTOR",
+  "V3KI", "V3NGI", "V4LSYL", "V8FTW", "VT2NC", "W00TAH", "W0153R", "W33DAR",
+  "X4B", "XG33KX", "Y2KAI", "Z33RO", "Z3MATT", "Z3US", "ZE1DA");
 
 # load nicks
 our $nickfile = "$ENV{'HOME'}/.nicks.csv";
@@ -113,92 +136,15 @@ foreach my $baseurl (@baseurls) {
 }
 
 sub updatenicks {
-
   our %results;
   our %nicks;
   our $nickfile;
   our @headers;
+  our @blacklist;
 
   foreach my $k (keys %results) {
-    next if $k eq "4N6KID";	# these look like callsigns, but are not.
-    next if $k eq "A1AMAN";
-    next if $k eq "A31XX";
-    next if $k eq "AC316SCU";
-    next if $k eq "AM3ON";
-    next if $k eq "AR3N";
-    next if $k eq "B0073D";
-    next if $k eq "B0ZZ";
-    next if $k eq "B3TAL";
-    next if $k eq "B4Q";
-    next if $k eq "B95CSF";
-    next if $k eq "CH00F";
-    next if $k eq "CH4QA";
-    next if $k eq "CR0CKER";
-    next if $k eq "CR500GUY";
-    next if $k eq "D3JAKE";
-    next if $k eq "DN3T";
-    next if $k eq "DV82XL";
-    next if $k eq "EM00GUY";
-    next if $k eq "F3REAL";
-    next if $k eq "FO0BAT";
-    next if $k eq "FX34ME";
-    next if $k eq "G0JIRA";
-    next if $k eq "H6DTR";
-    next if $k eq "HA1156W";
-    next if $k eq "J1986EG";
-    next if $k eq "JA450N";
-    next if $k eq "JK3US";
-    next if $k eq "JN75OT";  # is grid, not a callsign
-    next if $k eq "K24G";
-    next if $k eq "L0RAN";
-    next if $k eq "L2NP";
-    next if $k eq "L33TGOY";
-    next if $k eq "M00DAWG";
-    next if $k eq "M01E";
-    next if $k eq "M0LE";
-    next if $k eq "M3US";
-    next if $k eq "MR2FAN";
-    next if $k eq "N00F";
-    next if $k eq "N221UA";   # tail number?
-    next if $k eq "N71FS";    # tail number?
-    next if $k eq "OS2REXX";
-    next if $k eq "P42O";
-    next if $k eq "P4DDY";
-    next if $k eq "P4NTZ";
-    next if $k eq "P9K";
-    next if $k eq "PE5ER";
-    next if $k eq "PH00P";
-    next if $k eq "PI4ATE";
-    next if $k eq "PL8ER";
-    next if $k eq "Q00P";
-    next if $k eq "R08SHAW";
-    next if $k eq "R0LFO";
-    next if $k eq "R0WLA";
-    next if $k eq "RJ45JACK";
-    next if $k eq "RV49ER";
-    next if $k eq "S0LAR";
-    next if $k eq "S1EDOG";
-    next if $k eq "SG92I";
-    next if $k eq "SK4P";
-    next if $k eq "SL3RM";
-    next if $k eq "ST33P";
-    next if $k eq "T1PHIL";
-    next if $k eq "T3H";
-    next if $k eq "T90FAN";
-    next if $k eq "TV8TONY";
-    next if $k eq "V1CTOR";
-    next if $k eq "V3KI";
-    next if $k eq "V4LSYL";
-    next if $k eq "V8FTW";
-    next if $k eq "VT2NC";
-    next if $k eq "W00TAH";
-    next if $k eq "W0153R";
-    next if $k eq "W33DAR";
-    next if $k eq "XG33KX";
-    next if $k eq "Z3US";
-    next if $k eq "ZE1DA";
-
     next if $k eq "";
+    next if any { /^$k$/i } @blacklist;
 
     if (defined $nicks{$k}) {
       my ($call, $ircnick, undef) = split (/,/, $nicks{$k});
@@ -217,5 +163,4 @@ sub updatenicks {
     print NICKFILE "$nicks{$k}\n";
   }
   close(NICKFILE);
-
 }
