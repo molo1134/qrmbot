@@ -74,9 +74,9 @@ AB3JU,,/u/ab3ju
 AB3LS,,/u/liltechdude
 AB3RU,,/u/LordHector
 AB3RW,,/u/ab3rw
+AB3U,,/u/bearda
 AB3UR,,/u/the2belo
 AB3US,,/u/chssmsterwnook
-AB3U,,/u/bearda
 AB3WX,,/u/7h3l3g1zzl3
 AB3YH,,/u/AB3YH
 AB3YP,,/u/AB3YP
@@ -337,7 +337,6 @@ K1MIZ,,/u/K1MiZ
 K1NOT,,/u/chrismetcalf
 K1NRO,,/u/K1NRO
 K1NZ,K1NZ,/u/nickenzi
-K1NZ,,/u/nickenzi
 K1PPL,,/u/Pplude
 K1PPP,,/u/K1PPP
 K1RID,,/u/eridolfi
@@ -448,7 +447,6 @@ K5PO,,/u/K5PO
 K5STM,,/u/vashtyler
 K5SYN,,/u/SynMonger
 K5TMT,K5TMT,/u/sa513
-K5TMT,,/u/sa513
 K5UNX,,/u/k5unx
 K5URU,K5URU,/u/K5URU
 K5VLA,,/u/travelinmatt76
@@ -770,13 +768,13 @@ KC2SQI,,/u/KC2SQI
 KC2SST,,/u/Chucklz
 KC2SYK,,/u/kc2syk
 KC2TCK,,/u/tommasz
-KC2VIC,KC2VIC,/u/KC2VIC
 KC2TCQ,,/u/munterhitch
 KC2TTI,,/u/johnjay
 KC2TXO,,/u/erk71
 KC2UEZ,,/u/r00t69
 KC2UGV,,/u/PSkeptic
 KC2ULR,,/u/KC2ULR
+KC2VIC,KC2VIC,/u/KC2VIC
 KC2VON,,/u/tonynaia
 KC2VSP,,/u/YamBagSupreme
 KC2VVD,,/u/berticus
@@ -857,8 +855,8 @@ KC5UZD,,/u/kc5uzd
 KC6FYL,,/u/passthejoe
 KC7AAD,,/u/kc7aad
 KC7BEY,,/u/KC7BEY
-KC7IPY,,/u/azlyle
 KC7I,,/u/kc7i
+KC7IPY,,/u/azlyle
 KC7MEY,,/u/kc7mey
 KC7NEC,,/u/newbergman
 KC7SQK,,/u/nsandver
@@ -878,8 +876,7 @@ KC8UWJ,,/u/kc8uwj
 KC8YRV,,/u/nathanm412
 KC9ATJ,,/u/Kc9atj
 KC9BWP,,/u/KC9BWP
-KC9CHL,KC9CHL,
-KC9CHL,,/u/greenguy1090
+KC9CHL,KC9CHL,/u/greenguy1090
 KC9CTK,,/u/bbene
 KC9CUK,,/u/kc9cuk
 KC9DAE,,/u/dickbuttzz
@@ -1107,7 +1104,6 @@ KD6JSP,,/u/tejano714
 KD6ZJZ,,/u/kd6zjz
 KD7ALJ,,/u/bravenewgirl85
 KD7BBC,HamStudy_org,/u/taxilian
-KD7BBC,,/u/taxilian
 KD7CTV,,/u/yamiinterested
 KD7DEY,KD7DEY,/u/monkey1911
 KD7DMP,,/u/KD7DMP
@@ -1172,7 +1168,7 @@ KD8TMY,,/u/baloony
 KD8TUL,,/u/kd8tul
 KD8TVG,,/u/screamingnaked
 KD8TWG,kd8twg,/u/awyeah2
-KD8TWG,,/u/kd8twg
+KD8TWG,kd8twg,/u/kd8twg
 KD8VEN,,/u/arcook
 KD8VIW,,/u/thejustchad
 KD8VNB,,/u/yoshamano
@@ -1196,12 +1192,13 @@ KD8ZQY,,/u/lol_sup
 KD8ZUW,,/u/KD8ZUW
 KD8ZYB,,/u/Kallahan11
 KD8ZZT,,/u/scarter626
+KD9A,,/u/Sycho123321
 KD9ADV,,/u/m0j0j0_j0
 KD9AHU,,/u/rlankenau
 KD9AIH,,/u/43577
 KD9AQR,,/u/majikchicken
 KD9AUS,,/u/andrewbadera
-KD9A,,/u/Sycho123321
+KD9B,,/u/Himrin
 KD9BDG,,/u/bobbyj_chard
 KD9BFS,,/u/KD9BFS
 KD9BFS,,/u/tannimkyraxx
@@ -1210,7 +1207,6 @@ KD9BMY,,/u/kiwiapple87
 KD9BRP,,/u/KD9BRP
 KD9BTK,,/u/Do_Work_Son
 KD9BTR,,/u/KD9BTR
-KD9B,,/u/Himrin
 KD9BUP,,/u/jcps
 KD9BYX,,/u/fred_lowe
 KD9CER,,/u/kd9cer
@@ -1348,8 +1344,8 @@ KE4ZNR,,/u/KE4ZNR
 KE5ASZ,,/u/pmkleinp
 KE5CPU,,/u/MericanCheese
 KE5DPF,,/u/troyemcintosh
-KE5EOT,,/u/KE5EOT
 KE5EO,,/u/sasimpson
+KE5EOT,,/u/KE5EOT
 KE5HGQ,,/u/chuckpo
 KE5HHG,,/u/mkosmo
 KE5IKC,,/u/ke5ikc
@@ -2334,8 +2330,8 @@ N1MIS,,/u/tuoder
 N1NJT,,/u/CaptainNJT
 N1PSX,,/u/n1psx
 N1REU,,/u/excludingpauli
-N1TAA,,/u/FriendlyITGuy
 N1TA,,/u/mike_n1ta
+N1TAA,,/u/FriendlyITGuy
 N1TUX,,/u/poltergiest
 N1WG,,/u/poo_finger
 N1WKO,,/u/n1wko
@@ -2474,7 +2470,7 @@ N6RJX,,/u/DSelling
 N7ACM,,/u/AySeeEm
 N7AHE,,/u/N7AHE
 N7AJF,N7AJF,/u/goldman60
-N7AJF,,/u/work-account2
+N7AJF,N7AJF,/u/work-account2
 N7HPO,,/u/N7HPO
 N7HPR,,/u/n7hpr
 N7ICE,,/u/chrismatthieu
@@ -2681,8 +2677,7 @@ SP5MKL,,/u/Mchlpl
 SP7Q,,/u/sp7q
 SP9AB,,/u/andyb7
 SQ3PHA,,/u/Makdaam
-SQ3SWF,SQ3SWF,
-SQ3SWF,,/u/olgierd
+SQ3SWF,SQ3SWF,/u/olgierd
 SQ6TIF,,/u/dokch
 SQ9ONH,,/u/TheGuyFromNowhere
 SV1UY,,/u/sv1uy
@@ -2753,7 +2748,6 @@ VA7ZAT,,/u/dconzatti
 VE1CEN,ve1cen,
 VE1DRU,,/u/m0se5
 VE1FE,,/u/threemilesfinal
-VE1LX ADV,,/u/LordGarak
 VE1LX,,/u/LordGarak
 VE1MDO,,/u/VE1MDO
 VE1NCZ,,/u/Silverb0lte
@@ -3080,8 +3074,8 @@ W8JVB,,/u/chesticleez
 W8RDF,,/u/MemeLovingLoser
 W8SFC,,/u/w8sfc
 W8SIG,,/u/SigurthrEnterprises
-W8TAM,,/u/w8tam
 W8TAM,w8tam,/u/tamitall
+W8TAM,w8tam,/u/w8tam
 W8TDS,,/u/thrivestorm
 W8XDR,,/u/w8xdr
 W8ZZW,,/u/ThePolish
@@ -3171,7 +3165,7 @@ WD8IAN,,/u/ferretboy87
 WD9GET,,/u/Galen_of_Ockham
 WE1MD,,/u/billybobwillyt
 WE1OSU,,/u/Maarek_Elets
-WE4SEL,,/u/kg5jvf
+WE4SEL,WE4SEL,/u/kg5jvf
 WE4SEL,WE4SEL,/u/we4sel
 WE4X,,/u/WE4X
 WF3Y,WF3Y,
