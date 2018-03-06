@@ -23,9 +23,9 @@ my $sleep = 1;
 my @baseurls;
 foreach my $subreddit (@subreddits) {
   push @baseurls, "https://www.reddit.com/r/${subreddit}/new/.json";
-  push @baseurls, "https://www.reddit.com/r/${subreddit}/top/.json";
+  push @baseurls, "https://www.reddit.com/r/${subreddit}/comments/.json";
+#  push @baseurls, "https://www.reddit.com/r/${subreddit}/top/.json";
 #  push @baseurls, "https://www.reddit.com/r/${subreddit}/gilded/.json";
-#  push @baseurls, "https://www.reddit.com/r/${subreddit}/comments/.json";
 #  push @baseurls, "https://www.reddit.com/r/${subreddit}/controversial/.json";
 }
 #push @baseurls, "https://www.reddit.com/user/molo1134/m/hamradiomulti/new/.json";
