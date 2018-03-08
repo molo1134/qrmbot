@@ -14,7 +14,7 @@ binmode(STDOUT, ":utf8");
 use Cwd 'realpath';
 use File::Basename;
 
-my @subreddits = ("hamradio", "amateurradio");
+my @subreddits = ("amateurradio", "hamradio");
 
 #my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0";
 my $useragent = "foo";
@@ -112,18 +112,29 @@ foreach my $baseurl (@baseurls) {
 	    if ($u =~ /^\d?[a-z]{1,2}[0-9Øø]{1,4}[a-z]{1,4}$/i) {
 	      # username is callsign
 	      $c = uc $u;
-	      #print "inserting: $c $u\n";
-	      $results{$c} = $u;
+	      $c =~ s/[Øø]/0/g;
 	    }
 	  } elsif ($k eq "author_flair_text") {
 	    $f = $v;
 	    ($c, undef) = split(" ", $f);
-	    next if $c =~ /^[A-R]{2}[0-9]{2}([a-x]{2})?$/; # grid
+	    if ($c =~ /^[A-R]{2}[0-9]{2}([a-x]{2})?$/) { # grid
+	      $c = undef;
+	      next;
+	    }
 	    if ($c =~ /^\d?[a-z]{1,2}[0-9Øø]{1,4}[a-z]{1,4}$/i) {
-	      #print "inserting: $c $u\n";
 	      $c = uc $c;
+	      $c =~ s/[Øø]/0/g;
+	    } else {
+	      $c = undef;
+	    }
+	  } elsif ($k eq "kind") {
+	    # moving on to new entry
+	    if (defined $c and defined $u) {
+	      #print STDERR "inserting: $c $u\n";
 	      $results{$c} = $u;
 	    }
+	    $u = undef;
+	    $c = undef;
 	  }
 	}
       }
