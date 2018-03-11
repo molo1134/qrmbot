@@ -14,7 +14,6 @@ use Math::Trig 'great_circle_distance';
 use Math::Trig 'great_circle_bearing';
 use URI::Escape;
 
-
 sub gridToCoord {
   my $gridstr = shift;
 
@@ -98,7 +97,7 @@ sub qthToCoords {
     if (/OVER_QUERY_LIMIT/) {
       print "warning: over query limit\n";
       close(HTTP);
-      exit $exitnonzeroonerror if $tries > 3;
+      exit $::exitnonzeroonerror if $tries > 3;
       goto RESTART;
     }
     if (/<lat>([+-]?\d+.\d+)<\/lat>/) {
@@ -145,7 +144,7 @@ sub geolocate {
     if (/OVER_QUERY_LIMIT/) {
       print "warning: over query limit\n" unless defined($raw) and $raw == 1;
       close(HTTP);
-      exit $exitnonzeroonerror if $tries > 3;
+      exit $::exitnonzeroonerror if $tries > 3;
       goto RESTART;
     }
 
@@ -225,7 +224,7 @@ sub argToCoords {
     my $ret = qthToCoords($arg);
     if (!defined($ret)) {
       #print "'$arg' not found.\n";
-      #exit $exitnonzeroonerror;
+      #exit $::exitnonzeroonerror;
       return undef;
     }
     ($lat, $lon) = split(',', $ret);

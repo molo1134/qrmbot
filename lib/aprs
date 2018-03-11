@@ -20,6 +20,10 @@ use lib dirname(realpath(__FILE__));
 use Colors;
 use Location;
 
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq 'eggdrop') {
@@ -27,8 +31,8 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   } else {
     print "usage: $0 <callsign or object>\n";
   }
-  exit 0;
-}
+  exit $exitnonzeroonerror;
+
 
 our $apikey = undef;
 my $apikeyfile = $ENV{'HOME'} . "/.aprs.fi";
@@ -64,7 +68,7 @@ getvals($url, \%vals);
 
 if (defined $vals{found} and $vals{found} != 1) {
   print "not found: $targetcall\n";
-  exit 0;
+  exit $exitnonzeroonerror;
 }
 
 if ($vals{type} eq "w") {

@@ -56,7 +56,7 @@ my %aliases = (
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
-my $exitnonzeroonerror = 1;
+our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {

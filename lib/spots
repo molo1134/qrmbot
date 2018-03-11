@@ -21,7 +21,7 @@ use Location;
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # configuration
-my $exitnonzeroonerror = 1;
+our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
 my $timestampfile = $ENV{'HOME'}.'/.spottimestamps';
