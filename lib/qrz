@@ -521,8 +521,8 @@ sub getAndParseData {
       $country = $1;
       #next;
     }
-    if ($calldata and /span class="csgnl[^"]*">,?\s*([A-Z0-9]+)</ ) {
-      $retcall = $1;
+    if ($calldata and /span class="(csgnl|csignm)[^"]*">,?\s*([A-Z0-9\/]+)</ ) {
+      $retcall = $2;
       #next;
     }
     if (/Login is required for additional detail./) {
