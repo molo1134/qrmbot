@@ -56,7 +56,7 @@ our @blacklist = (
   "T1PHIL", "T3H", "T90FAN", "TH4AB", "TS830S", "TV8TONY", "UP2LATE", "V1CTOR",
   "V3KI", "V3NGI", "V4LSYL", "V8FTW", "VT2NC", "W00TAH", "W0153R", "W33DAR",
   "X4B", "XG33KX", "Y2KAI", "Z33RO", "Z3MATT", "Z3US", "ZE1DA",
-  "JH23DF", "K67FDE", "N546RV", "N983CC", "W09U");
+  "JH23DF", "K67FDE", "N546RV", "N983CC", "W09U", "CN85PQ");
 
 # load nicks
 our $nickfile = "$ENV{'HOME'}/.nicks.csv";
@@ -156,7 +156,10 @@ sub updatenicks {
 
   foreach my $k (keys %results) {
     next if $k eq "";
-    next if any { /^$k$/i } @blacklist;
+    if (any { /^$k$/i } @blacklist) {
+      delete $nicks{$k};
+      next;
+    }
 
     if (defined $nicks{$k}) {
       my ($call, $ircnick, undef) = split (/,/, $nicks{$k});
