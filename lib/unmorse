@@ -9,6 +9,11 @@ my %unmorse;
 
 my $lang = "intl";
 
+# eggdrop doesn't split args on spaces
+my $args = join(' ', @ARGV);
+$args =~ s/   / \/ /g;
+@ARGV=split(' ', $args);
+
 my @ARGS;
 my $i = 0;
 while ($i <= $#ARGV) {
@@ -308,11 +313,6 @@ if ($lang eq "japanese") {
   $unmorse{"-----"} = "0";
 }
 
-
-# eggdrop doesn't split args on spaces
-my $args = join(' ', @ARGS);
-$args =~ s/   / \/ /g;
-@ARGS=split(' ', $args);
 
 my $target;
 while ($target = shift(@ARGS)) {
