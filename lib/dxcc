@@ -53,8 +53,12 @@ if ( ! -e $ctydat ) {
   $needCTY = 1;
 } else {
   my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $mostwantedfile;
-  my $age = $now - $mtime;
-  if ($age > $maxage or $size == 0) {
+  if (defined $mtime) {
+    my $age = $now - $mtime;
+    if ($age > $maxage or $size == 0) {
+      $needCTY = 1;
+    }
+  } else {
     $needCTY = 1;
   }
 }
@@ -143,8 +147,12 @@ if ( ! -e $mostwantedfile ) {
 } else {
   my $now = time;
   my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $mostwantedfile;
-  my $age = $now - $mtime;
-  if ($age > $maxage or $size == 0) {
+  if (defined $mtime) {
+    my $age = $now - $mtime;
+    if ($age > $maxage or $size == 0) {
+      $needMW = 1;
+    }
+  } else {
     $needMW = 1;
   }
 }
@@ -264,7 +272,7 @@ sub scrapeMW {
       my @rows = split /<tr>/i;
       foreach my $row (@rows) {
 	#print "$row\n";
-	if ($row =~ /<td>([0-9]+)\.<\/td><td>([^<]+)<\/td><td><a href='mostwanted2.php\?dxcc=[0-9]+'>([^<]+)<\/a><\/td><\/tr>/i) {
+	if ($row =~ /<td>([0-9]+)\.<\/td><td>([^<]+)<\/td><td><a href='mostwanted2.php\?dxcc=[0-9]+'>([^<]+)<\/a>.*?<\/tr>/i) {
 	  my ($rank, $prefix, $name) = ($1, $2, $3);
 	  print MWFILE "$rank,$prefix,$name\n";
 	}
