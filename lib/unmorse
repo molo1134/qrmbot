@@ -311,6 +311,9 @@ if ($lang eq "japanese") {
   $unmorse{"---.."} = "8";
   $unmorse{"----."} = "9";
   $unmorse{"-----"} = "0";
+
+  $unmorse{"-..---"} = "{DO}";
+  $unmorse{"...-."} = "{SN}";
 }
 
 
