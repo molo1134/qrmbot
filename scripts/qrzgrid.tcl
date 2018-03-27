@@ -887,7 +887,7 @@ proc unmorse_pub { nick host hand chan text } {
 	catch {exec ${unmorsebin} ${msg}} data
 	set output [split $data "\n"]
 	foreach line $output {
-		putchan $chan "$line"
+		putchan $chan [encoding convertto utf-8 "$line"]
 	}
 }
 proc unmorse_msg {nick uhand handle input} {
@@ -897,7 +897,7 @@ proc unmorse_msg {nick uhand handle input} {
 	catch {exec ${unmorsebin} ${msg}} data
 	set output [split $data "\n"]
 	foreach line $output {
-		putmsg $nick "$line"
+		putmsg $nick [encoding convertto utf-8 "$line"]
 	}
 }
 
