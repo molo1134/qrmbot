@@ -242,6 +242,8 @@ my $ionogramFile = "/tmp/ionogram.${mid}.png";
 
 system "curl -s -k --max-time 4 --retry 1 \"${ionogramUrl}\" -o ${ionogramFile}";
 
+die "unable to retrieve $ionogramUrl" if (! -e ${ionogramFile});
+
 my $muf = undef;
 my $ocrdbpath = $ENV{'HOME'}. "/.ionosonde.db/";
 
@@ -270,5 +272,7 @@ close GOCR;
 
 $mon = sprintf("%02u", $mon);
 $mday = sprintf("%02u", $mday);
+
+$muf = "ERROR" if (!defined($muf));
 
 print bold($station), " ($lat, $lon): MUF @ $year-$mon-$mday ${utc}z: ", bold("$muf MHz"), "\n";
