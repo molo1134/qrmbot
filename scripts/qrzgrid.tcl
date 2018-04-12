@@ -1121,7 +1121,12 @@ proc sat_pub { nick host hand chan text } {
 	}
 	set output [split $data "\n"]
 	foreach line $output {
-		putchan $chan [encoding convertto utf-8 "$line"]
+		# list via msg
+		if [string equal "list" $params] then {
+			putmsg $nick [encoding convertto utf-8 "$line"]
+		} else {
+			putchan $chan [encoding convertto utf-8 "$line"]
+		}
 	}
 }
 proc sat_msg {nick uhand handle input} {
