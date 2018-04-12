@@ -95,7 +95,7 @@ sub qthToCoords {
     #print;
     chomp;
     if (/OVER_QUERY_LIMIT/) {
-      print "warning: over query limit\n";
+      #print "warning: over query limit\n";
       close(HTTP);
       exit $::exitnonzeroonerror if $tries > 3;
       goto RESTART;
@@ -142,7 +142,7 @@ sub geolocate {
     chomp;
 
     if (/OVER_QUERY_LIMIT/) {
-      print "warning: over query limit\n" unless defined($raw) and $raw == 1;
+      #print "warning: over query limit\n" unless defined($raw) and $raw == 1;
       close(HTTP);
       exit $::exitnonzeroonerror if $tries > 3;
       goto RESTART;
