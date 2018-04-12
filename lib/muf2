@@ -15,8 +15,8 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
   if ($username eq 'eggdrop') {
     print "usage: !muf2 <station>  --or--  !muf2 list (use /msg)\n";
@@ -166,8 +166,10 @@ if (!defined $ursiCode or $place eq "list") {
       $station=~s/^([a-z])/\U$1\E/;
       #print "$code $station\n";
 
+      my $limit = 65;
+      $limit = 400 if $username eq "eggdrop";
       if (lc($place) eq "list") {
-	if (length $list > 400) {
+	if (length $list > $limit) {
 	  print "$list\n";
 	  $list = "";
 	}
@@ -185,7 +187,8 @@ if (!defined $ursiCode or $place eq "list") {
   my $stationMap = "Map: http://giro.uml.edu/img/giro-map.gif";
 
   if (lc($place) eq "list") {
-    print "$list-- $stationMap\n";
+    print "$list-- $stationMap\n" if $username eq "eggdrop";
+    print "$list\n$stationMap\n" if $username ne "eggdrop";
     exit 0;
   }
 
