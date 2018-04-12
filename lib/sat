@@ -179,7 +179,21 @@ foreach my $tle (@elements) {
 }
 
 if (lc($sat) eq "list") {
-  print join(" ", @sats), "\n";
+  my $list = join(" ", @sats);
+  my $frag = undef;
+  my $limit = 68;
+  $limit = 400 if $username eq "eggdrop";
+  do {
+    # line wrap
+    $frag = undef;
+    if (length $list > $limit) {
+      $list =~ s/^(.{$limit}.*?)\s(.*)$/$1/;
+      $frag = $2;
+      print $list, "\n";
+      $list = $frag;
+    }
+  } while defined ($frag);
+  print $list, "\n";
   exit 0;
 }
 
