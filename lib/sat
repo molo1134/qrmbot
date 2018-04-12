@@ -212,24 +212,25 @@ if ($#passes < 0) {
 }
 
 my $numpasses = 3;
+$numpasses = 100 if $username ne "eggdrop";
+my $first = 1;
 
 foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
   #print "\n";
   foreach my $event (@{$pass->{events}}) {
 
     if ($event->{event} eq "rise") {
-      print(bold($event->{body}->get('name')),
-	    " @",
-	    coordToGrid($lat, $lon),
-	    ": ")
-	if $numpasses == 3;
+      if ($first == 1) {
+	printf("%s @%s: ",
+	  bold($event->{body}->get('name')),
+	  coordToGrid($lat, $lon));
+	$first = 0;
+      }
       print "\n  " if $username ne "eggdrop";
       print green("AOS"),
 	    strftime(" %Y-%m-%d ", gmtime($event->{time})),
 	    bold(strftime("%H:%Mz", gmtime($event->{time}))),
-	    " az ",
-	    sprintf("%d", rad2deg($event->{azimuth})),
-	    "°; ";
+	    sprintf(" az %d°; ", rad2deg($event->{azimuth}));
     }
 
     if ($event->{event} eq "max") {
@@ -262,4 +263,5 @@ foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
     #}
   }
 }
+print "\n";
 
