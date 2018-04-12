@@ -89,6 +89,7 @@ while ($i <= $#ARGV) {
   $i++;
 }
 if ($query =~ /^(.+)\s+[0-9.-]+,[0-9.-]+/) {
+  # if both a text parameter and a geo coord, use the text (for irc)
   $query = $1;
 }
 #print "query: $query\n";
@@ -102,13 +103,15 @@ if (length($query) == 0 && $sat ne "list") {
 
 my ($lat, $lon) = (0, 0);
 
-my $geo = argToCoords($query);
-if (!defined($geo)) {
-  print "error: not found: $query\n";
-  exit $exitnonzeroonerror;
+if ($sat ne "list") {
+  my $geo = argToCoords($query);
+  if (!defined($geo)) {
+    print "error: not found: $query\n";
+    exit $exitnonzeroonerror;
+  }
+  ($lat, $lon) = split(',', $geo) if $query ne '';
+  #print ("$lat, $lon\n");
 }
-($lat, $lon) = split(',', $geo) if $query ne '';
-#print ("$lat, $lon\n");
 
 my $now = time();
 
