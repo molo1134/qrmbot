@@ -20,6 +20,7 @@ As tested on Debian:
 
 * `curl`
 * `gocr`
+* `netpbm`
 * `perl`
 * `perl-base`
 * `perl-modules`
