@@ -15,6 +15,8 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 
+my $timeout = 10;	# 10 seconds
+
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 
@@ -154,7 +156,7 @@ if (!defined $ursiCode and not $place eq "list") {
 
 if (!defined $ursiCode or $place eq "list") {
 
-  open (STATIONS, '-|', "curl -s -k --max-time 4 --retry 1 \"${stationUrl}\"");
+  open (STATIONS, '-|', "curl -s -k --max-time $timeout --retry 1 \"${stationUrl}\"");
   while (<STATIONS>) {
     if (/^<td.*">([A-Z0-9]+)<\/a><\/big>.*?<big>([^<]*)<\/big>/) {
       my $code = $1;
@@ -208,7 +210,7 @@ my $lat;
 my $lon;
 
 #print "$indexUrl\n";
-open (INDEX, '-|', "curl -s -k --max-time 4 --retry 1 \"${indexUrl}\"");
+open (INDEX, '-|', "curl -s -k --max-time $timeout --retry 1 \"${indexUrl}\"");
 while (<INDEX>) {
 #  print;
   chomp;
@@ -243,7 +245,7 @@ my $ionogramUrl = "https://lgdc.uml.edu/common/ShowIonogram?mid=${mid}";
 
 my $ionogramFile = "/tmp/ionogram.${mid}.png";
 
-system "curl -s -k --max-time 4 --retry 1 \"${ionogramUrl}\" -o ${ionogramFile}";
+system "curl -s -k --max-time $timeout --retry 1 \"${ionogramUrl}\" -o ${ionogramFile}";
 
 die "unable to retrieve $ionogramUrl" if (! -e ${ionogramFile});
 
