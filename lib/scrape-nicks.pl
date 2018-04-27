@@ -95,7 +95,7 @@ foreach my $baseurl (@baseurls) {
     while(<HTTP>) {
     #  print STDERR "$_\n";
       $_ =~ s/{/{\n/g;
-      $_ =~ s/", "/"\n"/g;
+      $_ =~ s/["\]],\s+"/"\n"/g;
       $_ =~ s/(\d|true|false|null), /$1\n/g;
       @_ = split "\n";
       foreach my $e (@_) {
