@@ -293,6 +293,7 @@ sub doDXWatch
       if (/This filter returned no spot/) {
 	last;
       }
+      next if $line =~ /^\s*$/;
       $line =~ /"(\d+)":\[(.*)\]/;
       #say $line;
       my $num = $1;
