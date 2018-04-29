@@ -385,7 +385,7 @@ sub getyearformonthday
 
 sub doHamspots
 {
-  my $baseurl = "http://hamspots.net/";
+  my $baseurl = "https://hamspots.net/";
   our $historyurl = $baseurl . "history";
   our $cookiefile = $ENV{'HOME'}."/.hamspotcookies";
 
