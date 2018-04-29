@@ -156,7 +156,7 @@ sub doPSKreporter
 
   # using IPv4 because I got greedy and got banned using ipv6.
 #  print "curl -4 --max-time 4 --retry 1 -s '$url'\n";
-  open (HTTP, '-|', "curl -4 -k --max-time 4 --retry 1 -s '$url'");
+  open (HTTP, '-|', "curl -L -4 -k --max-time 4 --retry 1 -s '$url'");
   while (<HTTP>) {
     chomp;
     if (/The storm clouds are gathering/) {
@@ -281,7 +281,7 @@ sub doDXWatch
   #open (HTTP, '-|', "cat rb-N7XM.json");
   #print "$url\n";
 #  print "curl -k --max-time 4 --retry 1 -s '$url'";
-  open (HTTP, '-|', "curl -k --max-time 4 --retry 1 -s '$url'");
+  open (HTTP, '-|', "curl -L -k --max-time 4 --retry 1 -s '$url'");
   while (<HTTP>) {
     s/},"fname".*$//;
     s/{"s":{//;
@@ -406,7 +406,7 @@ getHistory:
 #  open(HTTP, '-|', "wget --timeout=4 -t 1 -q -O - --keep-session-cookies " .
 #		    "--save-cookies $cookiefile --load-cookies $cookiefile " .
 #		    "'$historyurl'");
-  open(HTTP, '-|', "curl --max-time 4 --retry 1 -s --cookie-jar $cookiefile " .
+  open(HTTP, '-|', "curl -L --max-time 4 --retry 1 -s --cookie-jar $cookiefile " .
 	  "--cookie $cookiefile " .
 	  "--user-agent 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2718.0 Safari/537.36' " .
 	  "'$historyurl'");
@@ -444,7 +444,7 @@ getHistory:
   my %freqs = %$bands_ref;
 
   #print "get: $historyurl\n";
-  open(HTTP, '-|', "curl --max-time 4 -s --cookie-jar $cookiefile " .
+  open(HTTP, '-|', "curl -L --max-time 4 -s --cookie-jar $cookiefile " .
 	  "--cookie $cookiefile --referer $historyurl " .
 	  "--data 'a=call_data&hist_call_1=$callsign&submit_call=Search' " .
 	  "--user-agent 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2718.0 Safari/537.36' " .
@@ -537,7 +537,7 @@ sub doHamspotsLogin
 #    "--post-data " .
 #    "'loginCall=$login_callsign&loginPass=$login_password&a=login&p=history' " .
 #    "--save-cookies $cookiefile '$historyurl'");
-  open(HTTP, '-|', "curl --max-time 4 --retry 1 -s --cookie-jar $cookiefile " .
+  open(HTTP, '-|', "curl -L --max-time 4 --retry 1 -s --cookie-jar $cookiefile " .
 	  "--cookie $cookiefile " .
 	  "--data 'loginCall=$login_callsign&loginPass=$login_password&a=login&p=history&submit=Log+In' " .
 	  "--user-agent 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2718.0 Safari/537.36' " .
