@@ -110,10 +110,10 @@ foreach my $baseurl (@baseurls) {
 	    $after = $v;
 	  } elsif ($k eq "author") {
 	    $u = $v;
-	    if ($u =~ /^\d?[a-z]{1,2}[0-9Øø]{1,4}[a-z]{1,4}$/i) {
+	    if ($u =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
 	      # username is callsign
 	      $c = uc $u;
-	      $c =~ s/[Øø]/0/g;
+	      $c =~ s/[Øø∅]/0/g;
 	    }
 	  } elsif ($k eq "author_flair_text") {
 	    $f = $v;
@@ -125,9 +125,9 @@ foreach my $baseurl (@baseurls) {
 	      $c = undef;
 	      next;
 	    }
-	    if ($c =~ /^\d?[a-z]{1,2}[0-9Øø]{1,4}[a-z]{1,4}$/i) {
+	    if ($c =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
 	      $c = uc $c;
-	      $c =~ s/[Øø]/0/g;
+	      $c =~ s/[Øø∅]/0/g;
 	    } else {
 	      $c = undef;
 	    }
