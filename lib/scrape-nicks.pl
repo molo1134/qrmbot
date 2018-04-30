@@ -31,6 +31,7 @@ foreach my $subreddit (@subreddits) {
 }
 #push @baseurls, "https://www.reddit.com/user/molo1134/m/hamradiomulti/new/.json";
 #push @baseurls, "https://www.reddit.com/user/molo1134/m/hamradiomulti/comments/.json";
+#push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8fowrk/is_there_a_baofenglike_radio_but_for_hf/dy6fl6s/.json"
 
 our %nicks;
 our %results;
@@ -56,7 +57,7 @@ our @blacklist = (
   "T1PHIL", "T3H", "T90FAN", "TH4AB", "TS830S", "TV8TONY", "UP2LATE", "V1CTOR",
   "V3KI", "V3NGI", "V4LSYL", "V8FTW", "VT2NC", "W00TAH", "W0153R", "W33DAR",
   "X4B", "XG33KX", "Y2KAI", "Z33RO", "Z3MATT", "Z3US", "ZE1DA",
-  "JH23DF", "K67FDE", "N546RV", "N983CC", "W09U", "CN85PQ", "CN85PL");
+  "JH23DF", "K67FDE", "N546RV", "N983CC", "W09U", "CN85PQ", "CN85PL", "BG4LAW");
 
 # load nicks
 our $nickfile = "$ENV{'HOME'}/.nicks.csv";
@@ -116,7 +117,10 @@ foreach my $baseurl (@baseurls) {
 	    }
 	  } elsif ($k eq "author_flair_text") {
 	    $f = $v;
-	    ($c, undef) = split(" ", $f);
+	    next if $f eq "null";
+	    ($c, undef) = grep {$_ ne ''} split(/[\s\W]/, $f);
+	    next if not defined $c;
+	    #print "$c\n";
 	    if ($c =~ /^[A-R]{2}[0-9]{2}([a-x]{2})?$/) { # grid
 	      $c = undef;
 	      next;
@@ -130,8 +134,10 @@ foreach my $baseurl (@baseurls) {
 	  } elsif ($k eq "kind") {
 	    # moving on to new entry
 	    if (defined $c and defined $u) {
-	      #print STDERR "inserting: $c $u\n";
-	      $results{$c} = $u;
+	      if (not any { /^$c$/i } @blacklist) {
+		print STDERR "found: $c $u\n";
+		$results{$c} = $u;
+	      }
 	    }
 	    $u = undef;
 	    $c = undef;
