@@ -31,7 +31,8 @@ foreach my $subreddit (@subreddits) {
 }
 #push @baseurls, "https://www.reddit.com/user/molo1134/m/hamradiomulti/new/.json";
 #push @baseurls, "https://www.reddit.com/user/molo1134/m/hamradiomulti/comments/.json";
-#push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8fowrk/is_there_a_baofenglike_radio_but_for_hf/dy6fl6s/.json"
+#push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8fowrk/is_there_a_baofenglike_radio_but_for_hf/dy6fl6s/.json";
+#push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8fd9vb/its_not_much_but_its_mine_shack_edition/dy6mkg7/.json";
 
 our %nicks;
 our %results;
@@ -57,7 +58,8 @@ our @blacklist = (
   "T1PHIL", "T3H", "T90FAN", "TH4AB", "TS830S", "TV8TONY", "UP2LATE", "V1CTOR",
   "V3KI", "V3NGI", "V4LSYL", "V8FTW", "VT2NC", "W00TAH", "W0153R", "W33DAR",
   "X4B", "XG33KX", "Y2KAI", "Z33RO", "Z3MATT", "Z3US", "ZE1DA",
-  "JH23DF", "K67FDE", "N546RV", "N983CC", "W09U", "CN85PQ", "CN85PL", "BG4LAW");
+  "JH23DF", "K67FDE", "N546RV", "N983CC", "W09U", "CN85PQ", "CN85PL", "BG4LAW",
+  "U03BB");
 
 # load nicks
 our $nickfile = "$ENV{'HOME'}/.nicks.csv";
