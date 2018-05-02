@@ -353,7 +353,7 @@ sub doWiki {
   my $title = shift;
   my $desc;
   my $url = "https://$lang.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles=$title";
-  print "$url\n";
+  #print "$url\n";
   open (HTTP, '-|', "curl -L -k -s \"$url\"");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
