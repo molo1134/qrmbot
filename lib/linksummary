@@ -1,0 +1,378 @@
+#!/usr/bin/perl
+# Create a description of a link.  2-clause BSD license.
+#
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+my $highlight="vt220";
+$highlight = "none" if ! -t STDOUT;
+$highlight = "irc" if $username eq "eggdrop";
+
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $i = 0;
+while ($i <= $#ARGV) {
+
+  if ($ARGV[$i] =~ /https?:\/\/(www\.)?youtube\.com\/watch\?v=([\w-]+)/) {
+    printYouTubeMetaData($2);
+  }
+  if ($ARGV[$i] =~ /https?:\/\/youtu\.be\/([\w-]+)/) {
+    printYouTubeMetaData($1);
+  }
+
+  if ($ARGV[$i] =~ /https?:\/\/t\.co\/\w+/) {
+    doTwitter($ARGV[$i]);
+  }
+  if ($ARGV[$i] =~ /https?:\/\/(mobile\.)?twitter\.com\//) {
+    doTwitter($ARGV[$i]);
+  }
+
+  if ($ARGV[$i] =~ /https?:\/\/(www\.)?imdb.com\/title\/tt\d+/) {
+    doImdb($ARGV[$i]);
+  }
+  if ($ARGV[$i] =~ /https?:\/\/imdb.to\/\w+/) {
+    doImdb($ARGV[$i]);
+  }
+
+  if ($ARGV[$i] =~ /https?:\/\/(\w+).wikipedia.org\/wiki\/([^\/\s]+)/) {
+    doWiki($1, $2);
+  }
+
+
+  $i++;
+}
+
+sub printYouTubeMetaData {
+  my $id = shift;
+  my $url = "https://youtube.com/watch?v=$id";
+  my $shortcut = "http://youtu.be/$id";
+  my $done = 0;
+  my ($title, $len, $desc, $count, $pubdate, $genre, $nsfw, $unlisted, $paid, $author);
+  open(HTTP, '-|', "curl -L -k -s \"$url\"");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    if (/<meta itemprop="(\w+)" content="([^"]*)">/) {
+      my ($k, $v) = ($1, $2);
+      $v =~ s/&amp;/\&/g;
+      $v =~ s/&#(\d+);/chr($1)/eg;
+      #print "$k = $v\n";
+      $title = $v if $k eq "name";
+      #$len   = $v if $k eq "duration";
+      $desc  = $v if $k eq "description";
+      $count = $v if $k eq "interactionCount";
+      $pubdate = $v if $k eq "datePublished";
+      $genre = $v if $k eq "genre";
+      $nsfw = $v eq "False" ? 1 : 0 if $k eq "isFamilyFriendly";
+      $unlisted = $v eq "True" ? 1 : 0 if $k eq "unlisted";
+      $paid = $v eq "True" ? 1 : 0 if $k eq "paid";
+    }
+    if (/"author":"([^"]+)"/) {
+      $author = $1;
+    }
+    if (/"length_seconds":"(\d+)"/) {
+      $len = $1;
+    }
+#    if (/"shortDescription":"([^"]+)"/) {
+#      $desc = $1;
+#    }
+  }
+  close(HTTP);
+
+  $desc = "(no description)" if $desc =~ /^\s*$/;
+  if (length $desc > 300) {
+    $desc = substr($desc, 0, 300) . "...";
+  }
+
+  use integer;
+  my $h = $len / 3600;
+  my $m = ($len - (($len / 3600) * 3600)) / 60;
+  my $s = $len - (($len / 60) * 60);
+
+  print "  ", bold("❝$title❞"), " by $author on $pubdate; ";
+  print "${h}h" if $h > 0;
+  print "${m}m" if $m > 0;
+  print "${s}s; $count views ($genre)";
+  print red(" [NSFW]") if $nsfw == 1;
+  print green(" [PAID]") if $paid == 1;
+  print yellow(" [UNLISTED]") if $unlisted == 1;
+  print ": $desc $shortcut\n";
+}
+
+
+
+
+sub doTwitter {
+  my $url = shift;
+  my $id = undef;
+  my $username = undef;
+  my $origUsername = undef;
+  my $directRT = 0;
+
+  if ($url =~ /https?:\/\/t\.co\/\w+/) {
+    open (HTTP, '-|', "curl -L -k -s -o /dev/null -w \"%{url_effective}\" \"$url\"");
+    while(<HTTP>) {
+      $url = $_;
+    }
+    close(HTTP);
+  }
+  #  'curl -Ls -o /dev/null -w "%{url_effective}" "https://t.co/aoVVgKEfqC"'
+
+  if ($url =~ /https?:\/\/(mobile\.)?twitter\.com\/(\w+)\/status\/(\d+)/) {
+    $username = $2;
+    $id = $3;
+  }
+
+  if (not defined $username and $url =~ /https?:\/\/(mobile\.)?twitter\.com\/(\w+)\/?/) {
+    # this is for getting the last tweet for a user
+    $username = $2;
+
+    my $token = getTwitterAuthToken($url);
+
+    my $targeturl = "https://mobile.twitter.com/i/nojs_router?path=%2F$username";
+
+    open (HTTP, '-|', "curl -L -k -s -H \"Referer: $url\" --data authenticity_token=$token \"$targeturl\"");
+    binmode(HTTP, ":utf8");
+    while(<HTTP>) {
+      chomp;
+      if (not defined $id and /retweeted/) {
+	#print "retweeted\n";
+	$directRT = 1;
+	$origUsername = $username;
+      }
+      if (not defined $id and /<div class="tweet-text" data-id="(\d+)">/) {
+	$id = $1;
+	next;
+      }
+    }
+    close(HTTP);
+  }
+
+  if (not defined $id or not defined $username) {
+    return;
+  }
+
+  my $token = getTwitterAuthToken($url);
+  my $targeturl = "https://mobile.twitter.com/i/nojs_router?path=%2F$username%2Fstatus%2F$id";
+
+  my $inusername = 0;
+  my $intext = 0;
+  my $infullname = 0;
+  my $inmedia = 0;
+
+  #my $username = undef;
+  my $fullname = undef;
+  my $text = undef;
+  my $date = undef;
+  my $verified = 0;
+  my $media = undef;
+  my $tco = undef;
+  my $rt = undef;
+  #my @links;
+
+  #print "$ARGV[$i]\n";
+  #print "$url\n";
+  #print "$token\n";
+  open (HTTP, '-|', "curl -L -k -s -H \"Referer: $url\" --data authenticity_token=$token \"$targeturl\"");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    #print;
+    chomp;
+    if (/<span class="username">/) {
+      $inusername = 1;
+      next;
+    }
+    if ($inusername == 1 and /<span>@<\/span>(\w+)\s*$/) {
+      $username = $1 ; #if ! defined($username);
+      $inusername = 0;
+    }
+    if (/class="tweet-text" data-id="$id"/) {
+      $intext = 1;
+      next;
+    }
+    if ($intext == 1 and /<div[^<]*>\s*(.*)/) {
+      #print;
+      $text = $1;
+      $text =~ s/\&lt;/</g;
+      $text =~ s/\&gt;/>/g;
+      $text =~ s/\&amp;/\&/g;
+      $text =~ s/\&quot;/"/g;
+      $text =~ s/\&#(\d+);/chr($1)/eg;
+      #$text =~ s/\s*<a href="(https?:\/\/t.co\/\w+)".*>.*?<\/a>\s*/$1/;
+      $text =~ s/<a href="\/\w+"class="twitter-atreply.*?>(.*?)<\/a>/$1/g;
+      $text =~ s/<a href="\/hashtag.*?class="twitter-hashtag.*?>(.*?)<\/a>/$1/g;
+      if ($text =~ /data-expanded-url="(https?:\/\/twitter\.com\/\w+\/status\/\d+)"/) {
+	$rt = $1;
+      }
+      #print "\n\n$text\n\n";
+      $text =~ s/<a href="(https?:\/\/t\.co\/\w+)".*?data-expanded-url="(https?:\/\/twitter\.com\/\w+\/status\/\d+)".*?class="twitter_external_link.*?>.*?<\/a>/$1/g;
+      $text =~ s/<a href=.*?data-expanded-url="([^"]+)".*?class="twitter_external_link.*?>.*?<\/a>/$1/g;
+      #print "\n\n$text\n\n";
+      #if ($text =~ /data-expanded-url="([^"]+)"/) {
+      #  my $dataurl = $1;
+      #  if (not $dataurl =~ /twitter\.com/) {
+  #	push (@links, $dataurl);
+  #      }
+  #    }
+      if ($text =~ /\s*<a href="(https?:\/\/t.co\/\w+)".*>(.*?)<\/a>/) {
+	$tco = $1 if defined $1;
+	my $extrabits = $2;
+	if ($extrabits =~ /twitter_external_link/) {
+	  $tco = undef;
+	}
+	$text =~ s/\s*<a href="(https?:\/\/t.co\/\w+)".*>.*?<\/a>//;
+      }
+      #print "$tco\n";
+      #<a href="https://t.co/z4JHTvtLNy"data-pre-embedded="true"rel="nofollow"data-entity-id="950835234823553024"dir="ltr"data-url="https://twitter.com/SethAbramson/status/950835283997741057/photo/1"data-tco-id="z4JHTvtLNy"class="twitter_external_link dir-ltr tco-link has-expanded-path"target="_top"data-expanded-path="/SethAbramson/status/950835283997741057/photo/1">pic.twitter.com/z4JHTvtLNy</a>
+      $intext = 0;
+      next
+    }
+    if (/<a href="#" class="">([^<]+)<\/a>/) {
+      $date = $1;
+    }
+    if (/<div class="fullname"/) {
+      $infullname = 1;
+      next;
+    }
+    if ($infullname == 1 and /<strong>([^<]+)<\/strong>/) {
+      $fullname = $1;
+    }
+    if ($infullname == 1 and /verified.gif/) {
+      $verified = 1;
+    }
+    if ($infullname == 1 and /<\/div>/) {
+      $infullname = 0;
+    }
+    if (/<div class="media">/) {
+      $inmedia = 1;
+      next;
+    }
+    if ($inmedia == 1 and /<img src="(https?:\/\/pbs.twimg.com\/media\/\w+\.jpg):/) {
+      $media = $1;
+    }
+  }
+  close(HTTP);
+
+  # 223   147   93     “     LEFT DOUBLE QUOTATION MARK
+  # 224   148   94     ”     RIGHT DOUBLE QUOTATION MARK
+  # ❝ ❞
+  # ☑ ✓ ✔ ✅
+
+  if (not defined $text) {
+    #print "not found\n";
+    #exit 0;
+    return;
+  }
+
+  #print "TEXT: $text\n";
+  #print "LINKS: ", join(" ", @links), "\n";
+  #print "MEDIA: $media\n";
+  #print "TCO: $tco\n";
+
+  my $verifiedText = "";
+  $verifiedText = lightblue("✔") if $verified == 1;
+  $text =~ s/^\s*$//g;
+  $text =~ s/\n\s*\n/\n/g;
+  #$text =~ s/\n/\n  ❝/g;
+  $text =~ s/(\S)\n(\S)/$1 $2/g;
+  $text =~ s/\n//g;
+  print "  \@${origUsername} RT:" if defined $origUsername and $directRT = 1;
+  print "  ❝$text❞ ";
+  #print " ", join(" ", @links) if $#links >= 0;
+  print "$media " if defined $media;
+  print "RT: $tco " if defined $rt and defined $tco;
+  print "$tco " if defined $tco and not defined $media and not defined $rt;
+  print "— \@$username ($fullname)$verifiedText, $date\n";
+
+  if (defined $rt) {
+    #print "$0 $rt\n";
+    system "$0 $rt";
+    #exit 0;
+  }
+
+}
+
+sub getTwitterAuthToken {
+  my $url = shift;
+  my $token = undef;
+  open (HTTP, '-|', "curl -L -k -s \"$url\"");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    if (!defined($token) and /name="authenticity_token"/) {
+      if (/value="([0-9a-f]+)"/) {
+	$token = $1;
+      }
+    }
+  }
+  close(HTTP);
+  return $token;
+}
+
+
+sub doImdb {
+  my $url = shift;
+  my ($title, $desc, $rating, $ratings);
+  open (HTTP, '-|', "curl -L -k -s \"$url\"");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    if (/<meta property='og:title' content="([^"]*)"/) {
+      $title = $1;
+    }
+    if (/<meta name="description" content="([^"]*)"/) {
+      $desc = $1;
+      if (length $desc > 300) {
+	$desc = substr($desc, 0, 300) . "...";
+      }
+    }
+    if (/<strong title="([\d.]+) based on ([\d,]+) user ratings">/) {
+      ($rating, $ratings) = ($1, $2);
+    }
+  }
+  close(HTTP);
+
+  return if !defined($title);
+
+  print bold("  ❝$title❞");
+  print " $rating", yellow("★"), " ($ratings ratings)" if defined $rating;
+  print " -- $desc" if defined $desc;
+  print "\n";
+}
+
+sub doWiki {
+  my $lang = shift;
+  my $title = shift;
+  my $desc;
+  my $url = "https://$lang.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles=$title";
+  print "$url\n";
+  open (HTTP, '-|', "curl -L -k -s \"$url\"");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    if (/"title":"([^"]*)"/) {
+      $title = $1;
+    }
+    if (/"extract":"(.*)"/) {
+      $desc = $1;
+      $desc =~ s/\\u([0-9a-f]{4})/chr(hex($1))/egi;
+      $desc =~ s/\\"/"/g;
+      $desc =~ s/\\n/ /g;
+      if (length $desc > 300) {
+	$desc = substr($desc, 0, 300) . "...";
+      }
+    }
+  }
+  close(HTTP);
+  if (defined($title) and defined($desc)) {
+    print bold("  ❝$title❞"), ": $desc\n";
+  }
+}
+

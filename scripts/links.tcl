@@ -1,4 +1,4 @@
-# twitter announcer
+# http link announcer
 #
 
 # 2-clause BSD license.
@@ -23,33 +23,29 @@
 #         bind pubm <flags> <mask> <proc>
 #         procname <nick> <user@host> <handle> <channel> <text>
 
-bind msgm - *twitter.com/* twitter_msg
-bind pubm - *twitter.com/* twitter_pub
+bind msgm - *http://* http_msg
+bind pubm - *http://* http_pub
+bind msgm - *https://* http_msg
+bind pubm - *https://* http_pub
 
-bind msgm - */t.co/* twitter_msg
-bind pubm - */t.co/* twitter_pub
+set linkbin "/home/eggdrop/bin/linksummary"
 
-set twitterbin "/home/eggdrop/bin/twitter"
-
-# load utility methods
-source scripts/util.tcl
-
-proc twitter_msg { nick host hand text } {
-	global twitterbin
+proc http_msg { nick host hand text } {
+	global linkbin
 	set params [sanitize_string [string trim ${text}]]
-	putlog "twitter msg: $nick $host $hand $params"
-	catch {exec ${twitterbin} ${params}} data
+	putlog "http msg: $nick $host $hand $params"
+	catch {exec ${linkbin} ${params}} data
 	set output [split $data "\n"]
 	foreach line $output {
 		putmsg $nick [encoding convertto utf-8 "$line"]
 	}
 }
 
-proc twitter_pub { nick host hand chan text } {
-	global twitterbin
+proc http_pub { nick host hand chan text } {
+	global linkbin
 	set params [sanitize_string [string trim ${text}]]
-	putlog "twitter pub: $nick $host $hand $chan $params"
-	catch {exec ${twitterbin} ${params}} data
+	putlog "http pub: $nick $host $hand $chan $params"
+	catch {exec ${linkbin} ${params}} data
 	set output [split $data "\n"]
 	foreach line $output {
 		putchan $chan [encoding convertto utf-8 "$line"]
