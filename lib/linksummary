@@ -141,6 +141,8 @@ sub doTwitter {
 
     my $targeturl = "https://mobile.twitter.com/i/nojs_router?path=%2F$username";
 
+    $url =~ s/http:/https:/;
+
     open (HTTP, '-|', "curl -L -k -s -H \"Referer: $url\" --data authenticity_token=$token \"$targeturl\"");
     binmode(HTTP, ":utf8");
     while(<HTTP>) {
