@@ -180,13 +180,21 @@ if ($multiple == 1) {
   exit $exitnonzeroonerror;
 }
 
+if (not defined $rec{'temp_c'} and not defined $rec{'conditions'}) {
+  # didn't get valid data
+  print "error encountered: no data\n";
+  exit $exitnonzeroonerror;
+}
+
 my $lat = nearest(.1, $rec{'disp_latitude'});
 my $lon = nearest(.1, $rec{'disp_longitude'});
 my $elev = nearest(1, $rec{'disp_elevation'});
 my $pressure_trend = $rec{'pressure_trend'};
-$pressure_trend =~ s/\+/↑/;
-$pressure_trend =~ s/-/↓/;
-$pressure_trend =~ s/0/·/;
+if (defined($pressure_trend)) {
+  $pressure_trend =~ s/\+/↑/;
+  $pressure_trend =~ s/-/↓/;
+  $pressure_trend =~ s/0/·/;
+}
 
 # unicode weather chars
 #       sun: ☀☼🌞
