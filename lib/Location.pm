@@ -97,6 +97,7 @@ sub qthToCoords {
     if (/OVER_QUERY_LIMIT/) {
       #print "warning: over query limit\n";
       close(HTTP);
+      print "error: over query limit. please try again.\n" if $tries > 3;
       exit $::exitnonzeroonerror if $tries > 3;
       goto RESTART;
     }
