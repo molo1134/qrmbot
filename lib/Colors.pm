@@ -18,6 +18,7 @@ BEGIN {
 
 sub darkRed {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x035\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -28,6 +29,7 @@ sub darkRed {
 }
 sub red {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x034\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -38,6 +40,7 @@ sub red {
 }
 sub yellow {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x038\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -48,6 +51,7 @@ sub yellow {
 }
 sub green {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x033\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -58,6 +62,7 @@ sub green {
 }
 sub lightblue {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x0312\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -68,6 +73,7 @@ sub lightblue {
 }
 sub bold {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -78,6 +84,7 @@ sub bold {
 }
 sub darkYellow {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x035\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -88,6 +95,7 @@ sub darkYellow {
 }
 sub lightGrey {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x0315\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -98,6 +106,7 @@ sub lightGrey {
 }
 sub grey {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x0314\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
