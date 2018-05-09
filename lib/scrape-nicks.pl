@@ -29,6 +29,7 @@ foreach my $subreddit (@subreddits) {
 #  push @baseurls, "https://www.reddit.com/r/${subreddit}/gilded/.json";
 #  push @baseurls, "https://www.reddit.com/r/${subreddit}/controversial/.json";
 }
+#push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8i4ayo/your_week_in_amateur_radio_new_licensees_05092018/dyostpt/.json";
 #push @baseurls, "https://www.reddit.com/user/molo1134/m/hamradiomulti/new/.json";
 #push @baseurls, "https://www.reddit.com/user/molo1134/m/hamradiomulti/comments/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8fowrk/is_there_a_baofenglike_radio_but_for_hf/dy6fl6s/.json";
@@ -137,7 +138,7 @@ foreach my $baseurl (@baseurls) {
 	    # moving on to new entry
 	    if (defined $c and defined $u) {
 	      if (not any { /^$c$/i } @blacklist) {
-		print STDERR "found: $c $u\n";
+		print STDERR "found: $c /u/$u\n";
 		$results{$c} = $u;
 	      }
 	    }
@@ -146,6 +147,15 @@ foreach my $baseurl (@baseurls) {
 	  }
 	}
       }
+      if (defined($u) and defined($c)) {
+	if (not any { /^$c$/i } @blacklist) {
+	  print STDERR "found: $c /u/$u\n";
+	  $results{$c} = $u;
+	}
+      }
+      $u = undef;
+      $c = undef;
+
     }
     close(HTTP);
 
