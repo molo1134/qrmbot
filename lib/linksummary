@@ -13,6 +13,15 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 
+use URI::Escape;
+use Encode qw(/decode/);
+
+our $bitly_apikey=undef;
+my $bitlykeyfile = $ENV{'HOME'} . "/.bitlyapikey";
+if (-e ($bitlykeyfile)) {
+  require($bitlykeyfile);
+}
+
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $highlight="vt220";
 $highlight = "none" if ! -t STDOUT;
@@ -24,31 +33,27 @@ $highlight = "irc" if $username eq "eggdrop";
 my $i = 0;
 while ($i <= $#ARGV) {
 
-  if ($ARGV[$i] =~ /https?:\/\/(www\.)?youtube\.com\/watch\?v=([\w-]+)/) {
+  if ($ARGV[$i] =~ m|https?://(www\.)?youtube\.com/watch\?v=([\w-]+)|) {
     printYouTubeMetaData($2);
-  }
-  if ($ARGV[$i] =~ /https?:\/\/youtu\.be\/([\w-]+)/) {
+  } elsif ($ARGV[$i] =~ m|https?://youtu\.be/([\w-]+)|) {
     printYouTubeMetaData($1);
-  }
-
-  if ($ARGV[$i] =~ /https?:\/\/t\.co\/\w+/) {
+  } elsif ($ARGV[$i] =~ m|https?://t\.co/\w+| or
+	  $ARGV[$i] =~ m|https?://(mobile\.)?twitter\.com/|) {
     doTwitter($ARGV[$i]);
-  }
-  if ($ARGV[$i] =~ /https?:\/\/(mobile\.)?twitter\.com\//) {
-    doTwitter($ARGV[$i]);
-  }
-
-  if ($ARGV[$i] =~ /https?:\/\/(www\.)?imdb.com\/title\/tt\d+/) {
+  } elsif ($ARGV[$i] =~ m|https?://(www\.)?imdb.com/title/tt\d+| or
+	  $ARGV[$i] =~ m|https?://imdb.to/\w+|) {
     doImdb($ARGV[$i]);
-  }
-  if ($ARGV[$i] =~ /https?:\/\/imdb.to\/\w+/) {
-    doImdb($ARGV[$i]);
-  }
-
-  if ($ARGV[$i] =~ /https?:\/\/(\w+).wikipedia.org\/wiki\/([^\/\s]+)/) {
+  } elsif ($ARGV[$i] =~ m|https?://(\w+).wikipedia.org/wiki/([^/\s]+)|) {
     doWiki($1, $2);
+  } elsif ($ARGV[$i] =~ m|https?://(www\.)?reddit.com/r/\w+/comments/\w+/| or
+	  $ARGV[$i] =~ m|https?://redd\.it/\w+|) {
+    doReddit($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|https?://goo.gl/maps/| or
+	  $ARGV[$i] =~ m|https?://(www\.)?google\.com/maps/|) {
+    # noop
+  } else {
+    doHtml($ARGV[$i]) if not $ARGV[$i] =~ /\.(gif|jpe?g|jpe|png|mp[34]|pdf)/;
   }
-
 
   $i++;
 }
@@ -64,8 +69,7 @@ sub printYouTubeMetaData {
   while(<HTTP>) {
     if (/<meta itemprop="(\w+)" content="([^"]*)">/) {
       my ($k, $v) = ($1, $2);
-      $v =~ s/&amp;/\&/g;
-      $v =~ s/&#(\d+);/chr($1)/eg;
+      $v = decodeEntities($v);
       #print "$k = $v\n";
       $title = $v if $k eq "name";
       #$len   = $v if $k eq "duration";
@@ -91,7 +95,7 @@ sub printYouTubeMetaData {
 
   $desc = "(no description)" if $desc =~ /^\s*$/;
   if (length $desc > 300) {
-    $desc = substr($desc, 0, 300) . "...";
+    $desc = substr($desc, 0, 300) . "…";
   }
 
   use integer;
@@ -205,11 +209,7 @@ sub doTwitter {
     if ($intext == 1 and /<div[^<]*>\s*(.*)/) {
       #print;
       $text = $1;
-      $text =~ s/\&lt;/</g;
-      $text =~ s/\&gt;/>/g;
-      $text =~ s/\&amp;/\&/g;
-      $text =~ s/\&quot;/"/g;
-      $text =~ s/\&#(\d+);/chr($1)/eg;
+      $text = decodeEntities($text);
       #$text =~ s/\s*<a href="(https?:\/\/t.co\/\w+)".*>.*?<\/a>\s*/$1/;
       $text =~ s/<a href="\/\w+"class="twitter-atreply.*?>(.*?)<\/a>/$1/g;
       $text =~ s/<a href="\/hashtag.*?class="twitter-hashtag.*?>(.*?)<\/a>/$1/g;
@@ -333,7 +333,7 @@ sub doImdb {
     if (/<meta name="description" content="([^"]*)"/) {
       $desc = $1;
       if (length $desc > 300) {
-	$desc = substr($desc, 0, 300) . "...";
+	$desc = substr($desc, 0, 300) . "…";
       }
     }
     if (/<strong title="([\d.]+) based on ([\d,]+) user ratings">/) {
@@ -352,15 +352,18 @@ sub doImdb {
 
 sub doWiki {
   my $lang = shift;
-  my $title = shift;
-  my $desc;
-  my $url = "https://$lang.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles=$title";
+  my $article = shift;
+  my ($desc, $title);
+  my $url = "https://$lang.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles=$article";
   #print "$url\n";
   open (HTTP, '-|', "curl -L -k -s \"$url\"");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     if (/"title":"([^"]*)"/) {
       $title = $1;
+      $title =~ s/\\u([0-9a-f]{4})/chr(hex($1))/egi;
+      $title =~ s/\\"/"/g;
+      $title =~ s/\\n/ /g;
     }
     if (/"extract":"(.*)"/) {
       $desc = $1;
@@ -368,13 +371,171 @@ sub doWiki {
       $desc =~ s/\\"/"/g;
       $desc =~ s/\\n/ /g;
       if (length $desc > 300) {
-	$desc = substr($desc, 0, 300) . "...";
+	$desc = substr($desc, 0, 300) . "…";
       }
     }
   }
   close(HTTP);
   if (defined($title) and defined($desc)) {
-    print bold("  ❝$title❞"), ": $desc\n";
+    my $shortUrl = shortenUrl("https://$lang.wikipedia.org/wiki/$article");
+    print "  ";
+    print "$shortUrl " if defined $shortUrl and length($shortUrl) > 0;
+    print bold("❝$title❞"), ": $desc\n";
   }
 }
 
+sub doHtml {
+  my $url = shift;
+  my ($title, $desc, $charset, $contenttype);
+  # -D - => output headers
+  # -f => fail to have no output for 404
+  # -L => follow 302
+  # -k => insecure -- don't care about certs
+  # -s => silent
+  # -H Accept => should cut down on images and the like, but check headers
+  open (HTTP, '-|', "curl -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" \"$url\"");
+  while (<HTTP>) {
+    #print;
+    chomp;
+    if (/^Content-Type:\s+(.*?)$/i) {
+      $contenttype = $1;
+      #print "$contenttype\n";
+      if (not $contenttype =~ /^(text\/html)|(application\/(xhtml|xml))/) {
+	close(HTTP);
+	return;
+      }
+      if ($contenttype =~ /charset=(.*)/i) {
+	if ($1 =~ /UTF-?8/i) {
+	  binmode(HTTP, ":utf8");
+	  $charset = "utf8";
+	}
+      }
+      last;
+    }
+  }
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $page = <HTTP>;
+  close(HTTP);
+  #print $page;
+
+  if (not defined($charset) and
+      $page =~ /^.*<meta\s+http-equiv="Content-Type"\s+content=".*?charset=([^"]+)"/mi) {
+    $charset = $1;
+    $page = decode($charset, $page);
+  }
+
+  if ($page =~ /<title.*?>([^<]+)<\/title>/im) {
+    $title = $1;
+  }
+  if ($page =~ /<meta\s+property="og:title"\s+content="([^"]+)"/im) {
+    $title = $1;
+  }
+  if ($page =~ /<meta\s+content="([^"]+)"\s+property="og:title"/im) {
+    $title = $1;
+  }
+  if (not defined($desc) and
+	  $page =~ /<meta\s+name="description"\s+content="([^"]+)"/im) {
+    $desc = $1;
+  }
+  if (not defined($desc) and
+	  $page =~ /<meta\s+content="([^"]+)"\s+name="description"/im) {
+    $desc = $1;
+  }
+  if ($page =~ /<meta\s+.*?property="og:description"\s+content="([^"]+)"/im) {
+    $desc = $1;
+  }
+  if ($page =~ /<meta\s+content="([^"]+)"\s+property="og:description"/im) {
+    $desc = $1;
+  }
+  if ($page =~ /<meta\s+name="DC.Description.Abstract"\s+content="([^"]+)"/im) {
+    $desc = $1;
+  }
+#  }
+
+  #print "title: $title\n";
+  #print "desc: $desc\n";
+
+  return if not defined($title) and not defined($desc);
+
+  my $shortUrl = shortenUrl($url);
+
+  if (defined($desc) and length($desc) > 300) {
+    $desc = substr($desc, 0, 300) . "…";
+  }
+  $title =~ tr/\n\r/  /;
+  $desc =~ tr/\n\r/  /;
+  $title = decodeEntities($title);
+  $desc = decodeEntities($desc);
+
+  print "  ";
+  print "$shortUrl " if defined($shortUrl) and length($shortUrl) > 0;
+  print bold("❝$title❞") if defined ($title);
+  print " -- $desc" if defined ($desc);
+  print "\n";
+}
+
+sub decodeEntities {
+  my $s = shift;
+  $s =~ s/&#(\d+);/chr($1)/eg;
+  $s =~ s/&#x([0-9a-f]+);/chr(hex($1))/egi;
+  $s =~ s/&lt;/</g;
+  $s =~ s/&gt;/>/g;
+  $s =~ s/&quot;/"/g;
+  $s =~ s/&nbsp;/ /g;
+  $s =~ s/&amp;/\&/g;
+  return $s;
+}
+
+sub shortenUrl {
+  my $url = shift;
+  return undef if length($url) < 60;
+
+  my $shortUrl;
+  my $encodedUrl = uri_escape($url);
+  our $bitly_apikey;  # loaded from file
+  return undef if not defined($bitly_apikey);
+  my $rest = "https://api-ssl.bitly.com/v3/shorten?access_token=$bitly_apikey&domain=j.mp&format=txt&longUrl=$encodedUrl";
+
+  open(HTTP, '-|', "curl -L -k -s \"$rest\"");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    s/[\r\n]//g;
+    $shortUrl = $_;
+  }
+  close(HTTP);
+
+  # success
+  return $shortUrl if $shortUrl =~ /^http/;
+
+  # failure case
+  print "error: $shortUrl\n";
+  return undef;
+}
+
+sub doReddit {
+  my $url = shift;
+
+  my ($id, $title);
+
+  if ($url =~ /https?:\/\/(www\.)?reddit.com\/r\/\w+\/comments\/(\w+)\//) {
+    $id = $2;
+  } elsif ($url =~ /https?:\/\/redd\.it\/(\w+)/) {
+    $id = $1;
+  } else {
+    return;
+  }
+
+  open(HTTP, '-|', "curl -A foo -L -k -s \"$url\"");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    if (/<title.*?>([^<]+)<\/title>/im) {
+      $title = decodeEntities($1);
+    }
+  }
+  close(HTTP);
+
+  print "  http://redd.it/$id ";
+  print bold("❝$title❞") if defined ($title);
+  #print " -- $desc" if defined ($desc);
+  print "\n";
+}
