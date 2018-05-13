@@ -216,10 +216,12 @@ if (defined $dxccmap{$term}) {
 
 # check if an entity is found by name -- needs to be at least 3 chars
 if (length($term) >= 3) {
+  my $matchterm = quotemeta($term);
+
   foreach my $rec (@records) {
     my ($length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz) = split /\|/,$rec;
 
-    if ($name =~ m/$term/i) {
+    if ($name =~ m/$matchterm/i) {
       print bold($dxcc), ": ", bold($name);
       print ": $cont CQ:$cq ITU:$itu";
       my $mw = $mostwantedByPrefix{uc($dxcc)} || $mostwantedByName{uc($name)};
