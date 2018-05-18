@@ -103,7 +103,7 @@ sub printYouTubeMetaData {
   my $m = ($len - (($len / 3600) * 3600)) / 60;
   my $s = $len - (($len / 60) * 60);
 
-  print "  ", bold("❝$title❞"), " by $author on $pubdate; ";
+  print "  ", bold("\"$title\""), " by $author on $pubdate; ";
   print "${h}h" if $h > 0;
   print "${m}m" if $m > 0;
   print "${s}s; $count views ($genre)";
@@ -288,8 +288,8 @@ sub doTwitter {
   #$text =~ s/\n/\n  ❝/g;
   $text =~ s/(\S)\n(\S)/$1 $2/g;
   $text =~ s/\n//g;
-  print "  \@${origUsername} RT:" if defined $origUsername and $directRT = 1;
-  print "  ❝$text❞ ";
+  print "\@${origUsername} RT:" if defined $origUsername and $directRT = 1;
+  print "\"$text\" ";
   #print " ", join(" ", @links) if $#links >= 0;
   print "$media " if defined $media;
   print "RT: $tco " if defined $rt and defined $tco;
@@ -344,9 +344,9 @@ sub doImdb {
 
   return if !defined($title);
 
-  print bold("  ❝$title❞");
+  print bold("\"$title\"");
   print " $rating", yellow("★"), " ($ratings ratings)" if defined $rating;
-  print " -- $desc" if defined $desc;
+  print " — $desc" if defined $desc;
   print "\n";
 }
 
@@ -378,9 +378,9 @@ sub doWiki {
   close(HTTP);
   if (defined($title) and defined($desc)) {
     my $shortUrl = shortenUrl("https://$lang.wikipedia.org/wiki/$article");
-    print "  ";
+    print bold("\"$title\" ");
     print "$shortUrl " if defined $shortUrl and length($shortUrl) > 0;
-    print bold("❝$title❞"), ": $desc\n";
+    "— $desc\n";
   }
 }
 
@@ -473,10 +473,9 @@ sub doHtml {
   $title = decodeEntities($title);
   $desc = decodeEntities($desc);
 
-  print "  ";
-  print "$shortUrl " if defined($shortUrl) and length($shortUrl) > 0;
-  print bold("❝$title❞") if defined ($title);
-  print " -- $desc" if defined ($desc);
+  print bold("\"$title\"") if defined ($title);
+  print " $shortUrl" if defined($shortUrl) and length($shortUrl) > 0;
+  print " — $desc" if defined ($desc);
   print "\n";
 }
 
@@ -541,7 +540,7 @@ sub doReddit {
   close(HTTP);
 
   print "  http://redd.it/$id ";
-  print bold("❝$title❞") if defined ($title);
-  #print " -- $desc" if defined ($desc);
+  print bold("\"$title\"") if defined ($title);
+  #print " — $desc" if defined ($desc);
   print "\n";
 }
