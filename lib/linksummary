@@ -386,18 +386,24 @@ sub doWiki {
 
 sub doHtml {
   my $url = shift;
-  my ($title, $desc, $charset, $contenttype);
+  my ($title, $desc, $charset, $contenttype, $httpcode);
   # -D - => output headers
   # -f => fail to have no output for 404
   # -L => follow 302
   # -k => insecure -- don't care about certs
   # -s => silent
   # -H Accept => should cut down on images and the like, but check headers
+  #print "curl -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" \"$url\"";
   open (HTTP, '-|', "curl -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" \"$url\"");
   while (<HTTP>) {
     #print;
     chomp;
-    if (/^Content-Type:\s+(.*?)$/i) {
+    if (/^HTTP\/[0-9.]+\s*(\d+).*?$/) {
+      $httpcode = $1;
+      #print "$httpcode\n";
+    }
+    # want to ignore content-type if getting a 302 redirect
+    if (defined($httpcode) and $httpcode < 300 and /^Content-Type:\s+(.*?)$/i) {
       $contenttype = $1;
       #print "$contenttype\n";
       if (not $contenttype =~ /^(text\/html)|(application\/(xhtml|xml))/) {
