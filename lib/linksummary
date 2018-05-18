@@ -51,8 +51,9 @@ while ($i <= $#ARGV) {
   } elsif ($ARGV[$i] =~ m|https?://goo.gl/maps/| or
 	  $ARGV[$i] =~ m|https?://(www\.)?google\.com/maps/|) {
     # noop
-  } else {
-    doHtml($ARGV[$i]) if not $ARGV[$i] =~ /\.(gif|jpe?g|jpe|png|mp[34]|pdf)/;
+  } elsif ($ARGV[$i] =~ m|https?://| and
+	  not $ARGV[$i] =~ /\.(gif|jpe?g|jpe|png|mp[34]|pdf)/) {
+    doHtml($ARGV[$i]);
   }
 
   $i++;
