@@ -9,6 +9,7 @@ source scripts/nickservpassword.tcl
 proc evnt:init_server {type} {
   #global botnick
   #putquick "MODE $botnick +iR-ws"
+  global nickservpassword
   putquick "PRIVMSG nickserv :identify ${nickservpassword}"
 }
 
@@ -16,5 +17,6 @@ proc evnt:init_server {type} {
 bind notc "*This nickname is registered and protected.*" identify
 
 proc identify {nick uhost hand text dest} {
+  global nickservpassword
   putquick "PRIVMSG nickserv :identify ${nickservpassword}"
 }
