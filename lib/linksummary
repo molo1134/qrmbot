@@ -431,8 +431,9 @@ sub doHtml {
     $page = decode($charset, $page);
   }
 
-  if ($page =~ /<title.*?>([^<]+)<\/title>/im) {
+  if ($page =~ /<title.*?>\s*([^<]+?)\s*<\/title>/im) {
     $title = $1;
+    $title =~ s/\s\s+/ /g;
   }
   if ($page =~ /<meta\s+property="og:title"\s+content="([^"]+)"/im) {
     $title = $1;
