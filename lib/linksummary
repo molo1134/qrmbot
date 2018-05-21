@@ -52,6 +52,8 @@ while ($i <= $#ARGV) {
     doReddit($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|https?://swap\.qth\.com/view_ad\.php\?counter=\d+|) {
     doQthCom($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|https?://(www\.)?qrz\.com/db/[A-Z0-9]+|i) {
+    doQrzDb($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|https?://goo\.gl/maps/| or
 	  $ARGV[$i] =~ m|https?://(www\.)?google\.com/maps/|) {
     # noop
@@ -612,4 +614,18 @@ sub doQthCom {
   print " by $call" if defined($call);
   print " — $desc" if defined($desc);
   print "\n";
+}
+
+sub doQrzDb {
+  my $url = shift;
+  my $call;
+  if ($url =~ m|https?://(www\.)?qrz\.com/db/([A-Z0-9]+)|i) {
+    $call = $2;
+  }
+  my $libdir = dirname(realpath(__FILE__));
+  if (not defined($call) or not -e "$libdir/qrz") {
+    doHtml($url);	# fallback
+  }
+
+  exec "$libdir/qrz", "--compact", "$call" or die "error execing qrz for $call";
 }
