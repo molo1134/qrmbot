@@ -42,12 +42,12 @@ while ($i <= $#ARGV) {
   } elsif ($ARGV[$i] =~ m|https?://t\.co/\w+| or
 	  $ARGV[$i] =~ m|https?://(mobile\.)?twitter\.com/|) {
     doTwitter($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://(www\.)?imdb.com/title/tt\d+| or
-	  $ARGV[$i] =~ m|https?://imdb.to/\w+|) {
+  } elsif ($ARGV[$i] =~ m|https?://(www\.)?imdb\.com/title/tt\d+| or
+	  $ARGV[$i] =~ m|https?://imdb\.to/\w+|) {
     doImdb($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://(\w+).wikipedia.org/wiki/([^/\s]+)|) {
+  } elsif ($ARGV[$i] =~ m|https?://(\w+)\.wikipedia\.org/wiki/([^/\s]+)|) {
     doWiki($1, $2);
-  } elsif ($ARGV[$i] =~ m|https?://(www\.)?reddit.com/r/\w+/comments/\w+/| or
+  } elsif ($ARGV[$i] =~ m|https?://(www\.)?reddit\.com/r/\w+/comments/\w+/| or
 	  $ARGV[$i] =~ m|https?://redd\.it/\w+|) {
     doReddit($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|https?://goo.gl/maps/| or
@@ -106,7 +106,7 @@ sub printYouTubeMetaData {
   my $m = ($len - (($len / 3600) * 3600)) / 60;
   my $s = $len - (($len / 60) * 60);
 
-  print "  ", bold("\"$title\""), " by $author on $pubdate; ";
+  print bold("\"$title\""), " by $author on $pubdate; ";
   print "${h}h" if $h > 0;
   print "${m}m" if $m > 0;
   print "${s}s; $count views ($genre)";
@@ -554,7 +554,7 @@ sub doReddit {
 
   my ($id, $title);
 
-  if ($url =~ /https?:\/\/(www\.)?reddit.com\/r\/\w+\/comments\/(\w+)\//) {
+  if ($url =~ /https?:\/\/(www\.)?reddit\.com\/r\/\w+\/comments\/(\w+)\//) {
     $id = $2;
   } elsif ($url =~ /https?:\/\/redd\.it\/(\w+)/) {
     $id = $1;
@@ -571,8 +571,8 @@ sub doReddit {
   }
   close(HTTP);
 
-  print "  http://redd.it/$id ";
   print bold("\"$title\"") if defined ($title);
+  print " http://redd.it/$id " if defined($id);
   #print " — $desc" if defined ($desc);
   print "\n";
 }
