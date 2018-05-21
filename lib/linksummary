@@ -447,6 +447,10 @@ sub doHtml {
     $title = $1;
     $title =~ s/\s\s+/ /g;
   }
+  if ($page =~ /<meta\s+name="dcterms.title"\s+content="([^"]+)"/im) {
+    $title = $1;
+    $title =~ s/\s\s+/ /g;
+  }
   if (not defined($desc) and
 	  $page =~ /<meta\s+name="description"\s+content="([^"]+)"/im) {
     $desc = $1;
