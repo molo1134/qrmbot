@@ -592,7 +592,7 @@ sub doQthCom {
     if (not defined($desc) and
 	m|<DT><font size=2 face="Arial,Helvetica">\s*(.*)</font>|) {
       $desc = $1;
-      $desc =~ s/<BR>/ /i;
+      $desc =~ s/<BR>/ /ig;
     }
     if (not defined($call) and m|<DT><font size=2 face="Arial,Helvetica">Listing #\d+ by <a href="https://www\.qth\.com/callsign\.php\?cs=[^"]+">([^<]+)</a>|) {
       $call = $1;
