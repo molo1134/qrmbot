@@ -50,7 +50,9 @@ while ($i <= $#ARGV) {
   } elsif ($ARGV[$i] =~ m|https?://(www\.)?reddit\.com/r/\w+/comments/\w+/| or
 	  $ARGV[$i] =~ m|https?://redd\.it/\w+|) {
     doReddit($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://goo.gl/maps/| or
+  } elsif ($ARGV[$i] =~ m|https?://swap\.qth\.com/view_ad\.php\?counter=\d+|) {
+    doQthCom($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|https?://goo\.gl/maps/| or
 	  $ARGV[$i] =~ m|https?://(www\.)?google\.com/maps/|) {
     # noop
   } elsif ($ARGV[$i] =~ m|https?://| and
@@ -574,5 +576,40 @@ sub doReddit {
   print bold("\"$title\"") if defined ($title);
   print " http://redd.it/$id " if defined($id);
   #print " — $desc" if defined ($desc);
+  print "\n";
+}
+
+sub doQthCom {
+  my $url = shift;
+  my ($title, $desc, $call);
+
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s \"$url\"");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    if (m|<font size=3 face="Arial,Helvetica">\s*([^<]+)</font></B>|) {
+      $title = $1;
+    }
+    if (not defined($desc) and
+	m|<DT><font size=2 face="Arial,Helvetica">\s*(.*)</font>|) {
+      $desc = $1;
+      $desc =~ s/<BR>/ /i;
+    }
+    if (not defined($call) and m|<DT><font size=2 face="Arial,Helvetica">Listing #\d+ by <a href="https://www\.qth\.com/callsign\.php\?cs=[^"]+">([^<]+)</a>|) {
+      $call = $1;
+    }
+  }
+  close(HTTP);
+
+  if (defined($desc) and length($desc) > 300) {
+    $desc = substr($desc, 0, 300) . "…";
+  }
+  $title =~ tr/\n\r/  /;
+  $desc =~ tr/\n\r/  /;
+  $title = decodeEntities($title);
+  $desc = decodeEntities($desc);
+
+  print bold("\"$title\"") if defined($title);
+  print " by $call" if defined($call);
+  print " — $desc" if defined($desc);
   print "\n";
 }
