@@ -45,7 +45,7 @@ while ($i <= $#ARGV) {
   } elsif ($ARGV[$i] =~ m|https?://(www\.)?imdb\.com/title/tt\d+| or
 	  $ARGV[$i] =~ m|https?://imdb\.to/\w+|) {
     doImdb($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://(\w+)\.wikipedia\.org/wiki/([^/\s]+)|) {
+  } elsif ($ARGV[$i] =~ m|https?://(\w+)\.wikipedia\.org/wiki/([^/\s]+)|i) {
     doWiki($1, $2);
   } elsif ($ARGV[$i] =~ m|https?://(www\.)?reddit\.com/r/\w+/comments/\w+/| or
 	  $ARGV[$i] =~ m|https?://redd\.it/\w+|) {
@@ -387,7 +387,7 @@ sub doWiki {
     my $shortUrl = shortenUrl("https://$lang.wikipedia.org/wiki/$article");
     print bold("\"$title\" ");
     print "$shortUrl " if defined $shortUrl and length($shortUrl) > 0;
-    "— $desc\n";
+    print "— $desc\n";
   }
 }
 
