@@ -22,6 +22,8 @@ if (-e ($bitlykeyfile)) {
   require($bitlykeyfile);
 }
 
+my $timeout = 4;	# max 4 seconds
+
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $highlight="vt220";
 $highlight = "none" if ! -t STDOUT;
@@ -65,7 +67,7 @@ sub printYouTubeMetaData {
   my $shortcut = "http://youtu.be/$id";
   my $done = 0;
   my ($title, $len, $desc, $count, $pubdate, $genre, $nsfw, $unlisted, $paid, $author);
-  open(HTTP, '-|', "curl -L -k -s \"$url\"");
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s \"$url\"");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     if (/<meta itemprop="(\w+)" content="([^"]*)">/) {
@@ -125,13 +127,13 @@ sub doTwitter {
   my $directRT = 0;
 
   if ($url =~ /https?:\/\/t\.co\/\w+/) {
-    open (HTTP, '-|', "curl -L -k -s -o /dev/null -w \"%{url_effective}\" \"$url\"");
+    open (HTTP, '-|', "curl --max-time $timeout -L -k -s -o /dev/null -w \"%{url_effective}\" \"$url\"");
     while(<HTTP>) {
       $url = $_;
     }
     close(HTTP);
   }
-  #  'curl -Ls -o /dev/null -w "%{url_effective}" "https://t.co/aoVVgKEfqC"'
+  #  'curl --max-time $timeout -Ls -o /dev/null -w "%{url_effective}" "https://t.co/aoVVgKEfqC"'
 
   if ($url =~ /https?:\/\/(mobile\.)?twitter\.com\/(\w+)\/status\/(\d+)/) {
     $username = $2;
@@ -148,7 +150,7 @@ sub doTwitter {
 
     $url =~ s/http:/https:/;
 
-    open (HTTP, '-|', "curl -L -k -s -H \"Referer: $url\" --data authenticity_token=$token \"$targeturl\"");
+    open (HTTP, '-|', "curl --max-time $timeout -L -k -s -H \"Referer: $url\" --data authenticity_token=$token \"$targeturl\"");
     binmode(HTTP, ":utf8");
     while(<HTTP>) {
       chomp;
@@ -190,7 +192,7 @@ sub doTwitter {
   #print "$ARGV[$i]\n";
   #print "$url\n";
   #print "$token\n";
-  open (HTTP, '-|', "curl -L -k -s -H \"Referer: $url\" --data authenticity_token=$token \"$targeturl\"");
+  open (HTTP, '-|', "curl --max-time $timeout -L -k -s -H \"Referer: $url\" --data authenticity_token=$token \"$targeturl\"");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     #print;
@@ -308,7 +310,7 @@ sub doTwitter {
 sub getTwitterAuthToken {
   my $url = shift;
   my $token = undef;
-  open (HTTP, '-|', "curl -L -k -s \"$url\"");
+  open (HTTP, '-|', "curl --max-time $timeout -L -k -s \"$url\"");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     if (!defined($token) and /name="authenticity_token"/) {
@@ -325,7 +327,7 @@ sub getTwitterAuthToken {
 sub doImdb {
   my $url = shift;
   my ($title, $desc, $rating, $ratings);
-  open (HTTP, '-|', "curl -L -k -s \"$url\"");
+  open (HTTP, '-|', "curl --max-time $timeout -L -k -s \"$url\"");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     if (/<meta property='og:title' content="([^"]*)"/) {
@@ -357,7 +359,7 @@ sub doWiki {
   my ($desc, $title);
   my $url = "https://$lang.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles=$article";
   #print "$url\n";
-  open (HTTP, '-|', "curl -L -k -s \"$url\"");
+  open (HTTP, '-|', "curl --max-time $timeout -L -k -s \"$url\"");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     if (/"title":"([^"]*)"/) {
@@ -394,8 +396,8 @@ sub doHtml {
   # -k => insecure -- don't care about certs
   # -s => silent
   # -H Accept => should cut down on images and the like, but check headers
-  #print "curl -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" \"$url\"";
-  open (HTTP, '-|', "curl -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" \"$url\"");
+  #print "curl --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" \"$url\"";
+  open (HTTP, '-|', "curl --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" \"$url\"");
   while (<HTTP>) {
     #print;
     chomp;
@@ -503,7 +505,7 @@ sub shortenUrl {
   return undef if not defined($bitly_apikey);
   my $rest = "https://api-ssl.bitly.com/v3/shorten?access_token=$bitly_apikey&domain=j.mp&format=txt&longUrl=$encodedUrl";
 
-  open(HTTP, '-|', "curl -L -k -s \"$rest\"");
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s \"$rest\"");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     s/[\r\n]//g;
@@ -532,7 +534,7 @@ sub doReddit {
     return;
   }
 
-  open(HTTP, '-|', "curl -A foo -L -k -s \"$url\"");
+  open(HTTP, '-|', "curl --max-time $timeout -A foo -L -k -s \"$url\"");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     if (/<title.*?>([^<]+)<\/title>/im) {
