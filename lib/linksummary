@@ -396,8 +396,8 @@ sub doHtml {
   # -k => insecure -- don't care about certs
   # -s => silent
   # -H Accept => should cut down on images and the like, but check headers
-  #print "curl --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" \"$url\"";
-  open (HTTP, '-|', "curl --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" \"$url\"");
+  #print "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" \"$url\"";
+  open (HTTP, '-|', "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=1.9\" \"$url\"");
   while (<HTTP>) {
     #print;
     chomp;
@@ -432,6 +432,8 @@ sub doHtml {
     $charset = $1;
     $page = decode($charset, $page);
   }
+
+  #print "is utf8? ", (utf8::is_utf8($page)), "\n";
 
   if ($page =~ /<title.*?>\s*([^<]+?)\s*<\/title>/im) {
     $title = $1;
