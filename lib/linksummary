@@ -389,7 +389,7 @@ sub doWiki {
 
 sub doHtml {
   my $url = shift;
-  my ($title, $desc, $charset, $contenttype, $httpcode);
+  my ($title, $desc, $charset, $contenttype, $httpcode, $shortUrl);
   # -D - => output headers
   # -f => fail to have no output for 404
   # -L => follow 302
@@ -467,6 +467,9 @@ sub doHtml {
     $desc = $1;
     $desc =~ s/\s\s+/ /g;
   }
+  if ($page =~ /<link\s+rel="shortlink"\s+href="([^"]+)"/im) {
+    $shortUrl = $1;
+  }
 #  }
 
   #print "title: $title\n";
@@ -474,7 +477,7 @@ sub doHtml {
 
   return if not defined($title) and not defined($desc);
 
-  my $shortUrl = shortenUrl($url);
+  $shortUrl = shortenUrl($url) if not defined($shortUrl);
 
   if (defined($desc) and length($desc) > 300) {
     $desc = substr($desc, 0, 300) . "…";
