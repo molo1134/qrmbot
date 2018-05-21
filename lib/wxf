@@ -253,7 +253,7 @@ close(HTTP);
 my $units = "_metric";
 $units = "" if $geo{'country_iso3166'} eq "US";
 
-print "Forecast for ", bold($place), " ($lon,$lat) as of $rec{'date'}:\n";
+print "Forecast for ", bold($place), " ($lat,$lon) as of $rec{'date'}:\n";
 
 foreach my $alert (@alerts) {
   print " $alert\n";
