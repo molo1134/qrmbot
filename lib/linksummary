@@ -439,26 +439,33 @@ sub doHtml {
   }
   if ($page =~ /<meta\s+property="og:title"\s+content="([^"]+)"/im) {
     $title = $1;
+    $title =~ s/\s\s+/ /g;
   }
   if ($page =~ /<meta\s+content="([^"]+)"\s+property="og:title"/im) {
     $title = $1;
+    $title =~ s/\s\s+/ /g;
   }
   if (not defined($desc) and
 	  $page =~ /<meta\s+name="description"\s+content="([^"]+)"/im) {
     $desc = $1;
+    $desc =~ s/\s\s+/ /g;
   }
   if (not defined($desc) and
 	  $page =~ /<meta\s+content="([^"]+)"\s+name="description"/im) {
     $desc = $1;
+    $desc =~ s/\s\s+/ /g;
   }
   if ($page =~ /<meta\s+.*?property="og:description"\s+content="([^"]+)"/im) {
     $desc = $1;
+    $desc =~ s/\s\s+/ /g;
   }
   if ($page =~ /<meta\s+content="([^"]+)"\s+property="og:description"/im) {
     $desc = $1;
+    $desc =~ s/\s\s+/ /g;
   }
   if ($page =~ /<meta\s+name="DC.Description.Abstract"\s+content="([^"]+)"/im) {
     $desc = $1;
+    $desc =~ s/\s\s+/ /g;
   }
 #  }
 
