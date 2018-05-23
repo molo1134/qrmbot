@@ -609,6 +609,8 @@ sub doQthCom {
   $desc =~ tr/\n\r/  /;
   $title = decodeEntities($title);
   $desc = decodeEntities($desc);
+  $title =~ s/^\s*(.*?)\s*$/$1/;
+  $desc =~ s/^\s*(.*?)\s*$/$1/;
 
   print bold("\"$title\"") if defined($title);
   print " by $call" if defined($call);
