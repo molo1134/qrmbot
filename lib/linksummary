@@ -556,10 +556,13 @@ sub shortenUrl {
 sub doReddit {
   my $url = shift;
 
-  my ($id, $title);
+  my ($id, $title, $shortCommentUrl);
 
-  if ($url =~ /https?:\/\/(www\.)?reddit\.com\/r\/\w+\/comments\/(\w+)\//) {
+  # example url for particular comment: https://www.reddit.com/r/dayton/comments/5bntme/what_neighborhoods_in_dayton_would_you_tell/d9w9euj/
+
+  if ($url =~ m|https?://(www\.)?reddit\.com/r/\w+/comments/(\w+)/([^/]+/\w+/)?|) {
     $id = $2;
+    $shortCommentUrl = shortenUrl($url) if defined($3);
   } elsif ($url =~ /https?:\/\/redd\.it\/(\w+)/) {
     $id = $1;
   } else {
@@ -577,6 +580,7 @@ sub doReddit {
 
   print bold("\"$title\"") if defined ($title);
   print " http://redd.it/$id " if defined($id);
+  print " $shortCommentUrl " if defined($shortCommentUrl);
   #print " — $desc" if defined ($desc);
   print "\n";
 }
