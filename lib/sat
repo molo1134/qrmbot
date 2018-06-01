@@ -162,9 +162,10 @@ my @passes;
 my @sats;
 foreach my $tle (@elements) {
   my $name = $tle->get('name');
+  my $id = $tle->get('id');
   $name =~ s/ /-/g;
   push(@sats, $name);
-  if (lc($name) eq lc($sat)) {
+  if (lc($name) eq lc($sat) or (isNumeric($sat) and $id == $sat)) {
     #print "$name\n";
     $tle->validate($now, $finish) or next;
     $found = 1;
@@ -215,14 +216,16 @@ my $numpasses = 3;
 $numpasses = 100 if $username ne "eggdrop";
 my $first = 1;
 
+my ($id, $name);
 foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
   #print "\n";
   foreach my $event (@{$pass->{events}}) {
 
     if ($event->{event} eq "rise") {
       if ($first == 1) {
-	printf("%s @%s: ",
-	  bold($event->{body}->get('name')),
+	printf("%s (#%d) @%s: ",
+	  bold($name = $event->{body}->get('name')),
+	  $id = $event->{body}->get('id'),
 	  coordToGrid($lat, $lon));
 	$first = 0;
       }
@@ -247,7 +250,7 @@ foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
       --$numpasses;
       print "\n" if $numpasses == 0;
       print " ‖ " if $numpasses > 0 && $username eq "eggdrop";
-      exit 0 if $numpasses == 0;
+      goto done if $numpasses == 0;
     }
 
     # not reached
@@ -264,4 +267,140 @@ foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
   }
 }
 print "\n";
+done:
+
+my $url = 'https://db.satnogs.org/api/transmitters/?format=json';
+$first = 1;
+open(TX, '-|', "curl --max-time 8 -s -L -k $url");
+while (<TX>) {
+  s/}.{/},\n{/g;
+  @_ = split "\n";
+  foreach my $e (@_) {
+    #print STDERR "$e\n";
+    my @kv = split ",", $e;
+    my %link;
+    foreach my $pair (@kv) {
+      if ($pair =~ /"(\w+)":(true|false|null|\d+|"[^"]+")/) {
+	my ($k, $v) = ($1, $2);
+	$v =~ s/^"(.*)"$/$1/;
+	#print "$k => $v\n";
+	$link{$k} = $v;
+      }
+    }
+    if ($link{norad_cat_id} == $id and
+	  $link{alive} eq "true" and
+	  not $link{description} =~ m/(PE0SAT|drift|current)/i) {
+
+      if ($first == 1) {
+	printf("%s (#%d): ", bold($name), $id);
+	print "\n" if $username ne "eggdrop";
+	$first = 0;
+      } else {
+	print " ‖ " if $username eq "eggdrop";
+      }
+
+      print "  " if $username ne "eggdrop";
+      if ($link{downlink_low} ne "null" and
+		$link{downlink_high} eq "null" and
+		$link{uplink_low} eq "null" and
+		$link{uplink_high} eq "null") {
+	print "transmitting: ";
+      }
+      if ($link{downlink_low} ne "null" and
+		$link{downlink_high} eq "null" and
+		$link{uplink_low} ne "null" and
+		$link{uplink_high} eq "null") {
+	print "repeating: ";
+      }
+      if ($link{downlink_low} ne "null" and
+		$link{downlink_high} ne "null" and
+		$link{uplink_low} ne "null" and
+		$link{uplink_high} ne "null") {
+	print "linear: ";
+      }
+      print "\"$link{description}\" ";
+      print hzToMhz($link{uplink_low}) if $link{uplink_low} ne "null";
+      print "-", hzToMhz($link{uplink_high}) if $link{uplink_high} ne "null";
+      print "/" if $link{uplink_low} ne "null";
+      print bold(hzToMhz($link{downlink_low})) if $link{downlink_low} ne "null";
+      print "-", bold(hzToMhz($link{downlink_high})) if $link{downlink_high} ne "null";
+      print " [inverting]" if $link{invert} eq "true" and $link{mode_id} != 1;
+      print " mode ", mode($link{mode_id});
+      print " $link{baud} baud" if $link{baud} ne "null" and $link{baud} != 0;
+      print "\n" if $username ne "eggdrop";
+    }
+  }
+}
+close(TX);
+print "\n" if $username eq "eggdrop";
+
+sub hzToMhz {
+  my $hz = shift;
+  return $hz / 1000000;
+}
+
+sub mode {
+  my $val = shift;
+  my %modes;
+  $modes{1} = "FM";
+  $modes{2} = "AFSK1k2";
+  $modes{4} = "APRS";
+  $modes{5} = "SSTV";
+  $modes{6} = "CW";
+  $modes{7} = "FMN";
+  $modes{9} = "USB";
+  $modes{15} = "GFSK4k8";
+  $modes{17} = "AHRPT";
+  $modes{18} = "AFSK9k6";
+  $modes{19} = "AM";
+  $modes{20} = "LSB";
+  $modes{21} = "FSK1k2";
+  $modes{22} = "FSK9k6";
+  $modes{25} = "APRS9k6";
+  $modes{26} = "GFSK1k2";
+  $modes{27} = "GFSK2k4";
+  $modes{28} = "GFSK9k6";
+  $modes{29} = "GFSK19k2";
+  $modes{30} = "MSK1k2";
+  $modes{31} = "MSK2k4";
+  $modes{32} = "MSK4k8";
+  $modes{33} = "MSK9k6";
+  $modes{34} = "MSK19k2";
+  $modes{35} = "MSK38k4";
+  $modes{36} = "GMSK1k2";
+  $modes{37} = "GMSK2k4";
+  $modes{38} = "GMSK4k8";
+  $modes{39} = "GMSK9k6";
+  $modes{40} = "PSK31";
+  $modes{41} = "PSK63";
+  $modes{42} = "QPSK31";
+  $modes{43} = "QPSK63";
+  $modes{44} = "APT";
+  $modes{45} = "HRPT";
+  $modes{46} = "FSK4k8";
+  $modes{47} = "BPSK1k2";
+  $modes{48} = "GMSK19k2";
+  $modes{49} = "AFSK";
+  $modes{50} = "BPSK";
+  $modes{51} = "FSK19k2";
+  $modes{52} = "BPSK115k2";
+  $modes{53} = "LRPT";
+  $modes{54} = "BPSK9k6";
+  $modes{55} = "FFSK1k2";
+  $modes{56} = "FSK2k4";
+  $modes{57} = "DSTAR";
+  $modes{58} = "DUV";
+  $modes{59} = "CERTO";
+  return $modes{$val} if defined $modes{$val};
+  print "unknown mode: $val\n";
+}
+
+sub isNumeric {
+  my $val = shift;
+  if ( defined $val ) {
+    return $val =~ /^\d+$/ ? 1 : 0;
+  } else {
+    warn "isNumeric requires an argument!";
+  }
+}
 
