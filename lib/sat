@@ -323,7 +323,7 @@ while (<TX>) {
       print "-", hzToMhz($link{uplink_high}) if $link{uplink_high} ne "null";
       print "/" if $link{uplink_low} ne "null";
       print bold(hzToMhz($link{downlink_low})) if $link{downlink_low} ne "null";
-      print "-", bold(hzToMhz($link{downlink_high})) if $link{downlink_high} ne "null";
+      print "-", bold(hzToMhz($link{downlink_high})) if $link{downlink_high} ne "null" and $link{downlink_high} != $link{downlink_low};
       print " [inverting]" if $link{invert} eq "true" and $link{mode_id} != 1;
       print " mode ", mode($link{mode_id});
       print " $link{baud} baud" if $link{baud} ne "null" and $link{baud} != 0;
