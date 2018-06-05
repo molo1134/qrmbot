@@ -182,14 +182,15 @@ if ($lang eq "greek") {
   $unmorse{"--.-"} = "Ψ";
   $unmorse{".--"} = "Ω";
   $unmorse{"...-"} = "HY";
-  $unmorse{"---.."} = "OI";
+  #$unmorse{"---.."} = "OI";
   $unmorse{"..--"} = "AY";
   $unmorse{".---"} = "YI";
-  $unmorse{"..."} = "EI";
+  #$unmorse{"..."} = "EI";
   $unmorse{"---."} = "EY";
   $unmorse{"..-"} = "OY";
   $unmorse{".-.-"} = "AI";
   $unmorse{"/"} = " ";
+  $unmorse{"-..-."} = "/";
   $unmorse{".----"} = "1";
   $unmorse{"..---"} = "2";
   $unmorse{"...--"} = "3";
@@ -200,6 +201,21 @@ if ($lang eq "greek") {
   $unmorse{"---.."} = "8";
   $unmorse{"----."} = "9";
   $unmorse{"-----"} = "0";
+  $unmorse{"......"} = ".";
+  $unmorse{".-.-.-"} = ",";
+  $unmorse{"---..."} = ":";
+  $unmorse{"-.-.-"} = ";";
+  $unmorse{"-.--.-"} = "()";
+  $unmorse{".----."} = "'";
+  $unmorse{".-..-."} = "\"";
+  $unmorse{"-....-"} = "—";
+  $unmorse{"-..-."} = "/";
+  $unmorse{"..--.."} = "?";
+  $unmorse{"--..--"} = "!";
+  $unmorse{"-...-"} = "-";
+  $unmorse{"........"} = "[Error]";
+  $unmorse{".--.-."} = "@";
+  $unmorse{"/"} = " ";
 }
 
 if ($lang eq "hebrew") {
