@@ -4,6 +4,11 @@
 # Copyright 2018 /u/molo1134. All rights reserved.
 
 use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+use Encode qw(decode);
+use I18N::Langinfo qw(langinfo CODESET);
 
 my %morse;
 
@@ -69,10 +74,51 @@ $morse{"Ñ"} = "--.--";
 $morse{"Ö"} = "---.";
 $morse{"Ü"} = "..--";
 $morse{"Š"} = "----";
+# greek
+$morse{"Α"} = ".-";
+$morse{"Β"} = "-...";
+$morse{"Γ"} = "--.";
+$morse{"Δ"} = "-..";
+$morse{"Ε"} = ".";
+$morse{"Ζ"} = "--..";
+$morse{"Η"} = "....";
+$morse{"Θ"} = "-.-.";
+$morse{"Ι"} = "..";
+$morse{"Κ"} = "-.-";
+$morse{"Λ"} = ".-..";
+$morse{"Μ"} = "--";
+$morse{"Ν"} = "-.";
+$morse{"Ξ"} = "-..-";
+$morse{"Ο"} = "---";
+$morse{"Π"} = ".--.";
+$morse{"Ρ"} = ".-.";
+$morse{"Σ"} = "...";
+$morse{"Τ"} = "-";
+$morse{"Υ"} = "-.--";
+$morse{"Φ"} = "..-.";
+$morse{"Χ"} = "----";
+$morse{"Ψ"} = "--.-";
+$morse{"Ω"} = ".--";
+$morse{"Ά"} = ".-";
+$morse{"Έ"} = ".";
+$morse{"Ή"} = "....";
+$morse{"Ί"} = "..";
+$morse{"Ό"} = "---";
+$morse{"Ύ"} = "-.--";
+$morse{"Ώ"} = ".--";
+$morse{"ΐ"} = "..";
+$morse{"ΰ"} = "-.--";
+$morse{"Ϊ"} = "..";
+$morse{"Ϋ"} = "-.--";
 
 # eggdrop doesn't split args on spaces
 my $args = join(' ', @ARGV);
 $args =~ s/   / \/ /g;
+
+# decode command line from locale-specified codeset
+my $codeset = langinfo(CODESET);
+$args = decode($codeset, $args);
+
 @ARGV=split(' ', $args);
 
 my $target;
@@ -86,7 +132,9 @@ print "\n";
 exit 0;
 
 sub morse {
-  return $morse{uc(shift)};
+  my $char = shift;
+  #print "char: $char, ", uc($char), "\n";
+  return $morse{uc($char)} || return "�";
 }
 
 
