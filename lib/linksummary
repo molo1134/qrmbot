@@ -479,8 +479,19 @@ sub doHtml {
   }
   if ($page =~ /<link\s+rel="shortlink"\s+href="([^"]+)"/im) {
     $shortUrl = $1;
+    # relative shortlinks
+    if ($shortUrl =~ m|^//|) {
+      my $tmp = $url;
+      $tmp =~ s|://.*$|:|;
+      $tmp .= $shortUrl;
+      $shortUrl = $tmp;
+    } elsif ($shortUrl =~ m|^/|) {
+      my $tmp = $url;
+      $tmp =~ s|://([^/]+)/.*$|://$1|;
+      $tmp .= $shortUrl;
+      $shortUrl = $tmp;
+    }
   }
-#  }
 
   #print "title: $title\n";
   #print "desc: $desc\n";
