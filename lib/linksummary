@@ -498,7 +498,8 @@ sub doHtml {
 
   return if not defined($title) and not defined($desc);
 
-  $shortUrl = shortenUrl($url) if not defined($shortUrl);
+  $shortUrl = shortenUrl($url)
+	if not defined($shortUrl) or length($shortUrl) > 60;
 
   if (defined($desc) and length($desc) > 300) {
     $desc = substr($desc, 0, 300) . "…";
