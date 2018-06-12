@@ -72,6 +72,10 @@ printf "Kp : %s\n", join("", kIndexToColorBlocks(@kp));
 printf "Ap : %s\n", join("", aIndexToColorBlocks(@ap));
 printf "SFI: %s\n", join("", sfiToColorBlocks(@sfi));
 
+# TODO: determine field day start programmatically
+my $fdIndicator = indicateEvent($lastday, "ARRL Field Day", "2018 6 23", 2);
+printf "     %s\n", $fdIndicator if defined $fdIndicator;
+
 sub kIndexToBlocks {
   map { tr/0123456789/ ▁▂▃▄▅▆▇█↑/ } @_;
   return @_;
@@ -157,4 +161,48 @@ sub monthNameToNum {
     case "Dec" { return 12 }
     else       { die "unknown month: $monthabbr" }
   }
+}
+
+sub indicateEvent {
+  my $lastDay = shift;
+  my $name = shift;
+  my $eventDate = shift;
+  my $duration = shift;
+
+  my $now = time();
+
+  my ($y, $m, $d) = split(/ /, $lastDay);
+  my $end = $dtparser->parse_datetime("$y " . monthNameToNum($m) . " $d");
+
+  my $fdStart = $dtparser->parse_datetime($eventDate);
+
+  my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime($now);
+  $year += 1900; $mon += 1;
+  #print "now: $year $mon $mday\n";
+
+  my $todayStart = $dtparser->parse_datetime("$year $mon $mday");
+
+  if ($todayStart->epoch() < $fdStart->epoch() and
+      $fdStart->epoch() < $end->epoch()) {
+
+    #print "have fd\n";
+    #print "$now, $lastDay, $fdStart, $end\n";
+
+    my $result = "";
+
+    my $cursor = $todayStart->epoch();
+    while ($cursor < $fdStart->epoch()) {
+      $result .= " ";
+      $cursor += 24*60*60;
+    }
+    my $i = 0;
+    while ($i < $duration) {
+      $result .= "^";
+      $i++;
+    }
+    $result .= " $name";
+    return $result;
+  }
+
+  return undef;
 }
