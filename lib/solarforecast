@@ -8,6 +8,7 @@ use utf8;
 use feature 'unicode_strings';
 use Switch;
 use POSIX qw(strftime);
+use List::Util qw[min max];
 use DateTime::Format::Strptime;
 binmode(STDOUT, ":utf8");
 
@@ -172,9 +173,10 @@ sub indicateEvent {
   my $now = time();
 
   my ($y, $m, $d) = split(/ /, $lastDay);
-  my $end = $dtparser->parse_datetime("$y " . monthNameToNum($m) . " $d");
+  my $graphEnd = $dtparser->parse_datetime("$y " . monthNameToNum($m) . " $d");
 
-  my $fdStart = $dtparser->parse_datetime($eventDate);
+  my $eventStart = $dtparser->parse_datetime($eventDate);
+  my $eventEnd = $eventStart->epoch() + ($duration * 60*60*24);
 
   my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime($now);
   $year += 1900; $mon += 1;
@@ -182,25 +184,27 @@ sub indicateEvent {
 
   my $todayStart = $dtparser->parse_datetime("$year $mon $mday");
 
-  if ($todayStart->epoch() < $fdStart->epoch() and
-      $fdStart->epoch() < $end->epoch()) {
+  if ($todayStart->epoch() < $eventEnd and
+      $eventEnd < $graphEnd->epoch()) {
 
     #print "have fd\n";
-    #print "$now, $lastDay, $fdStart, $end\n";
+    #print "$now, $lastDay, $eventStart, $graphEnd\n";
 
     my $result = "";
 
     my $cursor = $todayStart->epoch();
-    while ($cursor < $fdStart->epoch()) {
+    while ($cursor < $eventStart->epoch()) {
       $result .= " ";
       $cursor += 24*60*60;
     }
     my $i = 0;
-    while ($i < $duration) {
+    my $secsLeft = $eventEnd - max($eventStart->epoch(), $todayStart->epoch());
+    my $daysLeft = $secsLeft / (24*60*60);
+    while ($i < $daysLeft) {
       $result .= "^";
       $i++;
     }
-    $result .= " $name";
+    $result .= " " . $name;
     return $result;
   }
 
