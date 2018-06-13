@@ -205,7 +205,7 @@ if ($needlogin) {
 
 our ($retcall, $country, $name, $sk, $class, $mail, $grid, $lat, $lon, $geosrc,
 			$born, @prevcalls, $email, $codes, $website, $iota, $lotw, $eqsl,
-			$mailqsl, $qsl, $expiration, @othercalls, $trustee, $incomplete);
+			$mailqsl, $qsl, $expiration, @othercalls, $trustee, $incomplete, $lookups);
 
 getAndParseData();
 
@@ -309,6 +309,9 @@ if (defined($redditid) and length($redditid) gt 0) {
   } else {
     print " -- /u/$redditid";
   }
+}
+if (defined($lookups) and $compact eq 0) {
+  print " -- $lookups lookups";
 }
 if ($compact eq 0) {
   print "\n";
@@ -678,6 +681,9 @@ sub getAndParseData {
       if ($key =~ /QSL by Mail/) {
 	$mailqsl = $val;
 	next;
+      }
+      if ($key =~ /Lookups/) {
+	$lookups = $val;
       }
     }
     if ($detail and 
