@@ -22,7 +22,7 @@ proc q_addquote { nick uhost hand chan arg } {
 
   puts $qf $entry
 
-  putmsg $nick $entry
+  putmsg $nick "added quote for $chan: $arg"
 
   close $qf
 }
