@@ -139,7 +139,7 @@ sub geolocate {
   open (HTTP, '-|', "curl -k -s '$url'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
-		#print;
+    #print;
     chomp;
 
     if (/OVER_QUERY_LIMIT/) {
@@ -148,6 +148,8 @@ sub geolocate {
       exit $::exitnonzeroonerror if $tries > 3;
       goto RESTART;
     }
+
+    last if /ZERO_RESULTS/;
 
     if (/<result>/) {
       $newResult = 1;
