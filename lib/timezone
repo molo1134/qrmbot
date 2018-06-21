@@ -36,7 +36,38 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 # eggdrop doesn't split args on spaces
 #@ARGV=split(' ', join(' ',@ARGV));
 
-my $query = join(' ', @ARGV);
+my $i = 0;
+#while ($i <= $#ARGV) {
+#  print "$i: $ARGV[$i++]\n";
+#}
+#$i = 0;
+
+my $query = undef;
+my $de = undef;
+
+while ($i <= $#ARGV) {
+  if (!defined($de) and $ARGV[$i] =~ /^(--geo|de|from)$/i) {
+    $i++;
+    $de = $ARGV[$i];
+    $i++;
+    next;
+  }
+  if (defined($de) and $ARGV[$i] =~ /^--geo$/) {
+    # in case we have "de XXX --geo abc,xyz"
+    last;
+  }
+  if (defined($de)) {
+    $de = $de . " " . $ARGV[$i];
+    $i++;
+    next;
+  }
+  if (defined($query)) {
+    $query = $query ." ". $ARGV[$i];
+  } else {
+    $query = $ARGV[$i];
+  }
+  $i++;
+}
 
 my $result = argToCoords($query);
 if (!defined $result) {
