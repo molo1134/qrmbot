@@ -7,7 +7,7 @@
 package Location;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing);
+@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ);
 
 use Math::Trig;
 use Math::Trig 'great_circle_distance';
@@ -235,7 +235,7 @@ sub argToCoords {
 
   if (defined($grid)) {
     ($lat, $lon) = split(',', gridToCoord(uc($grid)));
-  } 
+  }
 
   return join(',', $lat, $lon);
 }
@@ -270,4 +270,43 @@ sub distBearing {
 # Example: my @Tokyo  = NESW(139.8, 35.7); # (35.7N 139.8E)
 sub NESW {
   deg2rad($_[0]), deg2rad(90 - $_[1])
+}
+
+sub coordToTZ {
+  my $lat = shift;
+  my $lon = shift;
+
+  my $now = time();
+  my $url = "https://maps.googleapis.com/maps/api/timezone/json?location=$lat,$lon&timestamp=$now";
+
+  my ($dstoffset, $rawoffset, $zoneid, $zonename);
+
+  open (HTTP, '-|', "curl -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  while (<HTTP>) {
+
+    # {
+    #    "dstOffset" : 3600,
+    #    "rawOffset" : -18000,
+    #    "status" : "OK",
+    #    "timeZoneId" : "America/New_York",
+    #    "timeZoneName" : "Eastern Daylight Time"
+    # }
+
+    if (/"(\w+)" : (-?\d+|"[^"]*")/) {
+      my ($k, $v) = ($1, $2);
+      $v =~ s/^"(.*)"$/$1/;
+      #print "$k ==> $v\n";
+      if ($k eq "status" and $v ne "OK") {
+	return undef;
+      }
+      $dstOffset = $v if $k eq "dstOffset";
+      $rawOffset = $v if $k eq "rawOffset";
+      $zoneid = $v if $k eq "timeZoneId";
+      $zonename = $v if $k eq "timeZoneName";
+    }
+  }
+  close(HTTP);
+
+  return $zoneid;
 }
