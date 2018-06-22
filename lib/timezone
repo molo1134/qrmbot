@@ -78,6 +78,9 @@ if (!defined $result) {
 my ($lat, $lon) = split(',', $result);
 my $zone = coordToTZ($lat, $lon);
 
+print "error: no time zone returned for $lat, $lon\n" if not defined $zone;
+exit $exitnonzeroonerror if not defined $zone;
+
 #print "$zone\n";
 
 my $now = DateTime->now(); # local time
