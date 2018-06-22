@@ -36,10 +36,16 @@ As tested on Debian:
 
 ```
 $ sudo apt-get install git dh-make-perl
+$ sudo apt-file update
 $ git clone 'https://github.com/trwyant/perl-Astro-Coord-ECI.git'
 $ cd perl-Astro-Coord-ECI
 $ git checkout 'v00.077'
 $ dh-make-perl --vcs none --build
+
+Would you like to configure as much as possible automatically? yes
+
+What approach do you want? manual
+
 $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 ```
 
