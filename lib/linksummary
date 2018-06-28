@@ -35,7 +35,7 @@ $highlight = "irc" if $username eq "eggdrop";
 my $i = 0;
 while ($i <= $#ARGV) {
 
-  $ARGV[$i] =~ s/'//; # sanitize
+  $ARGV[$i] =~ s/'//g; # sanitize
 
   if ($ARGV[$i] =~ m|https?://(www\.)?youtube\.com/watch\?v=([\w-]+)|) {
     printYouTubeMetaData($2);
