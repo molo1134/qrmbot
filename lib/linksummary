@@ -35,6 +35,8 @@ $highlight = "irc" if $username eq "eggdrop";
 my $i = 0;
 while ($i <= $#ARGV) {
 
+  $ARGV[$i] =~ s/'//; # sanitize
+
   if ($ARGV[$i] =~ m|https?://(www\.)?youtube\.com/watch\?v=([\w-]+)|) {
     printYouTubeMetaData($2);
   } elsif ($ARGV[$i] =~ m|https?://youtu\.be/([\w-]+)|) {
@@ -71,7 +73,7 @@ sub printYouTubeMetaData {
   my $shortcut = "http://youtu.be/$id";
   my $done = 0;
   my ($title, $len, $desc, $count, $pubdate, $genre, $nsfw, $unlisted, $paid, $author);
-  open(HTTP, '-|', "curl --max-time $timeout -L -k -s \"$url\"");
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     if (/<meta itemprop="(\w+)" content="([^"]*)">/) {
@@ -131,7 +133,7 @@ sub doTwitter {
   my $directRT = 0;
 
   if ($url =~ /https?:\/\/t\.co\/\w+/) {
-    open (HTTP, '-|', "curl --max-time $timeout -L -k -s -o /dev/null -w \"%{url_effective}\" \"$url\"");
+    open (HTTP, '-|', "curl --max-time $timeout -L -k -s -o /dev/null -w \"%{url_effective}\" '$url'");
     while(<HTTP>) {
       $url = $_;
     }
@@ -196,7 +198,7 @@ sub doTwitter {
   #print "$ARGV[$i]\n";
   #print "$url\n";
   #print "$token\n";
-  open (HTTP, '-|', "curl --max-time $timeout -L -k -s -H \"Referer: $url\" --data authenticity_token=$token \"$targeturl\"");
+  open (HTTP, '-|', "curl --max-time $timeout -L -k -s -H \"Referer: $url\" --data authenticity_token=$token '$targeturl'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     #print;
@@ -314,7 +316,7 @@ sub doTwitter {
 sub getTwitterAuthToken {
   my $url = shift;
   my $token = undef;
-  open (HTTP, '-|', "curl --max-time $timeout -L -k -s \"$url\"");
+  open (HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     if (!defined($token) and /name="authenticity_token"/) {
@@ -331,7 +333,7 @@ sub getTwitterAuthToken {
 sub doImdb {
   my $url = shift;
   my ($title, $desc, $rating, $ratings);
-  open (HTTP, '-|', "curl --max-time $timeout -L -k -s \"$url\"");
+  open (HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     if (/<meta property='og:title' content="([^"]*)"/) {
@@ -363,7 +365,7 @@ sub doWiki {
   my ($desc, $title);
   my $url = "https://$lang.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles=$article";
   #print "$url\n";
-  open (HTTP, '-|', "curl --max-time $timeout -L -k -s \"$url\"");
+  open (HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     if (/"title":"([^"]*)"/) {
@@ -401,9 +403,9 @@ sub doHtml {
   # -s => silent
   # -A => user agent
   # -H Accept => should cut down on images and the like, but check headers
-  #print "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" \"$url\"";
+  #print "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" '$url'";
   my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0";
-  open (HTTP, '-|', "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=1.9\" -A \"$useragent\" \"$url\"");
+  open (HTTP, '-|', "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=1.9\" -A \"$useragent\" '$url'");
   while (<HTTP>) {
     #print;
     chomp;
@@ -551,7 +553,7 @@ sub shortenUrl {
   return undef if not defined($bitly_apikey);
   my $rest = "https://api-ssl.bitly.com/v3/shorten?access_token=$bitly_apikey&domain=j.mp&format=txt&longUrl=$encodedUrl";
 
-  open(HTTP, '-|', "curl --max-time $timeout -L -k -s \"$rest\"");
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$rest'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     s/[\r\n]//g;
@@ -583,7 +585,7 @@ sub doReddit {
     return;
   }
 
-  open(HTTP, '-|', "curl --max-time $timeout -A foo -L -k -s \"$url\"");
+  open(HTTP, '-|', "curl --max-time $timeout -A foo -L -k -s '$url'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     if (/<title.*?>([^<]+)<\/title>/im) {
@@ -603,7 +605,7 @@ sub doQthCom {
   my $url = shift;
   my ($title, $desc, $call);
 
-  open(HTTP, '-|', "curl --max-time $timeout -L -k -s \"$url\"");
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     if (m|<font size=3 face="Arial,Helvetica">\s*([^<]+)</font></B>|) {

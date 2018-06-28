@@ -101,7 +101,7 @@ my ($freq, $offset, $squelch, $location, $state, $county, $callsign);
 goto WORLD if $world == 1;
 
 #print "$url\n";
-open (HTTP, '-|', "curl --max-time 5 --retry 1 --insecure -L -s \"$url\"");
+open (HTTP, '-|', "curl --max-time 5 --retry 1 --insecure -L -s '$url'");
 binmode(HTTP, ":encoding(cp1252)");
 while (<HTTP>) {
 	#print;
@@ -214,7 +214,7 @@ my $havemany = 0;
 $url = "https://www.repeaterbook.com/row_repeaters/keyResult.php?keyword=${encoded}&state_id=0";
 
 #print "$url\n";
-open (HTTP, '-|', "curl --max-time 5 --retry 1 --insecure -L -s \"$url\"");
+open (HTTP, '-|', "curl --max-time 5 --retry 1 --insecure -L -s '$url'");
 binmode(HTTP, ":encoding(cp1252)");
 while (<HTTP>) {
 	#print;
