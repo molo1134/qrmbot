@@ -37,30 +37,30 @@ while ($i <= $#ARGV) {
 
   $ARGV[$i] =~ s/'//g; # sanitize
 
-  if ($ARGV[$i] =~ m|https?://(www\.)?youtube\.com/watch\?v=([\w-]+)|) {
+  if ($ARGV[$i] =~ m|https?://(www\.)?youtube\.com/watch\?v=([\w-]+)|i) {
     printYouTubeMetaData($2);
-  } elsif ($ARGV[$i] =~ m|https?://youtu\.be/([\w-]+)|) {
+  } elsif ($ARGV[$i] =~ m|https?://youtu\.be/([\w-]+)|i) {
     printYouTubeMetaData($1);
-  } elsif ($ARGV[$i] =~ m|https?://t\.co/\w+| or
-	  $ARGV[$i] =~ m|https?://(mobile\.)?twitter\.com/|) {
+  } elsif ($ARGV[$i] =~ m|https?://t\.co/\w+|i or
+	  $ARGV[$i] =~ m|https?://(mobile\.)?twitter\.com/|i) {
     doTwitter($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://(www\.)?imdb\.com/title/tt\d+| or
-	  $ARGV[$i] =~ m|https?://imdb\.to/\w+|) {
+  } elsif ($ARGV[$i] =~ m|https?://(www\.)?imdb\.com/title/tt\d+|i or
+	  $ARGV[$i] =~ m|https?://imdb\.to/\w+|i) {
     doImdb($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|https?://(\w+)\.wikipedia\.org/wiki/([^/\s]+)|i) {
     doWiki($1, $2);
-  } elsif ($ARGV[$i] =~ m|https?://(www\.)?reddit\.com/r/\w+/comments/\w+/| or
-	  $ARGV[$i] =~ m|https?://redd\.it/\w+|) {
+  } elsif ($ARGV[$i] =~ m|https?://(www\.)?reddit\.com/r/\w+/comments/\w+/|i or
+	  $ARGV[$i] =~ m|https?://redd\.it/\w+|i) {
     doReddit($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://swap\.qth\.com/view_ad\.php\?counter=\d+|) {
+  } elsif ($ARGV[$i] =~ m|https?://swap\.qth\.com/view_ad\.php\?counter=\d+|i) {
     doQthCom($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|https?://(www\.)?qrz\.com/db/[A-Z0-9]+|i) {
     doQrzDb($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://goo\.gl/maps/| or
-	  $ARGV[$i] =~ m|https?://(www\.)?google\.com/maps/|) {
+  } elsif ($ARGV[$i] =~ m|https?://goo\.gl/maps/|i or
+	  $ARGV[$i] =~ m|https?://(www\.)?google\.com/maps/|i) {
     # noop
   } elsif ($ARGV[$i] =~ m|https?://| and
-	  not $ARGV[$i] =~ /\.(gif|jpe?g|jpe|png|mp[34]|pdf)/) {
+	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
     doHtml($ARGV[$i]);
   }
 
