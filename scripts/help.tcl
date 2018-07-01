@@ -46,6 +46,7 @@ proc send_help {nick} {
   putmsg $nick "  !qcode !q -- qcode lookup"
   putmsg $nick "  !utc -- display current UTC time"
   putmsg $nick "  !time !tz -- localtime in the qth or grid specified"
+  putmsg $nick "  !rig -- describe a radio or other gear"
   putmsg $nick "  !lotw -- last upload date to LoTW for a callsign"
   putmsg $nick "  !eqsl -- last login to eqsl.cc for a callsign"
   putmsg $nick "  !contests -- list current and upcoming contests"
@@ -56,6 +57,7 @@ proc send_help {nick} {
   putmsg $nick "  !units -- convert values between units"
   putmsg $nick "  !crypto -- cryptocurrency price check:"
   putmsg $nick "  !bitcoin !btc !litecoin !ltc !etherium !eth !doge" 
+  putmsg $nick "  !define -- glossary lookup"
 #  putmsg $nick "  !topic -- print current topic"
 #  putmsg $nick "  !topicrefresh -- reset the topic"
 #  putmsg $nick [encoding convertto utf-8 "  !myquit -- print your last signoff message †"]
