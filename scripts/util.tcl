@@ -4,7 +4,9 @@ proc sanitize_string {text} {
   regsub -all ">" $text "" text
   regsub -all "<" $text "" text
   regsub -all "\\|" $text "" text
-  regsub -all "&" $text "" text
+  regsub -all "&" $text "%26" text
+  regsub -all "\n" $text " " text
+  regsub -all "\r" $text " " text
 
   return $text
 }
