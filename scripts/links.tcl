@@ -32,7 +32,7 @@ set linkbin "/home/eggdrop/bin/linksummary"
 
 proc http_msg { nick host hand text } {
 	global linkbin
-	set params [sanitize_string [string trim ${text}]]
+	set params [sanitize_url [string trim ${text}]]
 	putlog "http msg: $nick $host $hand $params"
 	catch {exec ${linkbin} ${params}} data
 	set output [split $data "\n"]
@@ -41,9 +41,12 @@ proc http_msg { nick host hand text } {
 	}
 }
 
+# TODO FIXME XXX: add a blacklist of users that we don't process.
+# Add spaceweatherbot to the blacklist
+
 proc http_pub { nick host hand chan text } {
 	global linkbin
-	set params [sanitize_string [string trim ${text}]]
+	set params [sanitize_url [string trim ${text}]]
 	putlog "http pub: $nick $host $hand $chan $params"
 	catch {exec ${linkbin} ${params}} data
 	set output [split $data "\n"]

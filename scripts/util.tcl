@@ -4,9 +4,20 @@ proc sanitize_string {text} {
   regsub -all ">" $text "" text
   regsub -all "<" $text "" text
   regsub -all "\\|" $text "" text
-  regsub -all "&" $text "%26" text
+  regsub -all "&" $text "" text
   regsub -all "\n" $text " " text
   regsub -all "\r" $text " " text
+
+  return $text
+}
+
+proc sanitize_url {text} {
+  regsub -all ">" $text "%3E" text
+  regsub -all "<" $text "%3C" text
+  regsub -all "\\|" $text "%7C" text
+  #regsub -all "&" $text "" text
+  regsub -all "\n" $text "%0A" text
+  regsub -all "\r" $text "%0D" text
 
   return $text
 }
