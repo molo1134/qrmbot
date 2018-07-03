@@ -54,7 +54,7 @@ while ($i <= $#ARGV) {
     doReddit($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|https?://swap\.qth\.com/view_ad\.php\?counter=\d+|i) {
     doQthCom($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://(www\.)?qrz\.com/db/[A-Z0-9]+|i) {
+  } elsif ($ARGV[$i] =~ m|https?://(www\.)?qrz\.com/(db\|lookup)/[A-Z0-9]+|i) {
     doQrzDb($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|https?://goo\.gl/maps/|i or
 	  $ARGV[$i] =~ m|https?://(www\.)?google\.com/maps/|i) {
@@ -641,8 +641,8 @@ sub doQthCom {
 sub doQrzDb {
   my $url = shift;
   my $call;
-  if ($url =~ m|https?://(www\.)?qrz\.com/db/([A-Z0-9]+)|i) {
-    $call = $2;
+  if ($url =~ m|https?://(www\.)?qrz\.com/(db\|lookup)/([A-Z0-9]+)|i) {
+    $call = $3;
   }
   my $libdir = dirname(realpath(__FILE__));
   if (not defined($call) or not -e "$libdir/qrz") {
