@@ -284,7 +284,7 @@ sub doDXWatch
   open (HTTP, '-|', "curl -L -k --max-time 4 --retry 1 -s '$url'");
   while (<HTTP>) {
     s/},"fname".*$//;
-    s/{"s":{//;
+    s/\{"s":\{//;
     s/],"/]\n"/g;
 
     my @data = split /\n/;
