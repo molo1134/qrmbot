@@ -16,7 +16,7 @@ my $url = 'https://launchlibrary.net/1.4/launch/next/1?lsp=121';
 
 my ($name, $time);
 
-open(HTTP, '-|', "curl -s '$url'");
+open(HTTP, '-|', "curl -L -k --max-time 4 --retry 1 -s '$url'");
 binmode(HTTP, ":utf8");
 while(<HTTP>) {
   if (/"name":"([^"]+)"/) {
