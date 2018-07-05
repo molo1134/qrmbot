@@ -113,6 +113,9 @@ bind pub - !graves graves_pub
 bind msg - !sat sat_msg
 bind pub - !sat sat_pub
 
+bind msg - !spacex spacex_msg
+bind pub - !spacex spacex_pub
+
 bind msg - !qcode qcode_msg
 bind pub - !qcode qcode_pub
 bind msg - !q qcode_msg
@@ -139,6 +142,7 @@ set mufbin "/home/eggdrop/bin/muf"
 set muf2bin "/home/eggdrop/bin/muf2"
 set astrobin "/home/eggdrop/bin/astro"
 set satbin "/home/eggdrop/bin/sat"
+set spacexbin "/home/eggdrop/bin/spacex"
 set qcodebin "/home/eggdrop/bin/qcode"
 
 set spotfile spotlist
@@ -1184,6 +1188,25 @@ proc sat_msg {nick uhand handle input} {
 	} else {
 		catch {exec ${satbin} ${params} ${geo}} data
 	}
+	set output [split $data "\n"]
+	foreach line $output {
+		putmsg $nick [encoding convertto utf-8 "$line"]
+	}
+}
+
+proc spacex_pub { nick host hand chan text } {
+	global spacexbin
+	putlog "spacex pub: $nick $host $hand $chan $text"
+	catch {exec ${spacexbin}} data
+	set output [split $data "\n"]
+	foreach line $output {
+		putchan $chan [encoding convertto utf-8 "$line"]
+	}
+}
+proc spacex_msg {nick uhand handle input} {
+	global spacexbin
+	putlog "spacex msg: $nick $uhand $handle $input"
+	catch {exec ${spacexbin}} data
 	set output [split $data "\n"]
 	foreach line $output {
 		putmsg $nick [encoding convertto utf-8 "$line"]

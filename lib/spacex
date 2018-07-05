@@ -1,0 +1,36 @@
+#!/usr/bin/perl
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+
+# http://launchlibrary.net/docs/1.4/api.html
+# Launch Service Provider 121 = SpaceX
+my $url = 'https://launchlibrary.net/1.4/launch/next/1?lsp=121';
+
+my ($name, $time);
+
+open(HTTP, '-|', "curl -s '$url'");
+binmode(HTTP, ":utf8");
+while(<HTTP>) {
+  if (/"name":"([^"]+)"/) {
+    $name = $1;
+  }
+  if (/"windowstart":"([^"]+)"/) {
+    $time = $1;
+  }
+}
+close(HTTP);
+
+if (defined $name and defined $time) {
+  print bold($name), ": $time\n";
+} else {
+  print "not found\n";
+}
+
