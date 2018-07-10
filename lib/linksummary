@@ -72,7 +72,7 @@ sub printYouTubeMetaData {
   my $url = "https://youtube.com/watch?v=$id";
   my $shortcut = "http://youtu.be/$id";
   my $done = 0;
-  my ($title, $len, $desc, $count, $pubdate, $genre, $nsfw, $unlisted, $paid, $author);
+  my ($title, $len, $desc, $count, $pubdate, $genre, $nsfw, $unlisted, $paid, $author, $likes, $dislikes, $live);
   open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
@@ -99,6 +99,17 @@ sub printYouTubeMetaData {
 #    if (/"shortDescription":"([^"]+)"/) {
 #      $desc = $1;
 #    }
+    if (/"like this video along with ([0-9,]+) other people"/) {
+      $likes = $1;
+      $likes =~ s/,//;
+    }
+    if (/"dislike this video along with ([0-9,]+) other people"/) {
+      $dislikes = $1;
+      $dislikes =~ s/,//;
+    }
+    if (/"livestream":"1"/) {
+      $live = 1;
+    }
   }
   close(HTTP);
 
@@ -115,7 +126,12 @@ sub printYouTubeMetaData {
   print bold("\"$title\""), " by $author on $pubdate; ";
   print "${h}h" if $h > 0;
   print "${m}m" if $m > 0;
-  print "${s}s; $count views ($genre)";
+  print "${s}s;" if $s > 0;
+  print red("[LIVE]") if $live == 1;
+  print " $count views";
+  print green(" ${likes}↑") if defined $likes;
+  print red(" ${dislikes}↓") if defined $dislikes;
+  print " ($genre)" if defined $genre;
   print red(" [NSFW]") if $nsfw == 1;
   print green(" [PAID]") if $paid == 1;
   print yellow(" [UNLISTED]") if $unlisted == 1;
