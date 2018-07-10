@@ -112,9 +112,13 @@ if ($vals{type} eq "w") {
 }
 
 print bold($vals{name});
-print " (de $vals{srccall})" unless $vals{name} eq $vals{srccall} || !defined($vals{srccall});
+if (defined $vals{srccall} and $vals{name} ne $vals{srccall}) {
+  print " (de $vals{srccall})";
+}
 print " (WX)" if $vals{type} eq "w";
-print ": " . (geolocate($vals{lat}, $vals{lng}) || coordToGrid($vals{lat}, $vals{lng}));
+if (defined $vals{lat} and defined $vals{lng}) {
+  print ": " . (geolocate($vals{lat}, $vals{lng}) || coordToGrid($vals{lat}, $vals{lng}));
+}
 
 # wx station vals
 print "  Temp: " . bold("$vals{temp_c}°C/$vals{temp_f}°F") if defined ($vals{temp});
@@ -195,6 +199,7 @@ sub getvals {
     # "found":1,"entries":[{"class":"a"
     s/:(\d+),/:$1 , /g;
     s/","/" , "/g;
+    s/(\d),"/$1 , "/g;
     s/{"/{\n"/g;
     #print;
     my @fields = split / , /;
