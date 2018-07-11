@@ -42,16 +42,16 @@ our @blacklist = (
   "0X03F", "4N6KID", "6L6GC", "7K60FXD", "9N388GV", "A11EN", "A1AMAN", "A31XX",
   "A5MYTH", "A66AUTO", "AC316SCU", "AJ308WIN", "AM3ON", "AR0B", "AR3N", "AX0N",
   "B0073D", "B0BITH", "B0ZZ", "B3TAL", "B4Q", "B5GEEK", "B95CSF", "BA0TH",
-  "BE2VT", "C41N", "CH00F", "CH3X", "CH4QA", "CN89LA", "CP4R", "CQ2QC",
+  "BE2VT", "C41N", "CH00F", "CH3X", "CH4QA", "CP4R", "CQ2QC",
   "CR0CKER", "CR500GUY", "D03BOY", "D333D", "D3JAKE", "DC12V", "DE3L",
   "DH1021X", "DI0DEX", "DI1UTED", "DN3T", "DT2G", "DV82XL", "EF3S", "EM00GUY",
-  "EN82JJ", "F15SIM", "F1699BBS", "F3REAL", "FB0M", "FF0000IT", "FO0BAT",
+  "F15SIM", "F1699BBS", "F3REAL", "FB0M", "FF0000IT", "FO0BAT",
   "FR3QQ", "FX34ME", "G00PIX", "G0JIRA", "GO3TEAM", "GR0TESK", "H3LIX",
   "H6DTR", "HA1156W", "HB3B", "HE3RD", "IG88J", "J1986EG", "JA450N", "JH0N",
-  "JK3US", "JN75OT", "K1DOWN", "K240DF", "K24G", "L0RAN", "L10L", "L2NP",
+  "JK3US", "K1DOWN", "K240DF", "K24G", "L0RAN", "L10L", "L2NP",
   "L33R", "L33TGOY", "L3STAN", "M00DAWG", "M01E", "M05Y", "M0LE", "M101X",
   "M3US", "MD5SUMO", "MK2JA", "MR2FAN", "MS4SMAN", "N00F", "N00MIN", "N00TZ",
-  "N221UA", "N5CORP", "N71FS", "N734LQ", "N7E", "NY3JRON", "OP00TO", "OS2REXX",
+  "N221UA", "N5CORP", "N71FS", "N734LQ", "N7E", "NY3JRON", "OS2REXX",
   "OZ0SH", "P0RKS", "P1MRX", "P3PPR", "P42O", "P4DDY", "P4NTZ", "P8M", "P9K",
   "PE5ER", "PH00P", "PI4ATE", "PL8ER", "PR0TEAN", "Q00P", "R08SHAW", "R08ZY",
   "R0LFO", "R0WLA", "RJ45JACK", "RJ61X", "RV49ER", "S0LAR", "S1EDOG", "SC04AT",
@@ -59,9 +59,8 @@ our @blacklist = (
   "T1PHIL", "T3H", "T90FAN", "TH4AB", "TS830S", "TV8TONY", "UP2LATE", "V1CTOR",
   "V3KI", "V3NGI", "V4LSYL", "V8FTW", "VT2NC", "W00TAH", "W0153R", "W33DAR",
   "X4B", "XG33KX", "Y2KAI", "Z33RO", "Z3MATT", "Z3US", "ZE1DA",
-  "JH23DF", "K67FDE", "N546RV", "N983CC", "W09U", "CN85PQ", "CN85PL", "BG4LAW",
-  "U03BB", "UD83D", "A1LOU", "FN03DR", "A80J", "KZ4I", "KZ4IX", "J0MPZ",
-  "WH33T", "KO26BX", "B17X", "HO0BER", "JP82QK", "JO41WX");
+  "K67FDE", "N546RV", "N983CC", "W09U", "BG4LAW", "U03BB", "UD83D", "A1LOU",
+  "A80J", "KZ4I", "KZ4IX", "J0MPZ", "WH33T", "B17X", "HO0BER");
 
 # load nicks
 our $nickfile = "$ENV{'HOME'}/.nicks.csv";
@@ -125,7 +124,7 @@ foreach my $baseurl (@baseurls) {
 	    ($c, undef) = grep {$_ ne ''} split(/[\s\W]/, $f);
 	    next if not defined $c;
 	    #print "$c\n";
-	    if ($c =~ /^[A-R]{2}[0-9]{2}([a-x]{2})?$/) { # grid
+	    if ($c =~ /^[A-R]{2}[0-9]{2}([a-x]{2})?$/i) { # grid
 	      $c = undef;
 	      next;
 	    }
