@@ -19,7 +19,6 @@ bot](https://www.reddit.com/r/amateurradio/wiki/qrmbot).
 As tested on Debian:
 
 * `curl`
-* `gocr`
 * `netpbm`
 * `perl`
 * `perl-base`
