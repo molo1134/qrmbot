@@ -15,7 +15,7 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 
-my $timeout = 10;	# 10 seconds
+my $timeout = 15;	# 15 seconds
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
@@ -236,6 +236,8 @@ while (<INDEX>) {
 close INDEX;
 
 #print "$mid\n";
+
+$station = "" if not defined($station);
 
 print "No ionograms found for $station ($ursiCode)\n" if !defined($mid);
 exit 0 if !defined($mid);
