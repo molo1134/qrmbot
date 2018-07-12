@@ -283,6 +283,15 @@ sub doDXWatch
 #  print "curl -k --max-time 4 --retry 1 -s '$url'";
   open (HTTP, '-|', "curl -L -k --max-time 4 --retry 1 -s '$url'");
   while (<HTTP>) {
+    if (/<title>(\d\d\d .*?)<\/title>/) {
+      my $error = $1;
+      print "warning: ";
+      print "RBN: " if $rb == 1;
+      print "DXW: " if $rb == 0;
+      print "$error\n";
+      last;
+    }
+
     s/},"fname".*$//;
     s/\{"s":\{//;
     s/],"/]\n"/g;
