@@ -34,6 +34,7 @@ foreach my $subreddit (@subreddits) {
 #push @baseurls, "https://www.reddit.com/user/molo1134/m/hamradiomulti/comments/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8fowrk/is_there_a_baofenglike_radio_but_for_hf/dy6fl6s/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8fd9vb/its_not_much_but_its_mine_shack_edition/dy6mkg7/.json";
+#push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8ydhs6/2way_radio_recommendations/e2a6fcq/.json";
 
 our %nicks;
 our %results;
@@ -107,6 +108,7 @@ foreach my $baseurl (@baseurls) {
 	if ($e =~ /"(\w+)": (-?[\d.]+|null|true|false|".+"$)/) {
 	  my ($k, $v) = ($1, $2);
 	  $v =~ s/^"(.*)"$/$1/;
+	  $v =~ s/\\u([0-9a-f]{4})/chr(hex($1))/egi;
     #      print STDERR "$k => $v\n";
 
 	  if ($k eq "after") {
