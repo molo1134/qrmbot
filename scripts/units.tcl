@@ -6,6 +6,13 @@
 bind msg - !units msg_convert_units
 bind pub - !units pub_convert_units
 
+# because no one can remember GNU units syntax
+bind msg - !ftoc msg_ftoc
+bind pub - !ftoc pub_ftoc
+
+bind msg - !ctof msg_ctof
+bind pub - !ctof pub_ctof
+
 set unitsbin "/usr/bin/units"
 
 # load utility methods
@@ -130,4 +137,25 @@ proc pub_convert_units {nick host hand chan arg} {
   } else {
     putchan $chan [concat "$term1 = " [lindex $output 0] " $term2"]
   }
+}
+
+
+proc msg_ftoc {nick uhand handle arg} {
+  set arg [sanitize_string $arg]
+  msg_convert_units $nick $uhand $handle "tempF($arg) in tempC"
+}
+
+proc pub_ftoc {nick host hand chan arg} {
+  set arg [sanitize_string $arg]
+  pub_convert_units $nick $host $hand $chan "tempF($arg) in tempC"
+}
+
+proc msg_ctof {nick uhand handle arg} {
+  set arg [sanitize_string $arg]
+  msg_convert_units $nick $uhand $handle "tempC($arg) in tempF"
+}
+
+proc pub_ctof {nick host hand chan arg} {
+  set arg [sanitize_string $arg]
+  pub_convert_units $nick $host $hand $chan "tempC($arg) in tempF"
 }
