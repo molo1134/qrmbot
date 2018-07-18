@@ -764,7 +764,7 @@ sub doAmazon {
     #if ($pricespan == 1 and /\$([0-9.]+)\s*$/) {
     #}
     if (/<title>(Amazon.com: )?([^<]*?)(Amazon.com)?<\/title>/) {
-      $title = $2;
+      $title = decodeEntities($2);
     }
     if (/<span id="priceblock_ourprice"[^>]+>\$([0-9.]+)</) {
       $price = $1;
