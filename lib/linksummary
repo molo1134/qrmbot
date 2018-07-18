@@ -37,33 +37,33 @@ while ($i <= $#ARGV) {
 
   $ARGV[$i] =~ s/'//g; # sanitize
 
-  if ($ARGV[$i] =~ m|https?://(www\.)?youtube\.com/watch\?v=([\w-]+)|i) {
+  if ($ARGV[$i] =~ m|^https?://(www\.)?youtube\.com/watch\?v=([\w-]+)|i) {
     printYouTubeMetaData($2);
-  } elsif ($ARGV[$i] =~ m|https?://youtu\.be/([\w-]+)|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://youtu\.be/([\w-]+)|i) {
     printYouTubeMetaData($1);
-  } elsif ($ARGV[$i] =~ m|https?://t\.co/\w+|i or
-	  $ARGV[$i] =~ m|https?://(mobile\.)?twitter\.com/|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://t\.co/\w+|i or
+	  $ARGV[$i] =~ m|^https?://(mobile\.)?twitter\.com/|i) {
     doTwitter($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://(www\.)?imdb\.com/title/tt\d+|i or
-	  $ARGV[$i] =~ m|https?://imdb\.to/\w+|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?imdb\.com/title/tt\d+|i or
+	  $ARGV[$i] =~ m|^https?://imdb\.to/\w+|i) {
     doImdb($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://(\w+)\.wikipedia\.org/wiki/([^/\s]+)|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://(\w+)\.wikipedia\.org/wiki/([^/\s]+)|i) {
     doWiki($1, $2);
-  } elsif ($ARGV[$i] =~ m|https?://(www\.)?reddit\.com/r/\w+/comments/\w+/|i or
-	  $ARGV[$i] =~ m|https?://redd\.it/\w+|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?reddit\.com/r/\w+/comments/\w+/|i or
+	  $ARGV[$i] =~ m|^https?://redd\.it/\w+|i) {
     doReddit($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://swap\.qth\.com/view_ad\.php\?counter=\d+|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://swap\.qth\.com/view_ad\.php\?counter=\d+|i) {
     doQthCom($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://(www\.)?qrz\.com/(db\|lookup)/[A-Z0-9]+|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?qrz\.com/(db\|lookup)/[A-Z0-9]+|i) {
     doQrzDb($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://(www\.)?amazon\.(com\|co\.jp\|ca\|co\.uk)/(.*/)?dp/\w+/?|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?amazon\.(com\|co\.jp\|ca\|co\.uk)/(.*/)?dp/\w+/?|i) {
     doAmazon($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://a.co/\w+/?|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://a.co/\w+/?|i) {
     doAmazon($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|https?://goo\.gl/maps/|i or
-	  $ARGV[$i] =~ m|https?://(www\.)?google\.com/maps/|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://goo\.gl/maps/|i or
+	  $ARGV[$i] =~ m|^https?://(www\.)?google\.com/maps/|i) {
     # noop
-  } elsif ($ARGV[$i] =~ m|https?://| and
+  } elsif ($ARGV[$i] =~ m|^https?://| and
 	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
     doHtml($ARGV[$i]);
   }
