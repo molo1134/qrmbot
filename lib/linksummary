@@ -787,6 +787,7 @@ sub doAmazon {
 
   $prime = 0 if !defined $prime;
   $fulfilled = 0 if !defined $fulfilled;
+  my $shortUrl = shortenUrl($url);
 
 #  print "title: $title\n";
 #  print "price: $price\n";
@@ -798,5 +799,7 @@ sub doAmazon {
   print bold($title), " -- \$$price; $stars" . yellow("★"),
 	$prime == 1 ? darkYellow(" ✔").cyan("prime") : "",
 	" sold by $vendor",
-	$fulfilled == 1 ? " fulfilled by Amazon\n" : "\n";
+	$fulfilled == 1 ? " fulfilled by Amazon " : " ",
+	$shortUrl, "\n";
+
 }
