@@ -56,6 +56,8 @@ while ($i <= $#ARGV) {
     doQthCom($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|https?://(www\.)?qrz\.com/(db\|lookup)/[A-Z0-9]+|i) {
     doQrzDb($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|https?://(www\.)?amazon\.com/(.*/)?dp/\w+/|i) {
+    doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|https?://goo\.gl/maps/|i or
 	  $ARGV[$i] =~ m|https?://(www\.)?google\.com/maps/|i) {
     # noop
@@ -747,4 +749,54 @@ sub doQrzDb {
   }
 
   exec "$libdir/qrz", "--compact", "$call" or die "error execing qrz for $call";
+}
+
+sub doAmazon {
+  my $url = shift;
+  #my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0";
+  my $useragent = "foo";
+  my ($price, $stars, $prime, $vendor, $fulfilled, $title);
+  open(HTTP, '-|', "curl -A \"$useragent\" --max-time $timeout -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    #print;
+    #$pricespan = 1 if /span id="price_inside_buybox"/;
+    #if ($pricespan == 1 and /\$([0-9.]+)\s*$/) {
+    #}
+    if (/<title>(Amazon.com: )?([^<]*?)(Amazon.com)?<\/title>/) {
+      $title = $2;
+    }
+    if (/<span id="priceblock_ourprice"[^>]+>\$([0-9.]+)</) {
+      $price = $1;
+    }
+    if (/"([0-9.]+) out of 5 stars"/ and not defined $stars ) {
+      $stars = $1;
+    }
+    $prime = 1 if /a-icon-prime.*aria-label="Free Shipping for Prime Members"/;
+    if (/Sold by <[^>]+>([^<]+)</) {
+      $vendor = $1;
+    }
+    if (/Ships from and sold by <[^>]+>([^<]+)</) {
+      $vendor = $1;
+      $fulfilled = 0;
+    }
+    $fulfilled = 1 if /Fulfilled by Amazon/;
+    ($vendor, $fulfilled) = ("Amazon", 1) if /Ships from and sold by Amazon\.com\./;
+  }
+  close(HTTP);
+
+  $prime = 0 if !defined $prime;
+  $fulfilled = 0 if !defined $fulfilled;
+
+#  print "title: $title\n";
+#  print "price: $price\n";
+#  print "stars: $stars", yellow("★"), "\n";
+#  print "prime: $prime ", $prime == 1 ? darkYellow("✔").cyan("prime") : "", "\n";
+#  print "vendor: $vendor\n";
+#  print "fulfilled $fulfilled\n";
+
+  print bold($title), " -- \$$price; $stars" . yellow("★"),
+	$prime == 1 ? darkYellow(" ✔").cyan("prime") : "",
+	" sold by $vendor",
+	$fulfilled == 1 ? " fulfilled by Amazon\n" : "\n";
 }
