@@ -915,7 +915,7 @@ proc morse_pub { nick host hand chan text } {
 	catch {exec ${morsebin} ${msg}} data
 	set output [split $data "\n"]
 	foreach line $output {
-		putchan $chan "$line"
+		putchan $chan [encoding convertto utf-8 "$line"]
 	}
 }
 proc morse_msg {nick uhand handle input} {
@@ -925,7 +925,7 @@ proc morse_msg {nick uhand handle input} {
 	catch {exec ${morsebin} ${msg}} data
 	set output [split $data "\n"]
 	foreach line $output {
-		putmsg $nick "$line"
+		putmsg $nick [encoding convertto utf-8 "$line"]
 	}
 }
 
