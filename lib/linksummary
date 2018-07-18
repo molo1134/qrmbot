@@ -58,6 +58,8 @@ while ($i <= $#ARGV) {
     doQrzDb($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|https?://(www\.)?amazon\.(com\|co\.jp\|ca\|co\.uk)/(.*/)?dp/\w+/|i) {
     doAmazon($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|https?://a.co/\w+/?|i) {
+    doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|https?://goo\.gl/maps/|i or
 	  $ARGV[$i] =~ m|https?://(www\.)?google\.com/maps/|i) {
     # noop
