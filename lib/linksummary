@@ -765,7 +765,7 @@ sub doAmazon {
     #$pricespan = 1 if /span id="price_inside_buybox"/;
     #if ($pricespan == 1 and /\$([0-9.]+)\s*$/) {
     #}
-    if (/<title>(Amazon.com:|Amazon \|)?\s*([^<]*?)(-?\s*Amazon.com|-?\s*Amazon Canada)?<\/title>/) {
+    if (/<title>(Amazon.com\s*:|Amazon\s*\|)?\s*([^<]*?)(-?\s*Amazon.com|-?\s*Amazon Canada)?<\/title>/) {
       $title = decodeEntities($2);
     }
     if (/<span id="priceblock_ourprice"[^>]+>([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
