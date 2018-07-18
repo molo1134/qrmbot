@@ -75,7 +75,7 @@ sub darkYellow {
   my $s = shift;
   return undef if not defined($s);
   if ($highlight eq "irc") {
-    return "\x035\x02\x02$s\x0F"
+    return "\x037\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
     return "\e[33m$s\e[0m"
   } else {
