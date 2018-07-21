@@ -60,6 +60,8 @@ while ($i <= $#ARGV) {
     doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://a.co/\w+/?|i) {
     doAmazon($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?amazon\.(com\|co\.jp\|ca\|co\.uk)/gp/product/\w+/?|i) {
+    doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://goo\.gl/maps/|i or
 	  $ARGV[$i] =~ m|^https?://(www\.)?google\.com/maps/|i) {
     # noop
@@ -767,8 +769,14 @@ sub doAmazon {
     #}
     if (/<title>(Amazon.com\s*:|Amazon\s*\|)?\s*([^<]*?)(-?\s*Amazon.com|-?\s*Amazon Canada)?<\/title>/) {
       $title = decodeEntities($2);
+      $title =~ s/Amazon.co.uk:\s*//;
     }
     if (/<span id="priceblock_ourprice"[^>]+>([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
+      $curr = $1;
+      $curr =~ tr/￥/¥/;
+      $price = $2;
+    }
+    if (not defined $price and /span class=.*offer-price.*">([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
       $curr = $1;
       $curr =~ tr/￥/¥/;
       $price = $2;
@@ -789,7 +797,7 @@ sub doAmazon {
     }
     $fulfilled = 1 if /isAmazonFulfilled=1/;
     $fulfilled = 1 if /Fulfilled by Amazon/;
-    ($vendor, $fulfilled) = ("Amazon", 1) if /Ships from and sold by Amazon/;
+    ($vendor, $fulfilled) = ("Amazon", 1) if /(Ships|Dispatched) from and sold by Amazon/;
   }
   close(HTTP);
 
