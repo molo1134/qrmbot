@@ -11,6 +11,7 @@ use Astro::Coord::ECI::TLE;
 use Astro::Coord::ECI::TLE::Set;
 #use Astro::Coord::ECI::Utils qw{deg2rad rad2deg};
 use Math::Trig;
+#use Data::Dumper;
 use POSIX qw(strftime);
 binmode(STDOUT, ":utf8");
 
@@ -269,14 +270,16 @@ foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
 print "\n";
 done:
 
-my $url = 'https://db.satnogs.org/api/transmitters/?format=json';
+my $url = "https://db.satnogs.org/api/transmitters/?format=json";
 $first = 1;
-open(TX, '-|', "curl --max-time 8 -s -L -k $url");
+# IPv4 because satnogs IPv6 gets cut off
+open(TX, '-|', "curl -4 -s --max-time 10 -L -k $url");
 while (<TX>) {
+  #print;
   s/}.{/},\n{/g;
   @_ = split "\n";
   foreach my $e (@_) {
-    #print STDERR "$e\n";
+    #print STDERR "$e\n" if $e =~ /$id/;
     my @kv = split ",", $e;
     my %link;
     foreach my $pair (@kv) {
@@ -287,7 +290,12 @@ while (<TX>) {
 	$link{$k} = $v;
       }
     }
-    if ($link{norad_cat_id} == $id and
+    #local $Data::Dumper::Terse = 1;
+    #print "missing id: ", Dumper(\%link), "\n" if not defined $link{norad_cat_id};
+    #print "link: ", Dumper(\%link), "\n" if $id == ($link{norad_cat_id} || -1);
+    #print "sat: $link{norad_cat_id}\n" if defined $link{norad_cat_id};
+    if (defined($link{norad_cat_id}) and
+	  $link{norad_cat_id} == $id and
 	  $link{alive} eq "true" and
 	  not $link{description} =~ m/(PE0SAT|drift|current)/i) {
 
