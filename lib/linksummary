@@ -56,11 +56,11 @@ while ($i <= $#ARGV) {
     doQthCom($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?qrz\.com/(db\|lookup)/[A-Z0-9]+|i) {
     doQrzDb($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?amazon\.(com\|co\.jp\|ca\|co\.uk)/(.*/)?dp/\w+/?|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.\|smile\.)?amazon\.(com\|co\.jp\|ca\|co\.uk)/(.*/)?dp/\w+/?|i) {
     doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://a.co/\w+/?|i) {
     doAmazon($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?amazon\.(com\|co\.jp\|ca\|co\.uk)/gp/product/\w+/?|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.\|smile\.)?amazon\.(com\|co\.jp\|ca\|co\.uk)/gp/product/\w+/?|i) {
     doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://goo\.gl/maps/|i or
 	  $ARGV[$i] =~ m|^https?://(www\.)?google\.com/maps/|i) {
