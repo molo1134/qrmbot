@@ -797,7 +797,7 @@ sub doAmazon {
     }
     $fulfilled = 1 if /isAmazonFulfilled=1/;
     $fulfilled = 1 if /Fulfilled by Amazon/;
-    ($vendor, $fulfilled) = ("Amazon", 1) if /(Ships|Dispatched) from and sold by Amazon/;
+    #($vendor, $fulfilled) = ("Amazon", 1) if /(Ships|Dispatched) from and sold by Amazon/;
   }
   close(HTTP);
 
