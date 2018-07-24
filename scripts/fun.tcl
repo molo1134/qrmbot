@@ -61,7 +61,7 @@ proc debt_msg {nick uhand handle input} {
 proc debt_pub { nick host hand chan text } {
 	global debtbin
 	putlog "debt pub: $nick $host $hand $chan"
-	catch {exec ${debtbin}} } data
+	catch {exec ${debtbin}} data
 	set output [split $data "\n"]
 	foreach line $output {
 		putchan $chan "$line"
