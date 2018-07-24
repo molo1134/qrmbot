@@ -416,7 +416,7 @@ getHistory:
 #  open(HTTP, '-|', "wget --timeout=4 -t 1 -q -O - --keep-session-cookies " .
 #		    "--save-cookies $cookiefile --load-cookies $cookiefile " .
 #		    "'$historyurl'");
-  open(HTTP, '-|', "curl -L --max-time 4 --retry 1 -s --cookie-jar $cookiefile " .
+  open(HTTP, '-|', "curl -k -L --max-time 4 --retry 1 -s --cookie-jar $cookiefile " .
 	  "--cookie $cookiefile " .
 	  "--user-agent 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2718.0 Safari/537.36' " .
 	  "'$historyurl'");
@@ -454,7 +454,7 @@ getHistory:
   my %freqs = %$bands_ref;
 
   #print "get: $historyurl\n";
-  open(HTTP, '-|', "curl -L --max-time 4 -s --cookie-jar $cookiefile " .
+  open(HTTP, '-|', "curl -k -L --max-time 4 -s --cookie-jar $cookiefile " .
 	  "--cookie $cookiefile --referer $historyurl " .
 	  "--data 'a=call_data&hist_call_1=$callsign&submit_call=Search' " .
 	  "--user-agent 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2718.0 Safari/537.36' " .
@@ -547,7 +547,7 @@ sub doHamspotsLogin
 #    "--post-data " .
 #    "'loginCall=$login_callsign&loginPass=$login_password&a=login&p=history' " .
 #    "--save-cookies $cookiefile '$historyurl'");
-  open(HTTP, '-|', "curl -L --max-time 4 --retry 1 -s --cookie-jar $cookiefile " .
+  open(HTTP, '-|', "curl -k -L --max-time 4 --retry 1 -s --cookie-jar $cookiefile " .
 	  "--cookie $cookiefile " .
 	  "--data 'loginCall=$login_callsign&loginPass=$login_password&a=login&p=history&submit=Log+In' " .
 	  "--user-agent 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2718.0 Safari/537.36' " .
