@@ -49,7 +49,7 @@ bind pub - !debt debt_pub
 bind msg - !debt debt_msg
 
 set debtbin "/home/eggdrop/bin/debt"
-proc msg_debt {nick uhand handle input} {
+proc debt_msg {nick uhand handle input} {
 	global debtbin
 	putlog "debt msg: $nick $uhand $handle $input"
 	catch {exec ${debtbin}} data
@@ -58,7 +58,7 @@ proc msg_debt {nick uhand handle input} {
 		putmsg $nick "$line"
 	}
 }
-proc pub_debt { nick host hand chan text } {
+proc debt_pub { nick host hand chan text } {
 	global debtbin
 	putlog "debt pub: $nick $host $hand $chan $param"
 	catch {exec ${debtbin} ${param} } data
