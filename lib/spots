@@ -285,10 +285,7 @@ sub doDXWatch
   while (<HTTP>) {
     if (/<title>(\d\d\d .*?)<\/title>/) {
       my $error = $1;
-      print "warning: ";
-      print "RBN: " if $rb == 1;
-      print "DXW: " if $rb == 0;
-      print "$error\n";
+      print "warning: ", $rb == 1 ? "RBN" : "DXW", ": $error\n";
       last;
     }
 
