@@ -46,6 +46,11 @@ proc http_msg { nick host hand text } {
 
 proc http_pub { nick host hand chan text } {
 	global linkbin
+
+	if [string equal -nocase "SpaceWeatherBot" $nick] then {
+	  return
+	}
+
 	set params [sanitize_url [string trim ${text}]]
 	putlog "http pub: $nick $host $hand $chan $params"
 	catch {exec ${linkbin} ${params}} data
