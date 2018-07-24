@@ -38,7 +38,7 @@ set colortestbin "/home/eggdrop/bin/colortest"
 proc msg_colortest {nick uhand handle input} {
 	global colortestbin
 	putlog "colortest msg: $nick $uhand $handle $input"
-	catch {exec ${colotestbin}} data
+	catch {exec ${colortestbin}} data
 	set output [split $data "\n"]
 	foreach line $output {
 		putmsg $nick "$line"
