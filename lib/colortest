@@ -31,3 +31,22 @@ print italic("italic"), $sep;
 print strikethrough("strikethrough"), $sep;
 print blink("blink"), $sep;
 print monospace("monospace"), $sep;
+
+print "\nextended mirc color: " if $username eq "eggdrop";
+print "\x0324\x02\x02OO\x0F" if $username eq "eggdrop";
+print "\x0336\x02\x02OO\x0F" if $username eq "eggdrop";
+print "\x0348\x02\x02OO\x0F" if $username eq "eggdrop";
+print "\x0372\x02\x02OO\x0F" if $username eq "eggdrop";
+print "\x0384\x02\x02OO\x0F" if $username eq "eggdrop";
+print "\n" if $username eq "eggdrop";
+
+print "hex 24-bit color: " if $username eq "eggdrop";
+print "\x0400FF00OO\x0F" if $username eq "eggdrop";
+print "\x0400EE00OO\x0F" if $username eq "eggdrop";
+print "\x0400DD00OO\x0F" if $username eq "eggdrop";
+print "\x0400CC00OO\x0F" if $username eq "eggdrop";
+print "\x0400BB00OO\x0F" if $username eq "eggdrop";
+print "\x0400AA00OO\x0F" if $username eq "eggdrop";
+print "\x04009900OO\x0F" if $username eq "eggdrop";
+print "\x04008800OO\x0F" if $username eq "eggdrop";
+print "\n" if $username eq "eggdrop";
