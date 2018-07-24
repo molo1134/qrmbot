@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+#
+# US National debt, updated daily
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Location;
+
+my $url = "https://treasurydirect.gov/NP/debt/rss";
+my ($date, $public, $intra, $total);
+
+open (HTTP, '-|', "curl -k -s '$url'");
+while (<HTTP>) {
+  chomp;
+  if (not $date and m|<title>Debt to the Penny for ([0-9/]+)</title>|i) {
+    $date = $1;
+  }
+  if (m|<content:encoded>(.*)</content:encoded>|i) {
+    my $tmp = decodeEntities($1),"\n";
+    # <em>Debt Held by the Public:</em> 15,449,788,829,355.28<br /><em>Intragovernmental Holdings:</em> 5,690,264,848,112.51<br /><em>Total Public Debt Outstanding:</em> 21,140,053,677,467.79
+    if (not $public and
+	$tmp =~ m|Debt Held by the Public:</em>\s*([0-9,.]+)<|i) {
+
+      $public = $1;
+    }
+    if (not $intra and
+	$tmp =~ m|Intragovernmental Holdings:</em>\s*([0-9,.]+)<|i) {
+
+      $intra = $1;
+    }
+    if (not $total and
+	$tmp =~ m|Total Public Debt Outstanding:</em>\s*([0-9.,]+)\s*$|i) {
+
+      $total = $1;
+    }
+
+  }
+}
+close HTTP;
+
+#print "$date $total $public $intra\n";
+print "As of $date, the total US debt is USD\$ $total\n"
+  if defined $date and defined $total;
+

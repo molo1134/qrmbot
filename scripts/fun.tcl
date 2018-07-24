@@ -45,5 +45,28 @@ proc msg_colortest {nick uhand handle input} {
 	}
 }
 
+bind pub - !debt debt_pub
+bind msg - !debt debt_msg
+
+set debtbin "/home/eggdrop/bin/debt"
+proc msg_debt {nick uhand handle input} {
+	global debtbin
+	putlog "debt msg: $nick $uhand $handle $input"
+	catch {exec ${debtbin}} data
+	set output [split $data "\n"]
+	foreach line $output {
+		putmsg $nick "$line"
+	}
+}
+proc pub_debt { nick host hand chan text } {
+	global debtbin
+	putlog "debt pub: $nick $host $hand $chan $param"
+	catch {exec ${debtbin} ${param} } data
+	set output [split $data "\n"]
+	foreach line $output {
+		putchan $chan "$line"
+	}
+}
+
 putlog "fun.tcl loaded."
 
