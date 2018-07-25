@@ -640,7 +640,7 @@ sub doQthCom {
 sub doQrzDb {
   my $url = shift;
   my $call;
-  if ($url =~ m|https?://(www\.)?qrz\.com/(db\|lookup)/([A-Z0-9]+)|i) {
+  if ($url =~ m|https?://(www\.)?qrz\.com/(db\|lookup)/([A-Z0-9/]+)|i) {
     $call = $3;
   }
   my $libdir = dirname(realpath(__FILE__));
