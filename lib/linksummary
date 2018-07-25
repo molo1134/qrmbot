@@ -694,6 +694,7 @@ sub doAmazon {
     $fulfilled = 1 if /isAmazonFulfilled=1/;
     $fulfilled = 1 if /Fulfilled by Amazon/;
     #($vendor, $fulfilled) = ("Amazon", 1) if /(Ships|Dispatched) from and sold by Amazon/;
+    ($vendor, $fulfilled) = ("Amazon", 1) if /data-feature-name="shipsFromSoldByInsideBuyBox"/;
   }
   close(HTTP);
 
@@ -712,6 +713,6 @@ sub doAmazon {
 	$prime == 1 ? darkYellow(" ✔").cyan("prime") : "",
 	" sold by $vendor",
 	$fulfilled == 1 ? " fulfilled by Amazon " : " ",
-	$shortUrl, "\n";
+	$shortUrl, "\n" if defined $title;
 
 }
