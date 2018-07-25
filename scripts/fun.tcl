@@ -68,5 +68,29 @@ proc debt_pub { nick host hand chan text } {
 	}
 }
 
+bind msg - !spacex spacex_msg
+bind pub - !spacex spacex_pub
+set spacexbin "/home/eggdrop/bin/spacex"
+proc spacex_pub { nick host hand chan text } {
+	global spacexbin
+	putlog "spacex pub: $nick $host $hand $chan $text"
+	catch {exec ${spacexbin}} data
+	set output [split $data "\n"]
+	foreach line $output {
+		putchan $chan [encoding convertto utf-8 "$line"]
+	}
+}
+proc spacex_msg {nick uhand handle input} {
+	global spacexbin
+	putlog "spacex msg: $nick $uhand $handle $input"
+	catch {exec ${spacexbin}} data
+	set output [split $data "\n"]
+	foreach line $output {
+		putmsg $nick [encoding convertto utf-8 "$line"]
+	}
+}
+
+
+
 putlog "fun.tcl loaded."
 
