@@ -3,6 +3,9 @@
 #
 # Copyright 2018 /u/molo1134. All rights reserved.
 
+#disable for now until spam is addressed
+exit 0;
+
 use strict;
 use utf8;
 use feature 'unicode_strings';
