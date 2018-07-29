@@ -3,15 +3,19 @@ bind join - * who_onjoin
 bind nick - * who_nickchange
 bind raw - 352 rpl_whoreply
 
+# wait this long after a rename or a join to check status
+set whodelay 65
+
 proc who_onjoin {nick uhost hand chan} {
-	putserv "WHO $nick"
+	global whodelay
+	putlog "join: $chan $nick"
+	utimer $whodelay {putserv "WHO $nick"}
 }
 
 proc who_nickchange {nick uhost hand chan newnick} {
-	# what about nickserv delay? FIXME
-	# do utimer command
+	global whodelay
 	putlog "nick change: $chan $nick $newnick"
-	putserv "WHO $newnick"
+	utimer $whodelay {putserv "WHO $newnick"}
 }
 
 proc rpl_whoreply {from cmd text} {
