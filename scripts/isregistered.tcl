@@ -28,6 +28,6 @@ proc rpl_whoreply {from cmd text} {
 	#putlog [concat "reply 8: " [lindex $repl 8]]
 	set isregistered [string match "r" [lindex $repl 6]]
 	set nick [lindex $repl 5]
-	putlog "whoreply: $nick is registered? $isregisterd"
+	putlog "whoreply: $nick is registered? $isregistered"
 }
 
