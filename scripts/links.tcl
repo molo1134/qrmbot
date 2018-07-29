@@ -23,6 +23,10 @@
 #         bind pubm <flags> <mask> <proc>
 #         procname <nick> <user@host> <handle> <channel> <text>
 
+# needed to check for +r users on undernet-type networks, as an anti-spam
+# measure.
+source scripts/isregistered.tcl
+
 bind msgm - *http://* http_msg
 bind pubm - *http://* http_pub
 bind msgm - *https://* http_msg
@@ -32,6 +36,9 @@ set linkbin "/home/eggdrop/bin/linksummary"
 
 proc http_msg { nick host hand text } {
 	global linkbin
+
+	if { ! [isRegistered $nick] } { return }
+
 	set params [sanitize_url [string trim ${text}]]
 	putlog "http msg: $nick $host $hand $params"
 	catch {exec ${linkbin} ${params}} data
@@ -46,6 +53,8 @@ proc http_msg { nick host hand text } {
 
 proc http_pub { nick host hand chan text } {
 	global linkbin
+
+	if { ! [isRegistered $nick] } { return }
 
 	if [string equal -nocase "SpaceWeatherBot" $nick] then {
 	  return
