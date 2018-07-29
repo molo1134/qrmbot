@@ -4,7 +4,7 @@
 # 2-clause BSD license.
 # Copyright (c) 2018 /u/molo1134. All rights reserved.
 
-if { $net-type == 2 } {
+if { ${net-type} == 2 } {
   # only for undernet type networks
   bind join - * who_onjoin
   bind nick - * who_nickchange
