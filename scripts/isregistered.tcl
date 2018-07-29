@@ -9,13 +9,13 @@ set whodelay 65
 proc who_onjoin {nick uhost hand chan} {
 	global whodelay
 	putlog "join: $chan $nick"
-	utimer $whodelay [putserv "WHO $nick"]
+	utimer $whodelay "putserv \"WHO $nick\""
 }
 
 proc who_nickchange {nick uhost hand chan newnick} {
 	global whodelay
 	putlog "nick change: $chan $nick $newnick"
-	utimer $whodelay [putserv "WHO $newnick"]
+	utimer $whodelay "putserv \"WHO $newnick\""
 }
 
 proc rpl_whoreply {from cmd text} {
