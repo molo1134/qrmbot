@@ -41,7 +41,7 @@ proc rpl_whoreply {from cmd text} {
 		return
 	}
 
-	if { [lsearch -exact $registerednicks $nick] != -1 } {
+	if { [lsearch -exact $registerednicks $nick] == -1 } {
 		lappend $registerednicks $nick
 		putlog "noted registered nick: $nick"
 	}
