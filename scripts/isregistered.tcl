@@ -14,8 +14,6 @@ if { ${net-type} == 2 } {
 # wait this long after a rename or a join to check status
 set whodelay 65
 
-set registerednicks {}
-
 proc who_onjoin {nick uhost hand chan} {
   global whodelay
   putlog "join: $chan $nick"
@@ -50,7 +48,7 @@ proc rpl_whoreply {from cmd text} {
   }
 
   if { [lsearch -exact $registerednicks $nick] == -1 } {
-    lappend $registerednicks $nick
+    lappend registerednicks $nick
     putlog "noted registered nick: $nick"
   }
 }
