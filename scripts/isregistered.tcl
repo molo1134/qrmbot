@@ -58,7 +58,7 @@ proc rpl_whoreply {from cmd text} {
 
 proc isRegistered {nick} {
   global registerednicks
-  set retval { [lsearch -exact $registerednicks $nick] != -1 }
+  set retval [ [lsearch -exact $registerednicks $nick] != -1 ]
   putlog "is $nick registered? $retval"
   return $retval
 }
