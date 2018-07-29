@@ -1,6 +1,6 @@
 
 bind join - * who_onjoin
-bind nkch - * who_nickchange
+bind nick - * who_nickchange
 bind raw - 352 rpl_whoreply
 
 proc who_onjoin {nick uhost hand chan} {
