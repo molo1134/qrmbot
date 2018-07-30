@@ -23,6 +23,7 @@ proc who_onjoin {nick uhost hand chan} {
 proc who_nickchange {nick uhost hand chan newnick} {
   global whodelay
   putlog "nick change: $chan $nick $newnick"
+  delFromRegistered $nick
   utimer $whodelay "putserv \"WHO $newnick\""
 }
 
@@ -53,12 +54,21 @@ proc rpl_whoreply {from cmd text} {
   }
 }
 
+proc delFromRegistered {nick} {
+  global registerednicks
+  set index [lsearch -exact $registerednicks $nick]
+  if { $index != -1 } {
+    # delete from list
+    putlog "removing registered nick: $nick #$index"
+    set registerednicks [lreplace $registerednicks[set registerednicks {}] $index $index]
+  }
+}
 
 proc isRegistered {nick} {
   global registerednicks
   set retval [expr [lsearch -exact $registerednicks $nick] != -1 ]
-  putlog [concat "lsearch: " [lsearch -exact $registerednicks $nick]]
-  putlog "registerednicks: $registerednicks"
+  #putlog [concat "lsearch: " [lsearch -exact $registerednicks $nick]]
+  #putlog "registerednicks: $registerednicks"
   putlog "is $nick registered? $retval"
   return $retval
 }
