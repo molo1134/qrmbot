@@ -82,6 +82,7 @@ my $type = undef;
 my $i = 0;
 my $compact = 0;
 my $csv = 0;
+my $doCount = 0;
 
 while ($i <= $#ARGV) {
   if ($ARGV[$i] =~ /--geo/) {
@@ -100,6 +101,11 @@ while ($i <= $#ARGV) {
   }
   if ($ARGV[$i] =~ /--csv/) {
     $csv = 1;
+    $i++;
+    next;
+  }
+  if ($ARGV[$i] =~ /--count/) {
+    $doCount = 1;
     $i++;
     next;
   }
@@ -472,6 +478,10 @@ sub getAndParseData {
 
       if (/([0-9]+) matches/) {
 	$matches = $1;
+	if ($doCount == 1) {
+	  print "$call,$matches\n";
+	  exit 0;
+	}
       }
 
       while (<HTTP>) {
