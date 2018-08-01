@@ -672,6 +672,11 @@ sub doAmazon {
       $curr =~ tr/￥/¥/;
       $price = $2;
     }
+    if (/<span id="priceblock_ourprice"[^>]+>([\$￥£]|CDN\$)\s*([0-9.,]+) - ([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
+      $curr = $1;
+      $curr =~ tr/￥/¥/;
+      $price = "$2 to $1$4";
+    }
     if (not defined $price and /span class=.*offer-price.*">([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
       $curr = $1;
       $curr =~ tr/￥/¥/;
@@ -711,7 +716,7 @@ sub doAmazon {
 
   print bold($title), " -- $curr$price; $stars" . yellow("★"),
 	$prime == 1 ? darkYellow(" ✔").cyan("prime") : "",
-	" sold by $vendor",
+	defined($vendor) ? " sold by $vendor" : "",
 	$fulfilled == 1 ? " fulfilled by Amazon " : " ",
 	$shortUrl, "\n" if defined $title;
 
