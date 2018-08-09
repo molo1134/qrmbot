@@ -15,7 +15,7 @@ if { ${net-type} == 2 } {
 set whodelay 65
 
 # init
-if [! info exist registerednicks] {
+if { [info exist registerednicks] == 0 } {
   set registerednicks {}
 }
 
