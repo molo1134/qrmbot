@@ -14,6 +14,11 @@ if { ${net-type} == 2 } {
 # wait this long after a rename or a join to check status
 set whodelay 65
 
+# init
+if [! info exist registerednicks] {
+  set registerednicks {}
+}
+
 proc who_onjoin {nick uhost hand chan} {
   global whodelay
   putlog "join: $chan $nick"
