@@ -36,8 +36,9 @@ set linkbin "/home/eggdrop/bin/linksummary"
 
 proc http_msg { nick host hand text } {
 	global linkbin
+	global net-type
 
-	if { ! [isRegistered $nick] } { return }
+	if { ${net-type} == 2 && ! [isRegistered $nick] } { return }
 
 	set params [sanitize_url [string trim ${text}]]
 	putlog "http msg: $nick $host $hand $params"
@@ -53,8 +54,9 @@ proc http_msg { nick host hand text } {
 
 proc http_pub { nick host hand chan text } {
 	global linkbin
+	global net-type
 
-	if { ! [isRegistered $nick] } { return }
+	if { ${net-type} == 2 && ! [isRegistered $nick] } { return }
 
 	if [string equal -nocase "SpaceWeatherBot" $nick] then {
 	  return
