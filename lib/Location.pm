@@ -9,6 +9,7 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities);
 
+use utf8;
 use Math::Trig;
 use Math::Trig 'great_circle_distance';
 use Math::Trig 'great_circle_bearing';
@@ -333,6 +334,8 @@ sub decodeEntities {
   $s =~ s/&middot;/·/g;
   $s =~ s/&rsquo;/’/g;
   $s =~ s/&lsquo;/‘/g;
+  $s =~ s/&ldquo;/“/g;
+  $s =~ s/&rdquo;/”/g;
   $s =~ s/&ndash;/–/g;
   $s =~ s/&mdash;/—/g;
 
