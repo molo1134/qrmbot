@@ -463,7 +463,13 @@ sub doHtml {
     $charset = $1;
     $page = decode($charset, $page);
   }
+  if (not defined($charset) and
+      $page =~ /^.*<meta\s+charset="([^"]+)"/mi) {
+    $charset = $1;
+    $page = decode($charset, $page);
+  }
 
+  #print "charset: $charset\n";
   #print "is utf8? ", (utf8::is_utf8($page)), "\n";
 
   if ($page =~ /<title.*?>\s*([^<]+?)\s*<\/title>/im) {
@@ -535,6 +541,9 @@ sub doHtml {
   $desc =~ tr/\n\r/  /;
   $title = decodeEntities($title);
   $desc = decodeEntities($desc);
+
+  #print "title: $title\n";
+  #print "desc: $desc\n";
 
   print bold("\"$title\"") if defined ($title);
   print " $shortUrl" if defined($shortUrl) and length($shortUrl) > 0;
