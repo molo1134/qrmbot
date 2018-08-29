@@ -27,7 +27,7 @@ exit 0;
 
 sub phoneticise {
   my $letter = shift;
-  return $letter if ($letter =~ /[0-9]/);
+  return $letter if ($letter =~ /[^A-Za-z]/);
   my $num = scalar @{$words{$letter}};
   my $index = int(rand($num + 1));
   my $word = @{$words{$letter}}[$index];
