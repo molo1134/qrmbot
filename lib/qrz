@@ -296,7 +296,8 @@ if (defined($codes) && $compact ne 1) {
   print " -- codes: $codes $codetext";
 }
 if (@prevcalls) {
-  print " -- prev " . join(", ", @prevcalls);
+  my @uniqprevcalls = uniq(@prevcalls);
+  print " -- prev " . join(", ", @uniqprevcalls);
 }
 if (@othercalls) {
   print " -- aliases: " . join(", ", @othercalls);
@@ -920,6 +921,11 @@ sub getDMRidsForCall {
   }
 
   return join(",", @results);
+}
+
+sub uniq {
+  my %seen;
+  grep !$seen{$_}++, @_;
 }
 
 # vim: set ts=8 sw=2 sts=2
