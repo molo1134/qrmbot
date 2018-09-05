@@ -25,8 +25,8 @@ proc msg_convert_units {nick uhand handle arg} {
 
   if {[info exists matched]} {
     #putmsg $nick "matched: $matched"
-    set term1 $sub1
-    set term2 $sub2
+    set term1 [sanitize_string $sub1]
+    set term2 [sanitize_string $sub2]
   }
   if {[info exists matched2]} {
     #putmsg $nick "matched2: $matched2"
