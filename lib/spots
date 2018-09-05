@@ -94,6 +94,7 @@ while ($i <= $#ARGV) {
   }
   if (defined($callsign) && $ARGV[$i] =~ /^\d+$/) {
     $limit = $ARGV[$i];
+    $limit = 8 if $limit > 8 and $username eq 'eggdrop';
   }
   $i++;
 }
