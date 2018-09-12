@@ -15,6 +15,16 @@ use Math::Trig 'great_circle_distance';
 use Math::Trig 'great_circle_bearing';
 use URI::Escape;
 
+sub getGeocodingAPIKey {
+  my $apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
+  if (-e ($apikeyfile)) {
+    require($apikeyfile);
+  } else {
+    die "error: unable to read file $apikeyfile";
+  }
+  return $geocodingapikey;
+}
+
 sub gridToCoord {
   my $gridstr = shift;
 
@@ -83,12 +93,8 @@ sub qthToCoords {
   my $place = uri_escape_utf8(shift);
   my $lat = undef;
   my $lon = undef;
-  my $url = "http://maps.googleapis.com/maps/api/geocode/xml?address=$place&sensor=false";
-
-  my $tries = 0;
-
-  RESTART:
-  $tries++;
+  my $apikey = getGeocodingAPIKey();
+  my $url = "https://maps.googleapis.com/maps/api/geocode/xml?address=$place&sensor=false&key=$apikey";
 
   open (HTTP, '-|', "curl -k -s '$url'");
   binmode(HTTP, ":utf8");
@@ -96,11 +102,10 @@ sub qthToCoords {
     #print;
     chomp;
     if (/OVER_QUERY_LIMIT/) {
-      #print "warning: over query limit\n";
-      close(HTTP);
-      print "error: over query limit. please try again.\n" if $tries > 3;
-      exit $::exitnonzeroonerror if $tries > 3;
-      goto RESTART;
+      my $msg = <HTTP>;
+      $msg =~ s/^\s*<error_message>(.*)<\/error_message>/$1/;
+      print "error: over query limit: $msg\n";
+      last GET;
     }
     if (/<lat>([+-]?\d+.\d+)<\/lat>/) {
       $lat = $1;
@@ -124,8 +129,9 @@ sub qthToCoords {
 sub geolocate {
   my $lat = shift;
   my $lon = shift;
+  my $apikey = getGeocodingAPIKey();
 
-  my $url = "http://maps.googleapis.com/maps/api/geocode/xml?latlng=$lat,$lon&sensor=false";
+  my $url = "https://maps.googleapis.com/maps/api/geocode/xml?latlng=$lat,$lon&sensor=false&key=$apikey";
 
   my $newResult = 0;
   my $getnextaddr = 0;
@@ -276,9 +282,10 @@ sub NESW {
 sub coordToTZ {
   my $lat = shift;
   my $lon = shift;
+  my $apikey = getGeocodingAPIKey();
 
   my $now = time();
-  my $url = "https://maps.googleapis.com/maps/api/timezone/json?location=$lat,$lon&timestamp=$now";
+  my $url = "https://maps.googleapis.com/maps/api/timezone/json?location=$lat,$lon&timestamp=$now&key=$apikey";
 
   my ($dstoffset, $rawoffset, $zoneid, $zonename);
 
