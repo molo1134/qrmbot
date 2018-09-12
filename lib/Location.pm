@@ -285,7 +285,7 @@ sub coordToTZ {
   my $apikey = getGeocodingAPIKey();
 
   my $now = time();
-  my $url = "https://maps.googleapis.com/maps/api/timezone/json?location=$lat,$lon&timestamp=$now&key=$apikey";
+  my $url = "https://maps.googleapis.com/maps/api/timezone/json?location=$lat,$lon&timestamp=$now";
 
   my ($dstoffset, $rawoffset, $zoneid, $zonename);
 
