@@ -63,6 +63,8 @@ while ($i <= $#ARGV) {
     doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.\|smile\.)?amazon\.(com\|co\.jp\|ca\|co\.uk)/gp/product/\w+/?|i) {
     doAmazon($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?xkcd.com/(\d+)/?$|) {
+    doXkcd($2);
   } elsif ($ARGV[$i] =~ m|^https?://goo\.gl/maps/|i or
 	  $ARGV[$i] =~ m|^https?://(www\.)?google\.com/maps/|i) {
     # noop
@@ -729,4 +731,52 @@ sub doAmazon {
 	$fulfilled == 1 ? " fulfilled by Amazon " : " ",
 	$shortUrl, "\n" if defined $title;
 
+}
+
+sub doXkcd {
+  my $num = shift;
+  my $url = "https://xkcd.com/$num/info.0.json";
+  my %data;
+
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    my $lines = $_;
+    $lines =~ s/("|\d), "/\1,\n"/g;
+    my @vals = split("\n", $lines);
+    foreach my $e (@vals) {
+      if ($e =~ /"(\w+)": (\d+|"[^"]+"),/) {
+	my ($k, $v) = ($1, $2);
+	$v =~ s/^"//; $v =~ s/"$//;
+	#print "$k==>$v\n";
+	$data{$k} = $v;
+      }
+    }
+  }
+
+  return if not defined($data{title});
+
+  $data{transcript} =~ s/\\n/ /g;
+  $data{alt} =~ s/\\n/ /g;
+
+  if (defined($data{transcript}) and length($data{transcript}) > 200) {
+    $data{transcript} = substr($data{transcript}, 0, 200) . "…";
+  }
+
+  if (defined($data{alt}) and length($data{alt}) > 80) {
+    $data{alt} = substr($data{alt}, 0, 80) . "…";
+  }
+
+  $data{month} = "0$data{month}" if $data{month} < 10;
+
+  my $shortimg = shortenUrl($data{img});
+  $shortimg = $data{img} if not defined($shortimg);
+
+  print italic("xkcd"), " #$data{num}: ", bold($data{safe_title}),
+    " ($data{year}/$data{month}) img: ${shortimg}";
+  print " -- $data{transcript}"
+    if defined $data{transcript} and length($data{transcript}) > 0;
+  print " -- alt: $data{alt}"
+    if defined $data{alt} and length($data{alt}) > 0;
+  print "\n";
 }
