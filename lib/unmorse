@@ -7,74 +7,334 @@ use strict;
 
 my %unmorse;
 
-$unmorse{".-"} = "A";
-$unmorse{"-..."} = "B";
-$unmorse{"-.-."} = "C";
-$unmorse{"-.."} = "D";
-$unmorse{"."} = "E";
-$unmorse{"..-."} = "F";
-$unmorse{"--."} = "G";
-$unmorse{"...."} = "H";
-$unmorse{".."} = "I";
-$unmorse{".---"} = "J";
-$unmorse{"-.-"} = "K";
-$unmorse{".-.."} = "L";
-$unmorse{"--"} = "M";
-$unmorse{"-."} = "N";
-$unmorse{"---"} = "O";
-$unmorse{".--."} = "P";
-$unmorse{"--.-"} = "Q";
-$unmorse{".-."} = "R";
-$unmorse{"..."} = "S";
-$unmorse{"-"} = "T";
-$unmorse{"..-"} = "U";
-$unmorse{"...-"} = "V";
-$unmorse{".--"} = "W";
-$unmorse{"-..-"} = "X";
-$unmorse{"-.--"} = "Y";
-$unmorse{"--.."} = "Z";
-$unmorse{".----"} = "1";
-$unmorse{"..---"} = "2";
-$unmorse{"...--"} = "3";
-$unmorse{"....-"} = "4";
-$unmorse{"....."} = "5";
-$unmorse{"-...."} = "6";
-$unmorse{"--..."} = "7";
-$unmorse{"---.."} = "8";
-$unmorse{"----."} = "9";
-$unmorse{"-----"} = "0";
-$unmorse{"   "} = " ";
-$unmorse{".-.-.-"} = ".";
-$unmorse{"--..--"} = ",";
-$unmorse{"..--.."} = "?";
-$unmorse{".----."} = "'";
-$unmorse{"-.-.--"} = "!";
-$unmorse{"-..-."} = "/";
-$unmorse{"-.--."} = "(";
-$unmorse{"-.--.-"} = ")";
-$unmorse{".-..."} = "&";
-$unmorse{"---..."} = ":";
-$unmorse{"-.-.-."} = ";";
-$unmorse{"-...-"} = "=";
-$unmorse{".-.-."} = "+";
-$unmorse{"-....-"} = "-";
-$unmorse{".-..-."} = "\"";
-$unmorse{".--.-."} = "@";
-$unmorse{".-.-"} = "Ä";
-$unmorse{"..-.."} = "É";
-$unmorse{"--.--"} = "Ñ";
-$unmorse{"---."} = "Ö";
-$unmorse{"..--"} = "Ü";
-$unmorse{"----"} = "Š";
-$unmorse{"/"} = " ";
+my $lang = "intl";
 
 # eggdrop doesn't split args on spaces
 my $args = join(' ', @ARGV);
 $args =~ s/   / \/ /g;
 @ARGV=split(' ', $args);
 
+my @ARGS;
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /--cyrill?ic/ or $ARGV[$i] =~ /--russian?/) {
+    $lang = "cyrillic";
+  } elsif ($ARGV[$i] =~ /--gree(k|ce)/) {
+    $lang = "greek";
+  } elsif ($ARGV[$i] eq "--hebrew") {
+    $lang = "hebrew";
+  } elsif ($ARGV[$i] eq "--arabic") {
+    $lang = "arabic";
+  } elsif ($ARGV[$i] eq "--wabun" or $ARGV[$i] =~ /--japan(ese)?/) {
+    $lang = "japanese";
+  } else {
+    push @ARGS, $ARGV[$i];
+  }
+  $i++;
+}
+
+if ($lang eq "intl") {
+  $unmorse{".-"} = "A";
+  $unmorse{"-..."} = "B";
+  $unmorse{"-.-."} = "C";
+  $unmorse{"-.."} = "D";
+  $unmorse{"."} = "E";
+  $unmorse{"..-."} = "F";
+  $unmorse{"--."} = "G";
+  $unmorse{"...."} = "H";
+  $unmorse{".."} = "I";
+  $unmorse{".---"} = "J";
+  $unmorse{"-.-"} = "K";
+  $unmorse{".-.."} = "L";
+  $unmorse{"--"} = "M";
+  $unmorse{"-."} = "N";
+  $unmorse{"---"} = "O";
+  $unmorse{".--."} = "P";
+  $unmorse{"--.-"} = "Q";
+  $unmorse{".-."} = "R";
+  $unmorse{"..."} = "S";
+  $unmorse{"-"} = "T";
+  $unmorse{"..-"} = "U";
+  $unmorse{"...-"} = "V";
+  $unmorse{".--"} = "W";
+  $unmorse{"-..-"} = "X";
+  $unmorse{"-.--"} = "Y";
+  $unmorse{"--.."} = "Z";
+  $unmorse{".----"} = "1";
+  $unmorse{"..---"} = "2";
+  $unmorse{"...--"} = "3";
+  $unmorse{"....-"} = "4";
+  $unmorse{"....."} = "5";
+  $unmorse{"-...."} = "6";
+  $unmorse{"--..."} = "7";
+  $unmorse{"---.."} = "8";
+  $unmorse{"----."} = "9";
+  $unmorse{"-----"} = "0";
+  $unmorse{"   "} = " ";
+  $unmorse{".-.-.-"} = ".";
+  $unmorse{"--..--"} = ",";
+  $unmorse{"..--.."} = "?";
+  $unmorse{".----."} = "'";
+  $unmorse{"-.-.--"} = "!";
+  $unmorse{"-..-."} = "/";
+  $unmorse{"-.--."} = "(";
+  $unmorse{"-.--.-"} = ")";
+  $unmorse{".-..."} = "&";
+  $unmorse{"---..."} = ":";
+  $unmorse{"-.-.-."} = ";";
+  $unmorse{"-...-"} = "=";
+  $unmorse{".-.-."} = "+";
+  $unmorse{"-....-"} = "-";
+  $unmorse{".-..-."} = "\"";
+  $unmorse{".--.-."} = "@";
+  $unmorse{".-.-"} = "Ä";
+  $unmorse{"..-.."} = "É";
+  $unmorse{"--.--"} = "Ñ";
+  $unmorse{"---."} = "Ö";
+  $unmorse{"..--"} = "Ü";
+  $unmorse{"----"} = "Š";
+  $unmorse{"/"} = " ";
+}
+
+if ($lang eq "cyrillic") {
+  $unmorse{".-"} = "А";
+  $unmorse{"-..."} = "Б";
+  $unmorse{".--"} = "В";
+  $unmorse{"--."} = "Г";
+  $unmorse{"-.."} = "Д";
+  $unmorse{"."} = "Е";
+  $unmorse{"...-"} = "Ж";
+  $unmorse{"--.."} = "З";
+  $unmorse{".."} = "И";
+  $unmorse{".---"} = "Й";
+  $unmorse{"-.-"} = "К";
+  $unmorse{".-.."} = "Л";
+  $unmorse{"--"} = "М";
+  $unmorse{"-."} = "Н";
+  $unmorse{"---"} = "О";
+  $unmorse{".--."} = "П";
+  $unmorse{".-."} = "Р";
+  $unmorse{"..."} = "С";
+  $unmorse{"-"} = "Т";
+  $unmorse{"..-"} = "У";
+  $unmorse{"..-."} = "Ф";
+  $unmorse{"...."} = "Х";
+  $unmorse{"-.-."} = "Ц";
+  $unmorse{"---."} = "Ч";
+  $unmorse{"----"} = "Ш";
+  $unmorse{"--.-"} = "Щ";
+  $unmorse{"--.--"} = "Ъ";
+  $unmorse{"-.--"} = "Ы";
+  $unmorse{"-..-"} = "Ь";
+  $unmorse{"..-.."} = "Э";
+  $unmorse{"..--"} = "Ю";
+  $unmorse{".-.-"} = "Я";
+  $unmorse{".----"} = "1";
+  $unmorse{"..---"} = "2";
+  $unmorse{"...--"} = "3";
+  $unmorse{"....-"} = "4";
+  $unmorse{"....."} = "5";
+  $unmorse{"-...."} = "6";
+  $unmorse{"--..."} = "7";
+  $unmorse{"---.."} = "8";
+  $unmorse{"----."} = "9";
+  $unmorse{"-----"} = "0";
+  $unmorse{"......"} = ".";
+  $unmorse{".-.-.-"} = ",";
+  $unmorse{"---..."} = ":";
+  $unmorse{"-.-.-"} = ";";
+  $unmorse{"-.--.-"} = "()";
+  $unmorse{".----."} = "'";
+  $unmorse{".-..-."} = "\"";
+  $unmorse{"-....-"} = "—";
+  $unmorse{"-..-."} = "/";
+  $unmorse{"..--.."} = "?";
+  $unmorse{"--..--"} = "!";
+  $unmorse{"-...-"} = "-";
+  $unmorse{"........"} = "[Error]";
+  $unmorse{".--.-."} = "@";
+  $unmorse{"/"} = " ";
+}
+
+if ($lang eq "greek") {
+  $unmorse{".-"} = "Α";
+  $unmorse{"-..."} = "Β";
+  $unmorse{"--."} = "Γ";
+  $unmorse{"-.."} = "Δ";
+  $unmorse{"."} = "Ε";
+  $unmorse{"--.."} = "Ζ";
+  $unmorse{"...."} = "Η";
+  $unmorse{"-.-."} = "Θ";
+  $unmorse{".."} = "Ι";
+  $unmorse{"-.-"} = "Κ";
+  $unmorse{".-.."} = "Λ";
+  $unmorse{"--"} = "Μ";
+  $unmorse{"-."} = "Ν";
+  $unmorse{"-..-"} = "Ξ";
+  $unmorse{"---"} = "Ο";
+  $unmorse{".--."} = "Π";
+  $unmorse{".-."} = "Ρ";
+  $unmorse{"..."} = "Σ";
+  $unmorse{"-"} = "Τ";
+  $unmorse{"-.--"} = "Υ";
+  $unmorse{"..-."} = "Φ";
+  $unmorse{"----"} = "Χ";
+  $unmorse{"--.-"} = "Ψ";
+  $unmorse{".--"} = "Ω";
+  $unmorse{"...-"} = "HY";
+  #$unmorse{"---.."} = "OI";
+  $unmorse{"..--"} = "AY";
+  $unmorse{".---"} = "YI";
+  #$unmorse{"..."} = "EI";
+  $unmorse{"---."} = "EY";
+  $unmorse{"..-"} = "OY";
+  $unmorse{".-.-"} = "AI";
+  $unmorse{"/"} = " ";
+  $unmorse{"-..-."} = "/";
+  $unmorse{".----"} = "1";
+  $unmorse{"..---"} = "2";
+  $unmorse{"...--"} = "3";
+  $unmorse{"....-"} = "4";
+  $unmorse{"....."} = "5";
+  $unmorse{"-...."} = "6";
+  $unmorse{"--..."} = "7";
+  $unmorse{"---.."} = "8";
+  $unmorse{"----."} = "9";
+  $unmorse{"-----"} = "0";
+  $unmorse{"......"} = ".";
+  $unmorse{".-.-.-"} = ",";
+  $unmorse{"---..."} = ":";
+  $unmorse{"-.-.-"} = ";";
+  $unmorse{"-.--.-"} = "()";
+  $unmorse{".----."} = "'";
+  $unmorse{".-..-."} = "\"";
+  $unmorse{"-....-"} = "—";
+  $unmorse{"-..-."} = "/";
+  $unmorse{"..--.."} = "?";
+  $unmorse{"--..--"} = "!";
+  $unmorse{"-...-"} = "-";
+  $unmorse{"........"} = "[Error]";
+  $unmorse{".--.-."} = "@";
+  $unmorse{"/"} = " ";
+}
+
+if ($lang eq "hebrew") {
+  $unmorse{".-"} = "א";
+  $unmorse{"-..."} = "ב";
+  $unmorse{"--."} = "ג";
+  $unmorse{"-.."} = "ד";
+  $unmorse{"---"} = "ה";
+  $unmorse{"."} = "ו";
+  $unmorse{"--.."} = "ז";
+  $unmorse{"...."} = "ח";
+  $unmorse{"..-"} = "ט";
+  $unmorse{".."} = "י";
+  $unmorse{"-.-"} = "כ";
+  $unmorse{".-.."} = "ל";
+  $unmorse{"--"} = "מ";
+  $unmorse{"-."} = "נ";
+  $unmorse{"-.-."} = "ס";
+  $unmorse{".---"} = "ע";
+  $unmorse{".--."} = "פ";
+  $unmorse{".--"} = "צ";
+  $unmorse{"--.-"} = "ק";
+  $unmorse{".-."} = "ר";
+  $unmorse{"..."} = "ש";
+  $unmorse{"-"} = "ת";
+  $unmorse{"/"} = " ";
+  $unmorse{".----"} = "1";
+  $unmorse{"..---"} = "2";
+  $unmorse{"...--"} = "3";
+  $unmorse{"....-"} = "4";
+  $unmorse{"....."} = "5";
+  $unmorse{"-...."} = "6";
+  $unmorse{"--..."} = "7";
+  $unmorse{"---.."} = "8";
+  $unmorse{"----."} = "9";
+  $unmorse{"-----"} = "0";
+}
+
+if ($lang eq "japanese") {
+  $unmorse{"--.--"} = "ア";
+  $unmorse{".-.."} = "カ";
+  $unmorse{"-.-.-"} = "サ";
+  $unmorse{"-."} = "タ";
+  $unmorse{".-."} = "ナ";
+  $unmorse{"-..."} = "ハ";
+  $unmorse{"-..-"} = "マ";
+  $unmorse{".--"} = "ヤ";
+  $unmorse{"..."} = "ラ";
+  $unmorse{"-.-"} = "ワ";
+
+  $unmorse{".-"} = "イ";
+  $unmorse{"-.-.."} = "キ";
+  $unmorse{"--.-."} = "シ";
+  $unmorse{"..-."} = "チ";
+  $unmorse{"-.-."} = "ニ";
+  $unmorse{"--..-"} = "ヒ";
+  $unmorse{"..-.-"} = "ミ";
+  $unmorse{"--."} = "リ";
+  $unmorse{".-..-"} = "ヰ";
+
+  $unmorse{"..-"} = "ウ";
+  $unmorse{"...-"} = "ク";
+  $unmorse{"---.-"} = "ス";
+  $unmorse{".--."} = "ツ";
+  $unmorse{"...."} = "ヌ";
+  $unmorse{"--.."} = "フ";
+  $unmorse{"-"} = "ム";
+  $unmorse{"-..--"} = "ユ";
+  $unmorse{"-.--."} = "ル";
+  $unmorse{".-.-."} = "ン";
+
+  $unmorse{"-.---"} = "エ";
+  $unmorse{"-.--"} = "ケ";
+  $unmorse{".---."} = "セ";
+  $unmorse{".-.--"} = "テ";
+  $unmorse{"--.-"} = "ネ";
+  $unmorse{"."} = "ヘ";
+  $unmorse{"-...-"} = "メ";
+  $unmorse{"---"} = "レ";
+  $unmorse{".--.."} = "ヱ";
+
+  $unmorse{".-..."} = "オ";
+  $unmorse{"----"} = "コ";
+  $unmorse{"---."} = "ソ";
+  $unmorse{"..-.."} = "ト";
+  $unmorse{"..--"} = "ノ";
+  $unmorse{"-.."} = "ホ";
+  $unmorse{"-..-."} = "モ";
+  $unmorse{"--"} = "ヨ";
+  $unmorse{".-.-"} = "ロ";
+  $unmorse{".---"} = "ヲ";
+
+  $unmorse{".."} = "゛";
+  $unmorse{"..--."} = "゜";
+  $unmorse{".-.-.."} = "。";
+  $unmorse{".-.-.-"} = "、";
+  $unmorse{".--.-"} = "ー";
+  $unmorse{"-.--.-"} = "(";
+  $unmorse{".-..-."} = ")";
+
+  $unmorse{"/"} = " ";
+  $unmorse{".----"} = "1";
+  $unmorse{"..---"} = "2";
+  $unmorse{"...--"} = "3";
+  $unmorse{"....-"} = "4";
+  $unmorse{"....."} = "5";
+  $unmorse{"-...."} = "6";
+  $unmorse{"--..."} = "7";
+  $unmorse{"---.."} = "8";
+  $unmorse{"----."} = "9";
+  $unmorse{"-----"} = "0";
+
+  $unmorse{"-..---"} = "{DO}";
+  $unmorse{"...-."} = "{SN}";
+}
+
+
 my $target;
-while ($target = shift(@ARGV)) {
+while ($target = shift(@ARGS)) {
   if (!defined($unmorse{$target})) {
     print $target;
   } else {

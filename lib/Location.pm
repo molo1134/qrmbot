@@ -7,13 +7,23 @@
 package Location;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing);
+@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities);
 
+use utf8;
 use Math::Trig;
 use Math::Trig 'great_circle_distance';
 use Math::Trig 'great_circle_bearing';
 use URI::Escape;
 
+sub getGeocodingAPIKey {
+  my $apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
+  if (-e ($apikeyfile)) {
+    require($apikeyfile);
+  } else {
+    die "error: unable to read file $apikeyfile";
+  }
+  return $geocodingapikey;
+}
 
 sub gridToCoord {
   my $gridstr = shift;
@@ -83,12 +93,8 @@ sub qthToCoords {
   my $place = uri_escape_utf8(shift);
   my $lat = undef;
   my $lon = undef;
-  my $url = "http://maps.googleapis.com/maps/api/geocode/xml?address=$place&sensor=false";
-
-  my $tries = 0;
-
-  RESTART:
-  $tries++;
+  my $apikey = getGeocodingAPIKey();
+  my $url = "https://maps.googleapis.com/maps/api/geocode/xml?address=$place&sensor=false&key=$apikey";
 
   open (HTTP, '-|', "curl -k -s '$url'");
   binmode(HTTP, ":utf8");
@@ -96,10 +102,10 @@ sub qthToCoords {
     #print;
     chomp;
     if (/OVER_QUERY_LIMIT/) {
-      print "warning: over query limit\n";
-      close(HTTP);
-      exit $exitnonzeroonerror if $tries > 3;
-      goto RESTART;
+      my $msg = <HTTP>;
+      $msg =~ s/^\s*<error_message>(.*)<\/error_message>/$1/;
+      print "error: over query limit: $msg\n";
+      last GET;
     }
     if (/<lat>([+-]?\d+.\d+)<\/lat>/) {
       $lat = $1;
@@ -123,8 +129,9 @@ sub qthToCoords {
 sub geolocate {
   my $lat = shift;
   my $lon = shift;
+  my $apikey = getGeocodingAPIKey();
 
-  my $url = "http://maps.googleapis.com/maps/api/geocode/xml?latlng=$lat,$lon&sensor=false";
+  my $url = "https://maps.googleapis.com/maps/api/geocode/xml?latlng=$lat,$lon&sensor=false&key=$apikey";
 
   my $newResult = 0;
   my $getnextaddr = 0;
@@ -139,15 +146,17 @@ sub geolocate {
   open (HTTP, '-|', "curl -k -s '$url'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
-		#print;
+    #print;
     chomp;
 
     if (/OVER_QUERY_LIMIT/) {
-      print "warning: over query limit\n" unless defined($raw) and $raw == 1;
+      #print "warning: over query limit\n" unless defined($raw) and $raw == 1;
       close(HTTP);
-      exit $exitnonzeroonerror if $tries > 3;
+      exit $::exitnonzeroonerror if $tries > 3;
       goto RESTART;
     }
+
+    last if /ZERO_RESULTS/;
 
     if (/<result>/) {
       $newResult = 1;
@@ -225,7 +234,7 @@ sub argToCoords {
     my $ret = qthToCoords($arg);
     if (!defined($ret)) {
       #print "'$arg' not found.\n";
-      #exit $exitnonzeroonerror;
+      #exit $::exitnonzeroonerror;
       return undef;
     }
     ($lat, $lon) = split(',', $ret);
@@ -233,7 +242,7 @@ sub argToCoords {
 
   if (defined($grid)) {
     ($lat, $lon) = split(',', gridToCoord(uc($grid)));
-  } 
+  }
 
   return join(',', $lat, $lon);
 }
@@ -268,4 +277,151 @@ sub distBearing {
 # Example: my @Tokyo  = NESW(139.8, 35.7); # (35.7N 139.8E)
 sub NESW {
   deg2rad($_[0]), deg2rad(90 - $_[1])
+}
+
+sub coordToTZ {
+  my $lat = shift;
+  my $lon = shift;
+  my $apikey = getGeocodingAPIKey();
+
+  my $now = time();
+  my $url = "https://maps.googleapis.com/maps/api/timezone/json?location=$lat,$lon&timestamp=$now";
+
+  my ($dstoffset, $rawoffset, $zoneid, $zonename);
+
+  open (HTTP, '-|', "curl -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  while (<HTTP>) {
+
+    # {
+    #    "dstOffset" : 3600,
+    #    "rawOffset" : -18000,
+    #    "status" : "OK",
+    #    "timeZoneId" : "America/New_York",
+    #    "timeZoneName" : "Eastern Daylight Time"
+    # }
+
+    if (/"(\w+)" : (-?\d+|"[^"]*")/) {
+      my ($k, $v) = ($1, $2);
+      $v =~ s/^"(.*)"$/$1/;
+      #print "$k ==> $v\n";
+      if ($k eq "status" and $v ne "OK") {
+	return undef;
+      }
+      $dstOffset = $v if $k eq "dstOffset";
+      $rawOffset = $v if $k eq "rawOffset";
+      $zoneid = $v if $k eq "timeZoneId";
+      $zonename = $v if $k eq "timeZoneName";
+    }
+  }
+  close(HTTP);
+
+  return $zoneid;
+}
+
+sub decodeEntities {
+  my $s = shift;
+  $s =~ s/&#(\d+);/chr($1)/eg;
+  $s =~ s/&#x([0-9a-f]+);/chr(hex($1))/egi;
+
+  $s =~ s/&reg;/®/g;
+  $s =~ s/&copy;/©/g;
+  $s =~ s/&trade;/™/g;
+  $s =~ s/&cent;/¢/g;
+  $s =~ s/&pound;/£/g;
+  $s =~ s/&yen;/¥/g;
+  $s =~ s/&euro;/€/g;
+  $s =~ s/&laquo;/«/g;
+  $s =~ s/&raquo;/»/g;
+  $s =~ s/&bull;/•/g;
+  $s =~ s/&dagger;/†/g;
+  $s =~ s/&deg;/°/g;
+  $s =~ s/&permil;/‰/g;
+  $s =~ s/&micro;/µ/g;
+  $s =~ s/&middot;/·/g;
+  $s =~ s/&rsquo;/’/g;
+  $s =~ s/&lsquo;/‘/g;
+  $s =~ s/&ldquo;/“/g;
+  $s =~ s/&rdquo;/”/g;
+  $s =~ s/&ndash;/–/g;
+  $s =~ s/&mdash;/—/g;
+
+  $s =~ s/&aacute;/á/g;
+  $s =~ s/&Aacute;/Á/g;
+  $s =~ s/&acirc;/â/g;
+  $s =~ s/&Acirc;/Â/g;
+  $s =~ s/&aelig;/æ/g;
+  $s =~ s/&AElig;/Æ/g;
+  $s =~ s/&agrave;/à/g;
+  $s =~ s/&Agrave;/À/g;
+  $s =~ s/&aring;/å/g;
+  $s =~ s/&Aring;/Å/g;
+  $s =~ s/&atilde;/ã/g;
+  $s =~ s/&Atilde;/Ã/g;
+  $s =~ s/&auml;/ä/g;
+  $s =~ s/&Auml;/Ä/g;
+  $s =~ s/&ccedil;/ç/g;
+  $s =~ s/&Ccedil;/Ç/g;
+  $s =~ s/&eacute;/é/g;
+  $s =~ s/&Eacute;/É/g;
+  $s =~ s/&ecirc;/ê/g;
+  $s =~ s/&Ecirc;/Ê/g;
+  $s =~ s/&egrave;/è/g;
+  $s =~ s/&Egrave;/È/g;
+  $s =~ s/&eth;/ð/g;
+  $s =~ s/&ETH;/Ð/g;
+  $s =~ s/&euml;/ë/g;
+  $s =~ s/&Euml;/Ë/g;
+  $s =~ s/&iacute;/í/g;
+  $s =~ s/&Iacute;/Í/g;
+  $s =~ s/&icirc;/î/g;
+  $s =~ s/&Icirc;/Î/g;
+  $s =~ s/&iexcl;/¡/g;
+  $s =~ s/&igrave;/ì/g;
+  $s =~ s/&Igrave;/Ì/g;
+  $s =~ s/&iquest;/¿/g;
+  $s =~ s/&iuml;/ï/g;
+  $s =~ s/&Iuml;/Ï/g;
+  $s =~ s/&ntilde;/ñ/g;
+  $s =~ s/&Ntilde;/Ñ/g;
+  $s =~ s/&oacute;/ó/g;
+  $s =~ s/&Oacute;/Ó/g;
+  $s =~ s/&ocirc;/ô/g;
+  $s =~ s/&Ocirc;/Ô/g;
+  $s =~ s/&oelig;/œ/g;
+  $s =~ s/&OElig;/Œ/g;
+  $s =~ s/&ograve;/ò/g;
+  $s =~ s/&Ograve;/Ò/g;
+  $s =~ s/&ordf;/ª/g;
+  $s =~ s/&ordm;/º/g;
+  $s =~ s/&oslash;/ø/g;
+  $s =~ s/&Oslash;/Ø/g;
+  $s =~ s/&otilde;/õ/g;
+  $s =~ s/&Otilde;/Õ/g;
+  $s =~ s/&ouml;/ö/g;
+  $s =~ s/&Ouml;/Ö/g;
+  $s =~ s/&szlig;/ß/g;
+  $s =~ s/&thorn;/þ/g;
+  $s =~ s/&THORN;/Þ/g;
+  $s =~ s/&uacute;/ú/g;
+  $s =~ s/&Uacute;/Ú/g;
+  $s =~ s/&ucirc;/û/g;
+  $s =~ s/&Ucirc;/Û/g;
+  $s =~ s/&ugrave;/ù/g;
+  $s =~ s/&Ugrave;/Ù/g;
+  $s =~ s/&uml;/ö/g;
+  $s =~ s/&uuml;/ü/g;
+  $s =~ s/&Uuml;/Ü/g;
+  $s =~ s/&yacute;/ý/g;
+  $s =~ s/&Yacute;/Ý/g;
+  $s =~ s/&yuml;/ÿ/g;
+
+  $s =~ s/&lt;/</g;
+  $s =~ s/&gt;/>/g;
+  $s =~ s/&quot;/"/g;
+  $s =~ s/&apos;/'/g;
+  $s =~ s/&nbsp;/ /g;
+  $s =~ s/&amp;/\&/g;
+
+  return $s;
 }

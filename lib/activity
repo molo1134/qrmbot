@@ -100,6 +100,11 @@ while (<HTTP>) {
     exit 0
   }
 
+  if (/too many requests/i) {
+    print "pskreporter throttled: $url\n";
+    exit 0
+  }
+
   next if /^#/;
   my ($freq, $score, undef, undef, undef) = split /\s+/;
   next if $freq < 135000;

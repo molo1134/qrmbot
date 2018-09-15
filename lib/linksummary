@@ -1,0 +1,782 @@
+#!/usr/bin/perl
+# Create a description of a link.  2-clause BSD license.
+#
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+
+use URI::Escape;
+use Encode qw(/decode/);
+
+our $bitly_apikey=undef;
+my $bitlykeyfile = $ENV{'HOME'} . "/.bitlyapikey";
+if (-e ($bitlykeyfile)) {
+  require($bitlykeyfile);
+}
+
+my $timeout = 4;	# max 4 seconds
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+my $highlight="vt220";
+$highlight = "none" if ! -t STDOUT;
+$highlight = "irc" if $username eq "eggdrop";
+
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $i = 0;
+while ($i <= $#ARGV) {
+
+  $ARGV[$i] =~ s/'//g; # sanitize
+
+  if ($ARGV[$i] =~ m|^https?://(www\.)?youtube\.com/watch\?v=([\w-]+)|i) {
+    printYouTubeMetaData($2);
+  } elsif ($ARGV[$i] =~ m|^https?://youtu\.be/([\w-]+)|i) {
+    printYouTubeMetaData($1);
+  } elsif ($ARGV[$i] =~ m|^https?://t\.co/\w+|i or
+	  $ARGV[$i] =~ m|^https?://(mobile\.)?twitter\.com/|i) {
+    doTwitter($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?imdb\.com/title/tt\d+|i or
+	  $ARGV[$i] =~ m|^https?://imdb\.to/\w+|i) {
+    doImdb($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://(\w+)\.wikipedia\.org/wiki/([^/\s]+)|i) {
+    doWiki($1, $2);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?reddit\.com/r/\w+/comments/\w+/|i or
+	  $ARGV[$i] =~ m|^https?://redd\.it/\w+|i) {
+    doReddit($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://swap\.qth\.com/view_ad\.php\?counter=\d+|i) {
+    doQthCom($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?qrz\.com/(db\|lookup)/[A-Z0-9]+|i) {
+    doQrzDb($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.\|smile\.)?amazon\.(com\|co\.jp\|ca\|co\.uk)/(.*/)?dp/\w+/?|i) {
+    doAmazon($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://a.co/\w+/?|i) {
+    doAmazon($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.\|smile\.)?amazon\.(com\|co\.jp\|ca\|co\.uk)/gp/product/\w+/?|i) {
+    doAmazon($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?xkcd.com/(\d+)/?$|) {
+    doXkcd($2);
+  } elsif ($ARGV[$i] =~ m|^https?://goo\.gl/maps/|i or
+	  $ARGV[$i] =~ m|^https?://(www\.)?google\.com/maps/|i) {
+    # noop
+  } elsif ($ARGV[$i] =~ m|^https?://| and
+	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
+    doHtml($ARGV[$i]);
+  }
+
+  $i++;
+}
+
+sub printYouTubeMetaData {
+  my $id = shift;
+  my $url = "https://youtube.com/watch?v=$id";
+  my $shortcut = "http://youtu.be/$id";
+  my $done = 0;
+  my ($title, $len, $desc, $count, $pubdate, $genre, $nsfw, $unlisted, $paid, $author, $likes, $dislikes, $live);
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    if (/<meta itemprop="(\w+)" content="([^"]*)">/) {
+      my ($k, $v) = ($1, $2);
+      $v = decodeEntities($v);
+      #print "$k = $v\n";
+      $title = $v if $k eq "name";
+      #$len   = $v if $k eq "duration";
+      $desc  = $v if $k eq "description";
+      $count = $v if $k eq "interactionCount";
+      $pubdate = $v if $k eq "datePublished";
+      $genre = $v if $k eq "genre";
+      $nsfw = $v eq "False" ? 1 : 0 if $k eq "isFamilyFriendly";
+      $unlisted = $v eq "True" ? 1 : 0 if $k eq "unlisted";
+      $paid = $v eq "True" ? 1 : 0 if $k eq "paid";
+    }
+    if (/"author":"([^"]+)"/) {
+      $author = $1;
+    }
+    if (/"length_seconds":"(\d+)"/) {
+      $len = $1;
+    }
+#    if (/"shortDescription":"([^"]+)"/) {
+#      $desc = $1;
+#    }
+    if (/"like this video along with ([0-9,]+) other people"/) {
+      $likes = $1;
+      $likes =~ s/,//;
+    }
+    if (/"dislike this video along with ([0-9,]+) other people"/) {
+      $dislikes = $1;
+      $dislikes =~ s/,//;
+    }
+    if (/"livestream":"1"/) {
+      $live = 1;
+    }
+  }
+  close(HTTP);
+
+  $desc = "(no description)" if $desc =~ /^\s*$/;
+  if (length $desc > 300) {
+    $desc = substr($desc, 0, 300) . "…";
+  }
+
+  use integer;
+  my $h = $len / 3600;
+  my $m = ($len - (($len / 3600) * 3600)) / 60;
+  my $s = $len - (($len / 60) * 60);
+
+  print bold("\"$title\""), " by $author on $pubdate; ";
+  print "${h}h" if $h > 0;
+  print "${m}m" if $m > 0;
+  print "${s}s;" if $s > 0;
+  print red("[LIVE]") if $live == 1;
+  print " $count views";
+  print green(" ${likes}↑") if defined $likes;
+  print red(" ${dislikes}↓") if defined $dislikes;
+  print " ($genre)" if defined $genre;
+  print red(" [NSFW]") if $nsfw == 1;
+  print green(" [PAID]") if $paid == 1;
+  print yellow(" [UNLISTED]") if $unlisted == 1;
+  print ": $desc $shortcut\n";
+}
+
+
+
+
+sub doTwitter {
+  my $url = shift;
+  my $id = undef;
+  my $username = undef;
+  my $origUsername = undef;
+  my $directRT = 0;
+
+  if ($url =~ /https?:\/\/t\.co\/\w+/) {
+    open (HTTP, '-|', "curl --max-time $timeout -L -k -s -o /dev/null -w \"%{url_effective}\" '$url'");
+    while(<HTTP>) {
+      $url = $_;
+    }
+    close(HTTP);
+  }
+  #  'curl --max-time $timeout -Ls -o /dev/null -w "%{url_effective}" "https://t.co/aoVVgKEfqC"'
+
+  if ($url =~ /https?:\/\/(mobile\.)?twitter\.com\/(\w+)\/status\/(\d+)/) {
+    $username = $2;
+    $id = $3;
+  }
+
+  if (not defined $username and $url =~ /https?:\/\/(mobile\.)?twitter\.com\/(\w+)\/?/) {
+    # this is for getting the last tweet for a user
+    $username = $2;
+
+    my $token = getTwitterAuthToken($url);
+
+    my $targeturl = "https://mobile.twitter.com/i/nojs_router?path=%2F$username";
+
+    $url =~ s/http:/https:/;
+
+    open (HTTP, '-|', "curl --max-time $timeout -L -k -s -H \"Referer: $url\" --data authenticity_token=$token \"$targeturl\"");
+    binmode(HTTP, ":utf8");
+    while(<HTTP>) {
+      chomp;
+      if (not defined $id and /retweeted/) {
+	#print "retweeted\n";
+	$directRT = 1;
+	$origUsername = $username;
+      }
+      if (not defined $id and /<div class="tweet-text" data-id="(\d+)">/) {
+	$id = $1;
+	next;
+      }
+    }
+    close(HTTP);
+  }
+
+  if (not defined $id or not defined $username) {
+    return;
+  }
+
+  my $token = getTwitterAuthToken($url);
+  my $targeturl = "https://mobile.twitter.com/i/nojs_router?path=%2F$username%2Fstatus%2F$id";
+
+  my $inusername = 0;
+  my $intext = 0;
+  my $infullname = 0;
+  my $inmedia = 0;
+
+  #my $username = undef;
+  my $fullname = undef;
+  my $text = undef;
+  my $date = undef;
+  my $verified = 0;
+  my $media = undef;
+  my $tco = undef;
+  my $rt = undef;
+  #my @links;
+
+  #print "$ARGV[$i]\n";
+  #print "$url\n";
+  #print "$token\n";
+  open (HTTP, '-|', "curl --max-time $timeout -L -k -s -H \"Referer: $url\" --data authenticity_token=$token '$targeturl'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    #print;
+    chomp;
+    if (/<span class="username">/) {
+      $inusername = 1;
+      next;
+    }
+    if ($inusername == 1 and /<span>@<\/span>(\w+)\s*$/) {
+      $username = $1 ; #if ! defined($username);
+      $inusername = 0;
+    }
+    if (/class="tweet-text" data-id="$id"/) {
+      $intext = 1;
+      next;
+    }
+    if ($intext == 1 and /<div[^<]*>\s*(.*)/) {
+      #print;
+      $text = $1;
+      $text = decodeEntities($text);
+      #$text =~ s/\s*<a href="(https?:\/\/t.co\/\w+)".*>.*?<\/a>\s*/$1/;
+      $text =~ s/<a href="\/\w+"class="twitter-atreply.*?>(.*?)<\/a>/$1/g;
+      $text =~ s/<a href="\/hashtag.*?class="twitter-hashtag.*?>(.*?)<\/a>/$1/g;
+      if ($text =~ /data-expanded-url="(https?:\/\/twitter\.com\/\w+\/status\/\d+)"/) {
+	$rt = $1;
+      }
+      #print "\n\n$text\n\n";
+      $text =~ s/<a href="(https?:\/\/t\.co\/\w+)".*?data-expanded-url="(https?:\/\/twitter\.com\/\w+\/status\/\d+)".*?class="twitter_external_link.*?>.*?<\/a>/$1/g;
+      $text =~ s/<a href=.*?data-expanded-url="([^"]+)".*?class="twitter_external_link.*?>.*?<\/a>/$1/g;
+      #print "\n\n$text\n\n";
+      #if ($text =~ /data-expanded-url="([^"]+)"/) {
+      #  my $dataurl = $1;
+      #  if (not $dataurl =~ /twitter\.com/) {
+  #	push (@links, $dataurl);
+  #      }
+  #    }
+      if ($text =~ /\s*<a href="(https?:\/\/t.co\/\w+)".*>(.*?)<\/a>/) {
+	$tco = $1 if defined $1;
+	my $extrabits = $2;
+	if ($extrabits =~ /twitter_external_link/) {
+	  $tco = undef;
+	}
+	$text =~ s/\s*<a href="(https?:\/\/t.co\/\w+)".*>.*?<\/a>//;
+      }
+      #print "$tco\n";
+      #<a href="https://t.co/z4JHTvtLNy"data-pre-embedded="true"rel="nofollow"data-entity-id="950835234823553024"dir="ltr"data-url="https://twitter.com/SethAbramson/status/950835283997741057/photo/1"data-tco-id="z4JHTvtLNy"class="twitter_external_link dir-ltr tco-link has-expanded-path"target="_top"data-expanded-path="/SethAbramson/status/950835283997741057/photo/1">pic.twitter.com/z4JHTvtLNy</a>
+      $intext = 0;
+      next
+    }
+    if (/<a href="#" class="">([^<]+)<\/a>/) {
+      $date = $1;
+    }
+    if (/<div class="fullname"/) {
+      $infullname = 1;
+      next;
+    }
+    if ($infullname == 1 and /<strong>([^<]+)<\/strong>/) {
+      $fullname = $1;
+    }
+    if ($infullname == 1 and /verified.gif/) {
+      $verified = 1;
+    }
+    if ($infullname == 1 and /<\/div>/) {
+      $infullname = 0;
+    }
+    if (/<div class="media">/) {
+      $inmedia = 1;
+      next;
+    }
+    if ($inmedia == 1 and /<img src="(https?:\/\/pbs.twimg.com\/media\/\w+\.jpg):/) {
+      $media = $1;
+    }
+  }
+  close(HTTP);
+
+  # 223   147   93     “     LEFT DOUBLE QUOTATION MARK
+  # 224   148   94     ”     RIGHT DOUBLE QUOTATION MARK
+  # ❝ ❞
+  # ☑ ✓ ✔ ✅
+
+  if (not defined $text) {
+    #print "not found\n";
+    #exit 0;
+    return;
+  }
+
+  #print "TEXT: $text\n";
+  #print "LINKS: ", join(" ", @links), "\n";
+  #print "MEDIA: $media\n";
+  #print "TCO: $tco\n";
+
+  my $verifiedText = "";
+  $verifiedText = lightblue("✔") if $verified == 1;
+  $text =~ s/^\s*$//g;
+  $text =~ s/\n\s*\n/\n/g;
+  #$text =~ s/\n/\n  ❝/g;
+  $text =~ s/(\S)\n(\S)/$1 $2/g;
+  $text =~ s/\n//g;
+  print "\@${origUsername} RT:" if defined $origUsername and $directRT = 1;
+  print "\"$text\" ";
+  #print " ", join(" ", @links) if $#links >= 0;
+  print "$media " if defined $media;
+  print "RT: $tco " if defined $rt and defined $tco;
+  print "$tco " if defined $tco and not defined $media and not defined $rt;
+  print "— \@$username ($fullname)$verifiedText, $date\n";
+
+  if (defined $rt) {
+    #print "$0 $rt\n";
+    system "$0 $rt";
+    #exit 0;
+  }
+
+}
+
+sub getTwitterAuthToken {
+  my $url = shift;
+  my $token = undef;
+  open (HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    if (!defined($token) and /name="authenticity_token"/) {
+      if (/value="([0-9a-f]+)"/) {
+	$token = $1;
+      }
+    }
+  }
+  close(HTTP);
+  return $token;
+}
+
+
+sub doImdb {
+  my $url = shift;
+  my ($title, $desc, $rating, $ratings);
+  open (HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    if (/<meta property='og:title' content="([^"]*)"/) {
+      $title = $1;
+    }
+    if (/<meta name="description" content="([^"]*)"/) {
+      $desc = $1;
+      if (length $desc > 300) {
+	$desc = substr($desc, 0, 300) . "…";
+      }
+    }
+    if (/<strong title="([\d.]+) based on ([\d,]+) user ratings">/) {
+      ($rating, $ratings) = ($1, $2);
+    }
+  }
+  close(HTTP);
+
+  return if !defined($title);
+
+  print bold("\"$title\"");
+  print " $rating", yellow("★"), " ($ratings ratings)" if defined $rating;
+  print " — $desc" if defined $desc;
+  print "\n";
+}
+
+sub doWiki {
+  my $lang = shift;
+  my $article = shift;
+  my ($desc, $title);
+  my $url = "https://$lang.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles=$article";
+  #print "$url\n";
+  open (HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    if (/"title":"([^"]*)"/) {
+      $title = $1;
+      $title =~ s/\\u([0-9a-f]{4})/chr(hex($1))/egi;
+      $title =~ s/\\"/"/g;
+      $title =~ s/\\n/ /g;
+    }
+    if (/"extract":"(.*)"/) {
+      $desc = $1;
+      $desc =~ s/\\u([0-9a-f]{4})/chr(hex($1))/egi;
+      $desc =~ s/\\"/"/g;
+      $desc =~ s/\\n/ /g;
+      if (length $desc > 300) {
+	$desc = substr($desc, 0, 300) . "…";
+      }
+    }
+  }
+  close(HTTP);
+  if (defined($title) and defined($desc)) {
+    my $shortUrl = shortenUrl("https://$lang.wikipedia.org/wiki/$article");
+    print bold("\"$title\" ");
+    print "$shortUrl " if defined $shortUrl and length($shortUrl) > 0;
+    print "— $desc\n";
+  }
+}
+
+sub doHtml {
+  my $url = shift;
+  my ($title, $desc, $charset, $contenttype, $httpcode, $shortUrl);
+  # -D - => output headers
+  # -f => fail to have no output for 404
+  # -L => follow 302
+  # -k => insecure -- don't care about certs
+  # -s => silent
+  # -A => user agent
+  # -H Accept => should cut down on images and the like, but check headers
+  #print "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" '$url'";
+  my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0";
+  open (HTTP, '-|', "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=1.9\" -A \"$useragent\" '$url'");
+  while (<HTTP>) {
+    #print;
+    chomp;
+    if (/^HTTP\/[0-9.]+\s*(\d+).*?$/) {
+      $httpcode = $1;
+      #print "$httpcode\n";
+    }
+    # want to ignore content-type if getting a 302 redirect
+    if (defined($httpcode) and $httpcode < 300 and /^Content-Type:\s+(.*?)$/i) {
+      $contenttype = $1;
+      #print "$contenttype\n";
+      if (not $contenttype =~ /^(text\/html)|(application\/(xhtml|xml))/) {
+	close(HTTP);
+	return;
+      }
+      if ($contenttype =~ /charset=(.*)/i) {
+	if ($1 =~ /UTF-?8/i) {
+	  binmode(HTTP, ":utf8");
+	  $charset = "utf8";
+	}
+      }
+      last;
+    }
+  }
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $page = <HTTP>;
+  close(HTTP);
+  #print $page;
+
+  if (not defined($charset) and
+      $page =~ /^.*<meta\s+http-equiv="Content-Type"\s+content=".*?charset=([^"]+)"/mi) {
+    $charset = $1;
+    $page = decode($charset, $page);
+  }
+  if (not defined($charset) and
+      $page =~ /^.*<meta\s+charset="([^"]+)"/mi) {
+    $charset = $1;
+    $page = decode($charset, $page);
+  }
+
+  #print "charset: $charset\n";
+  #print "is utf8? ", (utf8::is_utf8($page)), "\n";
+
+  if ($page =~ /<title.*?>\s*([^<]+?)\s*<\/title>/im) {
+    $title = $1;
+    $title =~ s/\s\s+/ /g;
+  }
+  if ($page =~ /<meta\s+property="og:title"\s+content="([^"]+)"/im) {
+    $title = $1;
+    $title =~ s/\s\s+/ /g;
+  }
+  if ($page =~ /<meta\s+content="([^"]+)"\s+property="og:title"/im) {
+    $title = $1;
+    $title =~ s/\s\s+/ /g;
+  }
+  if ($page =~ /<meta\s+name="dcterms.title"\s+content="([^"]+)"/im) {
+    $title = $1;
+    $title =~ s/\s\s+/ /g;
+  }
+  if (not defined($desc) and
+	  $page =~ /<meta\s+name="description"\s+content="([^"]+)"/im) {
+    $desc = $1;
+    $desc =~ s/\s\s+/ /g;
+  }
+  if (not defined($desc) and
+	  $page =~ /<meta\s+content="([^"]+)"\s+name="description"/im) {
+    $desc = $1;
+    $desc =~ s/\s\s+/ /g;
+  }
+  if ($page =~ /<meta\s+.*?property="og:description"\s+content="([^"]+)"/im) {
+    $desc = $1;
+    $desc =~ s/\s\s+/ /g;
+  }
+  if ($page =~ /<meta\s+content="([^"]+)"\s+property="og:description"/im) {
+    $desc = $1;
+    $desc =~ s/\s\s+/ /g;
+  }
+  if ($page =~ /<meta\s+name="DC.Description.Abstract"\s+content="([^"]+)"/im) {
+    $desc = $1;
+    $desc =~ s/\s\s+/ /g;
+  }
+  if ($page =~ /<link\s+rel="shortlink"\s+href="([^"]+)"/im) {
+    $shortUrl = $1;
+    # relative shortlinks
+    if ($shortUrl =~ m|^//|) {
+      my $tmp = $url;
+      $tmp =~ s|://.*$|:|;
+      $tmp .= $shortUrl;
+      $shortUrl = $tmp;
+    } elsif ($shortUrl =~ m|^/|) {
+      my $tmp = $url;
+      $tmp =~ s|://([^/]+)/.*$|://$1|;
+      $tmp .= $shortUrl;
+      $shortUrl = $tmp;
+    }
+  }
+
+  #print "title: $title\n";
+  #print "desc: $desc\n";
+
+  return if not defined($title) and not defined($desc);
+
+  $shortUrl = shortenUrl($url)
+	if not defined($shortUrl) or length($shortUrl) > 60;
+
+  if (defined($desc) and length($desc) > 300) {
+    $desc = substr($desc, 0, 300) . "…";
+  }
+  $title =~ tr/\n\r/  /;
+  $desc =~ tr/\n\r/  /;
+  $title = decodeEntities($title);
+  $desc = decodeEntities($desc);
+
+  #print "title: $title\n";
+  #print "desc: $desc\n";
+
+  print bold("\"$title\"") if defined ($title);
+  print " $shortUrl" if defined($shortUrl) and length($shortUrl) > 0;
+  print " — $desc" if defined ($desc);
+  print "\n";
+}
+
+sub shortenUrl {
+  my $url = shift;
+  return undef if length($url) < 60;
+
+  my $shortUrl;
+  my $encodedUrl = uri_escape($url);
+  our $bitly_apikey;  # loaded from file
+  return undef if not defined($bitly_apikey);
+  my $rest = "https://api-ssl.bitly.com/v3/shorten?access_token=$bitly_apikey&domain=j.mp&format=txt&longUrl=$encodedUrl";
+
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$rest'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    s/[\r\n]//g;
+    $shortUrl = $_;
+  }
+  close(HTTP);
+
+  # success
+  return $shortUrl if $shortUrl =~ /^http/;
+
+  # failure case
+  print "error: $shortUrl\n";
+  return undef;
+}
+
+sub doReddit {
+  my $url = shift;
+
+  my ($id, $title, $shortCommentUrl);
+
+  # example url for particular comment: https://www.reddit.com/r/dayton/comments/5bntme/what_neighborhoods_in_dayton_would_you_tell/d9w9euj/
+
+  if ($url =~ m|https?://(www\.)?reddit\.com/r/\w+/comments/(\w+)/([^/]+/\w+/)?|) {
+    $id = $2;
+    $shortCommentUrl = shortenUrl($url) if defined($3);
+  } elsif ($url =~ /https?:\/\/redd\.it\/(\w+)/) {
+    $id = $1;
+  } else {
+    return;
+  }
+
+  open(HTTP, '-|', "curl --max-time $timeout -A foo -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    if (/<title.*?>([^<]+)<\/title>/im) {
+      $title = decodeEntities($1);
+    }
+  }
+  close(HTTP);
+
+  print bold("\"$title\"") if defined ($title);
+  print " http://redd.it/$id " if defined($id);
+  print " $shortCommentUrl " if defined($shortCommentUrl);
+  #print " — $desc" if defined ($desc);
+  print "\n";
+}
+
+sub doQthCom {
+  my $url = shift;
+  my ($title, $desc, $call);
+
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    if (m|<font size=3 face="Arial,Helvetica">\s*([^<]+)</font></B>|) {
+      $title = $1;
+    }
+    if (not defined($desc) and
+	m|<DT><font size=2 face="Arial,Helvetica">\s*(.*)</font>|) {
+      $desc = $1;
+      $desc =~ s/<BR>/ /ig;
+    }
+    if (not defined($call) and m|<DT><font size=2 face="Arial,Helvetica">Listing #\d+ by <a href="https://www\.qth\.com/callsign\.php\?cs=[^"]+">([^<]+)</a>|) {
+      $call = $1;
+    }
+  }
+  close(HTTP);
+
+  if (defined($desc) and length($desc) > 300) {
+    $desc = substr($desc, 0, 300) . "…";
+  }
+  $title =~ tr/\n\r/  /;
+  $desc =~ tr/\n\r/  /;
+  $title = decodeEntities($title);
+  $desc = decodeEntities($desc);
+  $title =~ s/^\s*(.*?)\s*$/$1/;
+  $desc =~ s/^\s*(.*?)\s*$/$1/;
+
+  print bold("\"$title\"") if defined($title);
+  print " by $call" if defined($call);
+  print " — $desc" if defined($desc);
+  print "\n";
+}
+
+sub doQrzDb {
+  my $url = shift;
+  my $call;
+  if ($url =~ m|https?://(www\.)?qrz\.com/(db\|lookup)/([A-Z0-9/]+)|i) {
+    $call = $3;
+  }
+  my $libdir = dirname(realpath(__FILE__));
+  if (not defined($call) or not -e "$libdir/qrz") {
+    doHtml($url);	# fallback
+  }
+
+  exec "$libdir/qrz", "--compact", "$call" or die "error execing qrz for $call";
+}
+
+sub doAmazon {
+  my $url = shift;
+  #my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0";
+  my $useragent = "foo";
+  my ($price, $curr, $stars, $prime, $vendor, $fulfilled, $title);
+  open(HTTP, '-|', "curl -A \"$useragent\" --compressed --max-time $timeout -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    #print;
+    #$pricespan = 1 if /span id="price_inside_buybox"/;
+    #if ($pricespan == 1 and /\$([0-9.]+)\s*$/) {
+    #}
+    if (/<title>(Amazon.com\s*:|Amazon\s*\|)?\s*([^<]*?)(-?\s*Amazon.com|-?\s*Amazon Canada)?<\/title>/) {
+      $title = decodeEntities($2);
+      $title =~ s/Amazon.co.uk:\s*//;
+    }
+    if (/<span id="priceblock_ourprice"[^>]+>([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
+      $curr = $1;
+      $curr =~ tr/￥/¥/;
+      $price = $2;
+    }
+    if (/<span id="priceblock_ourprice"[^>]+>([\$￥£]|CDN\$)\s*([0-9.,]+) - ([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
+      $curr = $1;
+      $curr =~ tr/￥/¥/;
+      $price = "$2 to $1$4";
+    }
+    if (not defined $price and /span class=.*offer-price.*">([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
+      $curr = $1;
+      $curr =~ tr/￥/¥/;
+      $price = $2;
+    }
+    if (/"([0-9.]+) out of 5 stars"/ and not defined $stars) {
+      $stars = $1;
+    }
+    if (/"5つ星のうち ([0-9.]+)"/ and not defined $stars) {
+      $stars = $1;
+    }
+    $prime = 1 if /a-icon-prime.*aria-label="Free Shipping for Prime Members"/;
+    if (/(Sold by |この商品は、)<[^>]+>([^<]+)</) {
+      $vendor = $2;
+    }
+    if (/Ships from and sold by <[^>]+>([^<]+)</) {
+      $vendor = $1;
+      $fulfilled = 0;
+    }
+    $fulfilled = 1 if /isAmazonFulfilled=1/;
+    $fulfilled = 1 if /Fulfilled by Amazon/;
+    #($vendor, $fulfilled) = ("Amazon", 1) if /(Ships|Dispatched) from and sold by Amazon/;
+    ($vendor, $fulfilled) = ("Amazon", 1) if /data-feature-name="shipsFromSoldByInsideBuyBox"/;
+  }
+  close(HTTP);
+
+  $prime = 0 if !defined $prime;
+  $fulfilled = 0 if !defined $fulfilled;
+  my $shortUrl = shortenUrl($url);
+
+#  print "title: $title\n";
+#  print "price: $price\n";
+#  print "stars: $stars", yellow("★"), "\n";
+#  print "prime: $prime ", $prime == 1 ? darkYellow("✔").cyan("prime") : "", "\n";
+#  print "vendor: $vendor\n";
+#  print "fulfilled $fulfilled\n";
+
+  print bold($title), " -- $curr$price; $stars" . yellow("★"),
+	$prime == 1 ? darkYellow(" ✔").cyan("prime") : "",
+	defined($vendor) ? " sold by $vendor" : "",
+	$fulfilled == 1 ? " fulfilled by Amazon " : " ",
+	$shortUrl, "\n" if defined $title;
+
+}
+
+sub doXkcd {
+  my $num = shift;
+  my $url = "https://xkcd.com/$num/info.0.json";
+  my %data;
+
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    my $lines = $_;
+    $lines =~ s/("|\d), "/\1,\n"/g;
+    my @vals = split("\n", $lines);
+    foreach my $e (@vals) {
+      if ($e =~ /"(\w+)": (\d+|"[^"]+"),/) {
+	my ($k, $v) = ($1, $2);
+	$v =~ s/^"//; $v =~ s/"$//;
+	#print "$k==>$v\n";
+	$data{$k} = $v;
+      }
+    }
+  }
+
+  return if not defined($data{title});
+
+  $data{transcript} =~ s/\\n/ /g;
+  $data{alt} =~ s/\\n/ /g;
+
+  if (defined($data{transcript}) and length($data{transcript}) > 200) {
+    $data{transcript} = substr($data{transcript}, 0, 200) . "…";
+  }
+
+  if (defined($data{alt}) and length($data{alt}) > 80) {
+    $data{alt} = substr($data{alt}, 0, 80) . "…";
+  }
+
+  $data{month} = "0$data{month}" if $data{month} < 10;
+
+  my $shortimg = shortenUrl($data{img});
+  $shortimg = $data{img} if not defined($shortimg);
+
+  print italic("xkcd"), " #$data{num}: ", bold($data{safe_title}),
+    " ($data{year}/$data{month}) img: ${shortimg}";
+  print " -- $data{transcript}"
+    if defined $data{transcript} and length($data{transcript}) > 0;
+  print " -- alt: $data{alt}"
+    if defined $data{alt} and length($data{alt}) > 0;
+  print "\n";
+}

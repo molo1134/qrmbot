@@ -11,6 +11,7 @@ use Astro::Coord::ECI::TLE;
 use Astro::Coord::ECI::TLE::Set;
 #use Astro::Coord::ECI::Utils qw{deg2rad rad2deg};
 use Math::Trig;
+#use Data::Dumper;
 use POSIX qw(strftime);
 binmode(STDOUT, ":utf8");
 
@@ -56,7 +57,7 @@ my %aliases = (
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
-my $exitnonzeroonerror = 1;
+our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
@@ -89,6 +90,7 @@ while ($i <= $#ARGV) {
   $i++;
 }
 if ($query =~ /^(.+)\s+[0-9.-]+,[0-9.-]+/) {
+  # if both a text parameter and a geo coord, use the text (for irc)
   $query = $1;
 }
 #print "query: $query\n";
@@ -102,13 +104,15 @@ if (length($query) == 0 && $sat ne "list") {
 
 my ($lat, $lon) = (0, 0);
 
-my $geo = argToCoords($query);
-if (!defined($geo)) {
-  print "error: not found: $query\n";
-  exit $exitnonzeroonerror;
+if ($sat ne "list") {
+  my $geo = argToCoords($query);
+  if (!defined($geo)) {
+    print "error: not found: $query\n";
+    exit $exitnonzeroonerror;
+  }
+  ($lat, $lon) = split(',', $geo) if $query ne '';
+  #print ("$lat, $lon\n");
 }
-($lat, $lon) = split(',', $geo) if $query ne '';
-#print ("$lat, $lon\n");
 
 my $now = time();
 
@@ -159,9 +163,10 @@ my @passes;
 my @sats;
 foreach my $tle (@elements) {
   my $name = $tle->get('name');
+  my $id = $tle->get('id');
   $name =~ s/ /-/g;
   push(@sats, $name);
-  if (lc($name) eq lc($sat)) {
+  if (lc($name) eq lc($sat) or (isNumeric($sat) and $id == $sat)) {
     #print "$name\n";
     $tle->validate($now, $finish) or next;
     $found = 1;
@@ -176,7 +181,21 @@ foreach my $tle (@elements) {
 }
 
 if (lc($sat) eq "list") {
-  print join(" ", @sats), "\n";
+  my $list = join(" ", @sats);
+  my $frag = undef;
+  my $limit = 68;
+  $limit = 400 if $username eq "eggdrop";
+  do {
+    # line wrap
+    $frag = undef;
+    if (length $list > $limit) {
+      $list =~ s/^(.{$limit}.*?)\s(.*)$/$1/;
+      $frag = $2;
+      print $list, "\n";
+      $list = $frag;
+    }
+  } while defined ($frag);
+  print $list, "\n";
   exit 0;
 }
 
@@ -195,24 +214,27 @@ if ($#passes < 0) {
 }
 
 my $numpasses = 3;
+$numpasses = 100 if $username ne "eggdrop";
+my $first = 1;
 
+my ($id, $name);
 foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
   #print "\n";
   foreach my $event (@{$pass->{events}}) {
 
     if ($event->{event} eq "rise") {
-      print(bold($event->{body}->get('name')),
-	    " @",
-	    coordToGrid($lat, $lon),
-	    ": ")
-	if $numpasses == 3;
+      if ($first == 1) {
+	printf("%s (#%d) @%s: ",
+	  bold($name = $event->{body}->get('name')),
+	  $id = $event->{body}->get('id'),
+	  coordToGrid($lat, $lon));
+	$first = 0;
+      }
       print "\n  " if $username ne "eggdrop";
       print green("AOS"),
 	    strftime(" %Y-%m-%d ", gmtime($event->{time})),
 	    bold(strftime("%H:%Mz", gmtime($event->{time}))),
-	    " az ",
-	    sprintf("%d", rad2deg($event->{azimuth})),
-	    "°; ";
+	    sprintf(" az %d°; ", rad2deg($event->{azimuth}));
     }
 
     if ($event->{event} eq "max") {
@@ -229,7 +251,7 @@ foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
       --$numpasses;
       print "\n" if $numpasses == 0;
       print " ‖ " if $numpasses > 0 && $username eq "eggdrop";
-      exit 0 if $numpasses == 0;
+      goto done if $numpasses == 0;
     }
 
     # not reached
@@ -243,6 +265,150 @@ foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
     #if ($event->{event} eq "set") {
     #  exit 0;
     #}
+  }
+}
+print "\n";
+done:
+
+my $url = "https://db.satnogs.org/api/transmitters/?format=json";
+$first = 1;
+# IPv4 because satnogs IPv6 gets cut off
+open(TX, '-|', "curl -4 -s --max-time 10 -L -k $url");
+while (<TX>) {
+  #print;
+  s/}.{/},\n{/g;
+  @_ = split "\n";
+  foreach my $e (@_) {
+    #print STDERR "$e\n" if $e =~ /$id/;
+    my @kv = split ",", $e;
+    my %link;
+    foreach my $pair (@kv) {
+      if ($pair =~ /"(\w+)":(true|false|null|\d+|"[^"]+")/) {
+	my ($k, $v) = ($1, $2);
+	$v =~ s/^"(.*)"$/$1/;
+	#print "$k => $v\n";
+	$link{$k} = $v;
+      }
+    }
+    #local $Data::Dumper::Terse = 1;
+    #print "missing id: ", Dumper(\%link), "\n" if not defined $link{norad_cat_id};
+    #print "link: ", Dumper(\%link), "\n" if $id == ($link{norad_cat_id} || -1);
+    #print "sat: $link{norad_cat_id}\n" if defined $link{norad_cat_id};
+    if (defined($link{norad_cat_id}) and
+	  $link{norad_cat_id} == $id and
+	  $link{alive} eq "true" and
+	  not $link{description} =~ m/(PE0SAT|drift|current)/i) {
+
+      if ($first == 1) {
+	printf("%s (#%d): ", bold($name), $id);
+	print "\n" if $username ne "eggdrop";
+	$first = 0;
+      } else {
+	print " ‖ " if $username eq "eggdrop";
+      }
+
+      print "  " if $username ne "eggdrop";
+      if ($link{downlink_low} ne "null" and
+		$link{downlink_high} eq "null" and
+		$link{uplink_low} eq "null" and
+		$link{uplink_high} eq "null") {
+	print "transmitting: ";
+      }
+      if ($link{downlink_low} ne "null" and
+		$link{downlink_high} eq "null" and
+		$link{uplink_low} ne "null" and
+		$link{uplink_high} eq "null") {
+	print "repeating: ";
+      }
+      if ($link{downlink_low} ne "null" and
+		$link{downlink_high} ne "null" and
+		$link{uplink_low} ne "null" and
+		$link{uplink_high} ne "null") {
+	print "linear: ";
+      }
+      print "\"$link{description}\" ";
+      print hzToMhz($link{uplink_low}) if $link{uplink_low} ne "null";
+      print "-", hzToMhz($link{uplink_high}) if $link{uplink_high} ne "null";
+      print "/" if $link{uplink_low} ne "null";
+      print bold(hzToMhz($link{downlink_low})) if $link{downlink_low} ne "null";
+      print "-", bold(hzToMhz($link{downlink_high})) if $link{downlink_high} ne "null" and $link{downlink_high} != $link{downlink_low};
+      print " [inverting]" if $link{invert} eq "true" and $link{mode_id} != 1;
+      print " mode ", mode($link{mode_id});
+      print " $link{baud} baud" if $link{baud} ne "null" and $link{baud} != 0;
+      print "\n" if $username ne "eggdrop";
+    }
+  }
+}
+close(TX);
+print "\n" if $username eq "eggdrop";
+
+sub hzToMhz {
+  my $hz = shift;
+  return $hz / 1000000;
+}
+
+sub mode {
+  my $val = shift;
+  my %modes;
+  $modes{1} = "FM";
+  $modes{2} = "AFSK1k2";
+  $modes{4} = "APRS";
+  $modes{5} = "SSTV";
+  $modes{6} = "CW";
+  $modes{7} = "FMN";
+  $modes{9} = "USB";
+  $modes{15} = "GFSK4k8";
+  $modes{17} = "AHRPT";
+  $modes{18} = "AFSK9k6";
+  $modes{19} = "AM";
+  $modes{20} = "LSB";
+  $modes{21} = "FSK1k2";
+  $modes{22} = "FSK9k6";
+  $modes{25} = "APRS9k6";
+  $modes{26} = "GFSK1k2";
+  $modes{27} = "GFSK2k4";
+  $modes{28} = "GFSK9k6";
+  $modes{29} = "GFSK19k2";
+  $modes{30} = "MSK1k2";
+  $modes{31} = "MSK2k4";
+  $modes{32} = "MSK4k8";
+  $modes{33} = "MSK9k6";
+  $modes{34} = "MSK19k2";
+  $modes{35} = "MSK38k4";
+  $modes{36} = "GMSK1k2";
+  $modes{37} = "GMSK2k4";
+  $modes{38} = "GMSK4k8";
+  $modes{39} = "GMSK9k6";
+  $modes{40} = "PSK31";
+  $modes{41} = "PSK63";
+  $modes{42} = "QPSK31";
+  $modes{43} = "QPSK63";
+  $modes{44} = "APT";
+  $modes{45} = "HRPT";
+  $modes{46} = "FSK4k8";
+  $modes{47} = "BPSK1k2";
+  $modes{48} = "GMSK19k2";
+  $modes{49} = "AFSK";
+  $modes{50} = "BPSK";
+  $modes{51} = "FSK19k2";
+  $modes{52} = "BPSK115k2";
+  $modes{53} = "LRPT";
+  $modes{54} = "BPSK9k6";
+  $modes{55} = "FFSK1k2";
+  $modes{56} = "FSK2k4";
+  $modes{57} = "DSTAR";
+  $modes{58} = "DUV";
+  $modes{59} = "CERTO";
+  return $modes{$val} if defined $modes{$val};
+  print "unknown mode: $val\n";
+}
+
+sub isNumeric {
+  my $val = shift;
+  if ( defined $val ) {
+    return $val =~ /^\d+$/ ? 1 : 0;
+  } else {
+    warn "isNumeric requires an argument!";
   }
 }
 

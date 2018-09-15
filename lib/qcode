@@ -27,7 +27,7 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 }
 
 my %qcodes = (
-## Begin ICAO Aeronautical codes.
+## BEGIN ICAO Aeronautical codes.
 "QAB" => "May I have clearance (for ...) from ... (place) to ... (place) at flight level/altitude ... ? / You are cleared (or ... is cleared) by ... from ... (place) to ... (place) at flight level/altitude ...",
 "QAF" => "Will you advise me when you are (were) at (over) ... (place)? / I am (was) at (over) ... (place) (at ... hours) at flight level/altitude ...",
 "QAG" => "Arrange your flight in order to arrive over ... (place) at ... hours.",
@@ -172,15 +172,48 @@ my %qcodes = (
 "QMW" => "At ... (position or zone) what is (are) the flight level(s)/altitude(s) ... of the zero Celsius isotherm(s)? / At ... (position or zone) the zero Celsius isotherm(s) is (are) at flight level(s)/altitude(s) ...",
 "QMX" => "What is the air temperature [at ... (position or zone)] (at ... hours) at flight level/altitude ...? / At ... (position or zone) at ... hours the air temperature is ... (degrees and units) at flight level/altitude ...  --Note-- Aircraft reporting QMX information will transmit the temperature figures as corrected for airspeed.",
 "QMZ" => "Have you any amendments to the flight forecast in respect of section of route yet to be traversed? / The following amendment(s) should be made to the flight forecast ...  [If no amendments, signal QMZ NIL]",
-"QNE" => "What indication will my altimeter give on landing at ... (place) at ... hours, my sub-scale being set to 1013.2 millibars (29.92 inches)? / On landing at ... (place) at ... hours, with your sub-scale being set to 1013.2 millibars (29.92 inches), your altimeter will indicate ... (figures and units).",
-"QNH" => "What should I set on the subscale of my altimeter so that the instrument would indicate its elevation if my aircraft were on the ground at your station? / If you set the subscale of your altimeter to read ... millibars, the instrument would indicate its elevation if your aircraft were on the ground at my station at ... hours.  --Note-- When the setting is given in hundredths of inch the abbreviation INS is used to identify the units.",
+
+# removing codes that conflict with ARRL codes
+
+#"QNE" => "What indication will my altimeter give on landing at ... (place) at ... hours, my sub-scale being set to 1013.2 millibars (29.92 inches)? / On landing at ... (place) at ... hours, with your sub-scale being set to 1013.2 millibars (29.92 inches), your altimeter will indicate ... (figures and units).",
+#"QNH" => "What should I set on the subscale of my altimeter so that the instrument would indicate its elevation if my aircraft were on the ground at your station? / If you set the subscale of your altimeter to read ... millibars, the instrument would indicate its elevation if your aircraft were on the ground at my station at ... hours.  --Note-- When the setting is given in hundredths of inch the abbreviation INS is used to identify the units.",
 #"QNI" => "Between what heights above ... (datum) has turbulence been observed at ... (position or zone)? / Turblence has been observed at ... (position or zone) with an intensity of ... between ... (figures and units) and ... (figures and units) heights above ... (datum).",
-"QNI" => "May I join the net? / You may check in...",
-"QNO" => "I am not equipped to give the information (or provide the facility) requested.",
-"QNR" => "I am approaching my point of no return.",
-"QNT" => "What is the maximum speed of the surface wind at ... (place)? / The maximum speed of the surface wind at ... (place) at ... hours is ... (speed figures and units).",
-"QNY" => "What is the present weather and the intensity thereof at ... (place, position or zone)? / The present weather and intensity thereof at ... (place, position or zone) at ... hours is ...",
+#"QNO" => "I am not equipped to give the information (or provide the facility) requested.",
+#"QNR" => "I am approaching my point of no return.",
+#"QNT" => "What is the maximum speed of the surface wind at ... (place)? / The maximum speed of the surface wind at ... (place) at ... hours is ... (speed figures and units).",
+#"QNY" => "What is the present weather and the intensity thereof at ... (place, position or zone)? / The present weather and intensity thereof at ... (place, position or zone) at ... hours is ...",
 ## END ICAO Aeronautical codes.
+
+## BEGIN ARRL “QN” CW Traffic Net Signals
+"QNA" => "Answer in prearranged order.",
+"QNB" => "Act as relay Between ... and ...",
+"QNC" => "All net stations Copy. I have a message for all net stations.",
+"QND" => "Net is Directed (controlled by net control station).",
+"QNE" => "Entire net stand by.",
+"QNF" => "Net is Free (not controlled).",
+"QNG" => "Take over as net control station.",
+"QNH" => "Your net frequency is High.",
+"QNI" => "Net stations report In. / I am reporting into the net. (Follow with a list or traffic or QRU).",
+#"QNI" => "May I join the net? / You may check in...",
+"QNJ" => "Can you copy me? Can you copy ...?",
+"QNK" => "Transmit message for ... to ...",
+"QNL" => "Your net frequency is Low.",
+"QNM" => "You are QRMing the net. Stand by.",
+"QNN" => "Net control station is ... What station has net control?",
+"QNO" => "Station is leaving the net.",
+"QNP" => "Unable to copy you. Unable to copy ...",
+"QNQ" => "Move frequency to ... and wait for ... to finish handling traffic. Then send him traffic for ...",
+"QNR" => "Answer ... and Receive traffic.",
+"QNS" => "Following Stations are in the net. (Follow with list) / Request list of stations in the net.",
+"QNT" => "I request permission to leave the net for ... minutes.",
+"QNU" => "The net has traffic for you. Stand by.",
+"QNV" => "Establish contact with ... on this frequency. If successful, move to ... and send him traffic for ...",
+"QNW" => "How do I route messages for ...?",
+"QNX" => "You are excused from the net. / Request to be excused from the net.",
+"QNY" => "Shift to another frequency (or to ... kHz) to clear traffic with ...",
+"QNZ" => "Zero beat your signal with mine.",
+## END ARRL “QN” CW Traffic Net Signals
+
 ## BEGIN Maritime Mobile service codes
 "QOA" => "Can you communicate by radiotelegraphy (500 kHz)? / I can communicate by radiotelegraphy (500 kHz).",
 "QOB" => "Can you communicate by radiotelephony (2182 kHz)? / I can communicate by radiotelephony (2182 kHz).",
@@ -198,6 +231,7 @@ my %qcodes = (
 "QOO" => "Can you send on any working frequency? / I can send on any working frequency.",
 "QOT" => "Do you hear my call; what is the approximate delay in minutes before we may exchange traffic? / I hear your call; the approximate delay is ... minutes.",
 ## END Maritime Mobile service codes
+
 ## BEGIN All services
 "QRA" => "What is the name of your vessel (or station)? / The name of my vessel (or station) is ...",
 #"QRA" => "What is the name (or call sign) of your station? / The name (or call sign) of my station is ...",

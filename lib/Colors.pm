@@ -7,7 +7,7 @@
 package Colors;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(darkRed red yellow green lightblue bold darkYellow lightGrey grey);
+@EXPORT = qw(darkRed red yellow green lightblue darkYellow lightGrey grey cyan lightcyan bold underline inverse italic strikethrough blink monospace);
 
 BEGIN {
   our $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
@@ -18,6 +18,7 @@ BEGIN {
 
 sub darkRed {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x035\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -28,6 +29,7 @@ sub darkRed {
 }
 sub red {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x034\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -38,6 +40,7 @@ sub red {
 }
 sub yellow {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x038\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -48,6 +51,7 @@ sub yellow {
 }
 sub green {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x033\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -58,6 +62,7 @@ sub green {
 }
 sub lightblue {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x0312\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -66,20 +71,11 @@ sub lightblue {
     return $s;
   }
 }
-sub bold {
-  my $s = shift;
-  if ($highlight eq "irc") {
-    return "\x02$s\x0F"
-  } elsif ($highlight eq "vt220") {
-    return "\e[1m$s\e[0m"
-  } else {
-    return $s;
-  }
-}
 sub darkYellow {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
-    return "\x035\x02\x02$s\x0F"
+    return "\x037\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
     return "\e[33m$s\e[0m"
   } else {
@@ -88,6 +84,7 @@ sub darkYellow {
 }
 sub lightGrey {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x0315\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -98,6 +95,7 @@ sub lightGrey {
 }
 sub grey {
   my $s = shift;
+  return undef if not defined($s);
   if ($highlight eq "irc") {
     return "\x0314\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
@@ -106,5 +104,114 @@ sub grey {
     return $s;
   }
 }
+sub cyan {
+  my $s = shift;
+  return undef if not defined($s);
+  if ($highlight eq "irc") {
+    return "\x0310\x02\x02$s\x0F"
+  } elsif ($highlight eq "vt220") {
+    return "\e[36m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+sub lightcyan {
+  my $s = shift;
+  return undef if not defined($s);
+  if ($highlight eq "irc") {
+    return "\x0311\x02\x02$s\x0F"
+  } elsif ($highlight eq "vt220") {
+    return "\e[1;36m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+
+# ctrl-b in irc client
+sub bold {
+  my $s = shift;
+  return undef if not defined($s);
+  if ($highlight eq "irc") {
+    return "\x02$s\x0F"
+  } elsif ($highlight eq "vt220") {
+    return "\e[1m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+# ctrl-_ in irc client
+sub underline {
+  my $s = shift;
+  return undef if not defined($s);
+  if ($highlight eq "irc") {
+    return "\x1F$s\x0F"
+  } elsif ($highlight eq "vt220") {
+    return "\e[4m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+# ctrl-v in irc client
+sub inverse {
+  my $s = shift;
+  return undef if not defined($s);
+  if ($highlight eq "irc") {
+    return "\x16$s\x0F"
+  } elsif ($highlight eq "vt220") {
+    return "\e[7m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+# ctrl-] in irc client
+sub italic {
+  my $s = shift;
+  return undef if not defined($s);
+  if ($highlight eq "irc") {
+    return "\x1D$s\x0F"
+  } elsif ($highlight eq "vt220") {
+    return "\e[3m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+# ctrl-^ in irc client ?
+# only supported by textual irc now
+sub strikethrough {
+  my $s = shift;
+  return undef if not defined($s);
+  if ($highlight eq "irc") {
+    return "\x1E$s\x0F"
+  } elsif ($highlight eq "vt220") {
+    return "\e[9m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+# ctrl-f in irc client
+sub blink {
+  my $s = shift;
+  return undef if not defined($s);
+  if ($highlight eq "irc") {
+    return "\x06$s\x0F"
+  } elsif ($highlight eq "vt220") {
+    return "\e[5m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+# only supported in IRCCloud client now
+# ctrl-q ?
+sub monospace {
+  my $s = shift;
+  return undef if not defined($s);
+  if ($highlight eq "irc") {
+    return "\x11$s\x0F"
+  } else {
+    return $s;
+  }
+}
+
+
 
 return 1;

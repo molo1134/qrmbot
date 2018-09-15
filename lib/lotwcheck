@@ -21,7 +21,7 @@ my $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
 my $url = "https://lotw.arrl.org/lotw-user-activity.csv";
-my $maxage=172800; # 2 days:
+my $maxage=86400; # 1 day
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq 'eggdrop') {

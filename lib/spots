@@ -21,7 +21,7 @@ use Location;
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # configuration
-my $exitnonzeroonerror = 1;
+our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
 my $timestampfile = $ENV{'HOME'}.'/.spottimestamps';
@@ -94,6 +94,7 @@ while ($i <= $#ARGV) {
   }
   if (defined($callsign) && $ARGV[$i] =~ /^\d+$/) {
     $limit = $ARGV[$i];
+    $limit = 8 if $limit > 8 and $username eq 'eggdrop';
   }
   $i++;
 }
@@ -156,7 +157,7 @@ sub doPSKreporter
 
   # using IPv4 because I got greedy and got banned using ipv6.
 #  print "curl -4 --max-time 4 --retry 1 -s '$url'\n";
-  open (HTTP, '-|', "curl -4 -k --max-time 4 --retry 1 -s '$url'");
+  open (HTTP, '-|', "curl -L -4 -k --max-time 4 --retry 1 -s '$url'");
   while (<HTTP>) {
     chomp;
     if (/The storm clouds are gathering/) {
@@ -281,10 +282,16 @@ sub doDXWatch
   #open (HTTP, '-|', "cat rb-N7XM.json");
   #print "$url\n";
 #  print "curl -k --max-time 4 --retry 1 -s '$url'";
-  open (HTTP, '-|', "curl -k --max-time 4 --retry 1 -s '$url'");
+  open (HTTP, '-|', "curl -L -k --max-time 4 --retry 1 -s '$url'");
   while (<HTTP>) {
+    if (/<title>(\d\d\d .*?)<\/title>/) {
+      my $error = $1;
+      print "warning: ", $rb == 1 ? "RBN" : "DXW", ": $error\n";
+      last;
+    }
+
     s/},"fname".*$//;
-    s/{"s":{//;
+    s/\{"s":\{//;
     s/],"/]\n"/g;
 
     my @data = split /\n/;
@@ -293,6 +300,7 @@ sub doDXWatch
       if (/This filter returned no spot/) {
 	last;
       }
+      next if $line =~ /^\s*$/;
       $line =~ /"(\d+)":\[(.*)\]/;
       #say $line;
       my $num = $1;
@@ -385,7 +393,7 @@ sub getyearformonthday
 
 sub doHamspots
 {
-  my $baseurl = "http://hamspots.net/";
+  my $baseurl = "https://hamspots.net/";
   our $historyurl = $baseurl . "history";
   our $cookiefile = $ENV{'HOME'}."/.hamspotcookies";
 
@@ -406,7 +414,7 @@ getHistory:
 #  open(HTTP, '-|', "wget --timeout=4 -t 1 -q -O - --keep-session-cookies " .
 #		    "--save-cookies $cookiefile --load-cookies $cookiefile " .
 #		    "'$historyurl'");
-  open(HTTP, '-|', "curl --max-time 4 --retry 1 -s --cookie-jar $cookiefile " .
+  open(HTTP, '-|', "curl -k -L --max-time 4 --retry 1 -s --cookie-jar $cookiefile " .
 	  "--cookie $cookiefile " .
 	  "--user-agent 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2718.0 Safari/537.36' " .
 	  "'$historyurl'");
@@ -444,7 +452,7 @@ getHistory:
   my %freqs = %$bands_ref;
 
   #print "get: $historyurl\n";
-  open(HTTP, '-|', "curl --max-time 4 -s --cookie-jar $cookiefile " .
+  open(HTTP, '-|', "curl -k -L --max-time 4 -s --cookie-jar $cookiefile " .
 	  "--cookie $cookiefile --referer $historyurl " .
 	  "--data 'a=call_data&hist_call_1=$callsign&submit_call=Search' " .
 	  "--user-agent 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2718.0 Safari/537.36' " .
@@ -537,7 +545,7 @@ sub doHamspotsLogin
 #    "--post-data " .
 #    "'loginCall=$login_callsign&loginPass=$login_password&a=login&p=history' " .
 #    "--save-cookies $cookiefile '$historyurl'");
-  open(HTTP, '-|', "curl --max-time 4 --retry 1 -s --cookie-jar $cookiefile " .
+  open(HTTP, '-|', "curl -k -L --max-time 4 --retry 1 -s --cookie-jar $cookiefile " .
 	  "--cookie $cookiefile " .
 	  "--data 'loginCall=$login_callsign&loginPass=$login_password&a=login&p=history&submit=Log+In' " .
 	  "--user-agent 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2718.0 Safari/537.36' " .

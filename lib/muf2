@@ -1,22 +1,24 @@
 #!/usr/bin/perl -w
-# Lookup MUF by station.  Performs OCR on imagess.  2-clause BSD license.
+# Lookup MUF by station.  2-clause BSD license.
 
 # Copyright 2018 /u/molo1134. All rights reserved.
-
-# dependency: gocr
 
 use strict;
 use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
+use Time::Piece ();
+
 use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 
+my $timeout = 15;	# 15 seconds
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
   if ($username eq 'eggdrop') {
     print "usage: !muf2 <station>  --or--  !muf2 list (use /msg)\n";
@@ -154,7 +156,7 @@ if (!defined $ursiCode and not $place eq "list") {
 
 if (!defined $ursiCode or $place eq "list") {
 
-  open (STATIONS, '-|', "curl -s -k --max-time 4 --retry 1 \"${stationUrl}\"");
+  open (STATIONS, '-|', "curl -s -k --max-time $timeout --retry 1 \"${stationUrl}\"");
   while (<STATIONS>) {
     if (/^<td.*">([A-Z0-9]+)<\/a><\/big>.*?<big>([^<]*)<\/big>/) {
       my $code = $1;
@@ -166,8 +168,10 @@ if (!defined $ursiCode or $place eq "list") {
       $station=~s/^([a-z])/\U$1\E/;
       #print "$code $station\n";
 
+      my $limit = 65;
+      $limit = 400 if $username eq "eggdrop";
       if (lc($place) eq "list") {
-	if (length $list > 400) {
+	if (length $list > $limit) {
 	  print "$list\n";
 	  $list = "";
 	}
@@ -185,7 +189,8 @@ if (!defined $ursiCode or $place eq "list") {
   my $stationMap = "Map: http://giro.uml.edu/img/giro-map.gif";
 
   if (lc($place) eq "list") {
-    print "$list-- $stationMap\n";
+    print "$list-- $stationMap\n" if $username eq "eggdrop";
+    print "$list\n$stationMap\n" if $username ne "eggdrop";
     exit 0;
   }
 
@@ -193,82 +198,68 @@ if (!defined $ursiCode or $place eq "list") {
   exit 0 if !defined($ursiCode);
 }
 
-my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
-$year += 1900;
-$mon++;
+my $dataUrl = "https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=${ursiCode}&charName=MUFD&DMUF=3000";
+my ($lat, $lon, $utc, $cs, $mufd, $minmuf, $maxmuf, $mintime, $maxtime, $name);
+my ($last, $ts, $sec, $min, $hour, $day, $mon, $year);
 
-my $indexUrl = "https://lgdc.uml.edu/common/DIDBDayStationStatistic?ursiCode=${ursiCode}&year=${year}&month=${mon}&day=${mday}";
+$maxmuf = -999.0;
+$minmuf = 999.0;
+$last = 0;
 
-my $mid = undef;
-my $utc;
-my $lat;
-my $lon;
+my %mufrecords;
 
-#print "$indexUrl\n";
-open (INDEX, '-|', "curl -s -k --max-time 4 --retry 1 \"${indexUrl}\"");
-while (<INDEX>) {
-#  print;
-  chomp;
-  if (/DIDBase statistic for (.*), [0-9]/) {
-    $station = $1;
-  }
-  if (/mid=([0-9]+)/) {
-    $mid = $1;
-  }
-  if (/ShowIonogramPage.*">[0-9.]+ \([0-9]+\) ([0-9][0-9]):([0-9][0-9])/) {
-    $utc = "$1$2";
-  }
-  if (/Lat: ([0-9.-]+)/) {
+#print "$dataUrl\n";
+open (DATA, '-|', "curl -s -k --max-time $timeout --retry 1 \"${dataUrl}\"");
+while (<DATA>) {
+  if (/Location: GEO (-?[0-9.]+)([NS]) (-?[0-9.]+)([EW]), URSI-Code (\w+) (.*?)\s*$/) {
     $lat = $1;
+    $lon = $3;
+    $lat *= -1 if $2 eq "S";
+    $lon *= -1 if $4 eq "W";
+    $lon = $lon - 360 if $4 eq "E" and $lon > 180;
+    $station = $6;
   }
-  if (/Long: ([0-9.-]+)/) {
-    $lon = $1;
-    if ($lon > 180) {
-      $lon = $lon - 360;
+
+  if (/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).\d{3}Z\s+(\d+)\s+(.*?)\s+\/\/\s*$/) {
+    ($year,$mon,$day,$hour,$min,$sec,$cs,$mufd)=($1,$2,$3,$4,$5,$6,$7,$8);
+    $ts = Time::Piece->strptime("$year-$mon-$day $hour:$min:$sec", "%Y-%m-%d %H:%M:%S")->epoch;
+    #$ts = Time::Piece->strptime($_, "%Y-%m-%dT%H:%M:%S")->epoch; # garbage at end
+
+    # CS is Confidence Score
+    if ($cs > 0 and isNumeric($mufd)) {
+      $mufrecords{$ts} = $mufd;
+      $last = $ts if $ts > $last;
+
+      $maxtime = "${hour}${min}z" if $mufd > $maxmuf;
+      $maxmuf = $mufd if $mufd > $maxmuf;
+
+      $mintime = "${hour}${min}z" if $mufd < $minmuf;
+      $minmuf = $mufd if $mufd < $minmuf;
     }
   }
 }
-close INDEX;
+close(DATA);
 
-#print "$mid\n";
-
-print "No ionograms found for $station ($ursiCode)\n" if !defined($mid);
-exit 0 if !defined($mid);
-
-my $ionogramUrl = "https://lgdc.uml.edu/common/ShowIonogram?mid=${mid}";
-#print "$ionogramUrl\n";
-
-my $ionogramFile = "/tmp/ionogram.${mid}.png";
-
-system "curl -s -k --max-time 4 --retry 1 \"${ionogramUrl}\" -o ${ionogramFile}";
-
-my $muf = undef;
-my $ocrdbpath = $ENV{'HOME'}. "/.ionosonde.db/";
-
-if (! -e $ocrdbpath) {
-  $ocrdbpath = dirname(realpath(__FILE__)) . "/ionosonde.ocr.db/";
+if ($last > 0) {
+  my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime($last);
+  $year += 1900;
+  $mon++;
+  my $datetime = sprintf("%4u-%02u-%02u %02u%02uz", $year, $mon, $mday, $hour, $min);
+  print bold($station), " ($lat, $lon): MUF @ $datetime: ", 
+	bold("$mufrecords{$last} MHz"),
+	"; recent high: $maxmuf at $maxtime; low $minmuf at $mintime\n";
+} else {
+  print "no records found for $ursiCode\n";
 }
 
-die "unable to find OCR DB path: $ocrdbpath" if (! -e $ocrdbpath);
+exit 0;
 
-# run:
-open (GOCR, '-|', "gocr -p $ocrdbpath -m 258 $ionogramFile");
-# train:
-#open (GOCR, '-|', "gocr -p $ocrdbpath -m 386 $ionogramFile");
-while (<GOCR>) {
-  #print;
-  #print if /MUF/;
-  chomp;
-  if (/MUF.*\(D\)\s*([0-9.]+|N\/A)/) {
-    $muf = $1;
-  }
-  if (!defined($muf) and /MUF.*?([0-9.]+) \[MHz\]/) {
-    $muf = $1;
+sub isNumeric {
+  my $val = shift;
+  if ( defined $val ) {
+    return $val =~ /^-?[0-9]+\.?[0-9]*$/ ? 1 : 0;
+  } else {
+    warn "isNumeric requires an argument!";
   }
 }
-close GOCR;
 
-$mon = sprintf("%02u", $mon);
-$mday = sprintf("%02u", $mday);
-
-print bold($station), " ($lat, $lon): MUF @ $year-$mon-$mday ${utc}z: ", bold("$muf MHz"), "\n";

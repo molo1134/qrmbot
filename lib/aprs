@@ -21,13 +21,18 @@ use Colors;
 use Location;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq 'eggdrop') {
     print "usage: !aprs <callsign or object>\n";
   } else {
     print "usage: $0 <callsign or object>\n";
   }
-  exit 0;
+  exit $exitnonzeroonerror;
 }
 
 our $apikey = undef;
@@ -64,7 +69,7 @@ getvals($url, \%vals);
 
 if (defined $vals{found} and $vals{found} != 1) {
   print "not found: $targetcall\n";
-  exit 0;
+  exit $exitnonzeroonerror;
 }
 
 if ($vals{type} eq "w") {
@@ -107,9 +112,13 @@ if ($vals{type} eq "w") {
 }
 
 print bold($vals{name});
-print " (de $vals{srccall})" unless $vals{name} eq $vals{srccall} || !defined($vals{srccall});
+if (defined $vals{srccall} and $vals{name} ne $vals{srccall}) {
+  print " (de $vals{srccall})";
+}
 print " (WX)" if $vals{type} eq "w";
-print ": " . (geolocate($vals{lat}, $vals{lng}) || coordToGrid($vals{lat}, $vals{lng}));
+if (defined $vals{lat} and defined $vals{lng}) {
+  print ": " . (geolocate($vals{lat}, $vals{lng}) || coordToGrid($vals{lat}, $vals{lng}));
+}
 
 # wx station vals
 print "  Temp: " . bold("$vals{temp_c}°C/$vals{temp_f}°F") if defined ($vals{temp});
@@ -184,12 +193,13 @@ sub getvals {
   my $valref = shift;
 
   #print "$url\n";
-  open(HTTP, '-|', "curl -A \"$useragent\" -s \"$url\"");
+  open(HTTP, '-|', "curl -A \"$useragent\" -s '$url'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
     # "found":1,"entries":[{"class":"a"
     s/:(\d+),/:$1 , /g;
     s/","/" , "/g;
+    s/(\d),"/$1 , "/g;
     s/{"/{\n"/g;
     #print;
     my @fields = split / , /;

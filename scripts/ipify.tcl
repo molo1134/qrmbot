@@ -38,6 +38,7 @@ proc ipify {args} {
 	return $data
 }
 
+# do lookup upon load
 set publicip [ipify]
 if {$publicip != ""} {
 	putlog "setting nat-ip: $publicip"

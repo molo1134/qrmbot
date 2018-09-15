@@ -81,6 +81,8 @@ my $call = undef;
 my $type = undef;
 my $i = 0;
 my $compact = 0;
+my $csv = 0;
+my $doCount = 0;
 
 while ($i <= $#ARGV) {
   if ($ARGV[$i] =~ /--geo/) {
@@ -94,6 +96,16 @@ while ($i <= $#ARGV) {
   }
   if ($ARGV[$i] =~ /--compact/) {
     $compact = 1;
+    $i++;
+    next;
+  }
+  if ($ARGV[$i] =~ /--csv/) {
+    $csv = 1;
+    $i++;
+    next;
+  }
+  if ($ARGV[$i] =~ /--count/) {
+    $doCount = 1;
     $i++;
     next;
   }
@@ -146,6 +158,7 @@ our $url;
 my $encodedcall = uri_escape_utf8($call);
 $encodedcall =~ s/%20/+/g;
 $url = "$baseurl/lookup/?query=$encodedcall&mode=$type";
+#print "$url\n";
 
 our $useragentoption = "";
 if (defined($useragent)) {
@@ -185,6 +198,8 @@ if (!-e $cookiefile) {
   #print "no cookie file -- doing login.\n";
   doLogin();
 }
+
+updateDMRfiles();
 
 # note: this code depends on the netscape cookie format (used by wget and curl)
 my $needlogin = 0;
@@ -240,6 +255,21 @@ if (!defined($name)) {
   $name="no name on file";
 }
 
+if ($csv == 1) {
+  $name =~ s/,//g;
+  $mail =~ s/,//g;
+  $born = "" if not defined $born;
+  $sk = 0 if not defined $sk;
+  $expiration = "" if not defined $expiration;
+  $qsl = "" if not defined $qsl;
+  $qsl =~ s/,//g;
+  print "$call,$retcall,$name,$mail,$born,$expiration,$sk,$qsl\n";
+  exit 0;
+}
+
+my $dmrIds = getDMRidsForCall($retcall);
+$dmrIds =~ s/,/, /g if defined $dmrIds;
+
 print bold($retcall), ": $country: $name";
 if (defined($expiration) && ($expiration lt strftime("%Y-%m-%d", gmtime))) {
   print " ", bold("\[EXPIRED\]");
@@ -266,10 +296,14 @@ if (defined($codes) && $compact ne 1) {
   print " -- codes: $codes $codetext";
 }
 if (@prevcalls) {
-  print " -- prev " . join(", ", @prevcalls);
+  my @uniqprevcalls = uniq(@prevcalls);
+  print " -- prev " . join(", ", @uniqprevcalls);
 }
 if (@othercalls) {
   print " -- aliases: " . join(", ", @othercalls);
+}
+if (defined($dmrIds) and length($dmrIds) > 0) {
+  print " -- DMR IDs: $dmrIds";
 }
 if (defined($trustee)) {
   print " -- trustee: $trustee";
@@ -445,6 +479,10 @@ sub getAndParseData {
 
       if (/([0-9]+) matches/) {
 	$matches = $1;
+	if ($doCount == 1) {
+	  print "$call,$matches\n";
+	  exit 0;
+	}
       }
 
       while (<HTTP>) {
@@ -521,8 +559,8 @@ sub getAndParseData {
       $country = $1;
       #next;
     }
-    if ($calldata and /span class="csgnl[^"]*">,?\s*([A-Z0-9]+)</ ) {
-      $retcall = $1;
+    if ($calldata and /span class="(csgnl|csignm)[^"]*">,?\s*([A-Z0-9\/]+)</ ) {
+      $retcall = $2;
       #next;
     }
     if (/Login is required for additional detail./) {
@@ -815,6 +853,79 @@ sub getCallForRedditId {
     close(NICKFILE);
   }
   return undef;
+}
+
+sub updateDMRfiles {
+  my $userFile="$ENV{HOME}/.dmr-id-users.csv";
+  my $rptrFile="$ENV{HOME}/.dmr-id-repeaters.csv";
+
+  my $usersUrl="https://www.radioid.net/static/users.csv";
+  my $rptrsUrl="https://www.radioid.net/static/rptrs.csv";
+
+  my $maxage=604800; # 1 week
+  my $now = time();
+  my $needUsers = 0;
+  my $needRptrs = 0;
+
+  $needUsers = 1 if not -e $userFile;
+  $needRptrs = 1 if not -e $rptrFile;
+
+  my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $userFile;
+  if (defined $mtime) {
+    my $age = $now - $mtime;
+    $needUsers = 1 if $age > $maxage or $size == 0;
+  } else {
+    $needUsers = 1
+  }
+
+  (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $rptrFile;
+  if (defined $mtime) {
+    my $age = $now - $mtime;
+    $needRptrs = 1 if $age > $maxage or $size == 0;
+  } else {
+    $needRptrs = 1
+  }
+
+  system "curl -s -k -o $userFile '$usersUrl'" if $needUsers == 1;
+  system "curl -s -k -o $rptrFile '$rptrsUrl'" if $needRptrs == 1;
+
+  # FIXME: errors ignored.
+}
+
+sub getDMRidsForCall {
+  my $call = uc shift;
+
+  my $userFile="$ENV{HOME}/.dmr-id-users.csv";
+  my $rptrFile="$ENV{HOME}/.dmr-id-repeaters.csv";
+
+  my @results;
+
+  if (-e $userFile) {
+    open (USERFILE, "<", $userFile);
+    while (<USERFILE>) {
+      chomp;
+      my ($id, $filecall) = split /,/;
+      push @results, $id if uc($filecall) eq $call;
+    }
+    close(USERFILE);
+  }
+
+  if (-e $rptrFile) {
+    open (RPTRFILE, "<", $rptrFile);
+    while (<RPTRFILE>) {
+      chomp;
+      my ($id, $filecall) = split /,/;
+      push @results, $id if uc($filecall) eq $call;
+    }
+    close(RPTRFILE);
+  }
+
+  return join(",", @results);
+}
+
+sub uniq {
+  my %seen;
+  grep !$seen{$_}++, @_;
 }
 
 # vim: set ts=8 sw=2 sts=2

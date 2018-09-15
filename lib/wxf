@@ -30,7 +30,7 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 our $apikey = undef;
 
 # change this to 0 to always exit with success
-my $exitnonzeroonerror = 1;
+our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
 my $apikeyfile = $ENV{'HOME'} . "/.wunderground";
@@ -253,7 +253,13 @@ close(HTTP);
 my $units = "_metric";
 $units = "" if $geo{'country_iso3166'} eq "US";
 
-print "Forecast for ", bold($place), " ($lon,$lat) as of $rec{'date'}:\n";
+if (!defined $rec{date} or $rec{date} eq "") {
+  print "Forecast for $place not found.\n" if defined $place;
+  print "Forecast not found.\n" if not defined $place;
+  exit $exitnonzeroonerror;
+}
+
+print "Forecast for ", bold($place), " ($lat,$lon) as of $rec{'date'}:\n";
 
 foreach my $alert (@alerts) {
   print " $alert\n";

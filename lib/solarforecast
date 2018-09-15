@@ -8,6 +8,7 @@ use utf8;
 use feature 'unicode_strings';
 use Switch;
 use POSIX qw(strftime);
+use List::Util qw[min max];
 use DateTime::Format::Strptime;
 binmode(STDOUT, ":utf8");
 
@@ -71,6 +72,21 @@ print "Daily forecast as of: $datestamp; today to $lastday:\n";
 printf "Kp : %s\n", join("", kIndexToColorBlocks(@kp));
 printf "Ap : %s\n", join("", aIndexToColorBlocks(@ap));
 printf "SFI: %s\n", join("", sfiToColorBlocks(@sfi));
+
+# TODO: determine field day start programmatically
+indicateEvent($lastday, "ARRL Field Day", "2018 6 23", 2);
+indicateEvent($lastday, "13 colonies", "2018 7 1", 7);
+indicateEvent($lastday, "IARU HF World Championship", "2018 7 14", 2);
+indicateEvent($lastday, "NA RTTY QSOP", "2018 7 21", 2);
+indicateEvent($lastday, "RSGB IOTA", "2018 7 28", 2);
+indicateEvent($lastday, "ARRL Rookie Roundup, RTTY", "2018 8 19", 1);
+indicateEvent($lastday, "CQ WW RTTY DX", "2018 9 29", 2);
+indicateEvent($lastday, "School Club Roundup", "2018 10 15", 4);
+indicateEvent($lastday, "ARRL Sweepstakes, CW", "2018 11 3", 3);
+indicateEvent($lastday, "ARRL Sweepstakes, Phone", "2018 11 17", 3);
+indicateEvent($lastday, "ARRL 160m", "2018 11 30", 3);
+indicateEvent($lastday, "ARRL 10m", "2018 12 8", 2);
+indicateEvent($lastday, "ARRL Rookie Roundup, CW", "2018 12 16", 1);
 
 sub kIndexToBlocks {
   map { tr/0123456789/ ▁▂▃▄▅▆▇█↑/ } @_;
@@ -157,4 +173,50 @@ sub monthNameToNum {
     case "Dec" { return 12 }
     else       { die "unknown month: $monthabbr" }
   }
+}
+
+sub indicateEvent {
+  my $lastDay = shift;
+  my $name = shift;
+  my $eventDate = shift;
+  my $duration = shift;
+
+  my $now = time();
+
+  my ($y, $m, $d) = split(/ /, $lastDay);
+  my $graphEnd = $dtparser->parse_datetime("$y " . monthNameToNum($m) . " $d");
+
+  my $eventStart = $dtparser->parse_datetime($eventDate);
+  my $eventEnd = $eventStart->epoch() + ($duration * 60*60*24);
+
+  my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime($now);
+  $year += 1900; $mon += 1;
+  #print "now: $year $mon $mday\n";
+
+  my $todayStart = $dtparser->parse_datetime("$year $mon $mday");
+
+  if ($todayStart->epoch() < $eventEnd and
+      $eventStart->epoch() < $graphEnd->epoch()) {
+
+    #print "have event\n";
+    #print "$now, $lastDay, $eventStart, $graphEnd\n";
+
+    my $result = "";
+
+    my $cursor = $todayStart->epoch();
+    while ($cursor < $eventStart->epoch()) {
+      $result .= " ";
+      $cursor += 24*60*60;
+    }
+    my $i = 0;
+    my $secsLeft = $eventEnd - max($eventStart->epoch(), $todayStart->epoch());
+    my $daysLeft = $secsLeft / (24*60*60);
+    while ($i < $daysLeft) {
+      $result .= "^";
+      $i++;
+    }
+    $result .= " " . $name;
+    printf "     %s\n", $result;
+  }
+
 }

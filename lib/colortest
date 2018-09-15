@@ -1,0 +1,54 @@
+#!/usr/bin/perl -w
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use Cwd 'realpath';
+use File::Basename;
+use lib dirname(realpath(__FILE__));
+use Colors;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+my $sep = "\n";
+$sep = " " if $username eq 'eggdrop';
+
+print darkRed("darkRed"), $sep;
+print red("red"), $sep;
+print yellow("yellow"), $sep;
+print darkYellow("darkYellow"), $sep;
+print green("green"), $sep;
+print lightblue("lightblue"), $sep;
+print cyan("cyan"), $sep;
+print lightcyan("lightcyan"), $sep;
+print lightGrey("lightGrey"), $sep;
+print grey("grey"), $sep;
+print bold("bold"), $sep;
+print underline("underline"), $sep;
+print inverse("inverse"), $sep;
+print italic("italic"), $sep;
+print strikethrough("strikethrough"), $sep;
+print blink("blink"), $sep;
+print monospace("monospace"), $sep;
+
+if ($username eq "eggdrop") {
+  print "\nextended mirc color: ";
+  print "\x0324\x02\x02OO\x0F";
+  print "\x0336\x02\x02OO\x0F";
+  print "\x0348\x02\x02OO\x0F";
+  print "\x0372\x02\x02OO\x0F";
+  print "\x0384\x02\x02OO\x0F";
+  print "\n";
+
+  print "hex 24-bit color: ";
+  print "\x04FF0000OO\x0F";
+  print "\x04EE0000OO\x0F";
+  print "\x04DD0000OO\x0F";
+  print "\x04CC0000OO\x0F";
+  print "\x04BB0000OO\x0F";
+  print "\x04AA0000OO\x0F";
+  print "\x04990000OO\x0F";
+  print "\x04880000OO\x0F";
+  print "\n";
+}

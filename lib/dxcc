@@ -53,8 +53,12 @@ if ( ! -e $ctydat ) {
   $needCTY = 1;
 } else {
   my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $mostwantedfile;
-  my $age = $now - $mtime;
-  if ($age > $maxage or $size == 0) {
+  if (defined $mtime) {
+    my $age = $now - $mtime;
+    if ($age > $maxage or $size == 0) {
+      $needCTY = 1;
+    }
+  } else {
     $needCTY = 1;
   }
 }
@@ -143,8 +147,12 @@ if ( ! -e $mostwantedfile ) {
 } else {
   my $now = time;
   my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $mostwantedfile;
-  my $age = $now - $mtime;
-  if ($age > $maxage or $size == 0) {
+  if (defined $mtime) {
+    my $age = $now - $mtime;
+    if ($age > $maxage or $size == 0) {
+      $needMW = 1;
+    }
+  } else {
     $needMW = 1;
   }
 }
@@ -172,6 +180,12 @@ while (<MW>) {
     if ($name eq "SAN ANDRES ISLAND") {
       $mostwantedByName{"SAN ANDRES & PROVIDENCIA"} = $rank;
     }
+    # hack. this place is 3B6 in cty.dat but 3B7 in clublog.
+    if ($name eq "AGALEGA & ST BRANDON ISLANDS") {
+      $mostwantedByPrefix{"3B6"} = $rank;
+      $mostwantedByName{"AGALEGA & ST. BRANDON"} = $rank;
+    }
+
   }
 }
 close(MW);
@@ -202,10 +216,12 @@ if (defined $dxccmap{$term}) {
 
 # check if an entity is found by name -- needs to be at least 3 chars
 if (length($term) >= 3) {
+  my $matchterm = quotemeta($term);
+
   foreach my $rec (@records) {
     my ($length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz) = split /\|/,$rec;
 
-    if ($name =~ m/$term/i) {
+    if ($name =~ m/$matchterm/i) {
       print bold($dxcc), ": ", bold($name);
       print ": $cont CQ:$cq ITU:$itu";
       my $mw = $mostwantedByPrefix{uc($dxcc)} || $mostwantedByName{uc($name)};
@@ -264,7 +280,7 @@ sub scrapeMW {
       my @rows = split /<tr>/i;
       foreach my $row (@rows) {
 	#print "$row\n";
-	if ($row =~ /<td>([0-9]+)\.<\/td><td>([^<]+)<\/td><td><a href='mostwanted2.php\?dxcc=[0-9]+'>([^<]+)<\/a><\/td><\/tr>/i) {
+	if ($row =~ /<td>([0-9]+)\.<\/td><td>([^<]+)<\/td><td><a href='mostwanted2.php\?dxcc=[0-9]+'>([^<]+)<\/a>.*?<\/tr>/i) {
 	  my ($rank, $prefix, $name) = ($1, $2, $3);
 	  print MWFILE "$rank,$prefix,$name\n";
 	}
