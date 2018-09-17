@@ -1,7 +1,7 @@
 # a simple seen script
 
-#Returns: number of minutes that person has been idle; 0 if the specified user
-#isn't on the channel
+# Returns: number of minutes that person has been idle; 0 if the specified user
+# isn't on the channel
 #getchanidle <nick> <channel>
 
 # returns a list containing the unixtime last seen and the last seen place.
@@ -24,10 +24,10 @@ proc seen_pub { nick host hand chan text } {
 		putchan $chan "https://www.youtube.com/watch?v=8qpQhBFBhwg&t=6m40s"
 		return
 	}
-	set idle [getchanidle ${target} $chan]
-	if {$idle != 0} {
+
+	if { [onchan ${target} $chan] } {
+		set idle [getchanidle ${target} $chan]
 		putchan $chan "${target} idle $idle minutes"
-		return
 	} elseif { [validuser ${target}] } {
 		set laston [getuser ${target} LASTON $chan]
 		if {$laston != 0} {
