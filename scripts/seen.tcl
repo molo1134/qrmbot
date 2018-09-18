@@ -15,12 +15,14 @@ proc seen_pub { nick host hand chan text } {
 	global botnick
 	putlog "seen pub: $nick $host $hand $chan $text"
 	set target [sanitize_string [string trim ${text}]]
+	set target [string tolower $target]
+	set nick [string tolower $nick]
 
 	if {${target} == ${nick}} {
 		putchan $chan "welp, there you are."
 		return
 	}
-	if {${target} == ${botnick}} {
+	if {${target} == [string tolower ${botnick}] } {
 		putchan $chan "https://www.youtube.com/watch?v=8qpQhBFBhwg&t=6m40s"
 		return
 	}
