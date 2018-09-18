@@ -29,7 +29,18 @@ proc seen_pub { nick host hand chan text } {
 
 	if { [onchan ${target} $chan] } {
 		set idle [getchanidle ${target} $chan]
-		putchan $chan "${target} idle $idle minutes"
+		set d [expr ($idle / 1440) ]
+		set h [expr (($idle % 1440) / 60) ]
+		set m [expr ($idle % 60) ]
+		set desc ""
+		if { $d > 0 } {
+			append desc "${d}d "
+		}
+		if { $d > 0 || $h > 0 } {
+			append desc "${h}h "
+		}
+		append desc "${m}m "
+		putchan $chan "${origQuery} idle ${desc}"
 	} elseif { [validuser ${target}] } {
 		set laston [getuser ${target} LASTON $chan]
 		if {$laston != 0} {
