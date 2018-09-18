@@ -14,8 +14,8 @@ bind pub - !seen seen_pub
 proc seen_pub { nick host hand chan text } {
 	global botnick
 	putlog "seen pub: $nick $host $hand $chan $text"
-	set target [sanitize_string [string trim ${text}]]
-	set target [string tolower $target]
+	set origQuery [sanitize_string [string trim ${text}]]
+	set target [string tolower $origQuery]
 	set nick [string tolower $nick]
 
 	if {${target} == ${nick}} {
@@ -34,12 +34,12 @@ proc seen_pub { nick host hand chan text } {
 		set laston [getuser ${target} LASTON $chan]
 		if {$laston != 0} {
 			set stamp [clock format $laston -gmt 1 -format "%Y-%m-%d %H:%M:%S %Z"]
-			putchan $chan "${target} last seen at $stamp"
+			putchan $chan "${origQuery} last seen at $stamp"
 		} else {
-			putchan $chan "${target} not found"
+			putchan $chan "${origQuery} not found"
 		}
 
 	} else {
-		putchan $chan "${target} not found"
+		putchan $chan "${origQuery} not found"
 	}
 }
