@@ -693,6 +693,16 @@ sub doAmazon {
       $curr =~ tr/￥/¥/;
       $price = $2;
     }
+    if (not defined $price and /\d New.*span class=.*a-color-price.*>\s*([\$￥£]|CDN\$)\s*([0-9.,]+)\s*</) {
+      $curr = $1;
+      $curr =~ tr/￥/¥/;
+      $price = $2;
+    }
+    if (not defined $price and not /Used/ and /span class=.*a-color-price.*>\s*([\$￥£]|CDN\$)\s*([0-9.,]+)\s*</) {
+      $curr = $1;
+      $curr =~ tr/￥/¥/;
+      $price = $2;
+    }
     if (/"([0-9.]+) out of 5 stars"/ and not defined $stars) {
       $stars = $1;
     }
