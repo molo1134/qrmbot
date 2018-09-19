@@ -7,7 +7,7 @@
 use strict;
 
 use File::Temp qw(tempfile);
-use Time:HiRes qw(gettimeofday);
+#use Time::HiRes qw(gettimeofday);
 
 use File::Basename;
 use Cwd 'realpath';
