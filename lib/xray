@@ -10,7 +10,7 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 
-my $url = "http://services.swpc.noaa.gov/products/latest-xray-event.json";
+my $url = "https://services.swpc.noaa.gov/products/latest-xray-event.json";
 my %data;
 
 open (HTTP, '-|', "curl -L -k -s $url");
@@ -27,6 +27,11 @@ while (<HTTP>) {
   }
 }
 close(HTTP);
+
+if (not defined($data{current_time})) {
+  print "not found.\n";
+  exit 0;
+}
 
 my $curr_time = $data{current_time};
 $curr_time =~ s/:00$//;

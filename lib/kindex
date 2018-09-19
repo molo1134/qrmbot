@@ -13,7 +13,7 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 
-my $url="http://services.swpc.noaa.gov/text/3-day-forecast.txt";
+my $url="https://services.swpc.noaa.gov/text/3-day-forecast.txt";
 my $datestamp;
 my $kpindex = 0;
 my ($d1, $d2, $d3);
@@ -84,6 +84,11 @@ foreach my $char (split(//, $plot)) {
   }
 }
 $plot = $result;
+
+if (not defined($datestamp)) {
+  print "not found\n";
+  exit 0;
+}
 
 print "Kp index prediction as of $datestamp:\n";
 print "$d1|$d2|$d3: $plot\n";
