@@ -156,7 +156,7 @@ if (!defined $ursiCode and not $place eq "list") {
 
 if (!defined $ursiCode or $place eq "list") {
 
-  open (STATIONS, '-|', "curl -s -k --max-time $timeout --retry 1 \"${stationUrl}\"");
+  open (STATIONS, '-|', "curl -s -k -L --max-time $timeout --retry 1 \"${stationUrl}\"");
   while (<STATIONS>) {
     if (/^<td.*">([A-Z0-9]+)<\/a><\/big>.*?<big>([^<]*)<\/big>/) {
       my $code = $1;
@@ -209,7 +209,7 @@ $last = 0;
 my %mufrecords;
 
 #print "$dataUrl\n";
-open (DATA, '-|', "curl -s -k --max-time $timeout --retry 1 \"${dataUrl}\"");
+open (DATA, '-|', "curl -s -k -L --max-time $timeout --retry 1 \"${dataUrl}\"");
 while (<DATA>) {
   if (/Location: GEO (-?[0-9.]+)([NS]) (-?[0-9.]+)([EW]), URSI-Code (\w+) (.*?)\s*$/) {
     $lat = $1;

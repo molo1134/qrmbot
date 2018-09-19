@@ -193,7 +193,7 @@ sub getvals {
   my $valref = shift;
 
   #print "$url\n";
-  open(HTTP, '-|', "curl -A \"$useragent\" -s '$url'");
+  open(HTTP, '-|', "curl -k -L -A \"$useragent\" -s '$url'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
     # "found":1,"entries":[{"class":"a"

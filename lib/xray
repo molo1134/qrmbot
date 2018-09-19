@@ -13,7 +13,7 @@ use Colors;
 my $url = "http://services.swpc.noaa.gov/products/latest-xray-event.json";
 my %data;
 
-open (HTTP, '-|', "curl -s $url");
+open (HTTP, '-|', "curl -L -k -s $url");
 while (<HTTP>) {
   my @entries = split /,/;
   foreach my $e (@entries) {

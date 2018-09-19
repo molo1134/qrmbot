@@ -20,7 +20,7 @@ my ($d1, $d2, $d3);
 my (@l1, @l2, @l3);
 my $numblank = 0;
 
-open (HTTP, '-|', "curl -s $url");
+open (HTTP, '-|', "curl -s -k -L $url");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   chomp;

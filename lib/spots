@@ -156,7 +156,7 @@ sub doPSKreporter
 #{"receiverCallsign":"JA8HZL","receiverLocator":"QN02TP","senderCallsign":"JA2HOL","senderLocator":"PM95ie20rh","frequency":10139114,"flowStartSeconds":1461063164,"mode":"JT65","isSender":1,"isReceiver":0,"senderDXCC":"Japan","senderDXCCCode":"JA","senderDXCCLocator":"PM96","senderLotwUpload":"2016-04-10","senderEqslAuthGuar":"A","sNR":-4},
 
   # using IPv4 because I got greedy and got banned using ipv6.
-#  print "curl -4 --max-time 4 --retry 1 -s '$url'\n";
+#  print "curl -4 -k -L --max-time 4 --retry 1 -s '$url'\n";
   open (HTTP, '-|', "curl -L -4 -k --max-time 4 --retry 1 -s '$url'");
   while (<HTTP>) {
     chomp;
@@ -281,7 +281,7 @@ sub doDXWatch
   #open (HTTP, '-|', "cat dxwatch-$callsign.json");
   #open (HTTP, '-|', "cat rb-N7XM.json");
   #print "$url\n";
-#  print "curl -k --max-time 4 --retry 1 -s '$url'";
+#  print "curl -k -L --max-time 4 --retry 1 -s '$url'";
   open (HTTP, '-|', "curl -L -k --max-time 4 --retry 1 -s '$url'");
   while (<HTTP>) {
     if (/<title>(\d\d\d .*?)<\/title>/) {

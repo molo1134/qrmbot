@@ -15,7 +15,7 @@ use Location;
 my $url = "https://treasurydirect.gov/NP/debt/rss";
 my ($date, $public, $intra, $total);
 
-open (HTTP, '-|', "curl -k -s '$url'");
+open (HTTP, '-|', "curl -L -k -s '$url'");
 while (<HTTP>) {
   chomp;
   if (not $date and m|<title>Debt to the Penny for ([0-9/]+)</title>|i) {

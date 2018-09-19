@@ -42,7 +42,7 @@ $call =~ s/[^A-Z0-9\/\$\^]//g;
 
 if ( ! -r $cachefile ) {
 	#print "system 1\n";
-  system "/usr/bin/curl -s -k -o $cachefile '$url'";
+  system "/usr/bin/curl -s -k -L -o $cachefile '$url'";
 }
 
 if ( ! -r $cachefile ) {
@@ -59,7 +59,7 @@ my $age = $now - $mtime;
 
 if ($age > $maxage or $size == 0) {
 	#print "system 2\n";
-  system "/usr/bin/curl -s -k -o $cachefile '$url'";
+  system "/usr/bin/curl -s -k -L -o $cachefile '$url'";
 }
 
 my $i = 0;

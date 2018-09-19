@@ -122,14 +122,14 @@ $sta->set(refraction => 0);
 $sta->universal($now);
 
 my @data;
-open(TLE, '-|', "curl --max-time 5 -s $tleurl");
+open(TLE, '-|', "curl --max-time 5 -s -k -L $tleurl");
 while (<TLE>) {
   push (@data, $_);
 }
 close(TLE);
 
 #my $seen = 0;
-#open(TLE, '-|', "curl -s http://www.amsat.org/amsat/ftp/keps/current/nasa.all");
+#open(TLE, '-|', "curl -k -L -s http://www.amsat.org/amsat/ftp/keps/current/nasa.all");
 #while (<TLE>) {
 #  if (/TO ALL RADIO AMATEURS/) {
 #    $seen = 1;

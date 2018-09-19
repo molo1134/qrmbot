@@ -178,7 +178,7 @@ if (!defined($id)) {
 my $url = "https://api.coinmarketcap.com/v1/ticker/$id/?convert=$fiat";
 my %results;
 
-open(HTTP, '-|', "curl --max-time 5 -s -k '$url'");
+open(HTTP, '-|', "curl --max-time 5 -s -k -L '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   #print;

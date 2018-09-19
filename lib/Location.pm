@@ -96,7 +96,7 @@ sub qthToCoords {
   my $apikey = getGeocodingAPIKey();
   my $url = "https://maps.googleapis.com/maps/api/geocode/xml?address=$place&sensor=false&key=$apikey";
 
-  open (HTTP, '-|', "curl -k -s '$url'");
+  open (HTTP, '-|', "curl -k -s -L '$url'");
   binmode(HTTP, ":utf8");
   GET: while (<HTTP>) {
     #print;
@@ -143,7 +143,7 @@ sub geolocate {
 
   RESTART:
 
-  open (HTTP, '-|', "curl -k -s '$url'");
+  open (HTTP, '-|', "curl -k -s -L '$url'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
     #print;
@@ -289,7 +289,7 @@ sub coordToTZ {
 
   my ($dstoffset, $rawoffset, $zoneid, $zonename);
 
-  open (HTTP, '-|', "curl -k -s '$url'");
+  open (HTTP, '-|', "curl -k -s -L '$url'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
 

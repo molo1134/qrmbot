@@ -272,7 +272,7 @@ sub scrapeMW {
   open(MWFILE, ">", $mostwantedfile) or die "Can't open for writing: $!";
 
   #print "$mwurl\n";
-  open (HTTP, '-|', "curl -s -k --max-time 4 --retry 1 '$mwurl'");
+  open (HTTP, '-|', "curl -s -k -L --max-time 4 --retry 1 '$mwurl'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     chomp;
@@ -299,7 +299,7 @@ sub updateCTY {
   my $updateUrl = undef;
 
   #print "$rssURL\n";
-  open (RSS, '-|', "curl -s -k --max-time 4 --retry 1 '$rssURL'");
+  open (RSS, '-|', "curl -s -k -L --max-time 4 --retry 1 '$rssURL'");
   binmode(RSS, ":utf8");
   while(<RSS>) {
     chomp;
@@ -317,7 +317,7 @@ sub updateCTY {
   $done = 0;
   if (defined $updateUrl) {
     #print "$updateUrl\n";
-    open (UPD, '-|', "curl -s -k --max-time 4 --retry 1 '$updateUrl'");
+    open (UPD, '-|', "curl -s -k -L --max-time 4 --retry 1 '$updateUrl'");
     binmode (UPD, ":utf8");
     while (<UPD>) {
       chomp;
@@ -334,7 +334,7 @@ sub updateCTY {
   if (defined $zipurl) {
     #print "$zipurl\n";
     my (undef, $tmpfile) = tempfile();
-    system "curl -s -k -o $tmpfile '$zipurl'";
+    system "curl -s -k -L -o $tmpfile '$zipurl'";
     system "unzip -p $tmpfile cty.dat > $ctydat";
     unlink $tmpfile
   } else {

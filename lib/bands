@@ -19,7 +19,7 @@ my ($updated, $aindex, $kindex, $solarflux, $sunspots);
 my @bands;
 my @phenom;
 
-open (HTTP, '-|', "curl -s $url");
+open (HTTP, '-|', "curl -s -k -L $url");
 while (<HTTP>) {
   chomp;
   if (/Warning/) {

@@ -47,7 +47,7 @@ my $member = undef;
 
 #print "$baseurl$call\n";
 
-open(HTTP, '-|', "curl -4 -k --max-time 4 --retry 1 -s '$baseurl$call'");
+open(HTTP, '-|', "curl -4 -k -L --max-time 4 --retry 1 -s '$baseurl$call'");
 while (<HTTP>) {
   #print;
   if (/service.*unavailable/) {

@@ -184,7 +184,7 @@ if ($httptool eq "wget") {
   $httptool_postdata = "--post-data";
   $httptool_timeout = "--timeout=";
 } elsif ($httptool eq "curl") {
-  $httptool_base = "curl -s $useragentoption";
+  $httptool_base = "curl -L -s $useragentoption";
   $httptool_base .= " --insecure" if $skipCA == 1;
   $httptool_savecookies = "--cookie-jar $cookiefile";
   $httptool_loadcookies = "--cookie $cookiefile";
@@ -886,8 +886,8 @@ sub updateDMRfiles {
     $needRptrs = 1
   }
 
-  system "curl -s -k -o $userFile '$usersUrl'" if $needUsers == 1;
-  system "curl -s -k -o $rptrFile '$rptrsUrl'" if $needRptrs == 1;
+  system "curl -s -k -L -o $userFile '$usersUrl'" if $needUsers == 1;
+  system "curl -s -k -L -o $rptrFile '$rptrsUrl'" if $needRptrs == 1;
 
   # FIXME: errors ignored.
 }

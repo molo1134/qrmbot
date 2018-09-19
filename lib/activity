@@ -89,7 +89,7 @@ my $url="https://pskreporter.info/cgi-bin/psk-freq.pl?mode=$mode&grid=$grid&time
 
 my %scores;
 
-open (HTTP, '-|', "curl --insecure -4 -s '$url'");
+open (HTTP, '-|', "curl -L -k -4 -s '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   #print;

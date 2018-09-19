@@ -21,7 +21,7 @@ my $i = 0;
 my %contests;
 my $now = time();
 
-open(HTTP, '-|', "curl -s '$url'");
+open(HTTP, '-|', "curl -L -k -s '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   #print;
