@@ -17,7 +17,7 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 
-my $url="http://services.swpc.noaa.gov/text/27-day-outlook.txt";
+my $url="https://services.swpc.noaa.gov/text/27-day-outlook.txt";
 
 my $datestamp;
 my ($firstday, $lastday);
@@ -32,7 +32,7 @@ my $dtparser = DateTime::Format::Strptime->new(
   time_zone => 'UTC',
   on_error => 'undef');
 
-open (HTTP, '-|', "curl -s $url");
+open (HTTP, '-|', "curl -L -k -s $url");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   chomp;
@@ -67,6 +67,11 @@ while (<HTTP>) {
   }
 }
 close HTTP;
+
+if (not defined($datestamp)) {
+  print "Forecast not found\n";
+  exit 0;
+}
 
 print "Daily forecast as of: $datestamp; today to $lastday:\n";
 printf "Kp : %s\n", join("", kIndexToColorBlocks(@kp));
