@@ -7,7 +7,7 @@
 package Location;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities getFullWeekendInMonth getIterDayInMonth);
+@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate);
 
 use utf8;
 use Math::Trig;
@@ -462,10 +462,13 @@ sub getFullWeekendInMonth {
     $sun_ts = UnixDate($sun, "%s");
   }
 
-  if (not isSequential($sat, $sun)) {
+  if (not isSequential($sat, $sun) and $ary == 5) {
     # not a full weekend
     return getFullWeekendInMonth(--$ary, $month);
   }
+
+  # Result will always a full weekend since we look for the Nth Saturday, which
+  # will be followed by a Sunday. -- except February? #TODO
 
   return UnixDate($sat, "%Y %m %d");
 }
@@ -530,3 +533,25 @@ sub aryToIter {
   return $iter;
 }
 
+
+sub getYearForDate {
+  $m = shift;
+  $d = shift;
+
+  my $today = ParseDate("today");
+  my $today_ts = UnixDate($today, "%s");
+  my $thisyear = UnixDate($today, "%Y");
+  my $nextyear = $thisyear + 1;
+  my $year = $thisyear;
+
+  my $query = "$m $d $year";
+  my $date = ParseDate($query);
+  my $query_ts = UnixDate($date, "%s");
+  if ($query_ts < $today_ts) {
+    $year = $nextyear;
+    $query = "$m $d $year";
+    $date = ParseDate($query);
+    $query_ts = UnixDate($date, "%s");
+  }
+  return UnixDate($date, "%Y %m %d");
+}

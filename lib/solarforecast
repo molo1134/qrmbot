@@ -93,9 +93,8 @@ indicateEvent($lastday, "CQ WPX SSB", getFullWeekendInMonth(5, "Mar"), 2);			# l
 indicateEvent($lastday, "ARRL Rookie Roundup, SSB", getIterDayInMonth(3, "Sunday", "Apr"), 1);	# 3rd Sunday in Apr
 indicateEvent($lastday, "CQ WPX CW", getFullWeekendInMonth(5, "May"), 2);			# last full weekend May
 indicateEvent($lastday, "ARRL Field Day", getFullWeekendInMonth(4, "Jun"), 2);			# 4th full weekend in June
-indicateEvent($lastday, "RAC Canada Day", "2019 7 1", 1);	# TODO FIXME perpetual year
-indicateEvent($lastday, "RAC Canada Day", "2020 7 1", 1);	# TODO FIXME perpetual year
-indicateEvent($lastday, "13 colonies", "2018 7 1", 7);		# TODO FIXME week of the 4th?
+indicateEvent($lastday, "RAC Canada Day", getYearForDate("Jul", 1), 1);				# July 1, 1 day
+indicateEvent($lastday, "13 colonies", getYearForDate("Jul", 1), 7);				# July 1, 7 days
 indicateEvent($lastday, "IARU HF World Championship", getFullWeekendInMonth(2, "Jul"), 2);	# 2nd full weekend of july
 indicateEvent($lastday, "NA RTTY QSOP", getFullWeekendInMonth(3, "Jul"), 2);			# 3rd full weekend in July
 indicateEvent($lastday, "RSGB IOTA", getFullWeekendInMonth(5, "Jul"), 2);			# last full weekend in July
