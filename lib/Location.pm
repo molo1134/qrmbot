@@ -7,13 +7,14 @@
 package Location;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities);
+@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities getFullWeekendInMonth getIterDayInMonth);
 
 use utf8;
 use Math::Trig;
 use Math::Trig 'great_circle_distance';
 use Math::Trig 'great_circle_bearing';
 use URI::Escape;
+use Date::Manip;
 
 sub getGeocodingAPIKey {
   my $apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
@@ -425,3 +426,107 @@ sub decodeEntities {
 
   return $s;
 }
+
+
+sub getFullWeekendInMonth {
+  my $ary = shift;
+  my $month = shift;
+
+  my $iter = aryToIter($ary);
+
+  my $today = ParseDate("today");
+  my $today_ts = UnixDate($today, "%s");
+  my $thisyear = UnixDate($today, "%Y");
+  my $nextyear = $thisyear + 1;
+  my $year = $thisyear;
+
+  my $satquery = "$iter Saturday in $month $year";
+  my $sunquery = "$iter Sunday in $month $year";
+
+  my $sat = ParseDate($satquery);
+  my $sun = ParseDate($sunquery);
+
+  my $sat_ts = UnixDate($sat, "%s");
+  my $sun_ts = UnixDate($sun, "%s");
+
+  if ($sun_ts < $today_ts) {
+    $year = $nextyear;
+
+    $satquery = "$iter Saturday in $month $year";
+    $sunquery = "$iter Sunday in $month $year";
+
+    $sat = ParseDate($satquery);
+    $sun = ParseDate($sunquery);
+
+    $sat_ts = UnixDate($sat, "%s");
+    $sun_ts = UnixDate($sun, "%s");
+  }
+
+  if (not isSequential($sat, $sun)) {
+    # not a full weekend
+    return getFullWeekendInMonth(--$ary, $month);
+  }
+
+  return UnixDate($sat, "%Y %m %d");
+}
+
+sub getIterDayInMonth {
+  my $ary = shift;
+  my $day = shift;
+  my $month = shift;
+
+  my $iter = aryToIter($ary);
+
+  my $today = ParseDate("today");
+  my $today_ts = UnixDate($today, "%s");
+  my $thisyear = UnixDate($today, "%Y");
+  my $nextyear = $thisyear + 1;
+  my $year = $thisyear;
+
+  my $dayquery = "$iter $day in $month $year";
+  my $date = ParseDate($dayquery);
+  my $date_ts = UnixDate($date, "%s");
+
+  if ($date_ts < $today_ts) {
+    $year = $nextyear;
+
+    $dayquery = "$iter $day in $month $year";
+    $date = ParseDate($dayquery);
+    $date_ts = UnixDate($date, "%s");
+  }
+
+  return UnixDate($date, "%Y %m %d");
+}
+
+sub isSequential {
+	my $d1 = shift;
+	my $d2 = shift;
+	my $d1_ts = UnixDate($d1, "%s");
+	my $d2_ts = UnixDate($d2, "%s");
+	if (($d2_ts - $d1_ts) <= 90000 and ($d2_ts - $d1_ts) > 0) {
+		# 25 hours to allow for DST
+		return 1;
+	}
+	return 0;
+}
+
+sub aryToIter {
+  my $ary = shift;
+  my $iter;
+
+  if ($ary == 1) {
+    $iter = "1st";
+  } elsif ($ary == 2) {
+    $iter = "2nd";
+  } elsif ($ary == 3) {
+    $iter = "3rd";
+  } elsif ($ary == 4) {
+    $iter = "4th";
+  } elsif ($ary == 5) {
+    $iter = "last";
+  } else {
+    $iter = "";
+  }
+  return $iter;
+}
+

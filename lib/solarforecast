@@ -16,6 +16,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Location;
 
 my $url="https://services.swpc.noaa.gov/text/27-day-outlook.txt";
 
@@ -78,20 +79,39 @@ printf "Kp : %s\n", join("", kIndexToColorBlocks(@kp));
 printf "Ap : %s\n", join("", aIndexToColorBlocks(@ap));
 printf "SFI: %s\n", join("", sfiToColorBlocks(@sfi));
 
-# TODO: determine field day start programmatically
-indicateEvent($lastday, "ARRL Field Day", "2018 6 23", 2);
-indicateEvent($lastday, "13 colonies", "2018 7 1", 7);
-indicateEvent($lastday, "IARU HF World Championship", "2018 7 14", 2);
-indicateEvent($lastday, "NA RTTY QSOP", "2018 7 21", 2);
-indicateEvent($lastday, "RSGB IOTA", "2018 7 28", 2);
-indicateEvent($lastday, "ARRL Rookie Roundup, RTTY", "2018 8 19", 1);
-indicateEvent($lastday, "CQ WW RTTY DX", "2018 9 29", 2);
-indicateEvent($lastday, "School Club Roundup", "2018 10 15", 4);
-indicateEvent($lastday, "ARRL Sweepstakes, CW", "2018 11 3", 3);
-indicateEvent($lastday, "ARRL Sweepstakes, Phone", "2018 11 17", 3);
-indicateEvent($lastday, "ARRL 160m", "2018 11 30", 3);
-indicateEvent($lastday, "ARRL 10m", "2018 12 8", 2);
-indicateEvent($lastday, "ARRL Rookie Roundup, CW", "2018 12 16", 1);
+indicateEvent($lastday, "RTTY Roundup", getFullWeekendInMonth(1, "Jan"), 2);		# 1st full weekend in January, but never Jan 1 FIXME
+indicateEvent($lastday, "NA CW QSOP", getFullWeekendInMonth(2, "Jan"), 2);			# 2nd full weekend in January
+indicateEvent($lastday, "NA SSB QSOP", getFullWeekendInMonth(3, "Jan"), 2);			# 3rd full weekend in January
+indicateEvent($lastday, "CQ 160m CW", getFullWeekendInMonth(5, "Jan"), 2);			# last full weekend Jan
+indicateEvent($lastday, "School Club Roundup", getIterDayInMonth(2, "Monday", "Feb"), 5);	# 2nd full school week in Feb
+indicateEvent($lastday, "CQ WPX RTTY", getFullWeekendInMonth(2, "Feb"), 2);			# 2nd full weekend Feb
+indicateEvent($lastday, "ARRL Intl DX CW", getFullWeekendInMonth(3, "Feb"), 2);			# 3rd full weekend in Feb
+indicateEvent($lastday, "CQ 160m SSB", getFullWeekendInMonth(5, "Feb"), 2);			# last full weekend Feb
+indicateEvent($lastday, "NA RTTY QSOP", getIterDayInMonth(5, "Saturday", "Feb"), 2);		# last Saturday in Feburary
+indicateEvent($lastday, "ARRL Intl DX Phone", getFullWeekendInMonth(1, "Mar"), 2);		# 1st full weekend in March
+indicateEvent($lastday, "CQ WPX SSB", getFullWeekendInMonth(5, "Mar"), 2);			# last full weekend March
+indicateEvent($lastday, "ARRL Rookie Roundup, SSB", getIterDayInMonth(3, "Sunday", "Apr"), 1);	# 3rd Sunday in Apr
+indicateEvent($lastday, "CQ WPX CW", getFullWeekendInMonth(5, "May"), 2);			# last full weekend May
+indicateEvent($lastday, "ARRL Field Day", getFullWeekendInMonth(4, "Jun"), 2);			# 4th full weekend in June
+indicateEvent($lastday, "RAC Canada Day", "2019 7 1", 1);	# TODO FIXME perpetual year
+indicateEvent($lastday, "RAC Canada Day", "2020 7 1", 1);	# TODO FIXME perpetual year
+indicateEvent($lastday, "13 colonies", "2018 7 1", 7);		# TODO FIXME week of the 4th?
+indicateEvent($lastday, "IARU HF World Championship", getFullWeekendInMonth(2, "Jul"), 2);	# 2nd full weekend of july
+indicateEvent($lastday, "NA RTTY QSOP", getFullWeekendInMonth(3, "Jul"), 2);			# 3rd full weekend in July
+indicateEvent($lastday, "RSGB IOTA", getFullWeekendInMonth(5, "Jul"), 2);			# last full weekend in July
+indicateEvent($lastday, "NA CW QSOP", getFullWeekendInMonth(1, "Aug"), 2);			# 1st full weekend in August
+indicateEvent($lastday, "NA SSB QSOP", getFullWeekendInMonth(3, "Aug"), 2);			# 3rd full weekend in August
+indicateEvent($lastday, "ARRL Rookie Roundup, RTTY", getIterDayInMonth(3, "Sunday", "Aug"), 1);	# 3rd Sunday in August
+indicateEvent($lastday, "CQ RTTY DX", getFullWeekendInMonth(5, "Sep"), 2);			# last full weekend of september
+indicateEvent($lastday, "ARRL Rookie Roundup, CW", getIterDayInMonth(3, "Sunday", "Dec"), 1);	# 3rd Sunday in December
+indicateEvent($lastday, "School Club Roundup", getIterDayInMonth(3, "Monday", "Oct"), 5);	# 3rd full school week in October
+indicateEvent($lastday, "CQ DX SSB", getFullWeekendInMonth(5, "Oct"), 2);			# last full weekend Oct
+indicateEvent($lastday, "ARRL Sweepstakes, CW", getFullWeekendInMonth(1, "Nov"), 3);		# 1st full weekend in Nov
+indicateEvent($lastday, "ARRL Sweepstakes, Phone", getFullWeekendInMonth(3, "Nov"), 3);		# 3rd full weekend in Nov
+indicateEvent($lastday, "CQ DX CW", getFullWeekendInMonth(5, "Nov"), 2);			# last full weekend Nov
+indicateEvent($lastday, "ARRL 160m", getFullWeekendInMonth(1, "Dec"), 2);			# 1st full weekend in Dec; actually starts Friday FIXME
+indicateEvent($lastday, "ARRL 10m", getFullWeekendInMonth(2, "Dec"), 2);			# 2nd full weekend in Dec
+indicateEvent($lastday, "ARRL Rookie Roundup, CW", getIterDayInMonth(3, "Sunday", "Dec"), 1);	# 3rd Sunday in Dec
 
 sub kIndexToBlocks {
   map { tr/0123456789/ ▁▂▃▄▅▆▇█↑/ } @_;
