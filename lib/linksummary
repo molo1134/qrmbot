@@ -16,6 +16,7 @@ use Location;
 
 use URI::Escape;
 use Encode qw(/decode/);
+use Time::Local;
 
 our $bitly_apikey=undef;
 my $bitlykeyfile = $ENV{'HOME'} . "/.bitlyapikey";
@@ -275,6 +276,15 @@ sub doTwitter {
     }
     if (/<a href="#" class="">([^<]+)<\/a>/) {
       $date = $1;
+      # 4:30 PM - 22 Sep 2018
+      if ($date =~ /(\d\d?):(\d\d) ([AP]M) - (\d+) (\w+) (\d+)$/) {
+	# convert from localtime in california
+	$ENV{TZ} = "PST8PDT";
+	my ($m, $h, $d, $mon, $y) = ($2, $1, $4, $5, $6);
+	$h += 12 if $3 eq "PM";
+	my $time = timelocal(0, $m, $h, $d, monthNameToNum($mon) - 1, $y);
+	$date = scalar(gmtime($time)) . " UTC";
+      }
     }
     if (/<div class="fullname"/) {
       $infullname = 1;

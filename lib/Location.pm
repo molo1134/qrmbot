@@ -7,7 +7,7 @@
 package Location;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate);
+@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum);
 
 use utf8;
 use Math::Trig;
@@ -15,6 +15,7 @@ use Math::Trig 'great_circle_distance';
 use Math::Trig 'great_circle_bearing';
 use URI::Escape;
 use Date::Manip;
+use Switch;
 
 sub getGeocodingAPIKey {
   my $apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
@@ -555,3 +556,23 @@ sub getYearForDate {
   }
   return UnixDate($date, "%Y %m %d");
 }
+
+sub monthNameToNum {
+  my $monthabbr = shift;
+  switch ($monthabbr) {
+    case "Jan" { return 1; }
+    case "Feb" { return 2; }
+    case "Mar" { return 3; }
+    case "Apr" { return 4; }
+    case "May" { return 5; }
+    case "Jun" { return 6; }
+    case "Jul" { return 7; }
+    case "Aug" { return 8; }
+    case "Sep" { return 9; }
+    case "Oct" { return 10; }
+    case "Nov" { return 11; }
+    case "Dec" { return 12; }
+    else       { die "unknown month: $monthabbr"; }
+  }
+}
+
