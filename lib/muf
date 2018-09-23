@@ -14,7 +14,7 @@ use lib dirname(realpath(__FILE__));
 use Colors;
 
 my $url = 'ftp://ftp.swpc.noaa.gov/pub/lists/iono_day/';
-my $stationMap = 'KML map: http://pastebin.com/Ni9tRV7N -- gmap: https://google.com/maps/d/viewer?mid=1WE9jrQtwL1KYdsN-_lx1jf2i5JWRK__u';
+my $stationMap = 'KML map: http://pastebin.com/Ni9tRV7N -- gmap: https://www.google.com/maps/d/viewer?mid=1tUa3CdSB6CVXYITH7cmF0Zmlu6fdt_wA';
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
