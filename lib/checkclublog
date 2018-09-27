@@ -1,0 +1,112 @@
+#!/usr/bin/perl
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+
+use File::Temp qw(tempfile);
+use strict;
+
+my $url = 'https://secure.clublog.org/clublog-users.json.zip';
+my $userfile=$ENV{'HOME'} . "/.clublogusers.gz";
+my $maxage=604800; # 1 week
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+my $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+sub updatezip {
+  my (undef, $tmpfile) = tempfile();
+  system "curl -s -k -L -o $tmpfile '$url'";
+  system "unzip -p $tmpfile clublog_users.json | gzip -c > $userfile";
+  unlink $tmpfile;
+}
+
+
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !clublog <callsign>\n";
+  } else {
+    print "usage: $0 <callsign>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $call = uc $ARGV[0];
+$call =~ s/^\s*//;
+$call =~ s/\s*$//;
+
+my $now = time;
+my $needzip = 0;
+if ( ! -e $userfile ) {
+  $needzip = 1;
+} else {
+  my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $userfile;
+  if (defined $mtime) {
+    my $age = $now - $mtime;
+    if ($age > $maxage or $size == 0) {
+      $needzip = 1;
+    }
+  } else {
+    $needzip = 1;
+  }
+}
+
+updatezip() if ($needzip == 1);
+
+
+my %rec;
+
+open (GZIP, '-|', "gzip -dc $userfile") or die "Can't open for reading: $!";
+binmode(GZIP, ":utf8");
+while (<GZIP>) {
+  #    "CALL": {
+  #        "firstqso": "2008-10-17 12:30:00",
+  #        "last-lotw": "2018-09-09 23:42:40",
+  #        "lastqso": "2018-09-09 21:14:30",
+  #        "lastupload": "2018-09-10 02:23:02",
+  #        "locator": "FN21WA",
+  #        "oqrs": false
+  #    },
+
+  if (/"$call":\s*{([^}]*)}/) {
+    # "firstqso":"2008-10-17 12:30:00","lastqso":"2018-09-09 21:14:30","lastupload":"2018-09-10 02:23:02","locator":"FN21WA","oqrs":false,"last-lotw":"2018-09-09 23:42:40"
+    my $line = $1;
+    #print "$line\n";
+    foreach my $e (split(/,/,$line)) {
+      #print "$e\n";
+      if ($e =~ /"(\w+)":("[^"]*"|true|false|-?\d+)/) {
+	my ($k, $v) = ($1, $2);
+	$v =~ s/^"//;
+	$v =~ s/"$//;
+	#print "$k $v\n";
+	$rec{$k} = $v;
+      }
+    }
+  }
+
+}
+
+if (scalar(keys(%rec)) == 0) {
+  print "$call not found\n";
+  exit 0;
+}
+
+# firstqso 1995-08-09 23:09:00
+# lastqso 2018-07-01 13:09:00
+# lastupload 2018-08-16 22:53:01
+# locator JO02AE
+# oqrs false
+
+my ($start, undef) = split(" ",$rec{firstqso});
+my ($end, undef) = split(" ",$rec{lastqso});
+my ($upload, undef) = split(" ", $rec{lastupload});
+
+print bold($call), ": from $start to $end; last upload $upload";
+print "; " . bold("OQRS") if $rec{oqrs} eq "true";
+print "\n";
+
+exit 0;

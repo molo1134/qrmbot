@@ -49,6 +49,7 @@ proc send_help {nick} {
   putmsg $nick "  !rig -- describe a radio or other gear"
   putmsg $nick "  !lotw -- last upload date to LoTW for a callsign"
   putmsg $nick "  !eqsl -- last login to eqsl.cc for a callsign"
+  putmsg $nick "  !clublog -- log and OQRS records on clublog.org"
   putmsg $nick "  !contests -- list current and upcoming contests"
   putmsg $nick "  !wx !wxfull -- show current weather conditions"
   putmsg $nick "  !wxf !wxflong -- weather forecast"

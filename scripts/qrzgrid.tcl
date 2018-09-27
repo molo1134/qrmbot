@@ -47,6 +47,9 @@ bind msg - !lotw msg_lotw
 bind pub - !eqsl eqsl
 bind msg - !eqsl msg_eqsl
 
+bind pub - !clublog pub_clublog
+bind msg - !clublog msg_clublog
+
 bind pub - !dxcc dxcc
 bind msg - !dxcc msg_dxcc
 
@@ -127,6 +130,7 @@ set xraybin "/home/eggdrop/bin/xray"
 set forecastbin "/home/eggdrop/bin/solarforecast"
 set lotwbin "/home/eggdrop/bin/lotwcheck"
 set eqslbin "/home/eggdrop/bin/eqslcheck"
+set clublogbin "/home/eggdrop/bin/checkclublog"
 set dxccbin "/home/eggdrop/bin/dxcc"
 set spotsbin "/home/eggdrop/bin/spots"
 set contestsbin "/home/eggdrop/bin/contests"
@@ -471,6 +475,28 @@ proc msg_eqsl {nick uhand handle input} {
 		putmsg $nick [encoding convertto utf-8 "$line"]
 	}
 }
+
+proc pub_clublog { nick host hand chan text } {
+	global clublogbin
+	set call [sanitize_string [string trim ${text}]]
+	putlog "clublog pub: $nick $host $hand $chan $call"
+	catch {exec ${clublogbin} ${call}} data
+	set output [split $data "\n"]
+	foreach line $output {
+		putchan $chan [encoding convertto utf-8 "$line"]
+	}
+}
+proc msg_clublog {nick uhand handle input} {
+	global clublogbin
+	set call [sanitize_string [string trim ${input}]]
+	putlog "clublog msg: $nick $uhand $handle $call"
+	catch {exec ${clublogbin} ${call}} data
+	set output [split $data "\n"]
+	foreach line $output {
+		putmsg $nick [encoding convertto utf-8 "$line"]
+	}
+}
+
 
 proc dxcc { nick host hand chan text } {
 	global dxccbin
