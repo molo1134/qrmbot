@@ -5,6 +5,7 @@
 
 bind pub - !qrz qrz
 bind pub - !call qrz
+bind pub - !dox dox
 
 bind msg - !qrz msg_qrz
 bind msg - !call msg_qrz
@@ -166,6 +167,9 @@ proc qrz { nick host hand chan text } {
 	}
 }
 
+proc dox { nick host hand chan text } {
+	qrz $nick $host $hand $chan "AG2V"
+}
 
 proc msg_qrz {nick uhand handle input} {
 	global qrzbin
