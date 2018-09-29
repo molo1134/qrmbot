@@ -281,7 +281,7 @@ sub doTwitter {
 	# convert from localtime in california
 	$ENV{TZ} = "PST8PDT";
 	my ($m, $h, $d, $mon, $y) = ($2, $1, $4, $5, $6);
-	$h += 12 if $3 eq "PM";
+	$h += 12 if $3 eq "PM" and $h != 12;
 	my $time = timelocal(0, $m, $h, $d, monthNameToNum($mon) - 1, $y);
 	$date = scalar(gmtime($time)) . " UTC";
       }
