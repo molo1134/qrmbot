@@ -292,6 +292,7 @@ sub doTwitter {
     }
     if ($infullname == 1 and /<strong>([^<]+)<\/strong>/) {
       $fullname = $1;
+      $fullname = decodeEntities($fullname)
     }
     if ($infullname == 1 and /verified.gif/) {
       $verified = 1;
