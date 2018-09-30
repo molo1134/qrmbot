@@ -82,6 +82,7 @@ my $type = undef;
 my $i = 0;
 my $compact = 0;
 my $csv = 0;
+my $xml = 0;
 my $doCount = 0;
 
 while ($i <= $#ARGV) {
@@ -101,6 +102,11 @@ while ($i <= $#ARGV) {
   }
   if ($ARGV[$i] =~ /--csv/) {
     $csv = 1;
+    $i++;
+    next;
+  }
+  if ($ARGV[$i] =~ /--xml/) {
+    $xml = 1;
     $i++;
     next;
   }
@@ -219,16 +225,17 @@ if ($needlogin) {
 }
 
 our ($retcall, $country, $name, $sk, $class, $mail, $grid, $lat, $lon, $geosrc,
-			$born, @prevcalls, $email, $codes, $website, $iota, $lotw, $eqsl,
-			$mailqsl, $qsl, $expiration, @othercalls, $trustee, $incomplete);
+  $born, @prevcalls, $email, $codes, $website, $iota, $lotw, $eqsl,
+  $mailqsl, $qsl, $expiration, @othercalls, $trustee, $incomplete, $addr1,
+  $addr2, $state, $zip, $mailcountry, $county, $ituzone, $cqzone, $qrzserial,
+  $qrzadmin, $effective);
 
 getAndParseData();
 
 my ($redditid, $ircnick) = getUserInfo($retcall);
 
 our ($vanity, $individual, $club, $military, $races, $primarypref, $clubpref,
-			$formerprimary, $closerelative, $formerclub, $clubwithconsent,
-			$codetext);
+  $formerprimary, $closerelative, $formerclub, $clubwithconsent, $codetext);
 
 if (defined($codes)) {
   parsecodes();
@@ -267,6 +274,79 @@ if ($csv == 1) {
   exit 0;
 }
 
+if ($xml == 1) {
+  print("<?xml version=\"1.0\" ?>\n");
+  print("<QRZDatabase version=\"1.33\">\n");
+  print("  <Callsign>\n");
+
+  print("    <call>$retcall</call>\n");
+  print("    <xref>",uc($call),"</xref>\n") if uc($retcall) ne uc($call);
+  # TODO: dxcc entity ID
+  print("    <aliases>".join(",", @othercalls)."</aliases>\n") if @othercalls;
+
+  my $lname = $name;
+  $lname =~ s/\s*$//;
+  $lname =~ s/^.*\s+//;
+  my $fname = $name;
+  $fname =~ s/^\s*//;
+  $fname =~ s/\s+.*$//;
+
+  print("    <fname>$fname</fname>\n");
+  print("    <name>$lname</name>\n");
+  print("    <addr1>$addr1</addr1>\n");
+  print("    <addr2>$addr2</addr2>\n");
+  print("    <state>$state</state>\n") if defined $state;
+  print("    <zip>$zip</zip>\n") if defined $zip;
+  print("    <country>$mailcountry</country>\n") if defined $mailcountry; #country name for mailing addr
+  # TODO: ccode -- dxcc entity code for mailing address country
+  print("    <lat>$lat</lat>\n");
+  print("    <lon>$lon</lon>\n");
+  print("    <grid>$grid</grid>\n") if defined($grid);
+  print("    <county>$county</county>\n") if defined($county);
+  # FIXME: fips (USA) -- requires an external lookup -- not on page
+  print("    <land>$country</land>\n"); # dxcc country name
+  print("    <efdate>$effective</efdate>\n") if defined($effective); # (USA)
+  print("    <expdate>$expiration</expdate>\n") if defined($expiration); # (USA)
+  print("    <p_call>$prevcalls[0]</p_call>\n") if defined($prevcalls[0]);
+  print("    <class>$class</class>\n") if defined($class);
+  print("    <codes>$codes</codes>\n") if defined($codes); # license type codes (USA)
+  print("    <qslmgr>$qsl</qslmgr>\n") if defined($qsl);
+  print("    <email>$email</email>\n") if defined($email);
+  # FIXME: url -- no longer on page
+  # TODO: views count
+  # TODO: bio -- length of bio in bytes
+  # TODO: biodate -- date of last bio update
+  # TODO: image
+  # TODO: imageinfo -- height:width:size in bytes of image
+  print("    <serial>$qrzserial</serial>\n") if defined($qrzserial);
+  # TODO: moddate -- qrz callsign last modified date
+  # TODO: MSA -- metro service area (USPS)
+  # TODO: areacode -- phone area code (USA)
+  # TODO: timezone -- USA
+  # TODO: GMT offset
+  # TODO: DST
+
+  my $eqslbool = "0";
+  $eqslbool = "1" if defined($eqsl) and $eqsl =~ /Yes/i;
+  print("    <eqsl>$eqslbool</eqsl>\n");
+  my $mqslbool = "0";
+  $mqslbool = "1" if defined($mailqsl) and $mailqsl =~ /Yes/i;
+  print("    <mqsl>$mqslbool</mqsl>\n");
+  my $lotwbool = "0";
+  $lotwbool = "1" if defined($lotw) and $lotw =~ /Yes/i;
+  print("    <lotw>$lotwbool</lotw>\n");
+
+  print("    <cqzone>$cqzone</cqzone>\n") if defined $cqzone;
+  print("    <ituzone>$ituzone</ituzone>\n") if defined $ituzone;
+  print("    <geoloc>$geosrc</geoloc>\n");
+  print("    <born>$born</born>\n") if defined($born);
+  print("    <user>$qrzadmin</user>\n") if defined($qrzadmin); # QRZ user who manages this record
+  print("    <iota>$iota</iota>\n") if defined($iota);
+  print("  </Callsign>\n");
+  print("</QRZDatabase>\n");
+  exit 0;
+}
+
 my $dmrIds = getDMRidsForCall($retcall);
 $dmrIds =~ s/,/, /g if defined $dmrIds;
 
@@ -300,7 +380,9 @@ if (@prevcalls) {
   print " -- prev " . join(", ", @uniqprevcalls);
 }
 if (@othercalls) {
-  print " -- aliases: " . join(", ", @othercalls);
+  my @uniqothercalls = uniq(@othercalls);
+  # TODO: remove calls from @uniqprevcalls from this list
+  print " -- aliases: " . join(", ", @uniqothercalls);
 }
 if (defined($dmrIds) and length($dmrIds) > 0) {
   print " -- DMR IDs: $dmrIds";
@@ -579,9 +661,15 @@ sub getAndParseData {
     }
     if (defined($retcall) and length($retcall) > 0 and $calldata and !defined($name) and /^<p class="m0">([^<]+)<span[^>]*>[^<]*<\/span><br *\/>(.*)$/) {
       $name = $1;
-      $mail = $2;
+      $addr1 = $addr2 = $mailcountry = $mail = $2;
       $mail =~ s/<br *\/>/; /g;
       $mail =~ s/<\/p>//g;
+      $addr1 =~ s/^([^<]*)<br *\/>.*$/$1/;
+      $addr2 =~ s/^[^<]*<br *\/>([^<]*)<br *\/>.*$/$1/;
+      if ($addr2 =~ m/(.*),\s+([A-Z]{2})\s+([0-9]{5})/) {
+	($addr2, $state, $zip) = ($1, $2, $3)
+      }
+      $mailcountry =~ s/^.*<br *\/>(.*?)<\/p>/$1/;
       next;
     }
     if (/<b>QSL:<\/b>\s*([^<]+)\s*</) {
@@ -666,9 +754,33 @@ sub getAndParseData {
 	  $geosrc = $val;
 	}
       }
+      if ($key =~ /County/) {
+	$county = $val;
+	next;
+      }
+      if ($key =~ /ITU Zone/) {
+	$ituzone = $val;
+	next;
+      }
+      if ($key =~ /CQ Zone/) {
+	$cqzone = $val;
+	next;
+      }
+      if ($key =~ /Effective/) {
+	$effective = $val;
+	next;
+      }
       if ($key =~ /Expires/) {
 	#print "Expires: $val\n";
 	$expiration = $val;
+	next;
+      }
+      if ($key =~ /QRZ Record/) {
+	$qrzserial = $val;
+	next;
+      }
+      if ($key =~ /QRZ Admin/) {
+	$qrzadmin = $val;
 	next;
       }
       if ($key =~ /Class/) {
