@@ -718,8 +718,15 @@ sub getAndParseData {
 	next;
       }
     }
+    if ($detail and /td class="dh">See Also<\/td><td class="d[iw]">(.*)\s*<\/td><\/tr>/) {
+      foreach my $e (split(/ /, $1)) {
+	if ($e =~ />(.*)<\/a>/) {
+	  push @othercalls, $1;
+	}
+      }
+    }
     if ($detail and 
-      /td class="ha"><a href="[^"]*">([A-Z0-9]+)<\/a><\/td><td class="hc">(.*)<\/td><\/tr>/) {
+      /td class="ha"><a href="[^"]*">([A-Z0-9\/]+)<\/a><\/td><td class="hc">(.*)<\/td><\/tr>/) {
 
       #print "$1: $2\n";
       my $alias = $1;
