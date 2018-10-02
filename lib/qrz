@@ -299,8 +299,8 @@ if ($xml == 1) {
   print("    <zip>$zip</zip>\n") if defined $zip;
   print("    <country>$mailcountry</country>\n") if defined $mailcountry; #country name for mailing addr
   # TODO: ccode -- dxcc entity code for mailing address country
-  print("    <lat>$lat</lat>\n");
-  print("    <lon>$lon</lon>\n");
+  print("    <lat>$lat</lat>\n") if defined $lat;
+  print("    <lon>$lon</lon>\n") if defined $lon;
   print("    <grid>$grid</grid>\n") if defined($grid);
   print("    <county>$county</county>\n") if defined($county);
   # FIXME: fips (USA) -- requires an external lookup -- not on page
@@ -338,7 +338,7 @@ if ($xml == 1) {
 
   print("    <cqzone>$cqzone</cqzone>\n") if defined $cqzone;
   print("    <ituzone>$ituzone</ituzone>\n") if defined $ituzone;
-  print("    <geoloc>$geosrc</geoloc>\n");
+  print("    <geoloc>$geosrc</geoloc>\n") if defined $geosrc;
   print("    <born>$born</born>\n") if defined($born);
   print("    <user>$qrzadmin</user>\n") if defined($qrzadmin); # QRZ user who manages this record
   print("    <iota>$iota</iota>\n") if defined($iota);
