@@ -375,9 +375,8 @@ if (defined($iota)) {
 if (defined($codes) && $compact ne 1) {
   print " -- codes: $codes $codetext";
 }
-if (@prevcalls) {
-  my @uniqprevcalls = uniq(@prevcalls);
-  print " -- prev " . join(", ", @uniqprevcalls);
+if (@prevcalls) {	if (@prevcalls) {
+  print " -- prev " . join(", ", @prevcalls);
 }
 if (@othercalls) {
   my @uniqothercalls = uniq(@othercalls);
