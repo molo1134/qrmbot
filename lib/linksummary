@@ -431,7 +431,8 @@ sub doWiki {
 
 sub doHtml {
   my $url = shift;
-  my ($title, $desc, $charset, $contenttype, $httpcode, $shortUrl);
+  my ($title, $desc, $charset, $contenttype, $httpcode, $shortUrl, $decoded);
+  $decoded = 0;
   # -D - => output headers
   # -f => fail to have no output for 404
   # -L => follow 302
@@ -461,29 +462,44 @@ sub doHtml {
 	if ($1 =~ /UTF-?8/i) {
 	  binmode(HTTP, ":utf8");
 	  $charset = "utf8";
+	  $decoded = 1;
 	}
       }
       last;
     }
   }
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  my $page = <HTTP>;
+  my $origpage = <HTTP>;
+  my $page;
   close(HTTP);
-  #print $page;
 
   if (not defined($charset) and
-      $page =~ /^.*<meta\s+http-equiv="Content-Type"\s+content=".*?charset=([^"]+)"/mi) {
+      $origpage =~ /^.*<meta\s+http-equiv="Content-Type"\s+content=".*?charset=([^"]+)"/mi) {
     $charset = $1;
-    $page = decode($charset, $page);
   }
   if (not defined($charset) and
-      $page =~ /^.*<meta\s+charset="([^"]+)"/mi) {
+      $origpage =~ /^.*<meta\s+charset="([^"]+)"/mi) {
     $charset = $1;
-    $page = decode($charset, $page);
+  }
+
+  if (defined($charset) and not $decoded) {
+    $page = decode($charset, $origpage);
+  } else {
+    $page = $origpage;
+  }
+
+  if (defined($page) and not utf8::valid($page)) {
+    # failed utf8
+    print "Error: Invalid UTF-8 sequence(s)\n";
+    exit 0;
+  }
+  if (not defined($page)) {
+    $page = $origpage;
   }
 
   #print "charset: $charset\n";
   #print "is utf8? ", (utf8::is_utf8($page)), "\n";
+  #print "valid utf8? ", (utf8::valid($page)), "\n";
 
   if ($page =~ /<title.*?>\s*([^<]+?)\s*<\/title>/im) {
     $title = $1;
