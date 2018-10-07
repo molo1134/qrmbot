@@ -87,8 +87,8 @@ while (<GZIP>) {
       }
     }
   }
-
 }
+close(GZIP);
 
 if (scalar(keys(%rec)) == 0) {
   print "$call not found\n";
