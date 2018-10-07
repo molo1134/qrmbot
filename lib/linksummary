@@ -558,21 +558,19 @@ sub doHtml {
   #print "title: $title\n";
   #print "desc: $desc\n";
 
-  return if not defined($title) and not defined($desc);
-
   $shortUrl = shortenUrl($url)
 	if not defined($shortUrl) or length($shortUrl) > 60;
+
+  return if not defined($title) and not defined($desc) and not defined($shortUrl);
 
   if (defined($desc) and length($desc) > 300) {
     $desc = substr($desc, 0, 300) . "…";
   }
-  $title =~ tr/\n\r/  /;
-  $desc =~ tr/\n\r/  /;
-  $title = decodeEntities($title);
-  $desc = decodeEntities($desc);
 
-  #print "title: $title\n";
-  #print "desc: $desc\n";
+  $title =~ tr/\n\r/  / if defined($title);
+  $desc =~ tr/\n\r/  / if defined($desc);
+  $title = decodeEntities($title) if defined($title);
+  $desc = decodeEntities($desc) if defined($desc);
 
   print bold("\"$title\"") if defined ($title);
   print " $shortUrl" if defined($shortUrl) and length($shortUrl) > 0;
