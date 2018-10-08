@@ -197,16 +197,20 @@ if (defined($pressure_trend)) {
 }
 
 # unicode weather chars
-#       sun: ☀☼🌞
+#       sun: ☀☼🌞🌣⛱
 #     cloud: ☁
-#    partly: ⛅
-#  umbrella: ☂
+#    partly: ⛅🌤🌥
+#  umbrella: ☂🌂
 #   snowman: ☃⛄⛇
-#      rain: ☔⛆
+#      snow: ❄❅❆
+#      rain: ☔⛆⛆🌢🌦🌧🌨⛈⛆🌢🌧
 #      moon: ☾☽🌑🌒🌓🌔🌕🌖🌗🌘🌙🌚🌛🌜🌝
-# lightning: ⚡⛈☇☈
+# lightning: ⚡⛈☇☈🌩
 #   cyclone: 🌀
-#       fog: 🌁▒
+#       fog: 🌁▒🌫
+#   tornado: 🌪
+#      wind: 🌬
+#   rainbow: 🌈
 #
 
 
