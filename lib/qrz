@@ -84,6 +84,7 @@ my $compact = 0;
 my $csv = 0;
 my $xml = 0;
 my $doCount = 0;
+my $dod = undef;
 
 while ($i <= $#ARGV) {
   if ($ARGV[$i] =~ /--geo/) {
@@ -92,6 +93,11 @@ while ($i <= $#ARGV) {
       ($mylat, $mylon) = split(',', $latlon);
       #print "lat: $mylat\tlon: $mylon\n";
     }
+    $i += 2;
+    next;
+  }
+  if ($ARGV[$i] =~ /--sk/) {
+    $dod = $ARGV[$i+1];
     $i += 2;
     next;
   }
@@ -260,6 +266,15 @@ if (!defined($mail)) {
 
 if (!defined($name)) {
   $name="no name on file";
+}
+
+if (defined($dod)) {
+  print "Subject: Deceased amateur license cancellation request - $retcall\n";
+  print "Please cancel the Amateur Radio license of $retcall, $name, who died on $dod. A copy of the <obiturary|Social Security Death Index report> is attached, showing the date of death.  Thank you.\n";
+  print "FCC System: ULS\n";
+  print "Radio Service: HA - Amateur\n";
+  print "------\n";
+  exit 0;
 }
 
 if ($csv == 1) {
