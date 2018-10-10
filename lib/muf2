@@ -15,7 +15,7 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 
-my $timeout = 15;	# 15 seconds
+my $timeout = 20;	# 20 seconds
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
