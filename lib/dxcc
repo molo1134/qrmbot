@@ -123,6 +123,9 @@ while (<CTYDAT>) {
 	$pattern = "^$prefix";
       }
 
+      # hack to deal with Gitmo; KG4xx = gitmo; KG4xxx = W4
+      $pattern = '^KG4[A-Z][A-Z]$' if $pattern eq "^KG4";
+
       $dxcc = $lastentity[7];
       $name = $lastentity[0];
       $cont = $lastentity[3];
