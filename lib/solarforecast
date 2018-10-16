@@ -201,8 +201,19 @@ sub indicateEvent {
   my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime($now);
   $year += 1900; $mon += 1;
   #print "now: $year $mon $mday\n";
+  #print "start: $eventStart\n";
+  #print "end  : $eventEnd\n";
 
   my $todayStart = $dtparser->parse_datetime("$year $mon $mday");
+
+  #print "todayStart: ". $todayStart->epoch() . "\n";
+  #print "eventEnd  : $eventEnd\n";
+  #print "eventStart: ". $eventStart->epoch(). "\n";
+  #print "graphEnd  : " . $graphEnd->epoch()."\n";
+  #print '$todayStart->epoch() < $eventEnd ? ' .
+  #    ($todayStart->epoch() < $eventEnd) . "\n";
+  #print '$eventStart->epoch() < $graphEnd->epoch() ? ' .
+  #    ($eventStart->epoch() < $graphEnd->epoch()) . "\n";
 
   if ($todayStart->epoch() < $eventEnd and
       $eventStart->epoch() < $graphEnd->epoch()) {

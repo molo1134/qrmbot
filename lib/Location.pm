@@ -478,11 +478,16 @@ sub getIterDayInMonth {
   my $ary = shift;
   my $day = shift;
   my $month = shift;
+  my $maxlength = shift;
+
+  # can look back up to this many days
+  $maxlength = 7 if not defined $maxlength;
 
   my $iter = aryToIter($ary);
 
   my $today = ParseDate("today");
   my $today_ts = UnixDate($today, "%s");
+  $today_ts -= ($maxlength * 24 * 60 * 60);
   my $thisyear = UnixDate($today, "%Y");
   my $nextyear = $thisyear + 1;
   my $year = $thisyear;
