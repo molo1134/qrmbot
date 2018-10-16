@@ -23,6 +23,11 @@ my $bitlykeyfile = $ENV{'HOME'} . "/.bitlyapikey";
 if (-e ($bitlykeyfile)) {
   require($bitlykeyfile);
 }
+our $imgur_key=undef;
+my $imgurfile = $ENV{'HOME'} . "/.imgurkey";
+if (-e ($imgurfile)) {
+  require($imgurfile);
+}
 
 my $timeout = 4;	# max 4 seconds
 
@@ -69,6 +74,8 @@ while ($i <= $#ARGV) {
   } elsif ($ARGV[$i] =~ m|^https?://goo\.gl/maps/|i or
 	  $ARGV[$i] =~ m|^https?://(www\.)?google\.com/maps/|i) {
     # noop
+  } elsif ($ARGV[$i] =~ m|^https?://(\w+\.)?imgur.com/|) {
+    doImgur($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://| and
 	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
     doHtml($ARGV[$i]);
@@ -813,5 +820,87 @@ sub doXkcd {
     if defined $data{transcript} and length($data{transcript}) > 0;
   print " -- alt: $data{alt}"
     if defined $data{alt} and length($data{alt}) > 0;
+  print "\n";
+}
+
+sub doImgur {
+  my $url = shift;
+  return if not defined $imgur_key;
+
+  my $isgal = 0;
+  my $isalb = 0;
+  my $isimg = 0;
+
+  my $hash = undef;
+  if ($url =~ m!/gallery/([0-9A-Za-z_]+)/?$!) {
+    $hash = $1;
+    $isgal = 1;
+  }
+  if ($url =~ m!/a/([0-9A-Za-z_]+)/?$!) {
+    $hash = $1;
+    $isalb = 1;
+  }
+  if ($url =~ m!imgur.com/([0-9A-Za-z_]+)\.(png|gif|jpg|gifv|mp4)?$!i) {
+    $hash = $1;
+    $isimg = 1;
+  }
+
+  my $apiurl = undef;
+  $apiurl = "https://api.imgur.com/3/image/$hash" if $isimg == 1;
+  $apiurl = "https://api.imgur.com/3/album/$hash" if $isalb == 1;
+  $apiurl = "https://api.imgur.com/3/gallery/$hash" if $isgal == 1;
+
+  print "unrecognized url: $url\n" if not defined $apiurl;
+  return if not defined $apiurl;
+
+  my %data;
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$apiurl' --request GET --header 'Authorization: Client-ID $imgur_key'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    #print;
+    my $lines = $_;
+    $lines =~ s/(null|true|false|"|\d),\s*"/\1,\n"/g;
+    my @vals = split("\n", $lines);
+    foreach my $e (@vals) {
+      #print "$e\n";
+      if ($e =~ /"(\w+)":\s*(\d+|"[^"]+"|true|false|null),/) {
+	my ($k, $v) = ($1, $2);
+	$v =~ s/^"//; $v =~ s/"$//;
+	if (not defined $data{$k}) {
+	  #print "$k==>$v\n";
+	  $data{$k} = $v;
+	}
+      }
+    }
+  }
+  close(HTTP);
+
+  return if not defined $data{success} or $data{success} eq "false";
+
+  use integer;
+  print "$url";
+  print bold(" \"$data{title}\"")
+    if defined $data{title} and $data{title} ne "null";
+  print " by \@$data{account_url}"
+    if defined $data{account_url} and $data{account_url} ne "null";
+  print " on ", scalar(gmtime($data{datetime})), " UTC;"
+    if defined $data{datetime};
+  print " $data{views} views"
+    if defined $data{views} and $data{views} ne "null";
+  print green(" $data{ups}↑") if defined $data{ups} and $data{ups} ne "null";
+  print red(" $data{downs}↓")
+    if defined $data{downs} and $data{downs} ne "null";
+  print " [$data{images_count} images]"
+    if defined $data{images_count} and $data{images_count} > 1;
+  print " [animated]" if defined $data{animated} and $data{animated} eq "true";
+  print " [$data{width}x$data{height}]"
+    if defined $data{width} and $data{width} > 0;
+  print " (" . $data{size} / 1024 . "kB)"
+    if defined $data{size} and $data{size} > 0;
+  print yellow(" [sound]")
+    if defined $data{has_sound} and $data{has_sound} eq "true";
+  print red(" [NSFW]") if defined $data{nsfw} and $data{nsfw} eq "true";
+  print ": $data{description}"
+    if defined $data{description} and $data{description} ne "null";
   print "\n";
 }
