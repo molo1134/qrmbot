@@ -877,10 +877,19 @@ sub doImgur {
 
   return if not defined $data{success} or $data{success} eq "false";
 
+  my $title = $data{title};
+  $title = unescape($title) if defined $title;
+  my $desc = $data{description};
+  if (defined $desc) {
+    $desc = unescape($desc);
+    if (length $desc > 300) {
+      $desc = substr($desc, 0, 300) . "…";
+    }
+  }
+
   use integer;
   print "$url";
-  print bold(" \"$data{title}\"")
-    if defined $data{title} and $data{title} ne "null";
+  print bold(" \"$title\"") if defined $title and $title ne "null";
   print " by \@$data{account_url}"
     if defined $data{account_url} and $data{account_url} ne "null";
   print " on ", scalar(gmtime($data{datetime})), " UTC;"
@@ -900,7 +909,14 @@ sub doImgur {
   print yellow(" [sound]")
     if defined $data{has_sound} and $data{has_sound} eq "true";
   print red(" [NSFW]") if defined $data{nsfw} and $data{nsfw} eq "true";
-  print ": $data{description}"
-    if defined $data{description} and $data{description} ne "null";
+  print ": $desc" if defined $desc and $desc ne "null";
   print "\n";
+}
+
+sub unescape {
+  my $s = shift;
+  $s =~ s/\\n/ /g;
+  $s =~ s/\\"/"/g;
+  $s =~ s|\\/|/|g;
+  return $s;
 }
