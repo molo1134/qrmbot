@@ -845,6 +845,10 @@ sub doImgur {
     $hash = $1;
     $isimg = 1;
   }
+  if ($url =~ m!imgur.com/r/\w+/([0-9A-Za-z_]+)/?$!) {
+    $hash = $1;
+    $isimg = 1;
+  }
 
   my $apiurl = undef;
   $apiurl = "https://api.imgur.com/3/image/$hash" if $isimg == 1;
@@ -900,6 +904,8 @@ sub doImgur {
   print green(" $data{ups}↑") if defined $data{ups} and $data{ups} ne "null";
   print red(" $data{downs}↓")
     if defined $data{downs} and $data{downs} ne "null";
+  print " /r/$data{section}/"
+    if defined $data{section} and $data{section} ne "null";
   print " [$data{images_count} images]"
     if defined $data{images_count} and $data{images_count} > 1;
   print " [animated]" if defined $data{animated} and $data{animated} eq "true";
