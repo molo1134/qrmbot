@@ -22,6 +22,7 @@ use Colors;
 use Location;
 
 my $tleurl="http://www.amsat.org/amsat/ftp/keps/current/nasabare.txt";
+my $satnogsurl = "https://db.satnogs.org/api/transmitters/?format=json";
 
 # potential changes:
 # 1) parameter for number of passes / length of time?
@@ -60,6 +61,9 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
+my $passThreshold = 5;       # degress above horizon
+my $goodPassThreshold = 45;  # degress above horizon
+
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   #print "usage: $0 <sat> <grid>|<qth> [<elev>ft|<elev>m]\n";
   print "usage: $0 <sat> <qth>|<grid>\n" if $username ne "eggdrop";
@@ -73,6 +77,8 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 my $query = "";
 my $sat = undef;
 my $elev_m = "0";
+my $doinfo = 0;
+my $dopass = 0;
 my $i = 0;
 while ($i <= $#ARGV) {
   if ( $ARGV[$i] =~ /^([0-9]+)(ft|m)/ ) {
@@ -80,6 +86,18 @@ while ($i <= $#ARGV) {
       $elev_m = $1;
     } elsif ($2 eq "ft") {
       $elev_m = $1 * 0.3048;  # feet to meters
+    }
+  } elsif ($ARGV[$i] eq "--info") {
+    $doinfo = 1;
+  } elsif ($ARGV[$i] eq "--pass") {
+    $dopass = 1;
+  } elsif ($ARGV[$i] eq "--elev") {
+    $i++;
+    if (isNumeric($ARGV[$i])) {
+      $passThreshold = $ARGV[$i];
+    } else {
+      print("error: --elev must be followed by a numeric value representing pass elevation angle threshold\n");
+      exit $exitnonzeroonerror;
     }
   } elsif (!defined($sat)) {
     $sat = $ARGV[$i];
@@ -95,6 +113,11 @@ if ($query =~ /^(.+)\s+[0-9.-]+,[0-9.-]+/) {
 }
 #print "query: $query\n";
 #print "$elev_m\n";
+
+if (not $dopass and not $doinfo) {
+  # do both by default
+  $dopass = $doinfo = 1;
+}
 
 if (length($query) == 0 && $sat ne "list") {
   print "usage: $0 <sat> <qth>|<grid>\n" if $username ne "eggdrop";
@@ -159,31 +182,41 @@ if (defined($aliases{$sat})) {
   $sat = $aliases{lc($sat)};
 }
 
+my ($id, $name);
 my @passes;
-my @sats;
 foreach my $tle (@elements) {
-  my $name = $tle->get('name');
-  my $id = $tle->get('id');
-  $name =~ s/ /-/g;
-  push(@sats, $name);
-  if (lc($name) eq lc($sat) or (isNumeric($sat) and $id == $sat)) {
-    #print "$name\n";
+  my $tlename = $tle->get('name');
+  my $tleid = $tle->get('id');
+  $tlename =~ s/ /-/g;
+  if (lc($tlename) eq lc($sat) or (isNumeric($sat) and $tleid == $sat)) {
+    #print "$tlename\n";
     $tle->validate($now, $finish) or next;
     $found = 1;
     #print $tle->tle_verbose(), "\n";
-    #print $name = $tle->get('tle'), "\n";
+    #print $tlename = $tle->get('tle'), "\n";
     #print "doing passes..\n";
-    $tle->set('pass_threshold', deg2rad(5)); # minimum peak elevation
+    $id = $tleid;
+    $name = $tlename;
+    $tle->set('pass_threshold', deg2rad($passThreshold)); # minimum peak elevation
     $tle->set('visible', 0);
     $tle->set('horizon', 0);
     push(@passes, $tle->pass($sta, $now, $finish));
   }
 }
 
+
 if (lc($sat) eq "list") {
+
+  my @sats;
+  foreach my $tle (@elements) {
+    my $name = $tle->get('name');
+    $name =~ s/ /-/g;
+    push(@sats, $name);
+  }
+
   my $list = join(" ", @sats);
   my $frag = undef;
-  my $limit = 68;
+  my $limit = 67;
   $limit = 400 if $username eq "eggdrop";
   do {
     # line wrap
@@ -217,7 +250,8 @@ my $numpasses = 3;
 $numpasses = 100 if $username ne "eggdrop";
 my $first = 1;
 
-my ($id, $name);
+goto done if (not $dopass);
+
 foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
   #print "\n";
   foreach my $event (@{$pass->{events}}) {
@@ -270,10 +304,18 @@ foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
 print "\n";
 done:
 
-my $url = "https://db.satnogs.org/api/transmitters/?format=json";
+if (not $doinfo) {
+  exit 0;
+}
+
+if (not defined $id) {
+  print "error: undefined \$id\n";
+  exit $exitnonzeroonerror;
+}
+
 $first = 1;
 # IPv4 because satnogs IPv6 gets cut off
-open(TX, '-|', "curl -4 -s --max-time 10 -L -k $url");
+open(TX, '-|', "curl -4 -s --max-time 10 -L -k $satnogsurl");
 while (<TX>) {
   #print;
   s/}.{/},\n{/g;
