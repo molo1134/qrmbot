@@ -243,7 +243,7 @@ if ($found == 0) {
 
 if ($#passes < 0) {
   print "$sat: no passes found within 24h\n";
-  exit $exitnonzeroonerror;
+  exit $exitnonzeroonerror if not $doinfo;
 }
 
 my $numpasses = 3;
