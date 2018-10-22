@@ -874,6 +874,7 @@ sub doImgur {
 	if (not defined $data{$k}) {
 	  #print "$k==>$v\n";
 	  $data{$k} = $v;
+	  $data{$k} = undef if $v eq "null";
 	}
       }
     }
@@ -894,18 +895,14 @@ sub doImgur {
 
   use integer;
   print "$url";
-  print bold(" \"$title\"") if defined $title and $title ne "null";
-  print " by \@$data{account_url}"
-    if defined $data{account_url} and $data{account_url} ne "null";
+  print bold(" \"$title\"") if defined $title;
+  print " by \@$data{account_url}" if defined $data{account_url};
   print " on ", scalar(gmtime($data{datetime})), " UTC;"
     if defined $data{datetime};
-  print " $data{views} views"
-    if defined $data{views} and $data{views} ne "null";
-  print green(" $data{ups}↑") if defined $data{ups} and $data{ups} ne "null";
-  print red(" $data{downs}↓")
-    if defined $data{downs} and $data{downs} ne "null";
-  print " /r/$data{section}/"
-    if defined $data{section} and $data{section} ne "null";
+  print " $data{views} views" if defined $data{views};
+  print green(" $data{ups}↑") if defined $data{ups};
+  print red(" $data{downs}↓") if defined $data{downs};
+  print " /r/$data{section}" if defined $data{section};
   print " [$data{images_count} images]"
     if defined $data{images_count} and $data{images_count} > 1;
   print " [animated]" if defined $data{animated} and $data{animated} eq "true";
@@ -916,7 +913,7 @@ sub doImgur {
   print yellow(" [sound]")
     if defined $data{has_sound} and $data{has_sound} eq "true";
   print red(" [NSFW]") if defined $data{nsfw} and $data{nsfw} eq "true";
-  print ": $desc" if defined $desc and $desc ne "null";
+  print ": $desc" if defined $desc;
   print "\n";
 }
 
