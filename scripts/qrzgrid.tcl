@@ -116,6 +116,10 @@ bind pub - !graves graves_pub
 
 bind msg - !sat sat_msg
 bind pub - !sat sat_pub
+bind msg - !satpass satpass_msg
+bind pub - !satpass satpass_pub
+bind msg - !satinfo satinfo_msg
+bind pub - !satinfo satinfo_pub
 
 bind msg - !qcode qcode_msg
 bind pub - !qcode qcode_pub
@@ -1218,6 +1222,18 @@ proc sat_msg {nick uhand handle input} {
 	foreach line $output {
 		putmsg $nick [encoding convertto utf-8 "$line"]
 	}
+}
+proc satpass_msg {nick uhand handle input} {
+	sat_msg $nick $uhand $handle "--pass $input"
+}
+proc satinfo_msg {nick uhand handle input} {
+	sat_msg $nick $uhand $handle "--info $input"
+}
+proc satpass_pub { nick host hand chan text } {
+	sat_pub $nick $host $hand $chan "--pass $text"
+}
+proc satinfo_pub { nick host hand chan text } {
+	sat_pub $nick $host $hand $chan "--info $text"
 }
 
 proc qcode_pub { nick host hand chan text } {
