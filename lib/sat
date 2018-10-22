@@ -250,6 +250,8 @@ my $numpasses = 3;
 $numpasses = 100 if $username ne "eggdrop";
 my $first = 1;
 
+$numpasses = $#passes if $#passes < $numpasses;
+
 goto done if (not $dopass);
 
 foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
