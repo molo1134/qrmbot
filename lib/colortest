@@ -33,7 +33,7 @@ print blink("blink"), $sep;
 print monospace("monospace"), $sep;
 
 if ($username eq "eggdrop") {
-  print "\nextended mirc color: ";
+  print "\nextended mirc color (shades of blue): ";
   print "\x0324\x02\x02OO\x0F";
   print "\x0336\x02\x02OO\x0F";
   print "\x0348\x02\x02OO\x0F";
@@ -41,7 +41,7 @@ if ($username eq "eggdrop") {
   print "\x0384\x02\x02OO\x0F";
   print "\n";
 
-  print "hex 24-bit color: ";
+  print "hex 24-bit color (shades of red): ";
   print "\x04FF0000OO\x0F";
   print "\x04EE0000OO\x0F";
   print "\x04DD0000OO\x0F";
