@@ -90,7 +90,13 @@ while (<GZIP>) {
 }
 close(GZIP);
 
-if (scalar(keys(%rec)) == 0) {
+#print scalar(keys(%rec)), "\n";
+#print join (" ", keys(%rec)), "\n";
+
+if (scalar(keys(%rec)) == 0 or
+    (not defined $rec{firstqso} and
+      not defined $rec{lastqso} and
+      not defined $rec{lastupload})) {
   print "$call not found\n";
   exit 0;
 }
