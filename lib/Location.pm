@@ -7,7 +7,7 @@
 package Location;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum);
+@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum getGeocodingAPIKey);
 
 use utf8;
 use Math::Trig;

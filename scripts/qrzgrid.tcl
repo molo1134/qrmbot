@@ -22,6 +22,9 @@ bind pub - !qth grid
 bind msg - !grid msg_grid
 bind msg - !qth msg_grid
 
+bind pub - !drive drive_pub
+bind msg - !drive drive_msg
+
 bind pub - !time timezone
 bind pub - !tz timezone
 bind msg - !time msg_timezone
@@ -128,6 +131,7 @@ bind pub - !q qcode_pub
 
 set qrzbin "/home/eggdrop/bin/qrz"
 set gridbin "/home/eggdrop/bin/grid"
+set drivebin "/home/eggdrop/bin/drivetime"
 set tzbin "/home/eggdrop/bin/timezone"
 set bandsbin "/home/eggdrop/bin/bands"
 set xraybin "/home/eggdrop/bin/xray"
@@ -321,6 +325,45 @@ proc msg_grid {nick uhand handle input} {
 		putmsg $nick [encoding convertto utf-8 "$line"]
 	}
 }
+
+proc drive_msg {nick uhand handle input} {
+	global drivebin
+	set grid [sanitize_string [string trim ${input}]]
+	set geo [qrz_getgeo $handle]
+
+	putlog "drive msg: $nick $uhand $handle $grid $geo"
+
+	if [string equal "" $geo] then {
+		catch {exec ${drivebin} ${grid}} data
+	} else {
+		catch {exec ${drivebin} ${grid} --geo $geo } data
+	}
+
+	set output [split $data "\n"]
+	foreach line $output {
+		putmsg $nick [encoding convertto utf-8 "$line"]
+	}
+}
+
+proc drive_pub { nick host hand chan text } {
+	global drivebin
+	set grid [sanitize_string [string trim ${text}]]
+	set geo [qrz_getgeo $hand]
+
+	putlog "drive pub: $nick $host $hand $chan $grid $geo"
+
+	if [string equal "" $geo] then {
+		catch {exec ${drivebin} ${grid}} data
+	} else {
+		catch {exec ${drivebin} ${grid} --geo $geo } data
+	}
+
+	set output [split $data "\n"]
+	foreach line $output {
+		putchan $chan [encoding convertto utf-8 "$line"]
+	}
+}
+
 
 proc timezone { nick host hand chan text } {
 	global tzbin

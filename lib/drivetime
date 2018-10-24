@@ -1,0 +1,182 @@
+#!/usr/bin/perl -w
+
+# Driving time, via Google maps API.  2-clause BSD license.
+
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+use strict;
+use utf8;
+use Encode qw(decode);
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use URI::Escape;
+use Math::Round;
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+our $mylat = undef;
+our $mylon = undef;
+
+my $loginfile = $ENV{'HOME'} . "/.qrzlogin";
+if (-e ($loginfile)) {
+  require($loginfile);
+}
+
+@ARGV = map { decode "utf-8", $_ } @ARGV;
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !drivetime <grid>|<lat>,<lon>|<qth> [<to|de> <grid>|<lat>,<lon>|<qth>]\n";
+  } else {
+    print "usage: $0 <grid>|<lat>,<lon>|<qth> <to|de> <grid>|<lat>,<lon>|<qth>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $i = 0;
+#while ($i <= $#ARGV) {
+#  print "$i: $ARGV[$i++]\n";
+#}
+#$i = 0;
+
+my $term1 = undef;
+my $term2 = undef;
+my $to = 0;		# to/from notation
+
+while ($i <= $#ARGV) {
+  if (!defined($term2) and $ARGV[$i] =~ /^(--geo|de|from|to)$/i) {
+    $to = 1 if $1 eq "to";
+    $i++;
+    $term2 = $ARGV[$i];
+    $i++;
+    next;
+  }
+  if (defined($term2) and $ARGV[$i] =~ /^--geo$/) {
+    # in case we have "de XXX --geo abc,xyz"
+    last;
+  }
+  if (defined($term2)) {
+    $term2 = $term2 . " " . $ARGV[$i];
+    $i++;
+    next;
+  }
+  if (defined($term1)) {
+    $term1 = $term1 ." ". $ARGV[$i];
+  } else {
+    $term1 = $ARGV[$i];
+  }
+  $i++;
+}
+
+if (defined($term1) and $term1 =~ /^[A-R]{2}[0-9]{2}([A-X]{2})?/i) {
+  my $gridgeo = gridToCoord($term1);
+  ($mylat, $mylon) = split(',', $gridgeo) if defined $gridgeo;
+  $term1 = "$mylat, $mylon";
+}
+
+if (defined($term2) and $term2 =~ /^[A-R]{2}[0-9]{2}([A-X]{2})?/i) {
+  my $gridgeo = gridToCoord($term2);
+  ($mylat, $mylon) = split(',', $gridgeo) if defined $gridgeo;
+  $term2 = "$mylat, $mylon";
+}
+
+#print "term1: $term1\n";
+#print "term2: $term2\n";
+#print "to? $to\n";
+
+my ($origin, $dest);
+($origin, $dest) = ($term2, $term1) unless $to == 1;
+($origin, $dest) = ($term1, $term2) if     $to == 1;
+my ($encodedOrigin, $encodedDest) = (uri_escape($origin), uri_escape($dest));
+
+my $apikey = getGeocodingAPIKey();
+
+my $url = "https://maps.googleapis.com/maps/api/directions/json?origin=${encodedOrigin}&destination=${encodedDest}&key=${apikey}";
+
+my ($inDist, $inDur) = (0,0);
+
+my ($distance, $time, $startPlace, $endPlace, $summary, $status) = (undef, undef, undef, undef, undef, undef);
+
+open (HTTP, '-|', "curl -k -s -L '$url'");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+  #print;
+  if (/"error_message"\s*:\s*"([^"]+)"/) {
+    print "error: $1\n";
+    exit $exitnonzeroonerror;
+  }
+
+  $inDist = 1 if /"distance"\s*:/;
+  
+  if (not defined $distance and $inDist == 1 and /"value"\s*:\s*(\d+)\s*$/) {
+    $distance = $1;
+    $inDist = 0;
+  }
+
+  $inDur = 1 if /"duration"\s*:/;
+  if (not defined $time and $inDur == 1 and /"value"\s*:\s*(\d+)\s*$/) {
+    $time = $1;
+    $inDur = 0;
+  }
+
+  if (/}/) {
+    $inDur = $inDist = 0;
+  }
+
+  $startPlace = $1 if /"start_address"\s*:\s*"([^"]+)",?\s*$/;
+  $endPlace = $1 if /"end_address"\s*:\s*"([^"]+)",?\s*$/;
+  $summary = $1 if /"summary"\s*:\s*"([^"]+)",?\s*$/;
+  $status = $1 if /"status"\s*:\s*"([^"]+)",?\s*$/;
+
+#               "distance" : {
+#                  "text" : "35.9 mi",
+#                  "value" : 57824
+#               },
+#               "duration" : {
+#                  "text" : "51 mins",
+#                  "value" : 3062
+#               },
+#               "end_address" : "382 William St, Ridgewood, NJ 07450, USA",
+#               "start_address" : "165 Hopper Ave, Waldwick, NJ 07463, USA",
+#               "summary" : "I-5 N and US-101 N"
+#               "status" : "OK"
+}
+
+if ($status ne "OK") {
+  print "No results found: $status\n";
+  exit $exitnonzeroonerror;
+}
+
+my $dist_km = round($distance/100.0)/10.0;
+my $dist_mi = round($distance/160.9344)/10.0;
+
+
+use integer;
+my $d = $time / 86400;
+my $h = ($time - (($time / 86400) * 86400)) / 3600;
+my $m = ($time - (($time / 3600) * 3600)) / 60;
+my $s = $time - (($time / 60) * 60);
+
+print "Drive: ", bold("$dist_km km"), " / ", bold("$dist_mi mi");
+print " via $summary" if defined $summary;
+print "; ";
+print bold(
+      (($d > 0) ? "${d}d " : "") .
+      (($h > 0 or $d > 0) ? "${h}h " : "") .
+      (($m > 0 or $d > 0 or $h > 0) ? "${m}m " : "") .
+      "${s}s");
+print " from ", green($startPlace), " to ", red($endPlace), "\n";
