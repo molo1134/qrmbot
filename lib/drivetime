@@ -82,6 +82,13 @@ while ($i <= $#ARGV) {
   $i++;
 }
 
+if (not defined($term1) or not defined($term2)) {
+  my $msg = "";
+  $msg = "; set an origin with !setgeo" if $username eq "eggdrop";
+  print "error: missing input(s)$msg\n";
+  exit $exitnonzeroonerror;
+}
+
 if (defined($term1) and $term1 =~ /^[A-R]{2}[0-9]{2}([A-X]{2})?/i) {
   my $gridgeo = gridToCoord($term1);
   ($mylat, $mylon) = split(',', $gridgeo) if defined $gridgeo;
