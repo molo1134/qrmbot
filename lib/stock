@@ -103,7 +103,7 @@ while (<HTTP>) {
 	my $volume  = commify($info[5]);
 	my $percent = substr ($info[9], 0, -4);
 
-	print bold($ticker. " $trend") . " Price: \$$price Open: \$$open Change: \$$change ($percent\%) Volume: $volume\n";
+	print bold($ticker. " $trend") . " Price: $price Open: $open Change: $change ($percent\%) Volume: $volume\n";
 }
 close(HTTP);
 
