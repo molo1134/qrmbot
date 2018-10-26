@@ -86,7 +86,7 @@ my $url = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=$quote
 
 my ($ticker, $open, $price, $vol, $chg, $pct);
 
-open(HTTP, '-|', "curl --max-time 5 -s -k -L '$url'");
+open(HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
 	chomp; chomp; # // CRLF
@@ -103,7 +103,7 @@ if (not defined($ticker) or not defined($pct)) {
 	my $url = "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=$encquote&apikey=$apikey&datatype=csv";
 	my $found = 0;
 
-	open(HTTP, '-|', "curl --max-time 5 -s -k -L '$url'");
+	open(HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
 	binmode(HTTP, ":utf8");
 	while (<HTTP>) {
 		next if m/^symbol,/;
