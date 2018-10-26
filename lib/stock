@@ -1,0 +1,120 @@
+#!/usr/bin/perl -w
+
+# substantially hustled from the btc code written by:
+# Copyright 2018 /u/molo1134. All rights reserved.
+#
+# Requires an API key from AlphaVantage. Place into your
+# $HOME/.alphavantage as follows:
+#
+# $apikey = "1234567890ABCDEF";
+#
+# NB: some things are in here, I assume, to make this
+# script play well with eggdrop and other IRC-related
+# stuff. 
+
+use strict;
+use warnings;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+@ARGV=split(' ', join(' ',@ARGV));
+
+our $apikey = undef;
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !stock <symbol>\n";
+  } else {
+    print "usage: $0 <symbol>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $apikeyfile = $ENV{'HOME'} . "/.alphavantage";
+if (-e ($apikeyfile)) {
+  require($apikeyfile);
+} else {
+  die "error: unable to read file $apikeyfile"
+}
+die "error: no API key set" unless defined($apikey);
+
+my $quote = $ARGV[0];
+
+# The AlphaVantage API outputs the following fields for point-in-time quotes:
+#
+# CSV:
+#
+# symbol,open,high,low,price,volume,latestDay,previousClose,change,changePercent
+#
+# JSON:
+# 
+# {
+#    "Global Quote": {
+#        "01. symbol": "^DJI",
+#        "02. open": "24736.5400",
+#        "03. high": "24975.6800",
+#        "04. low": "24645.5600",
+#        "05. price": "24958.2000",
+#        "06. volume": "159230140",
+#        "07. latest trading day": "2018-10-25",
+#        "08. previous close": "24583.4200",
+#        "09. change": "374.7793",
+#        "10. change percent": "1.5245%"
+#    }
+# 
+# Select via the datatype key/value pair in the URL (cvs or json)
+#
+# see https://www.alphavantage.co/documentation/ for more info.
+
+my $url = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=$quote&apikey=$apikey&datatype=csv";
+
+open(HTTP, '-|', "curl --max-time 5 -s -k -L '$url'");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+	chomp; 
+	next if $. < 2; # this skips the first line of CSV headers
+	my @info = split(',', $_);
+	my $trend;
+
+	$trend = green("↑");
+	$trend = red("↓") if $info[9] =~ /-/;
+
+	# the little circles look cool, too
+	#$trend = green("●");
+	#$trend = red("●") if $info[9] =~ /-/;
+
+	my $ticker = $info[0];
+	# lop off some trailing 0s and other digits
+	my $price   = commify(substr ($info[4], 0, -2));
+	my $open    = commify(substr ($info[1], 0, -2));
+	my $change  = commify(substr ($info[8], 0, -2));
+	my $volume  = commify($info[5]);
+	my $percent = substr ($info[9], 0, -4);
+
+	print bold($ticker. " $trend") . " Price: \$$price Open: \$$open Change: \$$change ($percent\%) Volume: $volume\n";
+}
+close(HTTP);
+
+sub commify {
+  my $num = shift;
+  my ($whole, $frac);
+  if ($num =~ /\./) {
+    ($whole, $frac) = split(/\./, $num, 2);
+    $num = $whole;
+  }
+  $num =~ s/(\d)(?=(\d{3})+(\D|$|\.\d*))/$1\,/g;
+  $num = "$num.$frac" if defined($frac);
+  return $num;
+}
