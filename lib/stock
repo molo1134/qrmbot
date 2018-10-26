@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 # substantially hustled from the btc code written by:
+# 2-clause BSD license.
 # Copyright 2018 /u/molo1134. All rights reserved.
 #
 # Requires an API key from AlphaVantage. Place into your
@@ -10,13 +11,15 @@
 #
 # NB: some things are in here, I assume, to make this
 # script play well with eggdrop and other IRC-related
-# stuff. 
+# stuff.
 
 use strict;
 use warnings;
 use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
+
+use Math::Round;
 
 use File::Basename;
 use Cwd 'realpath';
@@ -59,7 +62,7 @@ my $quote = $ARGV[0];
 # symbol,open,high,low,price,volume,latestDay,previousClose,change,changePercent
 #
 # JSON:
-# 
+#
 # {
 #    "Global Quote": {
 #        "01. symbol": "^DJI",
@@ -73,39 +76,67 @@ my $quote = $ARGV[0];
 #        "09. change": "374.7793",
 #        "10. change percent": "1.5245%"
 #    }
-# 
+#
 # Select via the datatype key/value pair in the URL (cvs or json)
 #
 # see https://www.alphavantage.co/documentation/ for more info.
 
 my $url = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=$quote&apikey=$apikey&datatype=csv";
 
+my ($ticker, $open, $price, $vol, $chg, $pct);
+
 open(HTTP, '-|', "curl --max-time 5 -s -k -L '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
-	chomp; 
+	chomp; chomp; # // CRLF
+	s/\r//g;
 	next if $. < 2; # this skips the first line of CSV headers
-	my @info = split(',', $_);
-	my $trend;
 
-	$trend = green("↑");
-	$trend = red("↓") if $info[9] =~ /-/;
-
-	# the little circles look cool, too
-	#$trend = green("●");
-	#$trend = red("●") if $info[9] =~ /-/;
-
-	my $ticker = $info[0];
-	# lop off some trailing 0s and other digits
-	my $price   = commify(substr ($info[4], 0, -2));
-	my $open    = commify(substr ($info[1], 0, -2));
-	my $change  = commify(substr ($info[8], 0, -2));
-	my $volume  = commify($info[5]);
-	my $percent = substr ($info[9], 0, -4);
-
-	print bold($ticker. " $trend") . " Price: $price Open: $open Change: $change ($percent\%) Volume: $volume\n";
+	($ticker, $open, undef, undef, $price, $vol, undef, undef, $chg, $pct) = split(',', $_);
 }
 close(HTTP);
+
+if (not defined($ticker) or not defined($pct)) {
+	print "no data returned: $quote\n";
+	exit $exitnonzeroonerror;
+}
+
+my $trend = 1;
+$trend = 0 if defined($pct) and $pct =~ m/-/;
+
+my $trendsymbol;
+$trendsymbol = green("↑") if $trend > 0;
+$trendsymbol = red("↓") if $trend <= 0;
+
+# the little circles look cool, too
+#$trend = green("●");
+#$trend = red("●") if $info[9] =~ /-/;
+
+# lop off some trailing 0s
+$price =~ s/(\.[0-9]*?[1-9]?)0+$/$1/;
+$price =~ s/\.$//;
+$open  =~ s/(\.[0-9]*?[1-9]?)0+$/$1/;
+$open  =~ s/\.$//;
+$chg   =~ s/(\.[0-9]*?[1-9]?)0+$/$1/;
+$chg   =~ s/\.$//;
+
+$pct =~ s/%//;
+$pct = round($pct * 10) / 10;
+
+$price = commify($price);
+$open = commify($open);
+$chg = commify($chg);
+$vol = commify($vol);
+
+print bold($ticker), " ", "$trendsymbol$price ";
+
+print "+$chg (" if $trend;
+print "$chg (" if not $trend;
+
+print green("+$pct") if $trend;
+print red($pct) if not $trend;
+
+print "%) open: $open volume: $vol\n";
 
 sub commify {
   my $num = shift;
