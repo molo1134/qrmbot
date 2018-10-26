@@ -20,6 +20,7 @@ use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
 use Math::Round;
+use URI::Escape;
 
 use File::Basename;
 use Cwd 'realpath';
@@ -97,7 +98,24 @@ while (<HTTP>) {
 close(HTTP);
 
 if (not defined($ticker) or not defined($pct)) {
-	print "no data returned: $quote\n";
+
+	my $encquote = uri_escape($quote);
+	my $url = "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=$encquote&apikey=$apikey&datatype=csv";
+	my $found = 0;
+
+	open(HTTP, '-|', "curl --max-time 5 -s -k -L '$url'");
+	binmode(HTTP, ":utf8");
+	while (<HTTP>) {
+		next if m/^symbol,/;
+		my ($symb,$name,$type,$reg) = split(',');
+		print(bold($symb), ": $name - $type, $reg; ");
+		$found = 1;
+	}
+	print "\n" if $found;
+
+	if (not $found) {
+		print "no data returned: $quote\n";
+	}
 	exit $exitnonzeroonerror;
 }
 
