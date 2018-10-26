@@ -102,6 +102,33 @@ proc canteen_msg {nick uhand handle input} {
 	}
 }
 
+bind pub - !stock stock_pub
+bind msg - !stock stock_msg
+set stockbin "/home/eggdrop/bin/stock"
+proc stock_pub { nick host hand chan text } {
+	global stockbin
+	set param [sanitize_string [string trim ${text}]]
+
+	putlog "stock pub: $nick $host $hand $chan $param"
+
+	catch {exec ${stockbin} ${param} } data
+
+	set output [split $data "\n"]
+	foreach line $output {
+		putchan $chan [encoding convertto utf-8 "$line"]
+	}
+}
+proc stock_msg {nick uhand handle input} {
+	global stockbin
+	set param [sanitize_string [string trim ${input}]]
+	putlog "stock msg: $nick $uhand $handle $param"
+	catch {exec ${stockbin} ${param} } data
+	set output [split $data "\n"]
+	foreach line $output {
+		putmsg $nick [encoding convertto utf-8 "$line"]
+	}
+}
+
 
 
 putlog "fun.tcl loaded."
