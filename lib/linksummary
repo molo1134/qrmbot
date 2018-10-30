@@ -174,9 +174,9 @@ sub doTwitter {
   }
   #  'curl --max-time $timeout -Ls -o /dev/null -w "%{url_effective}" "https://t.co/aoVVgKEfqC"'
 
-  if ($url =~ /https?:\/\/(mobile\.)?twitter\.com\/(\w+)\/status\/(\d+)/) {
+  if ($url =~ /https?:\/\/(mobile\.)?twitter\.com\/(\w+)\/status(es)?\/(\d+)/) {
     $username = $2;
-    $id = $3;
+    $id = $4;
   }
 
   if (not defined $username and $url =~ /https?:\/\/(mobile\.)?twitter\.com\/(\w+)\/?/) {
