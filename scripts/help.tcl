@@ -62,6 +62,8 @@ proc send_help {nick} {
   putmsg $nick "  !crypto -- cryptocurrency price check:"
   putmsg $nick "  !bitcoin !btc !litecoin !ltc !etherium !eth !doge" 
   putmsg $nick "  !define -- glossary lookup"
+  putmsg $nick "  !drive -- compute drive time and distance"
+  putmsg $nick "  !stock -- financial quotes"
 #  putmsg $nick "  !topic -- print current topic"
 #  putmsg $nick "  !topicrefresh -- reset the topic"
 #  putmsg $nick [encoding convertto utf-8 "  !myquit -- print your last signoff message †"]
