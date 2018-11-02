@@ -129,6 +129,9 @@ bind pub - !qcode qcode_pub
 bind msg - !q qcode_msg
 bind pub - !q qcode_pub
 
+bind pub - !qsl qslcheck_pub
+bind msg - !qsl qslcheck_msg
+
 set qrzbin "/home/eggdrop/bin/qrz"
 set gridbin "/home/eggdrop/bin/grid"
 set drivebin "/home/eggdrop/bin/drivetime"
@@ -1298,6 +1301,16 @@ proc qcode_msg {nick uhand handle input} {
 	foreach line $output {
 		putmsg $nick "$line"
 	}
+}
+
+proc qslcheck_pub { nick host hand chan text } {
+     qslcheck_msg "$nick" "$host" "$hand" "$text"
+}
+proc qslcheck_msg {nick uhand handle input} {
+	msg_qrz     "$nick" "$uhand" "$handle" "$input"
+	msg_lotw    "$nick" "$uhand" "$handle" "$input"
+	msg_eqsl    "$nick" "$uhand" "$handle" "$input"
+	msg_clublog "$nick" "$uhand" "$handle" "$input"
 }
 
 putlog "Ham utils loaded."
