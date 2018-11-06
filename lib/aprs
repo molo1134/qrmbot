@@ -124,11 +124,13 @@ if (defined $vals{lat} and defined $vals{lng}) {
 print "  Temp: " . bold("$vals{temp_c}°C/$vals{temp_f}°F") if defined ($vals{temp});
 print "  Humidity: $vals{humidity}%" if defined ($vals{humidity});
 
+my $winddir = $vals{wind_dir} || "?";
+
 if (defined($vals{wind_calm}) and $vals{wind_calm} == 1) {
-    print "  Wind: $vals{wind_dir} calm";
+    print "  Wind: $winddir calm";
     #print " $vals{wind_direction}°" if defined ($vals{wind_direction});
 } elsif (defined $vals{wind_speed}) {
-  print "  Wind: $vals{wind_dir} at $vals{wind_speed_kph}kph/$vals{wind_speed_mph}mph";
+  print "  Wind: $winddir at $vals{wind_speed_kph}kph/$vals{wind_speed_mph}mph";
 }
 print " (gust $vals{wind_gust_kph}kph/$vals{wind_gust_mph}mph)" if defined ($vals{wind_gust}) && $vals{wind_gust} > 0;
 print "  Pressure: $vals{pressure}mb/$vals{pressure_inhg}inHg" if defined ($vals{pressure});
