@@ -710,10 +710,10 @@ sub doAmazon {
       $title = decodeEntities($2);
       $title =~ s/Amazon.co.uk:\s*//;
     }
-    if (/<span id="priceblock_ourprice"[^>]+>([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
-      $curr = $1;
+    if (/<span id="priceblock_(ourprice|pospromoprice)"[^>]+>([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
+      $curr = $2;
       $curr =~ tr/￥/¥/;
-      $price = $2;
+      $price = $3;
     }
     if (/<span id="priceblock_ourprice"[^>]+>([\$￥£]|CDN\$)\s*([0-9.,]+) - ([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
       $curr = $1;
