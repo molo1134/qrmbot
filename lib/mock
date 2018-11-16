@@ -1,0 +1,29 @@
+#!/usr/bin/perl -w
+# Convert a word to random phonetics based on system dictionary.
+# 2-clause BSD license.
+
+# translation code from
+# https://stackoverflow.com/questions/28124600/alternate-between-upper-and-lowercase-perl
+
+use strict;
+use warnings;
+
+sub periodic {
+  my @subs = @_;
+  my $i = 0;
+
+  return sub {
+    $i = 0 if $i > $#subs;
+    return $subs[$i++]->(@_);
+  };
+}
+
+my $mystring = join(" ", @ARGV);
+
+my $f = periodic(
+  sub { uc pop },
+  sub { lc pop },
+);
+
+$mystring =~ s/([a-z])/ $f->($1) /egi;
+print $mystring, "\n";
