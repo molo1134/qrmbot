@@ -1,14 +1,13 @@
 #!/usr/bin/perl -w
+
 # Convert a string to mocking spongebob-style text
+#
 # Turns this:
 # Guess I'll just have to play with my new icom gear
 #
 # Into this:
 # GuEsS i'Ll JuSt HaVe To PlAy WiTh My NeW iCoM gEaR
-
 #
-# 2-clause BSD license.
-
 # translation code from
 # https://stackoverflow.com/questions/28124600/alternate-between-upper-and-lowercase-perl
 
