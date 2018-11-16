@@ -1,5 +1,12 @@
 #!/usr/bin/perl -w
-# Convert a word to random phonetics based on system dictionary.
+# Convert a string to mocking spongebob-style text
+# Turns this:
+# Guess I'll jus thave to play with my new icom gear
+#
+# Into this:
+# GuEsS i'Ll JuSt HaVe To PlAy WiTh My NeW iCoM gEaR
+
+#
 # 2-clause BSD license.
 
 # translation code from
