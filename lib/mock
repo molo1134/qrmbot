@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # Convert a string to mocking spongebob-style text
 # Turns this:
-# Guess I'll jus thave to play with my new icom gear
+# Guess I'll just have to play with my new icom gear
 #
 # Into this:
 # GuEsS i'Ll JuSt HaVe To PlAy WiTh My NeW iCoM gEaR
