@@ -89,4 +89,8 @@ needed.
 6. Use geo grid for `!activity`
 7. Cleanup needed in `qrz` script
 8. Add a preferred wx station in addition to `!setgeo` geo coords
+9. Find nearest ionosonde for !muf/!muf2
+10. A command to get elevation data at a location
+11. AE7Q scraping
+12. If no callsign is specified with `!spots` use irc nick.
 
