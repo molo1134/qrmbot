@@ -173,7 +173,13 @@ while (<HTTP>) {
     tzset;
     $end = strftime("%a %H:%M %Z", localtime($end)); # e.g. Sun 11:00 PDT
 
-    push(@alerts, bold("Alert").": ".bold($description)." until ${end}");
+    my $alertmsg = bold("Alert");
+    $alertmsg = yellow("Alert") if $description =~ /yellow/i;
+    $alertmsg = darkYellow("Alert") if $description =~ /orange/i;
+    $alertmsg = red("Alert") if $description =~ /red/i;
+    $alertmsg = darkRed("Alert") if $description =~ /(dark ?red|dunkelrot)/i;
+
+    push(@alerts, "${alertmsg}: ".bold($description)." until ${end}");
 
     $description = $zone = undef;
     $end = 0;

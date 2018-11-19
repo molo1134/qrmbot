@@ -343,7 +343,12 @@ while (<HTTP>) {
     tzset;
     $end = strftime("%a %H:%M %Z", localtime($end)); # e.g. Sun 11:00 PDT
 
-    print " ", bold("Alert"), ": ", bold(${description}), " until $end";
+    my $alertmsg = bold("Alert");
+    $alertmsg = yellow("Alert") if $description =~ /yellow/i;
+    $alertmsg = darkYellow("Alert") if $description =~ /orange/i;
+    $alertmsg = red("Alert") if $description =~ /red/i;
+    $alertmsg = darkRed("Alert") if $description =~ /(dark ?red|dunkelrot)/i;
+    print " ${alertmsg}: ", bold(${description}), " until $end";
     print "\n" if $full == 1;
     print " " if $full == 0;
 
