@@ -5,10 +5,11 @@
 
 bind pub - !qrz qrz
 bind pub - !call qrz
-bind pub - !dox dox
+bind pub - !dox qrz
 
 bind msg - !qrz msg_qrz
 bind msg - !call msg_qrz
+bind msg - !dox msg_qrz
 
 bind pub - !setgeo qrz_setgeo_pub
 bind msg - !setgeo qrz_setgeo_msg
@@ -180,10 +181,6 @@ proc qrz { nick host hand chan text } {
 	foreach line $output {
 		putchan $chan [encoding convertto utf-8 "$line"]
 	}
-}
-
-proc dox { nick host hand chan text } {
-	qrz $nick $host $hand $chan "AG2V"
 }
 
 proc msg_qrz {nick uhand handle input} {
