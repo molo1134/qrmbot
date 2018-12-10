@@ -35,7 +35,7 @@ As tested on Debian:
 ### Building `libastro-satpass-perl`
 
 ```
-$ sudo apt-get install git dh-make-perl
+$ sudo apt-get install git dh-make-perl apt-file
 $ sudo apt-file update
 $ git clone 'https://github.com/trwyant/perl-Astro-Coord-ECI.git'
 $ cd perl-Astro-Coord-ECI
