@@ -183,6 +183,10 @@ binmode(HTTP, ":utf8");
 while (<HTTP>) {
   #print;
   chomp;
+  if (/Access denied/i) {
+    print "Access denied.\n";
+    exit 0
+  }
   if (/"(\w+)":\s*"?(.*?)"?,?\s*$/) {
     my ($key, $value) = ($1, $2);
     $results{$key} = $value;
