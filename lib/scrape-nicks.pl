@@ -92,7 +92,7 @@ foreach my $baseurl (@baseurls) {
 
   for ( my $count = 0; $count < $limit; $count++) {
 
-    my ($u, $f, $c);
+    my ($u, $f, $c, $ts);
     last if defined $after and $after eq "null";
     $url = "$baseurl?after=$after" if defined $after;
     print STDERR "$count: $url\n";
@@ -111,7 +111,7 @@ foreach my $baseurl (@baseurls) {
 	  my ($k, $v) = ($1, $2);
 	  $v =~ s/^"(.*)"$/$1/;
 	  $v =~ s/\\u([0-9a-f]{4})/chr(hex($1))/egi;
-    #      print STDERR "$k => $v\n";
+	  #print STDERR "$k => $v\n";
 
 	  if ($k eq "after") {
 	    $after = $v;
@@ -138,27 +138,34 @@ foreach my $baseurl (@baseurls) {
 	    } else {
 	      $c = undef;
 	    }
+	  } elsif ($k eq "created_utc") {
+	    $ts = $v;
+	    $ts =~ s/\.0*$//g;
 	  } elsif ($k eq "kind") {
 	    # moving on to new entry
 	    if (defined $c and defined $u) {
 	      if (not any { /^$c$/i } @blacklist) {
-		print STDERR "found: $c /u/$u\n";
-		$results{$c} = $u;
+		updateResult($c, $ts, $u);
+		$ts = time() if not defined $ts;
+		$results{$c} = "$ts,$u";
 	      }
 	    }
 	    $u = undef;
 	    $c = undef;
+	    $ts = undef;
 	  }
 	}
       }
       if (defined($u) and defined($c)) {
 	if (not any { /^$c$/i } @blacklist) {
-	  print STDERR "found: $c /u/$u\n";
-	  $results{$c} = $u;
+	  updateResult($c, $ts, $u);
+	  $ts = time() if not defined $ts;
+	  $results{$c} = "$ts,$u";
 	}
       }
       $u = undef;
       $c = undef;
+      $ts = undef;
 
     }
     close(HTTP);
@@ -182,12 +189,13 @@ sub updatenicks {
       delete $nicks{$k};
       next;
     }
+    my (undef, $uid) = split(/,/, $results{$k});
 
     if (defined $nicks{$k}) {
       my ($call, $ircnick, undef) = split (/,/, $nicks{$k});
-      $nicks{$k} = "$call,$ircnick,/u/$results{$k}";
+      $nicks{$k} = "$call,$ircnick,/u/$uid";
     } else {
-      $nicks{$k} = "$k,,/u/$results{$k}";
+      $nicks{$k} = "$k,,/u/$uid";
     }
   }
 
@@ -200,4 +208,22 @@ sub updatenicks {
     print NICKFILE "$nicks{$k}\n";
   }
   close(NICKFILE);
+}
+
+sub updateResult {
+  our %results;
+  my $c = shift;
+  my $ts = shift;
+  my $u = shift;
+  print STDERR "found: $c /u/$u \@$ts\n";
+  if (defined($results{$c})) {
+    my ($oldts,$oldval) = split(/,/, $results{$c});
+    if ($ts > $oldts) {
+      $results{$c} = "$ts,$u";
+    } else {
+      print STDERR "discarding older\n";
+    }
+  } else {
+    $results{$c} = "$ts,$u";
+  }
 }
