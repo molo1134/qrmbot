@@ -71,7 +71,8 @@ my (undef,undef,undef,undef,undef,undef,$dow,$jdate,undef) = gmtime $now;
 #print "jdate: $jdate\n";
 
 my @current;
-my @weekend;
+my @thisweekend;
+my @nextweekend;
 
 while (defined $contests{$i}) {
   ($start, $end, $summary, $conturl) = split("::", $contests{$i});
@@ -81,20 +82,38 @@ while (defined $contests{$i}) {
     push @current, $summary;
   }
 
-  # TODO: this weekend versus next weekend? -- use $jdate, $yday, $wday
-  my $weekend = 0;
+  # weekday based on GMT
   my (undef,undef,undef,undef,undef,undef,$wday,$yday,undef) = gmtime $start;
-  $weekend = 1 if ($wday == 5 || $wday == 6) and $start > $now;
-  (undef,undef,undef,undef,undef,undef,$wday,$yday,undef) = localtime $start;
-  $weekend = 1 if ($wday == 5 || $wday == 6) and $start > $now;
-
-  #print "$summary $weekend " . ($end-$start) . "\n";
 
   # starts on friday or saturday and duration is at least 12 hours.
   # 43100 seconds = 11 hours + 58 minutes + 20 seconds
-  #print("this weekend: $summary\n") if $weekend == 1 and ($end-$start) > 43100;
-  push @weekend, $summary if $weekend == 1 and ($end-$start) > 43100;
+  if (($wday == 5 || $wday == 6) and
+	$start > $now and
+	($end-$start) > 43100) {
+    if (($yday - $jdate) < 7) {
+      push @thisweekend, $summary;
+    } else {
+      push @nextweekend, $summary;
+    }
+    $i++;
+    next
+  }
+  	
+  # weekday based on localtime
+  (undef,undef,undef,undef,undef,undef,$wday,$yday,undef) = localtime $start;
 
+  if (($wday == 5 || $wday == 6) and
+	$start > $now and
+	($end-$start) > 43100) {
+    if (($yday - $jdate) < 7) {
+      push @thisweekend, $summary;
+    } else {
+      push @nextweekend, $summary;
+    }
+  }
+  	
+  #print "$summary $weekend " . ($end-$start) . "\n";
+  #print("this weekend: $summary\n") if $weekend == 1 and ($end-$start) > 43100;
   $i++;
 }
 
@@ -104,12 +123,18 @@ if (@current) {
   print "\n";
 }
 
-if (@weekend) {
+if (@thisweekend) {
   print "this weekend: ";
-  print join ("; ", @weekend);
+  print join ("; ", @thisweekend);
+  print "\n";
+}
+if (@nextweekend) {
+  print "next weekend: ";
+  print join ("; ", @nextweekend);
   print "\n";
 }
 
-if (!@current and !@weekend) {
+
+if (!@current and !@thisweekend and !@nextweekend) {
   print "no current contests and no major contests found.\n";
 }
