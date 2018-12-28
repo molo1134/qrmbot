@@ -257,7 +257,7 @@ close(HTTP);
 #
 
 my $units = "_metric";
-$units = "" if $geo{'country_iso3166'} eq "US";
+$units = "" if defined $geo{'country_iso3166'} and $geo{'country_iso3166'} eq "US";
 
 if (!defined $rec{date} or $rec{date} eq "") {
   print "Forecast for $place not found.\n" if defined $place;
@@ -265,7 +265,11 @@ if (!defined $rec{date} or $rec{date} eq "") {
   exit $exitnonzeroonerror;
 }
 
-print "Forecast for ", bold($place), " ($lat,$lon) as of $rec{'date'}:\n";
+$place = "?" if not defined $place;
+
+print "Forecast for ", bold($place);
+print " ($lat,$lon)" if defined $lat and defined $lon;
+print " as of $rec{'date'}:\n";
 
 foreach my $alert (@alerts) {
   print " $alert\n";
