@@ -98,7 +98,7 @@ while (defined $contests{$i}) {
     $i++;
     next
   }
-  	
+
   # weekday based on localtime
   (undef,undef,undef,undef,undef,undef,$wday,$yday,undef) = localtime $start;
 
@@ -111,7 +111,7 @@ while (defined $contests{$i}) {
       push @nextweekend, $summary;
     }
   }
-  	
+
   #print "$summary $weekend " . ($end-$start) . "\n";
   #print("this weekend: $summary\n") if $weekend == 1 and ($end-$start) > 43100;
   $i++;
