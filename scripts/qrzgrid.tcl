@@ -31,6 +31,9 @@ bind pub - !tz timezone
 bind msg - !time msg_timezone
 bind msg - !tz msg_timezone
 
+bind pub - !elev elev
+bind msg - !elev msg_elev
+
 bind pub - !bands bands
 bind msg - !bands msg_bands
 
@@ -137,6 +140,7 @@ set qrzbin "/home/eggdrop/bin/qrz"
 set gridbin "/home/eggdrop/bin/grid"
 set drivebin "/home/eggdrop/bin/drivetime"
 set tzbin "/home/eggdrop/bin/timezone"
+set elevbin "/home/eggdrop/bin/elev"
 set bandsbin "/home/eggdrop/bin/bands"
 set xraybin "/home/eggdrop/bin/xray"
 set forecastbin "/home/eggdrop/bin/solarforecast"
@@ -396,6 +400,45 @@ proc msg_timezone {nick uhand handle input} {
 		catch {exec ${tzbin} ${timezone}} data
 	} else {
 		catch {exec ${tzbin} ${timezone} --geo $geo } data
+	}
+
+	set output [split $data "\n"]
+	foreach line $output {
+		putmsg $nick [encoding convertto utf-8 "$line"]
+	}
+}
+
+proc elev { nick host hand chan text } {
+	global elevbin
+	set elev [sanitize_string [string trim ${text}]]
+	set geo [qrz_getgeo $hand]
+
+	putlog "elev pub: $nick $host $hand $chan $elev $geo"
+
+	if [string equal "" $geo] then {
+		catch {exec ${elevbin} ${elev}} data
+	} else {
+		catch {exec ${elevbin} ${elev} --geo $geo } data
+	}
+
+	set output [split $data "\n"]
+	foreach line $output {
+		putchan $chan [encoding convertto utf-8 "$line"]
+	}
+}
+
+
+proc msg_elev {nick uhand handle input} {
+	global elevbin
+	set elev [sanitize_string [string trim ${input}]]
+	set geo [qrz_getgeo $handle]
+
+	putlog "elev msg: $nick $uhand $handle $elev $geo"
+
+	if [string equal "" $geo] then {
+		catch {exec ${elevbin} ${elev}} data
+	} else {
+		catch {exec ${elevbin} ${elev} --geo $geo } data
 	}
 
 	set output [split $data "\n"]

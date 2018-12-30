@@ -7,7 +7,7 @@
 package Location;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum getGeocodingAPIKey);
+@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum getGeocodingAPIKey coordToElev);
 
 use utf8;
 use Math::Trig;
@@ -581,3 +581,42 @@ sub monthNameToNum {
   }
 }
 
+sub coordToElev {
+  my $lat = shift;
+  my $lon = shift;
+  my $apikey = getGeocodingAPIKey();
+
+  my $url = "https://maps.googleapis.com/maps/api/elevation/json?locations=$lat,$lon&key=$apikey";
+
+  my ($elev, $res);
+  open (HTTP, '-|', "curl -k -s -L '$url'");
+  binmode(HTTP, ":utf8");
+  while (<HTTP>) {
+    # {
+    #    "results" : [
+    #       {
+    #          "elevation" : 1608.637939453125,
+    #          "location" : {
+    #             "lat" : 39.73915360,
+    #             "lng" : -104.98470340
+    #          },
+    #          "resolution" : 4.771975994110107
+    #       }
+    #    ],
+    #    "status" : "OK"
+    # }
+    if (/"(\w+)" : (-?\d+(\.\d+)?|"[^"]*")/) {
+      my ($k, $v) = ($1, $2);
+      $v =~ s/^"(.*)"$/$1/;
+      #print "$k ==> $v\n";
+      if ($k eq "status" and $v ne "OK") {
+	return undef;
+      }
+      $elev = $v if $k eq "elevation";
+      $res = $v if $k eq "resolution";
+    }
+  }
+  close(HTTP);
+
+  return $elev;
+}
