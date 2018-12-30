@@ -84,7 +84,7 @@ needed.
 1. Clean up and modularize TCL scripts
 2. ~~Add TCL scripts~~
 3. Document how to use and configure TCL scripts
-4. Clarify this week/next week for `contests`
+4. ~~Clarify this week/next week for `contests`~~
 5. Accept other formats for `!setgeo`
 6. Use geo grid for `!activity`
 7. Cleanup needed in `qrz` script
@@ -93,4 +93,5 @@ needed.
 10. A command to get elevation data at a location
 11. AE7Q scraping
 12. If no callsign is specified with `!spots` use irc nick.
+13. Requested by K1NZ: `!untappd` for beer info
 
