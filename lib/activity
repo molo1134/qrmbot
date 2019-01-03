@@ -93,7 +93,7 @@ my %scores;
 open (HTTP, '-|', "curl --max-time 15 -L -k -4 -s '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
-  print;
+  #print;
   chomp;
 
   next if /<!DOCTYPE/;
