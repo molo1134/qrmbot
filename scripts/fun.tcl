@@ -129,7 +129,43 @@ proc stock_msg {nick uhand handle input} {
 	}
 }
 
+bind pub - !wwv wwv_pub
+proc wwv_pub { nick host hand chan text } {
+	set ts [clock microseconds]
+	set remaining [expr 60000000 - [expr $ts % 60000000]]
+	set usec_remaining [expr $remaining % 1000000]
+	set sec_remaining [expr [expr $remaining - $usec_remaining] / 1000000]
+	set ut [utimers]
+#	putchan $chan "utimers: $ut"
+	set i 0
+	while { $i < [llength $ut] } {
+#		putchan $chan "lindex $i: [lindex $ut $i]"
+#		putchan $chan "found? $i: [string match "*_wwv*" [lindex $ut $i]]"
+#		putchan $chan "found chan? $i: [string match "*$chan*" [lindex $ut $i]]"
+		if { [string match "*_wwv*" [lindex $ut $i]] &&
+				[string match "*$chan*" [lindex $ut $i]] } {
+			return
+		}
+		#putchan $chan "double index: [lindex [lindex $ut $i] 1]"
+		set i [expr $i + 1]
+	}
+	utimer [expr $sec_remaining - 4] [list do_wwv_announce_pub $chan]
+	utimer $sec_remaining [list do_wwv_beep_pub $chan]
+}
 
+proc do_wwv_announce_pub { chan } {
+	set ts [clock microseconds]
+	putchan $chan [clock format [expr ( $ts / 1000000 ) + 10] -format "At the tone: %H hours %M minutes Coordinated Universal Time:"]
+}
+proc do_wwv_beep_pub { chan } {
+	set ts [clock microseconds]
+	#putchan $chan "do_wwv_beep_pub called: $ts"
+	while {[expr [expr $ts % 60000000] > 50000000]} {
+		set ts [clock microseconds]
+	}
+	#putchan $chan "<beep> $ts"
+	putchan $chan "<beep>"
+}
 
 putlog "fun.tcl loaded."
 
