@@ -48,6 +48,7 @@ proc send_help {nick} {
   putmsg $nick "  !qcode !q -- qcode lookup"
   putmsg $nick "  !utc -- display current UTC time"
   putmsg $nick "  !time !tz -- localtime in the qth or grid specified"
+  putmsg $nick "  !wwv -- emulate WWV station (in channel only)"
   putmsg $nick "  !rig -- describe a radio or other gear"
   putmsg $nick "  !lotw -- last upload date to LoTW for a callsign"
   putmsg $nick "  !eqsl -- last login to eqsl.cc for a callsign"
@@ -64,6 +65,7 @@ proc send_help {nick} {
   putmsg $nick "  !define -- glossary lookup"
   putmsg $nick "  !drive -- compute drive time and distance"
   putmsg $nick "  !stock -- financial quotes"
+  putmsg $nick "  !elev -- get elevation data for a place"
 #  putmsg $nick "  !topic -- print current topic"
 #  putmsg $nick "  !topicrefresh -- reset the topic"
 #  putmsg $nick [encoding convertto utf-8 "  !myquit -- print your last signoff message †"]
