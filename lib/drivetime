@@ -56,8 +56,12 @@ my $i = 0;
 my $term1 = undef;
 my $term2 = undef;
 my $to = 0;		# to/from notation
+my $transit = 0;
 
 while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /--transit/) {
+    $transit = 1;
+  }
   if (!defined($term2) and $ARGV[$i] =~ /^(--geo|de|from|to)$/i) {
     $to = 1 if $1 eq "to";
     $i++;
@@ -114,9 +118,12 @@ my $apikey = getGeocodingAPIKey();
 
 my $url = "https://maps.googleapis.com/maps/api/directions/json?origin=${encodedOrigin}&destination=${encodedDest}&key=${apikey}";
 
-my ($inDist, $inDur) = (0,0);
+$url .= "&mode=transit" if $transit == 1;
 
-my ($distance, $time, $startPlace, $endPlace, $summary, $status) = (undef, undef, undef, undef, undef, undef);
+my ($inDist, $inDur, $inLine, $inAgency, $inDep, $inArr) = (0,0,0,0,0,0);
+
+my ($distance, $time, $startPlace, $endPlace, $summary, $status, $agency, $line, $departs, $arrives) = (undef, undef, undef, undef, undef, undef, undef, undef, undef, undef);
+my @lines;
 
 open (HTTP, '-|', "curl -k -s -L '$url'");
 binmode(HTTP, ":utf8");
@@ -128,7 +135,6 @@ while (<HTTP>) {
   }
 
   $inDist = 1 if /"distance"\s*:/;
-  
   if (not defined $distance and $inDist == 1 and /"value"\s*:\s*(\d+)\s*$/) {
     $distance = $1;
     $inDist = 0;
@@ -140,8 +146,43 @@ while (<HTTP>) {
     $inDur = 0;
   }
 
-  if (/}/) {
+  $inDep = 1 if /"departure_time"\s*:/;
+  if (not defined($departs) and $inDep == 1 and /"text"\s*:\s*"([^"]*)"/) {
+    $departs = $1;
+    $inDep = 0;
+  }
+  $inArr = 1 if /"arrival_time"\s*:/;
+  if (not defined($arrives) and $inArr == 1 and /"text"\s*:\s*"([^"]*)"/) {
+    $arrives = $1;
+    $inArr = 0;
+  }
+
+  if(/}/) {
     $inDur = $inDist = 0;
+  }
+
+  if (/"line"/) {
+    $inLine = 1;
+  }
+  if ($inLine == 1 and /"agencies"/) {
+    $inAgency = 1;
+  }
+  if ($inAgency == 1 and not defined($agency) and /"name"\s*:\s*"([^"]*)"/) {
+    $agency = $1;
+    #print "agency: $agency\n";
+    next;
+  }
+  if ($inAgency == 1 and
+      defined($agency) and
+      not defined($line) and
+      /"name"\s*:\s*"([^"]*)"/)
+  {
+    $line = $1;
+    #print "line: $line\n";
+    push @lines, "$agency $line";
+    ($agency, $line) = (undef, undef);
+    $inAgency = $inLine = 0;
+    next;
   }
 
   $startPlace = $1 if /"start_address"\s*:\s*"([^"]+)",?\s*$/;
@@ -161,6 +202,21 @@ while (<HTTP>) {
 #               "start_address" : "165 Hopper Ave, Waldwick, NJ 07463, USA",
 #               "summary" : "I-5 N and US-101 N"
 #               "status" : "OK"
+
+#                        "line" : {
+#                           "agencies" : [
+#                              {
+#                                 "name" : "NJ Transit",
+#                                 "url" : "http://www.njtransit.com/"
+#                              }
+#                           ],
+#                           "name" : "Main/Bergen County Line",
+#                           "vehicle" : {
+#			      "icon" : "//maps.gstatic.com/mapfiles/transit/iw2/6/rail2.png",
+#                              "name" : "Train",
+#                              "type" : "HEAVY_RAIL"
+#                           }
+#                        },
 }
 
 if ($status ne "OK") {
@@ -178,7 +234,14 @@ my $h = ($time - (($time / 86400) * 86400)) / 3600;
 my $m = ($time - (($time / 3600) * 3600)) / 60;
 my $s = $time - (($time / 60) * 60);
 
-print "Drive: ", bold("$dist_km km"), " / ", bold("$dist_mi mi");
+if (not defined($summary) and $#lines gt 0) {
+  $summary = join(", ", @lines);
+  $summary =~ s/, $//;
+}
+
+print "Transit: " if $transit == 1;
+print "Drive: " if $transit == 0;
+print bold("$dist_km km"), " / ", bold("$dist_mi mi");
 print " via $summary" if defined $summary;
 print "; ";
 print bold(
@@ -186,4 +249,7 @@ print bold(
       (($h > 0 or $d > 0) ? "${h}h " : "") .
       (($m > 0 or $d > 0 or $h > 0) ? "${m}m " : "") .
       "${s}s");
-print " from ", green($startPlace), " to ", red($endPlace), "\n";
+print " from ", green($startPlace), " to ", red($endPlace);
+print " -- depart at $departs, arrival at $arrives"
+  if defined($departs) and defined($arrives);
+print "\n";

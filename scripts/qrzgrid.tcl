@@ -25,6 +25,8 @@ bind msg - !qth msg_grid
 
 bind pub - !drive drive_pub
 bind msg - !drive drive_msg
+bind pub - !transit transit_pub
+bind msg - !transit transit_msg
 
 bind pub - !time timezone
 bind pub - !tz timezone
@@ -360,6 +362,44 @@ proc drive_pub { nick host hand chan text } {
 		catch {exec ${drivebin} ${grid}} data
 	} else {
 		catch {exec ${drivebin} ${grid} --geo $geo } data
+	}
+
+	set output [split $data "\n"]
+	foreach line $output {
+		putchan $chan [encoding convertto utf-8 "$line"]
+	}
+}
+
+proc transit_msg {nick uhand handle input} {
+	global drivebin
+	set grid [sanitize_string [string trim ${input}]]
+	set geo [qrz_getgeo $handle]
+
+	putlog "transit msg: $nick $uhand $handle $grid $geo"
+
+	if [string equal "" $geo] then {
+		catch {exec ${drivebin} --transit ${grid}} data
+	} else {
+		catch {exec ${drivebin} --transit ${grid} --geo $geo } data
+	}
+
+	set output [split $data "\n"]
+	foreach line $output {
+		putmsg $nick [encoding convertto utf-8 "$line"]
+	}
+}
+
+proc transit_pub { nick host hand chan text } {
+	global drivebin
+	set grid [sanitize_string [string trim ${text}]]
+	set geo [qrz_getgeo $hand]
+
+	putlog "transit pub: $nick $host $hand $chan $grid $geo"
+
+	if [string equal "" $geo] then {
+		catch {exec ${drivebin} --transit ${grid}} data
+	} else {
+		catch {exec ${drivebin} --transit ${grid} --geo $geo } data
 	}
 
 	set output [split $data "\n"]
