@@ -64,6 +64,7 @@ proc send_help {nick} {
   putmsg $nick "  !bitcoin !btc !litecoin !ltc !etherium !eth !doge" 
   putmsg $nick "  !define -- glossary lookup"
   putmsg $nick "  !drive -- compute drive time and distance"
+  putmsg $nick "  !transit -- compute transit time and route"
   putmsg $nick "  !stock -- financial quotes"
   putmsg $nick "  !elev -- get elevation data for a place"
 #  putmsg $nick "  !topic -- print current topic"
