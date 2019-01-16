@@ -176,9 +176,9 @@ while (<HTTP>) {
   if ($inAgency == 1 and
       defined($agency) and
       not defined($line) and
-      /"name"\s*:\s*"(.*)"/)
+      /"(short_)?name"\s*:\s*"(.*)"/)
   {
-    $line = $1;
+    $line = $2;
     $line =~ s/\\"/"/g;
     #print "line: $line\n";
     push @lines, "$agency $line";
@@ -236,7 +236,7 @@ my $h = ($time - (($time / 86400) * 86400)) / 3600;
 my $m = ($time - (($time / 3600) * 3600)) / 60;
 my $s = $time - (($time / 60) * 60);
 
-if (not defined($summary) and $#lines gt 0) {
+if (not defined($summary) and $#lines ge 0) {
   $summary = join(", ", @lines);
   $summary =~ s/, $//;
 }
