@@ -88,6 +88,12 @@ while ($i <= $#ARGV) {
     $ham = 1;
     $i++; next;
   }
+  if (!defined($callsign) and $ARGV[$i] =~ /^\d{3,}$/) {
+    # callsign is frequency in khz -- search for matching spot
+    $callsign = $ARGV[$i];
+    $psk = $ham = 0;
+    $dxw = $rbn = 1;
+  }
   if (!defined($callsign)) {
     $callsign = uc $ARGV[$i];
     $i++; next;
@@ -108,7 +114,7 @@ if ($dxw == 0 && $rbn == 0 && $psk == 0 && $ham == 0) {
 
 $callsign = "" unless defined $callsign;
 
-if (!($callsign =~ m/^([A-Z0-9]+[0-9]?\/)?[A-Z0-9]+[0-9][A-Z]+(\/[A-Z0-9]+)?$/)) {
+if (not ($callsign =~ m/^([A-Z0-9]+[0-9]?\/)?[A-Z0-9]+[0-9][A-Z]+(\/[A-Z0-9]+)?$/) and not ($callsign =~ m/^\d{3,}$/)) {
   print "invalid callsign: $callsign\n";
   exit $exitnonzeroonerror;
 }
@@ -234,11 +240,24 @@ sub doDXWatch
     $rb = 0;
   }
 
+  my $freqmode = 0;
+  $freqmode = 1 if $callsign =~ m/^\d+$/;
+  my @seencalls;
+
   my $url;
-  if ($rb == 0) {
-    $url = 'https://www.dxwatch.com/dxsd1/s.php?s=0&r=50&cdx=' . $callsign;
+  if ($freqmode == 0) {
+    if ($rb == 0) {
+      $url = 'https://www.dxwatch.com/dxsd1/s.php?s=0&r=50&cdx=' . $callsign;
+    } else {
+      $url = 'http://www.reversebeacon.net/dxsd1/sk.php?s=0&r=15&cdx=' . $callsign;
+    }
   } else {
-    $url = 'http://www.reversebeacon.net/dxsd1/sk.php?s=0&r=15&cdx=' . $callsign;
+    # frequency mode
+    if ($rb == 0) {
+      $url = 'https://www.dxwatch.com/dxsd1/s.php?s=0&r=50&d=1';
+    } else {
+      $url = 'http://www.reversebeacon.net/dxsd1/sk.php?s=0&r=100&d=1';
+    }
   }
 
   my $modes_ref = {
@@ -291,12 +310,14 @@ sub doDXWatch
     }
 
     s/},"fname".*$//;
+    s/},"msg".*$//;
     s/\{"s":\{//;
     s/],"/]\n"/g;
 
     my @data = split /\n/;
     my %rec;
     foreach my $line (@data) {
+      #print;
       if (/This filter returned no spot/) {
 	last;
       }
@@ -348,13 +369,25 @@ sub doDXWatch
 	$lastspot = $ts unless ($ts < $lastspot);
       }
 
-      push (@spots, {ts => $ts,
-		      src => (($rb == 1) ? "r" : "d"),
-		      de => $de,
-		      dx => $dx,
-		      f => $freq,
-		      msg => substr($cmt, 0, 28)}
-		    );
+      my $seen = scalar(grep { /^$dx$/ } @seencalls);
+      #print("seen: $seen : $dx : @seencalls\n");
+
+      if ($freqmode == 0 or
+	  ($freqmode == 1 and
+	    ($freq > $callsign - 5) and
+	    ($freq < $callsign + 5) and
+	    $seen == 0))
+      {
+	push (@spots, {ts => $ts,
+			src => (($rb == 1) ? "r" : "d"),
+			de => $de,
+			dx => $dx,
+			f => $freq,
+			msg => substr($cmt, 0, 28)}
+		      );
+	push (@seencalls, $dx);
+      }
+
 
       #printf "%-7s %-7s %5d %-28s %s\n", $de, $dx, $freq, substr($cmt, 0, 28), $datetime;
     }
