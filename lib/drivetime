@@ -167,17 +167,19 @@ while (<HTTP>) {
   if ($inLine == 1 and /"agencies"/) {
     $inAgency = 1;
   }
-  if ($inAgency == 1 and not defined($agency) and /"name"\s*:\s*"([^"]*)"/) {
+  if ($inAgency == 1 and not defined($agency) and /"name"\s*:\s*"(.*)"/) {
     $agency = $1;
+    $agency =~ s/\\"/"/g;
     #print "agency: $agency\n";
     next;
   }
   if ($inAgency == 1 and
       defined($agency) and
       not defined($line) and
-      /"name"\s*:\s*"([^"]*)"/)
+      /"name"\s*:\s*"(.*)"/)
   {
     $line = $1;
+    $line =~ s/\\"/"/g;
     #print "line: $line\n";
     push @lines, "$agency $line";
     ($agency, $line) = (undef, undef);
