@@ -180,7 +180,7 @@ if ($multiple == 1) {
   exit $exitnonzeroonerror;
 }
 
-if (not defined $rec{'temp_c'} and not defined $rec{'conditions'}) {
+if (not defined $rec{'temp_c'} and not defined $rec{'temp_f'}) {
   # didn't get valid data
   print "error encountered: no data\n";
   exit $exitnonzeroonerror;
