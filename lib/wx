@@ -166,13 +166,13 @@ if ($multiple == 1) {
 #  print "do something.\n";
   print "multiple results: ";
   my $i = 0;
-  while (%rec = %{shift @results}) {
+  while (@results and %rec = %{shift @results}) {
     #print $i++ . "\n";
     if ($rec{'name'} ne $rec{'city'}) {
       print "$rec{'name'}, ";
     }
     print "$rec{'city'}, ";
-    print "$rec{'state'}, " if (defined $rec{state} and length $rec{state} > 0);
+    print "$rec{'state'}, " if (defined $rec{'state'} and length $rec{'state'} > 0);
     print ($rec{'country_name'} || $rec{'country'});
     print "; ";
   }
