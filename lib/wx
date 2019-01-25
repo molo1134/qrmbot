@@ -78,8 +78,10 @@ if (!defined($loc) or length($loc) == 0) {
   exit $exitnonzeroonerror;
 }
 
-my $geo = argToCoords($loc);
-$loc = $geo if defined $geo;
+if (not $loc =~ m/^PWS:/i) {
+  my $geo = argToCoords($loc);
+  $loc = $geo if defined $geo;
+}
 
 #print "loc: $loc\n";
 my $encodedloc = uri_escape($loc);

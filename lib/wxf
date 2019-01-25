@@ -74,8 +74,10 @@ if (!defined($loc)) {
 
 $loc =~ s/^\s*//;
 $loc =~ s/\s*$//;
-my $geo = argToCoords($loc);
-$loc = $geo if defined $geo;
+if (not $loc =~ m/^PWS:/i) {
+  my $geo = argToCoords($loc);
+  $loc = $geo if defined $geo;
+}
 
 $loc =~ s/\s/_/g;
 my $encodedloc = uri_escape($loc);
