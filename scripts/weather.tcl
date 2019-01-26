@@ -16,8 +16,16 @@ bind msg - !wxf msg_wxf
 bind pub - !wxflong msg_wxflong_pub
 bind msg - !wxflong msg_wxflong
 
+bind pub - !metar metar
+bind msg - !metar msg_metar
+
+bind pub - !taf taf
+bind msg - !taf msg_taf
+
 set wxbin "/home/eggdrop/bin/wx"
 set wxfbin "/home/eggdrop/bin/wxf"
+set metarbin "/home/eggdrop/bin/metar"
+set tafbin "/home/eggdrop/bin/taf"
 
 # load utility methods
 source scripts/util.tcl
@@ -217,4 +225,49 @@ proc msg_wxflong {nick uhand handle input} {
 		putmsg $nick [encoding convertto utf-8 "$line"]
 	}
 }
+
+proc metar { nick host hand chan text } {
+	global metarbin 
+	set loc [sanitize_string [string trim ${text}]]
+
+	putlog "metar pub: $nick $host $hand $chan $loc"
+	
+	catch {exec ${metarbin} ${loc} } data
+
+}
+
+proc msg_metar {nick uhand handle input} { 
+	global metarbin 
+	putlog "metar msg: $nick $uhand $handle $loc"
+
+	catch {exec ${metarbin} ${loc} } data
+
+	set output [split $data "\n"]
+	foreach line $output {
+		putmsg $nick [encoding convertto utf-8 "$line"]
+	}
+}
+
+proc taf { nick host hand chan text } {
+	global tafbin 
+	set loc [sanitize_string [string trim ${text}]]
+
+	putlog "taf pub: $nick $host $hand $chan $loc"
+	
+	catch {exec ${tafbin} ${loc} } data
+
+}
+
+proc msg_taf {nick uhand handle input} { 
+	global tafbin 
+	putlog "taf msg: $nick $uhand $handle $loc"
+
+	catch {exec ${tafbin} ${loc} } data
+
+	set output [split $data "\n"]
+	foreach line $output {
+		putmsg $nick [encoding convertto utf-8 "$line"]
+	}
+}
+
 
