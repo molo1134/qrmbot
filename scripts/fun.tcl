@@ -6,6 +6,7 @@
 bind pub - !phonetics phoneticise
 bind pub - !phoneticise phoneticise
 bind pub - !phoneticize phoneticise
+bind pub - !metard metard
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 
@@ -165,6 +166,10 @@ proc do_wwv_beep_pub { chan } {
 	}
 	#putchan $chan "<beep> $ts"
 	putchan $chan "<beep>"
+}
+
+proc metard { nick host hand chan text} {
+	putchan $chan "$nick you tard" 
 }
 
 putlog "fun.tcl loaded."
