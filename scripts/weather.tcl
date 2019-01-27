@@ -226,18 +226,24 @@ proc msg_wxflong {nick uhand handle input} {
 	}
 }
 
-proc metar { nick host hand chan text } {
+proc metar {nick host hand chan text} {
 	global metarbin 
 	set loc [sanitize_string [string trim ${text}]]
 
 	putlog "metar pub: $nick $host $hand $chan $loc"
 	
 	catch {exec ${metarbin} ${loc} } data
-
+	
+	set output [split $data "\n"]
+	foreach line $output {
+		putchan $chan [encoding convertto utf-8 "$line"]
+	}
 }
 
 proc msg_metar {nick uhand handle input} { 
 	global metarbin 
+	set loc [sanitize_string [string trim ${text}]]
+	
 	putlog "metar msg: $nick $uhand $handle $loc"
 
 	catch {exec ${metarbin} ${loc} } data
@@ -248,18 +254,24 @@ proc msg_metar {nick uhand handle input} {
 	}
 }
 
-proc taf { nick host hand chan text } {
+proc taf {nick host hand chan text} {
 	global tafbin 
 	set loc [sanitize_string [string trim ${text}]]
 
 	putlog "taf pub: $nick $host $hand $chan $loc"
 	
 	catch {exec ${tafbin} ${loc} } data
-
+	
+	set output [split $data "\n"]
+	foreach line $output {
+		putchan $chan [encoding convertto utf-8 "$line"]
+	}
 }
 
 proc msg_taf {nick uhand handle input} { 
 	global tafbin 
+	set loc [sanitize_string [string trim ${text}]]
+	
 	putlog "taf msg: $nick $uhand $handle $loc"
 
 	catch {exec ${tafbin} ${loc} } data
