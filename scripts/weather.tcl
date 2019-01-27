@@ -242,7 +242,7 @@ proc metar {nick host hand chan text} {
 
 proc msg_metar {nick uhand handle input} { 
 	global metarbin 
-	set loc [sanitize_string [string trim ${text}]]
+	set loc [sanitize_string [string trim ${input}]]
 	
 	putlog "metar msg: $nick $uhand $handle $loc"
 
@@ -270,7 +270,7 @@ proc taf {nick host hand chan text} {
 
 proc msg_taf {nick uhand handle input} { 
 	global tafbin 
-	set loc [sanitize_string [string trim ${text}]]
+	set loc [sanitize_string [string trim ${input}]]
 	
 	putlog "taf msg: $nick $uhand $handle $loc"
 
