@@ -82,8 +82,8 @@ indicateEvent($lastday, "RTTY Roundup", getFullWeekendInMonth(1, "Jan"), 2);		# 
 indicateEvent($lastday, "NA CW QSOP", getFullWeekendInMonth(2, "Jan"), 2);			# 2nd full weekend in January
 indicateEvent($lastday, "NA SSB QSOP", getFullWeekendInMonth(3, "Jan"), 2);			# 3rd full weekend in January
 indicateEvent($lastday, "CQ 160m CW", getFullWeekendInMonth(5, "Jan"), 2);			# last full weekend Jan
-indicateEvent($lastday, "School Club Roundup", getIterDayInMonth(2, "Monday", "Feb"), 5);	# 2nd full school week in Feb
 indicateEvent($lastday, "CQ WPX RTTY", getFullWeekendInMonth(2, "Feb"), 2);			# 2nd full weekend Feb
+indicateEvent($lastday, "School Club Roundup", getIterDayInMonth(2, "Monday", "Feb"), 5);	# 2nd full school week in Feb
 indicateEvent($lastday, "ARRL Intl DX CW", getFullWeekendInMonth(3, "Feb"), 2);			# 3rd full weekend in Feb
 indicateEvent($lastday, "CQ 160m SSB", getFullWeekendInMonth(5, "Feb"), 2);			# last full weekend Feb
 indicateEvent($lastday, "NA RTTY QSOP", getIterDayInMonth(5, "Saturday", "Feb"), 2);		# last Saturday in Feburary
