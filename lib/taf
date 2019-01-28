@@ -15,15 +15,23 @@ if (length($code) != 4) {
 my $url = "http://tgftp.nws.noaa.gov/data/forecasts/taf/stations/$code.TXT";
 #print "$url\n";
 my $found = 0;
+my @lines;
 
 open(HTTP, '-|', "curl -f --max-time 10 -s -k -L '$url'");
 while(<HTTP>) {
 	next if (m|^\d{4}/\d{2}/\d{2} \d{2}:\d{2}$|);
 	next if /^\s*TAF\s*$/;
-	print;
+	s/^\s*//;
+	s/\s*$//;
+	chomp;
+	push @lines, $_;
 	$found = 1;
 }
 
 if ($found == 0) {
 	print("not found: $code\n");
+	exit 0;
 }
+
+print(join(" | ", @lines));
+print("\n");
