@@ -50,7 +50,7 @@ proc wx { nick host hand chan text } {
 
 	set output [split $data "\n"]
 	foreach line $output {
-		if [string equal "chuck" $nick] then {
+		if [string match -nocase {chuck*} $nick] then {
 			putmsg $nick [encoding convertto utf-8 "$line"]
 		} else {
 			putchan $chan [encoding convertto utf-8 "$line"]
@@ -150,7 +150,7 @@ proc wxf { nick host hand chan text } {
 
 	set output [split $data "\n"]
 	foreach line $output {
-		if [string equal "chuck" $nick] then {
+		if [string match -nocase {chuck*} $nick] then {
 			putmsg $nick [encoding convertto utf-8 "$line"]
 		} else {
 			putchan $chan [encoding convertto utf-8 "$line"]
