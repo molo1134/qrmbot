@@ -119,11 +119,11 @@ sub printYouTubeMetaData {
 #    }
     if (/"like this video along with ([0-9,]+) other people"/) {
       $likes = $1;
-      $likes =~ s/,//;
+      $likes =~ s/,//g;
     }
     if (/"dislike this video along with ([0-9,]+) other people"/) {
       $dislikes = $1;
-      $dislikes =~ s/,//;
+      $dislikes =~ s/,//g;
     }
     if (/"livestream":"1"/) {
       $live = 1;
