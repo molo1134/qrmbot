@@ -89,6 +89,7 @@ sub printYouTubeMetaData {
   my $id = shift;
   my $url = "https://youtube.com/watch?v=$id";
   my $shortcut = "http://youtu.be/$id";
+  my $vidimg = "https://i.ytimg.com/vi/$id/hqdefault.jpg";
   my $done = 0;
   my ($title, $len, $desc, $count, $pubdate, $genre, $nsfw, $unlisted, $paid, $author, $likes, $dislikes, $live);
   open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
@@ -153,7 +154,7 @@ sub printYouTubeMetaData {
   print red(" [NSFW]") if $nsfw == 1;
   print green(" [PAID]") if $paid == 1;
   print yellow(" [UNLISTED]") if $unlisted == 1;
-  print ": $desc $shortcut\n";
+  print ": $desc $shortcut img: $vidimg\n";
 }
 
 
