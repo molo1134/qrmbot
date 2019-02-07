@@ -190,7 +190,8 @@ if (not defined $rec{'temp_c'} and not defined $rec{'temp_f'}) {
 
 my $lat = nearest(.1, $rec{'disp_latitude'});
 my $lon = nearest(.1, $rec{'disp_longitude'});
-my $elev = nearest(1, $rec{'disp_elevation'});
+my $elev = undef;
+$elev = nearest(1, $rec{'disp_elevation'}) if defined $rec{'disp_elevation'} and length($rec{'disp_elevation'}) > 0;
 my $pressure_trend = $rec{'pressure_trend'};
 if (defined($pressure_trend)) {
   $pressure_trend =~ s/\+/↑/;
@@ -216,12 +217,13 @@ if (defined($pressure_trend)) {
 #
 
 
-$elev = "${elev}m/" . nearest(1, $elev * 3.2808399) . "ft";
+$elev = "${elev}m/" . nearest(1, $elev * 3.2808399) . "ft" if defined($elev);
 
 print "Weather for ", bold($rec{'disp_full'});
 
 #full
-print " ($lat,$lon)  Elev: $elev\n" if ($full == 1);
+print " ($lat,$lon) " if $full == 1;
+print " Elev: $elev\n" if $full == 1 and defined($elev);
 if (defined($rec{'estimated'}) and $rec{'estimated'} == 1) {
   print " *estimated ";
   print "conditions only\n" if ($full == 1);
