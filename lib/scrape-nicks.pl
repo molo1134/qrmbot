@@ -142,7 +142,7 @@ foreach my $baseurl (@baseurls) {
 	    $ts = $v;
 	    $ts =~ s/\.0*$//g;
 	  } elsif ($k eq "body") {
-	    if ($v =~ /\s+DE\s+([A-Z0-9]+)\s*$/i) {
+	    if ($v =~ /\s+(73s?|DE)\s+([A-Z0-9Øø∅]+)\s*$/i) {
 	      my $tmp = $1;
 	      if ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
 		$c = $tmp;
