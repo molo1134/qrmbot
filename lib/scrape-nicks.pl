@@ -141,6 +141,13 @@ foreach my $baseurl (@baseurls) {
 	  } elsif ($k eq "created_utc") {
 	    $ts = $v;
 	    $ts =~ s/\.0*$//g;
+	  } elsif ($k eq "body") {
+	    if ($v =~ /\s+DE\s+([A-Z0-9]+)\s*$/i) {
+	      my $tmp = $1;
+	      if ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
+		$c = $tmp;
+	      }
+	    }
 	  } elsif ($k eq "kind") {
 	    # moving on to new entry
 	    if (defined $c and defined $u) {
