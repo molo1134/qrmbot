@@ -29,6 +29,18 @@ foreach my $subreddit (@subreddits) {
 #  push @baseurls, "https://www.reddit.com/r/${subreddit}/gilded/.json";
 #  push @baseurls, "https://www.reddit.com/r/${subreddit}/controversial/.json";
 }
+#push @baseurls, ".json";
+#push @baseurls, "https://www.reddit.com/r/trees/comments/iwr3u/i_think_one_of_your_users_got_high_and_wandered/.json";
+#push @baseurls, "https://www.reddit.com/r/trees/comments/iwzpn/hey_guys_i_made_my_first_dx_contact_on_my_qrp_rig/.json";
+#push @baseurls, "https://www.reddit.com/r/amateurradio/comments/iw0ro/hey_rtrees_today_i_woke_upate_breakfasttook_a/.json";
+#push @baseurls, "https://www.reddit.com/r/AskReddit/comments/87v3pv/serious_amatuer_ham_radio_operators_of_reddit/.json";
+#push @baseurls, "https://www.reddit.com/r/AskReddit/comments/8ykbu5/what_hobby_would_you_get_into_if_you_had_a_spare/.json";
+#push @baseurls, "https://www.reddit.com/r/AskReddit/comments/9xhg9/does_anyone_still_use_ham_radios_what_are_your/.json";
+#push @baseurls, "https://www.reddit.com/r/AskReddit/comments/80xk8w/when_in_comes_to_your_hobby_what_is_a_sure_sign/.json";
+#push @baseurls, "https://www.reddit.com/r/AskReddit/comments/1zhf0e/what_is_cheap_yet_fun_hobby_that_anyone_can_get/.json";
+#push @baseurls, "https://www.reddit.com/r/AskReddit/comments/3pcw9o/what_hobby_do_you_simply_not_get/.json";
+#push @baseurls, "https://www.reddit.com/r/AskReddit/comments/9z3jz7/whats_a_very_niche_but_interesting_hobby_many/.json";
+#push @baseurls, "https://www.reddit.com/r/AskReddit/comments/27g2oa/amateur_radio_operators_of_reddit_what_tips_do/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8i4ayo/your_week_in_amateur_radio_new_licensees_05092018/dyostpt/.json";
 #push @baseurls, "https://www.reddit.com/user/molo1134/m/hamradiomulti/new/.json";
 #push @baseurls, "https://www.reddit.com/user/molo1134/m/hamradiomulti/comments/.json";
@@ -63,7 +75,8 @@ our @blacklist = (
   "K67FDE", "N546RV", "N983CC", "W09U", "BG4LAW", "U03BB", "UD83D", "A1LOU",
   "A80J", "KZ4I", "KZ4IX", "J0MPZ", "WH33T", "B17X", "HO0BER", "H8TE",
   "FC3SBOB", "OP00TO", "P0NS", "H2LOL", "AD936X", "E30JAWN", "ML20S",
-  "J300BLK", "R820T", "B3RIA", "1OF3S", "TW010F", "A2BTLC", "XP2FAN", "KT315I");
+  "J300BLK", "R820T", "B3RIA", "1OF3S", "TW010F", "A2BTLC", "XP2FAN", "KT315I",
+  "B2311E", "L00PEE", "TH3BFG");
 
 # load nicks
 our $nickfile = "$ENV{'HOME'}/.nicks.csv";
@@ -222,6 +235,7 @@ sub updateResult {
   my $c = shift;
   my $ts = shift;
   my $u = shift;
+  return if $u =~ /\[deleted\]/;
   print STDERR "found: $c /u/$u \@$ts\n";
   if (defined($results{$c})) {
     my ($oldts,$oldval) = split(/,/, $results{$c});
