@@ -63,7 +63,7 @@ our @blacklist = (
   "K67FDE", "N546RV", "N983CC", "W09U", "BG4LAW", "U03BB", "UD83D", "A1LOU",
   "A80J", "KZ4I", "KZ4IX", "J0MPZ", "WH33T", "B17X", "HO0BER", "H8TE",
   "FC3SBOB", "OP00TO", "P0NS", "H2LOL", "AD936X", "E30JAWN", "ML20S",
-  "J300BLK", "R820T", "B3RIA", "1OF3S", "TW010F", "A2BTLC", "XP2FAN");
+  "J300BLK", "R820T", "B3RIA", "1OF3S", "TW010F", "A2BTLC", "XP2FAN", "KT315I");
 
 # load nicks
 our $nickfile = "$ENV{'HOME'}/.nicks.csv";
@@ -142,8 +142,8 @@ foreach my $baseurl (@baseurls) {
 	    $ts = $v;
 	    $ts =~ s/\.0*$//g;
 	  } elsif ($k eq "body") {
-	    if ($v =~ /\s+(73s?|DE)\s+([A-Z0-9Øø∅]+)\s*$/i) {
-	      my $tmp = $1;
+	    if ($v =~ /(\\n|73s?|DE)\s*([A-Z0-9Øø∅]+)\s*$/i) {
+	      my $tmp = $2;
 	      if ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
 		$c = $tmp;
 	      }
@@ -227,8 +227,8 @@ sub updateResult {
     my ($oldts,$oldval) = split(/,/, $results{$c});
     if ($ts > $oldts) {
       $results{$c} = "$ts,$u";
-    } else {
-      print STDERR "discarding older\n";
+#    } else {
+      #print STDERR "discarding older\n";
     }
   } else {
     $results{$c} = "$ts,$u";
