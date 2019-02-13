@@ -140,7 +140,7 @@ while (<HTTP>) {
     $instate = 1;
     #print "instate\n";
   }
-  if ($instate == 1 && /.*>([^<]*)<\/font/) {
+  if ($instate == 1 && /.*>([^<]*)<\/td/) {
     $state = $1;
   }
 
@@ -150,7 +150,7 @@ while (<HTTP>) {
     #print "incounty\n";
   }
   #print "$_\n" if $incounty == 1;
-  if ($incounty == 1 && /.*>([^<]*)<\/font>/) {
+  if ($incounty == 1 && /.*>([^<]*)<\/td>/) {
     $county = $1;
   }
 
@@ -159,7 +159,7 @@ while (<HTTP>) {
     $incall = 1;
     #print "incall\n";
   }
-  if ($incall == 1 && /.*>([^<]*)</) {
+  if ($incall == 1 && /^\s*([^<]+)</) {
     #print "$_\n";
     $callsign = $1;
   }
