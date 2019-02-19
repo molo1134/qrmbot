@@ -930,7 +930,7 @@ sub doFccApp {
     $appId = $1;
   }
   $url = "http://wireless2.fcc.gov/UlsApp/ApplicationSearch/applMain.jsp?applID=$appId";
-  print "$url\n";
+  #print "$url\n";
   open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   my $inStatus = 0;
   my $inReceipt = 0;
