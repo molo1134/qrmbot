@@ -77,6 +77,8 @@ while ($i <= $#ARGV) {
     # noop
   } elsif ($ARGV[$i] =~ m|^https?://(\w+\.)?imgur.com/|) {
     doImgur($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://wireless2.fcc.gov/UlsApp/ApplicationSearch/.*\?applID=|) {
+    doFccApp($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://| and
 	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
     doHtml($ARGV[$i]);
@@ -919,6 +921,92 @@ sub doImgur {
 	($data{width} > 640 or $data{height} > 640);
   print ": $desc" if defined $desc;
   print "\n";
+}
+
+sub doFccApp {
+  my $url = shift;
+  my ($appId, $call, $status, $receipt, $action, $systematic, $relative, $req);
+  if ($url =~ m|https?://wireless2.fcc.gov/UlsApp/ApplicationSearch/.*\?applID=(\d+)|) {
+    $appId = $1;
+  }
+  $url = "http://wireless2.fcc.gov/UlsApp/ApplicationSearch/applMain.jsp?applID=$appId";
+  print "$url\n";
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  my $inStatus = 0;
+  my $inReceipt = 0;
+  my $inAction = 0;
+  while(<HTTP>) {
+    #print;
+    if (m|title="Link to License in new window" target="_new">([^<]+)</a>|) {
+      $call = $1;
+      #print "call $call\n"
+    }
+    $inStatus = 1 if />Application Status</;
+    if ($inStatus and /-\s*(\w+)\s*$/) {
+      $status = $1;
+      #print "status: $status\n";
+      $inStatus = 0;
+    }
+    $inReceipt = 1 if />Receipt Date</;
+    if ($inReceipt and m|\s*([01][0-9]/[0-3][0-9]/\d{4})(&nbsp;)?<|) {
+      $receipt = $1;
+      #print "receipt: $receipt\n";
+      $inReceipt = 0;
+    }
+    $inAction = 1 if />Action Date</;
+    if ($inAction and m|\s*([01][0-9]/[0-3][0-9]/\d{4})(&nbsp;)?<|) {
+      $action = $1;
+      #print "action: $action\n";
+      $inAction = 0;
+    }
+  }
+  close(HTTP);
+
+  $url = "http://wireless2.fcc.gov/UlsApp/ApplicationSearch/applServiceSpecific.jsp?applID=$appId";
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  my $inSystematic = 0;
+  my $inPreflist = 0;
+  my $inReq = 0;
+  my @vanities;
+  while(<HTTP>) {
+    $inSystematic = 1 if />Request to change a station call sign systematically\?</;
+    if ($inSystematic and /\s*(.*)&nbsp;</) {
+      $systematic = $1;
+      #print "systematic: $systematic\n";
+      $inSystematic = 0;
+    }
+    if (/Close Relative of Former Holder - (.+?)\s*$/) {
+      $relative = $1;
+    }
+    $inReq = 1 if />Requested Call Sign</;
+    if ($inReq and /^\s*([A-Z0-9]+)\s*&nbsp;</) {
+      $req = $1;
+      $inReq = 0;
+    }
+    $inPreflist = 1 if /Reference Copy Displays Call Sign Preference Information Out Of Order/;
+    if ($inPreflist and /(&nbsp;)*(\d+)\.(&nbsp;)*([A-Z0-9]+)\s*</) {
+      my ($n, $c) = ($2, $4);
+      #print "$n: $c\n";
+      $vanities[$n-1] = $c;
+    }
+
+  }
+  close(HTTP);
+
+  if (defined $call) {
+    print bold($call), ": ";
+    $status = lightblue($status) if $status eq "Pending";
+    $status = green($status) if $status eq "Granted";
+    $status = red($status) if $status eq "Dismissed";
+    $status = yellow($status) if $status eq "Inactive";
+    print "$status -- ";
+    print "systematic; " if defined $systematic and $systematic ne "N";
+    print "received $receipt, last action $action; " if defined $receipt;
+    print "vanity list: ", join(", ", @vanities) if defined $vanities[0];
+    print "relative: $relative " if defined $relative;
+    print "requested: $req" if defined $req;
+    print "\n";
+  }
 }
 
 sub unescape {
