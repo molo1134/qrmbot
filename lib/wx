@@ -101,7 +101,7 @@ my @results;	  # array of hash references
 my $count = 0;
 
 #print "$url\n";
-open(HTTP, '-|', "curl -s -L --insecure '$url'");
+open(HTTP, '-|', "curl -s -L --compressed --insecure '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   #print;
@@ -300,7 +300,7 @@ my $europe = 0;
 
 $url = "http://api.wunderground.com/api/$apikey/alerts/q/$encodedloc.json";
 #print "$url\n";
-open(HTTP, '-|', "curl -s -L --insecure '$url'");
+open(HTTP, '-|', "curl -s -L --compressed --insecure '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   chomp;
