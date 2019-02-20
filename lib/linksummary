@@ -928,6 +928,7 @@ sub doImgur {
 sub doFccApp {
   my $url = shift;
   my ($appId, $call, $status, $receipt, $action, $systematic, $relative, $req);
+  my $purpose;
   if ($url =~ m|https?://wireless2.fcc.gov/UlsApp/ApplicationSearch/.*\?applID=(\d+)|) {
     $appId = $1;
   }
@@ -943,6 +944,9 @@ sub doFccApp {
       $call = $1;
       #print "call $call\n"
     }
+    $purpose = "Administrative Update" if /Administrative Update/;
+    $purpose = "Renewal" if /Renewal Only/;
+    $purpose = "New License" if /NE - New/;
     $inStatus = 1 if />Application Status</;
     if ($inStatus and /-\s*(\w+)\s*$/) {
       $status = $1;
@@ -975,6 +979,7 @@ sub doFccApp {
     if ($inSystematic and /\s*(.*)&nbsp;</) {
       $systematic = $1;
       #print "systematic: $systematic\n";
+      $systematic = undef if $systematic eq "";
       $inSystematic = 0;
     }
     if (/Close Relative of Former Holder - (.+?)\s*$/) {
@@ -991,7 +996,6 @@ sub doFccApp {
       #print "$n: $c\n";
       $vanities[$n-1] = $c;
     }
-
   }
   close(HTTP);
 
@@ -1002,6 +1006,7 @@ sub doFccApp {
     $status = red($status) if $status eq "Dismissed";
     $status = yellow($status) if $status eq "Inactive";
     print "$status -- ";
+    print "$purpose; " if defined $purpose;
     print "systematic; " if defined $systematic and $systematic ne "N";
     print "received $receipt, last action $action; " if defined $receipt;
     print "vanity list: ", join(", ", @vanities) if defined $vanities[0];
