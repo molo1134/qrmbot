@@ -1030,7 +1030,8 @@ sub doAe7qRegion {
   my @pending;
   my $lastcall;
   my $inCallTable = 0;
-  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  my $ae7qTimeout = $timeout * 2;
+  open(HTTP, '-|', "curl --max-time $ae7qTimeout -L -k -s '$url'");
   while(<HTTP>) {
     if (m|<tr><th class='Database' colspan='2'> Totals </th><td class='DatabaseField' align='right'> (\d+) </td><td class='DatabaseField' align='right'> (\d+) <|) {
       $numavail = $1;
