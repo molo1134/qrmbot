@@ -25,11 +25,12 @@ my @baseurls;
 foreach my $subreddit (@subreddits) {
   push @baseurls, "https://www.reddit.com/r/${subreddit}/new/.json";
   push @baseurls, "https://www.reddit.com/r/${subreddit}/comments/.json";
-#  push @baseurls, "https://www.reddit.com/r/${subreddit}/top/.json";
-#  push @baseurls, "https://www.reddit.com/r/${subreddit}/gilded/.json";
-#  push @baseurls, "https://www.reddit.com/r/${subreddit}/controversial/.json";
+  #push @baseurls, "https://www.reddit.com/r/${subreddit}/top/.json";
+  #push @baseurls, "https://www.reddit.com/r/${subreddit}/gilded/.json";
+  #push @baseurls, "https://www.reddit.com/r/${subreddit}/controversial/.json";
 }
 #push @baseurls, ".json";
+#push @baseurls, "https://www.reddit.com/r/amateurradio/comments/asxn9e/what_was_your_first_ham_mistake/.json";
 #push @baseurls, "https://www.reddit.com/r/TropicalWeather/comments/6zcr3y/this_is_a_message_from_st_john_us_virgin_islands/.json?limit=500";
 #push @baseurls, "https://www.reddit.com/r/trees/comments/iwr3u/i_think_one_of_your_users_got_high_and_wandered/.json";
 #push @baseurls, "https://www.reddit.com/r/trees/comments/iwzpn/hey_guys_i_made_my_first_dx_contact_on_my_qrp_rig/.json";
@@ -43,8 +44,6 @@ foreach my $subreddit (@subreddits) {
 #push @baseurls, "https://www.reddit.com/r/AskReddit/comments/9z3jz7/whats_a_very_niche_but_interesting_hobby_many/.json";
 #push @baseurls, "https://www.reddit.com/r/AskReddit/comments/27g2oa/amateur_radio_operators_of_reddit_what_tips_do/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8i4ayo/your_week_in_amateur_radio_new_licensees_05092018/dyostpt/.json";
-#push @baseurls, "https://www.reddit.com/user/molo1134/m/hamradiomulti/new/.json";
-#push @baseurls, "https://www.reddit.com/user/molo1134/m/hamradiomulti/comments/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8fowrk/is_there_a_baofenglike_radio_but_for_hf/dy6fl6s/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8fd9vb/its_not_much_but_its_mine_shack_edition/dy6mkg7/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8ydhs6/2way_radio_recommendations/e2a6fcq/.json";
@@ -155,17 +154,18 @@ foreach my $baseurl (@baseurls) {
 	  } elsif ($k eq "created_utc") {
 	    $ts = $v;
 	    $ts =~ s/\.0*$//g;
-	  } elsif ($k eq "body") {
-	    if ($v =~ /(\\n|73s?|DE)\s*([A-Z0-9Øø∅]+)\s*$/i) {
+	  } elsif ($k eq "body" or $k eq "selftext") {
+	    if ($v =~ /(\\n|73s?|DE)\s*([A-Z0-9Øø∅]+)(\s|\\n)*$/i) {
 	      my $tmp = $2;
 	      if ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
-		$c = $tmp;
+		$c = uc $tmp;
+		print STDERR "$c :: $k => $v\n";
 	      }
 	    }
 	  } elsif ($k eq "kind") {
 	    # moving on to new entry
 	    if (defined $c and defined $u) {
-	      if (not any { /^$c$/i } @blacklist) {
+	      if (not any { /^$c$/i } @blacklist and $u ne "[deleted]") {
 		updateResult($c, $ts, $u);
 		$ts = time() if not defined $ts;
 		$results{$c} = "$ts,$u";
@@ -178,7 +178,7 @@ foreach my $baseurl (@baseurls) {
 	}
       }
       if (defined($u) and defined($c)) {
-	if (not any { /^$c$/i } @blacklist) {
+	if (not any { /^$c$/i } @blacklist and $u ne "[deleted]") {
 	  updateResult($c, $ts, $u);
 	  $ts = time() if not defined $ts;
 	  $results{$c} = "$ts,$u";
