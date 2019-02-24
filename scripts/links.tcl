@@ -78,6 +78,9 @@ proc ae7q { nick host hand chan text } {
 	global linkbin
 	set input [sanitize_string [string trim ${text}]]
 	putlog "ae7q pub: $nick $host $hand $chan $input"
+	if [string equal "0" $input] then {
+		set input "10"
+	}
 	set url "http://www.ae7q.com/query/list/GenLicAvail.php?REGION=$input"
 	catch {exec ${linkbin} ${url}} data
 	set output [split $data "\n"]
@@ -89,6 +92,9 @@ proc msg_ae7q {nick uhand handle input} {
 	global linkbin
 	set input [sanitize_string [string trim ${input}]]
 	putlog "ae7q msg: $nick $uhand $handle $input"
+	if [string equal "0" $input] then {
+		set input "10"
+	}
 	set url "http://www.ae7q.com/query/list/GenLicAvail.php?REGION=${input}"
 	catch {exec ${linkbin} ${url}} data
 	set output [split $data "\n"]
