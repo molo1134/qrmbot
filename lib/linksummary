@@ -1033,14 +1033,15 @@ sub doAe7qRegion {
   my $ae7qTimeout = $timeout * 2;
   open(HTTP, '-|', "curl --max-time $ae7qTimeout -L -k -s '$url'");
   while(<HTTP>) {
-    if (m|<tr><th class='Database' colspan='2'> Totals </th><td class='DatabaseField' align='right'> (\d+) </td><td class='DatabaseField' align='right'> (\d+) <|) {
+    if (m|<tr><th class='Database' colspan='[23]'> Totals </th><td class='DatabaseField' align='right'> (\d+) </td><td class='DatabaseField' align='right'> (\d+) <|) {
       $numavail = $1;
       $numpending = $2;
       #print "$numavail, $numpending\n";
     }
-    $inCallTable = 1 if (m|1x2 callsigns|);
+    $inCallTable = 1 if (m|[12]x[12] callsigns|);
     if (not defined $lastcall and $inCallTable and m|<a href='/query/data/CallHistory\.php\?CALL=([A-Z0-9]+)'|) {
-      $lastcall = $1
+      $lastcall = $1;
+      #print "lastcall: $lastcall\n";
     }
     if (defined $lastcall and m|</td><td class='DatabaseField' align='center'>\d+</td><td class="Database" style='background-color:#([0-9A-F]+);|) {
       my $color = $1;
