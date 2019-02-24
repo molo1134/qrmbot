@@ -7,6 +7,7 @@ bind pub - !phonetics phoneticise
 bind pub - !phoneticise phoneticise
 bind pub - !phoneticize phoneticise
 bind pub - !metard metard
+bind pub - !whotard whotard
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 
@@ -172,5 +173,8 @@ proc metard { nick host hand chan text} {
 	putchan $chan "$nick you tard" 
 }
 
+proc whotard { nick host hand chan text} {
+	putchan $chan "Why the lovely Aram of course"
+}
 putlog "fun.tcl loaded."
 
