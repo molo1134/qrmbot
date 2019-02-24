@@ -32,6 +32,9 @@ bind pubm - *http://* http_pub
 bind msgm - *https://* http_msg
 bind pubm - *https://* http_pub
 
+bind pub - !ae7q ae7q
+bind msg - !ae7q msg_ae7q
+
 set linkbin "/home/eggdrop/bin/linksummary"
 
 proc http_msg { nick host hand text } {
@@ -68,5 +71,28 @@ proc http_pub { nick host hand chan text } {
 	set output [split $data "\n"]
 	foreach line $output {
 		putchan $chan [encoding convertto utf-8 "$line"]
+	}
+}
+
+proc ae7q { nick host hand chan text } {
+	global linkbin
+	set input [sanitize_string [string trim ${text}]]
+	putlog "ae7q pub: $nick $host $hand $chan $input"
+	set url "http://www.ae7q.com/query/list/GenLicAvail.php?REGION=$input"
+	catch {exec ${linkbin} ${url}} data
+	set output [split $data "\n"]
+	foreach line $output {
+		putchan $chan [encoding convertto utf-8 "$line"]
+	}
+}
+proc msg_ae7q {nick uhand handle input} {
+	global linkbin
+	set input [sanitize_string [string trim ${input}]]
+	putlog "ae7q msg: $nick $uhand $handle $input"
+	set url "http://www.ae7q.com/query/list/GenLicAvail.php?REGION=${input}"
+	catch {exec ${linkbin} ${url}} data
+	set output [split $data "\n"]
+	foreach line $output {
+		putmsg $nick [encoding convertto utf-8 "$line"]
 	}
 }
