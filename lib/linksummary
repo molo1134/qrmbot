@@ -1038,7 +1038,7 @@ sub doAe7qRegion {
       $numpending = $2;
       #print "$numavail, $numpending\n";
     }
-    $inCallTable = 1 if (m|[12]x[12] callsigns|);
+    $inCallTable = 1 if (m|>\s*[12]x[12] callsigns\s*<|);
     if (not defined $lastcall and $inCallTable and m|<a href='/query/data/CallHistory\.php\?CALL=([A-Z0-9]+)'|) {
       $lastcall = $1;
       #print "lastcall: $lastcall\n";
