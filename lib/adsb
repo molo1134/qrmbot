@@ -55,6 +55,8 @@ while ($i <= $#ARGV) {
   $i++;
 }
 
+updateICAOtypes();
+
 my $geo;
 my ($lat, $lon);
 my $url;
@@ -104,20 +106,26 @@ while(<HTTP>) {
     }
 
     #print "keys: ", join (", ", keys(%rec)) , "\n";
-    #print "postime: $rec{'postime'}\n";
-    my $time = strftime("%H:%M:%Sz", gmtime($rec{postime}/1000)); 
-    my $grid = coordToGrid($rec{lat}, $rec{lon});
-    my $placename = geolocate($rec{lat}, $rec{lon});
-    #print "pos: $lat, $lon, $rec{lat}, $rec{lon}\n";
-    my ($dist, $bearing) = distBearing($lat, $lon, $rec{lat}, $rec{lon});
+    $rec{time} = strftime("%H:%M:%Sz", gmtime($rec{postime}/1000));
+    $rec{grid} = coordToGrid($rec{lat}, $rec{lon});
+    $rec{place} = geolocate($rec{lat}, $rec{lon});
+    ($rec{dist}, $rec{bearing}) = distBearing($lat, $lon, $rec{lat}, $rec{lon});
 
-    print bold("$rec{call}/$rec{reg}"), " ($rec{type}) 0x$rec{icao}; ";
+    if (defined($rec{call}) and length($rec{call}) > 0 and
+	$rec{call} ne $rec{reg}) {
+      print bold("$rec{call}/$rec{reg}");
+    } else {
+      print bold($rec{reg});
+    }
+    print " ($rec{type}) 0x$rec{icao}; ";
     print "squawk $rec{sqk} " if defined $rec{sqk} and length($rec{sqk}) > 0;
-    print "alt $rec{alt} ft; track $rec{trak}° speed $rec{spd} knots";
+    print "alt $rec{alt} ft;";
+    printf (" track %.0f° speed %.0f knots", $rec{trak}, $rec{spd});
     print yellow(" MLAT") if $rec{mlat} != 0;
     print green(" GND") if $rec{gnd} != 0;
-    print " over $placename ($grid)";
-    printf (" -- %.1f km, %.0f°", $dist, $bearing);
+    print " over $rec{place} ($rec{grid})";
+    print " at $rec{time}";
+    printf (" -- %.1f km, %.0f°", $rec{dist}, $rec{bearing});
     print "\n";
   }
 }
@@ -128,3 +136,31 @@ if ($total == 0 and defined($callOrReg) and $url =~ /callsign/) {
   goto DOHTTP;
 }
 
+if ($total == 0) {
+  print "no results\n";
+}
+
+sub updateICAOtypes {
+  my $url = "https://www4.icao.int/doc8643/External/AircraftTypes";
+  my $typesfile = $ENV{'HOME'} . "/.icao-types";
+  my $needICAO = 0;
+  my $now = time;
+  my $maxage=604800; # 1 week
+  if (not -e $typesfile) {
+    $needICAO = 1
+  } else {
+    my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $typesfile;
+    if (defined $mtime) {
+      my $age = $now - $mtime;
+      if ($age > $maxage or $size == 0) {
+	$needICAO = 1;
+      }
+    } else {
+      $needICAO = 1;
+    }
+  }
+  if ($needICAO == 1) {
+    print "$url\n";
+    system("curl -s -k -L --max-time 20 --retry 1 -o '$typesfile' -d '' '$url'");
+  }
+}
