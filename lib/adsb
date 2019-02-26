@@ -139,6 +139,9 @@ if ($total == 0 and defined($callOrReg) and $url =~ /callsign/) {
   goto DOHTTP;
 }
 
+print "no planes found!" if $#planes == 0;
+exit $exitnonzeroonerror if $#planes == 0;
+
 my @sortedplanes = sort { $a->{dist} <=> $b->{dist} } @planes;  # ascending
 show(\@sortedplanes);
 
