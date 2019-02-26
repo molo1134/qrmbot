@@ -78,7 +78,7 @@ my $total = 0;
 
 DOHTTP:
 
-print "$url\n";
+#print "$url\n";
 open(HTTP, '-|', "curl --max-time 10 -s -k -L -H 'api-auth: $apikey' '$url'");
 while(<HTTP>) {
   s/\},\{/\},\n\{/g;
