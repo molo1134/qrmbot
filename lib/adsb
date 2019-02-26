@@ -1,0 +1,130 @@
+#!/usr/bin/perl
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+use Encode qw(decode);
+use I18N::Langinfo qw(langinfo CODESET);
+use URI::Escape;
+use Math::Round;
+use POSIX qw(strftime);
+use POSIX qw(tzset);
+use Time::Piece ();
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+our $apikey = undef;
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+my $apikeyfile = $ENV{'HOME'} . "/.adsbx";
+if (-e ($apikeyfile)) {
+  require($apikeyfile);
+} else {
+  die "error: unable to read file $apikeyfile"
+}
+die "error: no API key set" unless defined($apikey);
+
+my $callOrReg;
+my $loc;
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /--geo/) {
+    $i++;
+    next;
+  }
+  if ($ARGV[$i] =~ /^[A-Z0-9-]+$/) {
+    $callOrReg = $ARGV[$i];
+  } else {
+    if (defined($loc)) {
+      $loc = $loc . " " . $ARGV[$i];
+    } else {
+      $loc = $ARGV[$i];
+    }
+  }
+  $i++;
+}
+
+my $geo;
+my ($lat, $lon);
+my $url;
+#print "loc: $loc\n";
+if (defined($loc) and $loc =~ /^-?\d+(.\d+)?,-?\d+(.\d+)?$/) {
+  ($lat, $lon) = split /,/, $loc;
+  $url = "https://adsbexchange.com/api/aircraft/json/lat/" .
+    uri_escape($lat) . "/lon/" . uri_escape($lon) . "/dist/10/";
+} elsif (defined($loc)) {
+  $loc =~ s/^\s*//;
+  $loc =~ s/\s*$//;
+  $geo = argToCoords($loc);
+  ($lat, $lon) = split /,/, $geo;
+  $url = "https://adsbexchange.com/api/aircraft/json/lat/" .
+    uri_escape($lat) . "/lon/" . uri_escape($lon) . "/dist/10/";
+} elsif (defined($callOrReg)) {
+  $url = "https://adsbexchange.com/api/aircraft/callsign/$callOrReg";
+}
+
+my $total = 0;
+
+DOHTTP:
+
+print "$url\n";
+open(HTTP, '-|', "curl --max-time 10 -s -k -L -H 'api-auth: $apikey' '$url'");
+while(<HTTP>) {
+  s/\},\{/\},\n\{/g;
+  s/\}]/\}\n]/g;
+  #print;
+  if (/"total":(\d+),/) {
+    $total = $1;
+  }
+  last if /503 Service Unavailable/;
+  my @lines = split /\n/, $_;
+  foreach my $l (@lines) {
+    #print "$l\n";
+    next if $l =~ /total/;
+    $l =~ s/","/",\n"/g;
+    my @kv = split /\n/, $l;
+    my %rec;
+    foreach my $p (@kv) {
+      #print "$p\n";
+      if ($p =~ m/"(\w+)":"([^"]*)",/) {
+	$rec{$1} = $2;
+	#print "$1 => $2\n";
+      }
+    }
+
+    #print "keys: ", join (", ", keys(%rec)) , "\n";
+    #print "postime: $rec{'postime'}\n";
+    my $time = strftime("%H:%M:%Sz", gmtime($rec{postime}/1000)); 
+    my $grid = coordToGrid($rec{lat}, $rec{lon});
+    my $placename = geolocate($rec{lat}, $rec{lon});
+    #print "pos: $lat, $lon, $rec{lat}, $rec{lon}\n";
+    my ($dist, $bearing) = distBearing($lat, $lon, $rec{lat}, $rec{lon});
+
+    print bold("$rec{call}/$rec{reg}"), " ($rec{type}) 0x$rec{icao}; ";
+    print "squawk $rec{sqk} " if defined $rec{sqk} and length($rec{sqk}) > 0;
+    print "alt $rec{alt} ft; track $rec{trak}° speed $rec{spd} knots";
+    print yellow(" MLAT") if $rec{mlat} != 0;
+    print green(" GND") if $rec{gnd} != 0;
+    print " over $placename ($grid)";
+    printf (" -- %.1f km, %.0f°", $dist, $bearing);
+    print "\n";
+  }
+}
+close(HTTP);
+
+if ($total == 0 and defined($callOrReg) and $url =~ /callsign/) {
+  $url = "https://adsbexchange.com/api/aircraft/registration/$callOrReg";
+  goto DOHTTP;
+}
+
