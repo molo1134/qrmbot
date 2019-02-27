@@ -76,6 +76,9 @@ if (defined($loc) and $loc =~ /^-?\d+(.\d+)?,-?\d+(.\d+)?$/) {
   $url = "https://adsbexchange.com/api/aircraft/callsign/$callOrReg";
 }
 
+my $localgrid;
+$localgrid = coordToGrid($lat, $lon) if defined($lat);
+
 my $total = 0;
 my @planes;	# array of hashrefs
 
@@ -214,6 +217,7 @@ sub show
     print " at $rec{time}";
     print "; owner: $owner" if defined $owner;
     printf (" -- %.1f km, %.0f°", $rec{dist}, $rec{bearing});
+    print " from $localgrid" if defined($localgrid);
 
     if (defined($icao) and defined($rec{icao}) and $icao ne $rec{icao}) {
       print(" -- ", yellow("warning"));
