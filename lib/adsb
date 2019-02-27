@@ -185,7 +185,11 @@ sub show
     if ($rec{reg} =~ m/^N/) {
       ($manuf, $model, $type, $etype, $icao, $owner) = getFaaReg($rec{reg});
     }
-
+    my ($airline, $orig, $dest, $fnum);
+    if ($rec{reg} ne $rec{call}) {
+      ($airline, $orig, $dest, $fnum) = getFlightTrack($rec{call});
+    }
+    #print join(",", ($airline, $orig, $dest)), "\n";
     #print join(",", ($manuf, $model, $type, $etype, $icao, $owner)), "\n";
 
     if (defined($rec{call}) and length($rec{call}) > 0 and
@@ -199,6 +203,7 @@ sub show
     } else {
       print " ($manuf $model)";
     }
+    print " ($airline $fnum ", bold("$orig->$dest"), ")" if defined $airline;
     print " 0x$rec{icao}; ";
     print "squawk $rec{sqk} " if defined $rec{sqk} and length($rec{sqk}) > 0;
     print "alt $rec{alt} ft;";
@@ -253,4 +258,28 @@ sub getFaaReg
   }
   close(HTTP);
   return ($manuf, $model, $type, $etype, $icao, $owner);
+}
+
+sub getFlightTrack
+{
+  my $flight = shift;
+  my $url = "https://flightaware.com/live/flight/$flight";
+  my ($airline, $orig, $dest, $fnum);
+  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
+  while(<HTTP>) {
+    if (/name="origin".*content="([A-Z]+)"/) {
+      $orig = $1;
+    }
+    if (/name="destination".*content="([A-Z]+)"/) {
+      $dest = $1;
+    }
+    if (m|"shortName":"([^"]*)"|) {
+      $airline = $1;
+    }
+    if (m|#(\d+)|) {
+      $fnum = $1;
+    }
+  }
+  close(HTTP);
+  return ($airline, $orig, $dest, $fnum);
 }
