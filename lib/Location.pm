@@ -98,7 +98,7 @@ sub qthToCoords {
   my $apikey = getGeocodingAPIKey();
   my $url = "https://maps.googleapis.com/maps/api/geocode/xml?address=$place&sensor=false&key=$apikey";
 
-  open (HTTP, '-|', "curl -k -s -L '$url'");
+  open (HTTP, '-|', "curl --stderr - -N -k -s -L '$url'");
   binmode(HTTP, ":utf8");
   GET: while (<HTTP>) {
     #print;
@@ -145,7 +145,7 @@ sub geolocate {
 
   RESTART:
 
-  open (HTTP, '-|', "curl -k -s -L '$url'");
+  open (HTTP, '-|', "curl --stderr - -N -k -s -L '$url'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
     #print;
@@ -291,7 +291,7 @@ sub coordToTZ {
 
   my ($dstoffset, $rawoffset, $zoneid, $zonename);
 
-  open (HTTP, '-|', "curl -k -s -L '$url'");
+  open (HTTP, '-|', "curl --stderr - -N -k -s -L '$url'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
 
@@ -589,7 +589,7 @@ sub coordToElev {
   my $url = "https://maps.googleapis.com/maps/api/elevation/json?locations=$lat,$lon&key=$apikey";
 
   my ($elev, $res);
-  open (HTTP, '-|', "curl -k -s -L '$url'");
+  open (HTTP, '-|', "curl --stderr - -N -k -s -L '$url'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
     # {
