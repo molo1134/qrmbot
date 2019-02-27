@@ -308,8 +308,8 @@ sub getFlightTrack
       if (m/"actual":\d+\},"landingTimes":\{"scheduled":\d+,"estimated":(\d+),"actual":null/) {
 	my $estimated = $1;
 	my $now = time();
-	print "estimated: $estimated\n";
-	print "now $now\n";
+	#print "estimated: $estimated\n";
+	#print "now $now\n";
 	if ($estimated > $now) {
 	  my $m = (($estimated - $now) / 60) % 60;
 	  my $h = floor((($estimated - $now) / 60) / 60);
