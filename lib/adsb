@@ -229,7 +229,8 @@ sub getFaaReg
   my ($manuf, $model, $type, $etype, $icao, $owner);
   my $url = "https://registry.faa.gov/aircraftinquiry/NNum_Results.aspx?nNumberTxt=$reg";
   #print "$url\n";
-  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L -H 'api-auth: $apikey' '$url'");
+  return; # FIXME
+  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
   while(<HTTP>) {
     #print;
     if (/<span id="content_lbMfrName" class="Results_DataText">([^<]+?)\s*<\/span>/) {
