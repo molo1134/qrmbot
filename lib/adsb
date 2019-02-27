@@ -166,7 +166,7 @@ sub updateICAOtypes {
   }
   if ($needICAO == 1) {
     #print "$url\n";
-    #system("curl --stderr - -s -k -L --max-time 20 --retry 1 -o '$typesfile' -d '' '$url'");
+    system("curl --stderr - -s -k -L --max-time 20 --retry 1 -o '$typesfile' -d '' '$url'");
   }
 }
 
@@ -229,7 +229,6 @@ sub getFaaReg
   my ($manuf, $model, $type, $etype, $icao, $owner);
   my $url = "https://registry.faa.gov/aircraftinquiry/NNum_Results.aspx?nNumberTxt=$reg";
   #print "$url\n";
-  return; # FIXME
   open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
   while(<HTTP>) {
     #print;
