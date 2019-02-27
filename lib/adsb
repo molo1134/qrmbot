@@ -139,7 +139,7 @@ if ($total == 0 and defined($callOrReg) and $url =~ /callsign/) {
   goto DOHTTP;
 }
 
-print "no planes found!" if $#planes == 0;
+print "no planes found.\n" if $#planes == 0;
 exit $exitnonzeroonerror if $#planes == 0;
 
 my @sortedplanes = sort { $a->{dist} <=> $b->{dist} } @planes;  # ascending
@@ -180,13 +180,25 @@ sub show
   foreach my $planeref (@$array) {
     my %rec = %$planeref;
 
+    my ($manuf, $model, $type, $etype, $icao, $owner);
+    if ($rec{reg} =~ m/^N/) {
+      ($manuf, $model, $type, $etype, $icao, $owner) = getFaaReg($rec{reg});
+    }
+
+    #print join(",", ($manuf, $model, $type, $etype, $icao, $owner)), "\n";
+
     if (defined($rec{call}) and length($rec{call}) > 0 and
 	$rec{call} ne $rec{reg}) {
       print bold("$rec{call}/$rec{reg}");
     } else {
       print bold($rec{reg});
     }
-    print " ($rec{type}) 0x$rec{icao}; ";
+    if (not defined($model)) {
+      print " ($rec{type})";
+    } else {
+      print " ($manuf $model)";
+    }
+    print " 0x$rec{icao}; ";
     print "squawk $rec{sqk} " if defined $rec{sqk} and length($rec{sqk}) > 0;
     print "alt $rec{alt} ft;";
     printf (" track %.0f° speed %.0f knots", $rec{trak}, $rec{spd});
@@ -194,11 +206,50 @@ sub show
     print green(" GND") if $rec{gnd} != 0;
     print " over $rec{place} ($rec{grid})";
     print " at $rec{time}";
+    print "; owner: $owner" if defined $owner;
     printf (" -- %.1f km, %.0f°", $rec{dist}, $rec{bearing});
+
+    if (defined($icao) and defined($rec{icao}) and $icao ne $rec{icao}) {
+      print(" -- ", yellow("warning"));
+      print(": observed ICAO mode S code $rec{icao} differs from registered code $icao");
+    }
+
     print "\n";
 
     if (++$i >= $limit) {
       last;
     }
   }
+}
+
+sub getFaaReg
+{
+  my $reg = shift;
+  my ($manuf, $model, $type, $etype, $icao, $owner);
+  my $url = "https://registry.faa.gov/aircraftinquiry/NNum_Results.aspx?nNumberTxt=$reg";
+  #print "$url\n";
+  open(HTTP, '-|', "curl --max-time 10 -s -k -L -H 'api-auth: $apikey' '$url'");
+  while(<HTTP>) {
+    #print;
+    if (/<span id="content_lbMfrName" class="Results_DataText">([^<]+?)\s*<\/span>/) {
+      $manuf = $1;
+    }
+    if (/<span id="content_Label7" class="Results_DataText">([^<]+?)\s*<\/span>/) {
+      $model = $1;
+    }
+    if (/<span id="content_Label11" class="Results_DataText">([^<]+?)\s*<\/span>/) {
+      $type = $1;
+    }
+    if (/<span id="content_lbTypeEng" class="Results_DataText">([^<]+?)\s*<\/span>/) {
+      $etype = $1;
+    }
+    if (/<span id="content_lbOwnerName" class="Results_DataText"[^>]*>([^<]+?)\s*<\/span>/) {
+      $owner = $1;
+    }
+    if (m|<td>([0-9A-F]{6})</td>|) {
+      $icao = $1;
+    }
+  }
+  close(HTTP);
+  return ($manuf, $model, $type, $etype, $icao, $owner);
 }
