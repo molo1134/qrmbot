@@ -82,7 +82,7 @@ my @planes;	# array of hashrefs
 DOHTTP:
 
 #print "$url\n";
-open(HTTP, '-|', "curl -N --max-time 10 -s -k -L -H 'api-auth: $apikey' '$url'");
+open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L -H 'api-auth: $apikey' '$url'");
 while(<HTTP>) {
   s/\},\{/\},\n\{/g;
   s/\}]/\}\n]/g;
@@ -166,7 +166,7 @@ sub updateICAOtypes {
   }
   if ($needICAO == 1) {
     #print "$url\n";
-    system("curl -s -k -L --max-time 20 --retry 1 -o '$typesfile' -d '' '$url'");
+    system("curl --stderr - -s -k -L --max-time 20 --retry 1 -o '$typesfile' -d '' '$url'");
   }
 }
 
@@ -229,7 +229,7 @@ sub getFaaReg
   my ($manuf, $model, $type, $etype, $icao, $owner);
   my $url = "https://registry.faa.gov/aircraftinquiry/NNum_Results.aspx?nNumberTxt=$reg";
   #print "$url\n";
-  open(HTTP, '-|', "curl -N --max-time 10 -s -k -L -H 'api-auth: $apikey' '$url'");
+  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L -H 'api-auth: $apikey' '$url'");
   while(<HTTP>) {
     #print;
     if (/<span id="content_lbMfrName" class="Results_DataText">([^<]+?)\s*<\/span>/) {
