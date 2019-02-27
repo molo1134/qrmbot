@@ -8,6 +8,7 @@ use Encode qw(decode);
 use I18N::Langinfo qw(langinfo CODESET);
 use URI::Escape;
 use Math::Round;
+use POSIX qw(floor);
 use POSIX qw(strftime);
 use POSIX qw(tzset);
 use Time::Piece ();
@@ -189,9 +190,11 @@ sub show
     if ($rec{reg} =~ m/^N/) {
       ($manuf, $model, $type, $etype, $icao, $owner) = getFaaReg($rec{reg});
     }
-    my ($airline, $orig, $dest, $fnum);
-    if ($rec{reg} ne $rec{call}) {
-      ($airline, $orig, $dest, $fnum) = getFlightTrack($rec{call});
+    my ($airline, $orig, $dest, $fnum, $eta);
+    if (defined($rec{call}) and length($rec{call}) > 0) {
+      ($airline, $orig, $dest, $fnum, $eta) = getFlightTrack($rec{call});
+    } else {
+      ($airline, $orig, $dest, $fnum, $eta) = getFlightTrack($rec{reg});
     }
     #print join(",", ($airline, $orig, $dest)), "\n";
     #print join(",", ($manuf, $model, $type, $etype, $icao, $owner)), "\n";
@@ -207,7 +210,9 @@ sub show
     } else {
       print " ($manuf $model)";
     }
-    print " ($airline $fnum ", bold("$orig->$dest"), ")" if defined $airline;
+    print " ($airline $fnum ", bold("$orig->$dest") if defined $airline;
+    print " eta $eta" if defined $eta;
+    print ")" if defined $airline;
     print " 0x$rec{icao}; ";
     print "squawk $rec{sqk} " if defined $rec{sqk} and length($rec{sqk}) > 0;
     print "alt $rec{alt} ft;";
@@ -269,7 +274,9 @@ sub getFlightTrack
 {
   my $flight = shift;
   my $url = "https://flightaware.com/live/flight/$flight";
-  my ($airline, $orig, $dest, $fnum);
+  my ($airline, $orig, $dest, $fnum, $eta);
+  my $token;
+  #print "$url\n";
   open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
   while(<HTTP>) {
     if (/name="origin".*content="([A-Z]+)"/) {
@@ -281,10 +288,39 @@ sub getFlightTrack
     if (m|"shortName":"([^"]*)"|) {
       $airline = $1;
     }
-    if (m|#(\d+)|) {
+    if (m|<title.*#(\d+)\s+.*</title>|) {
       $fnum = $1;
+    }
+    # var trackpollGlobals = {"TOKEN":"dd1320656957446e91ec1b5b1b04d2ce5a7d0a670f899c2e--da74a34ace4ede66ab25308cec9e6b9338c28a99","INTERVAL":65,"SINGLE_FLIGHT":true,"USERTOKEN":"323564526"};
+    if (m|trackpollGlobals.*"TOKEN":"([0-9a-f-]+)"|) {
+      $token = $1;
+      #print "token: $token\n";
     }
   }
   close(HTTP);
-  return ($airline, $orig, $dest, $fnum);
+
+  if (defined($token)) {
+    $url = "https://flightaware.com/ajax/trackpoll.rvt?token=$token&locale=en_US&summary=1";
+    #print "$url\n";
+    open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
+    while(<HTTP>) {
+      #print;
+      if (m/"actual":\d+\},"landingTimes":\{"scheduled":\d+,"estimated":(\d+),"actual":null/) {
+	my $estimated = $1;
+	my $now = time();
+	print "estimated: $estimated\n";
+	print "now $now\n";
+	if ($estimated > $now) {
+	  my $m = (($estimated - $now) / 60) % 60;
+	  my $h = floor((($estimated - $now) / 60) / 60);
+	  $eta = "${h}h${m}m" if $h > 0;
+	  $eta = "${m}m" if $h <= 0;
+	  #print "$eta\n";
+	}
+      }
+    }
+    close(HTTP);
+  }
+
+  return ($airline, $orig, $dest, $fnum, $eta);
 }
