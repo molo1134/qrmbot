@@ -166,7 +166,7 @@ sub updateICAOtypes {
   }
   if ($needICAO == 1) {
     #print "$url\n";
-    system("curl --stderr - -s -k -L --max-time 20 --retry 1 -o '$typesfile' -d '' '$url'");
+    #system("curl --stderr - -s -k -L --max-time 20 --retry 1 -o '$typesfile' -d '' '$url'");
   }
 }
 
