@@ -222,7 +222,7 @@ sub show
     print " over $rec{place} ($rec{grid})";
     print " at $rec{time}";
     print "; owner: $owner" if defined $owner;
-    printf (" -- %.1f km, %.0f°", $rec{dist}, $rec{bearing});
+    printf (" -- %.1f km, %.0f°", $rec{dist}, $rec{bearing}) if defined($lat);
     print " from $localgrid" if defined($localgrid);
 
     if (defined($icao) and defined($rec{icao}) and $icao ne $rec{icao}) {
