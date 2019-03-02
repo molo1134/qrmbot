@@ -146,7 +146,10 @@ if ($total == 0 and defined($callOrReg) and $url =~ /callsign/) {
 }
 
 #print "planes: ", join (",", @planes);
-print "no planes found.\n" if scalar @planes == 0;
+print "no callsign/registration found: $callOrReg\n"
+	if scalar @planes == 0 and $url =~ /registration/;
+print "no planes found near $lat,$lon\n"
+	if scalar @planes == 0 and $url =~ /lat/;
 exit $exitnonzeroonerror if scalar @planes == 0;
 
 my @sortedplanes = sort { $a->{dist} <=> $b->{dist} } @planes;  # ascending
