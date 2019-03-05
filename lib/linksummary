@@ -656,7 +656,7 @@ sub doQthCom {
   open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
-    if (m|<font size=3 face="Arial,Helvetica">\s*([^<]+)</font></B>|) {
+    if (m|<font size=3 face="Arial,Helvetica">\s*(.*?)\s*</font></B>|) {
       $title = $1;
     }
     if (not defined($desc) and
