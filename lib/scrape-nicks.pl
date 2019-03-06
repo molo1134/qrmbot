@@ -156,7 +156,7 @@ foreach my $baseurl (@baseurls) {
 	    $ts = $v;
 	    $ts =~ s/\.0*$//g;
 	  } elsif ($k eq "body" or $k eq "selftext") {
-	    if ($v =~ /(\\n|73s?|DE)\s*([A-Z0-9Øø∅]+)(\s|\\n)*$/i) {
+	    if ($v =~ /(\\n|73s?|DE|-)\s*([A-Z0-9Øø∅]+)(\s|\\n)*$/i) {
 	      my $tmp = $2;
 	      if ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
 		$c = uc $tmp;
