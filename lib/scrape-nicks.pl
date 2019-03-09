@@ -47,6 +47,7 @@ foreach my $subreddit (@subreddits) {
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8fowrk/is_there_a_baofenglike_radio_but_for_hf/dy6fl6s/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8fd9vb/its_not_much_but_its_mine_shack_edition/dy6mkg7/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8ydhs6/2way_radio_recommendations/e2a6fcq/.json";
+#push @baseurls, "https://www.reddit.com/r/amateurradio/comments/ayyp9l/calibration_instructions_for_a_daiwa_cn501h/.json";
 
 our %nicks;
 our %results;
@@ -77,7 +78,7 @@ our @blacklist = (
   "FC3SBOB", "OP00TO", "P0NS", "H2LOL", "AD936X", "E30JAWN", "ML20S",
   "J300BLK", "R820T", "B3RIA", "1OF3S", "TW010F", "A2BTLC", "XP2FAN", "KT315I",
   "B2311E", "L00PEE", "TH3BFG", "NO99SUM", "NO3FCC", "R4808N", "0D1USA",
-  "W4NEWS");
+  "W4NEWS", "F8HP", "NW4QA", "NW8TAM", "NK1MOS");
 
 # load nicks
 our $nickfile = "$ENV{'HOME'}/.nicks.csv";
@@ -139,24 +140,22 @@ foreach my $baseurl (@baseurls) {
 	  } elsif ($k eq "author_flair_text") {
 	    $f = $v;
 	    next if $f eq "null";
-	    ($c, undef) = grep {$_ ne ''} split(/[\s\W]/, $f);
-	    next if not defined $c;
-	    #print "$c\n";
-	    if ($c =~ /^[A-R]{2}[0-9]{2}([a-x]{2})?$/i) { # grid
-	      $c = undef;
+	    my ($tmp, undef) = grep {$_ ne ''} split(/[\s\W]/, $f);
+	    next if not defined $tmp;
+	    #print "$tmp\n";
+	    if ($tmp =~ /^[A-R]{2}[0-9]{2}([a-x]{2})?$/i) { # grid
 	      next;
 	    }
-	    if ($c =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
-	      $c = uc $c;
+	    if ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
+	      $c = uc $tmp;
 	      $c =~ s/[Øø∅]/0/g;
-	    } else {
-	      $c = undef;
 	    }
 	  } elsif ($k eq "created_utc") {
 	    $ts = $v;
 	    $ts =~ s/\.0*$//g;
 	  } elsif ($k eq "body" or $k eq "selftext") {
-	    if ($v =~ /(\\n|73s?|DE|-)\s*([A-Z0-9Øø∅]+)(\s|\\n)*$/i) {
+	    # FIXME: below regexp matches '73\nK1NAS' with call NK1NAS.
+	    if ($v =~ /(\\n|73.*?|DE|-)\s*([A-Z0-9Øø∅]+)(\s|\\n)*$/i) {
 	      my $tmp = $2;
 	      if ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
 		$c = uc $tmp;
