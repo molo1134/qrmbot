@@ -78,7 +78,7 @@ our @blacklist = (
   "FC3SBOB", "OP00TO", "P0NS", "H2LOL", "AD936X", "E30JAWN", "ML20S",
   "J300BLK", "R820T", "B3RIA", "1OF3S", "TW010F", "A2BTLC", "XP2FAN", "KT315I",
   "B2311E", "L00PEE", "TH3BFG", "NO99SUM", "NO3FCC", "R4808N", "0D1USA",
-  "W4NEWS", "F8HP", "NW4QA", "NW8TAM", "NK1MOS");
+  "W4NEWS", "F8HP");
 
 # load nicks
 our $nickfile = "$ENV{'HOME'}/.nicks.csv";
@@ -154,12 +154,11 @@ foreach my $baseurl (@baseurls) {
 	    $ts = $v;
 	    $ts =~ s/\.0*$//g;
 	  } elsif ($k eq "body" or $k eq "selftext") {
-	    # FIXME: below regexp matches '73\nK1NAS' with call NK1NAS.
-	    if ($v =~ /(\\n|73.*?|DE|-)\s*([A-Z0-9Øø∅]+)(\s|\\n)*$/i) {
-	      my $tmp = $2;
+	    if ($v =~ /(\\n|73.*?|DE|-)(\s|\\n)*([A-Z0-9Øø∅]+)(\s|\\n)*$/i) {
+	      my $tmp = $3;
 	      if ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
 		$c = uc $tmp;
-		print STDERR "$c :: $k => $v\n";
+		printf STDERR "%s :: %s => %s\n", $c, $k, substr($v,-25);
 	      }
 	    }
 	  } elsif ($k eq "kind") {
@@ -167,8 +166,8 @@ foreach my $baseurl (@baseurls) {
 	    if (defined $c and defined $u) {
 	      if (not any { /^$c$/i } @blacklist and $u ne "[deleted]") {
 		updateResult($c, $ts, $u);
-		$ts = time() if not defined $ts;
-		$results{$c} = "$ts,$u";
+		#$ts = time() if not defined $ts;
+		#$results{$c} = "$ts,$u";
 	      }
 	    }
 	    $u = undef;
@@ -180,8 +179,8 @@ foreach my $baseurl (@baseurls) {
       if (defined($u) and defined($c)) {
 	if (not any { /^$c$/i } @blacklist and $u ne "[deleted]") {
 	  updateResult($c, $ts, $u);
-	  $ts = time() if not defined $ts;
-	  $results{$c} = "$ts,$u";
+	  #$ts = time() if not defined $ts;
+	  #$results{$c} = "$ts,$u";
 	}
       }
       $u = undef;
@@ -216,6 +215,7 @@ sub updatenicks {
       my ($call, $ircnick, undef) = split (/,/, $nicks{$k});
       $nicks{$k} = "$call,$ircnick,/u/$uid";
     } else {
+      print STDERR "NEW: ===> $k $uid\n";
       $nicks{$k} = "$k,,/u/$uid";
     }
   }
@@ -237,7 +237,7 @@ sub updateResult {
   my $ts = shift;
   my $u = shift;
   return if $u =~ /\[deleted\]/;
-  print STDERR "found: $c /u/$u \@$ts\n";
+  #print STDERR "found: $c /u/$u \@$ts\n";
   if (defined($results{$c})) {
     my ($oldts,$oldval) = split(/,/, $results{$c});
     if ($ts > $oldts) {
