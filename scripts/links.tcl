@@ -27,10 +27,12 @@
 # measure.
 source scripts/isregistered.tcl
 
-bind msgm - *http://* http_msg
-bind pubm - *http://* http_pub
-bind msgm - *https://* http_msg
-bind pubm - *https://* http_pub
+bind msgm - *://* http_msg
+bind pubm - *://* http_pub
+#bind msgm - *http://* http_msg
+#bind pubm - *http://* http_pub
+#bind msgm - *https://* http_msg
+#bind pubm - *https://* http_pub
 
 bind pub - !ae7q ae7q
 bind msg - !ae7q msg_ae7q
