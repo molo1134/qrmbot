@@ -219,43 +219,26 @@ binmode(HTTP, ":encoding(cp1252)");
 while (<HTTP>) {
 	#print;
   chomp;
-  if (/<!-- freq -->/) {
-    $infreq = 1;
-  }
-  if ($infreq == 1 && />([0-9.]+)</) {
+  if (/View Details.*?>([0-9.]+)</) {
     $freq = $1;
   }
-  if ($infreq == 1 && /^([^>]+)<\/td>/) {
+  if (defined $freq and /^([^>]+)<\/td>\s*$/) {
     $squelch = $1;
   }
 
-  if (/<!-- Location -->/) {
-    $infreq = 0;
-    $inloc = 1;
-  }
-  if ($inloc == 1 && /.*>([^<]*)</) {
+  if (/^<td NOWRAP><font CLASS="normal">([^<]*)<\/td>\s*$/) {
     $location = $1;
   }
 
-  if (/<!-- Country -->/) {
-    $inloc = 0;
-    $instate = 1;
-  }
-  if ($instate == 1 && /.*>([^<]+)</) {
+  if (m|<td NOWRAP ALIGN="center"><font CLASS="normal">([^<]+)</font></td>|) {
     $state = $1;
   }
 
-  if (/<!-- Callsign. -->/) {
-    $instate = 0;
-    $incall = 1;
-  }
-  if ($incall == 1 && /.*>([^<]*)</) {
-    #print "$_\n";
+  if (m|<font CLASS="normal">([A-Z0-9]+)</td>|) {
     $callsign = $1;
   }
 
-  if (/<!-- Use -->/) {
-    $incall = 0;
+  if (m|</tr>| and defined($freq) and defined($location)) {
     $squelch = "" if !defined($squelch);
     $vals{"$freq,$location"} = join("::", $freq, $squelch, $location, $state, $callsign);
     #print "added $freq: " . $vals{"$freq,$location"} . "\n";
