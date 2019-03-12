@@ -14,7 +14,10 @@ binmode(STDOUT, ":utf8");
 use Cwd 'realpath';
 use File::Basename;
 
-my @subreddits = ("hamfest", "hamradio", "rtlsdr", "amateurradio");
+my @subreddits = ("antennasporn", "hamfest", "hamradio", "rtlsdr",
+	"amateurradio", "hamdevs", "morse", "MMDVM", "hampota", "hamspots",
+	"PDXhamradio", "CHIhamradio", "baofeng", "EmComm", "diytubes",
+	"hamcasters");
 
 #my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0";
 my $useragent = "foo";
@@ -25,7 +28,7 @@ my @baseurls;
 foreach my $subreddit (@subreddits) {
   push @baseurls, "https://www.reddit.com/r/${subreddit}/new/.json";
   push @baseurls, "https://www.reddit.com/r/${subreddit}/comments/.json";
-  #push @baseurls, "https://www.reddit.com/r/${subreddit}/top/.json";
+  #push @baseurls, "https://www.reddit.com/r/${subreddit}/top/.json?t=all";
   #push @baseurls, "https://www.reddit.com/r/${subreddit}/gilded/.json";
   #push @baseurls, "https://www.reddit.com/r/${subreddit}/controversial/.json";
 }
@@ -78,7 +81,8 @@ our @blacklist = (
   "FC3SBOB", "OP00TO", "P0NS", "H2LOL", "AD936X", "E30JAWN", "ML20S",
   "J300BLK", "R820T", "B3RIA", "1OF3S", "TW010F", "A2BTLC", "XP2FAN", "KT315I",
   "B2311E", "L00PEE", "TH3BFG", "NO99SUM", "NO3FCC", "R4808N", "0D1USA",
-  "W4NEWS", "F8HP", "K20A");
+  "W4NEWS", "F8HP", "K20A", "5R7W", "6AQ7GT", "C0LBW", "D073N", "QU1EN",
+  "RY4NY", "S1OED");
 
 # load nicks
 our $nickfile = "$ENV{'HOME'}/.nicks.csv";
