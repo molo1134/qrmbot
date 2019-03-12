@@ -60,9 +60,8 @@ while ($i <= $#ARGV) {
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?reddit\.com/r/\w+/comments/\w+/|i or
 	  $ARGV[$i] =~ m|^https?://redd\.it/\w+|i) {
     doReddit($ARGV[$i]);
-#  DigitalOcean blocked
-#  } elsif ($ARGV[$i] =~ m|^https?://swap\.qth\.com/view_ad\.php\?counter=\d+|i) {
-#    doQthCom($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://swap\.qth\.com/view_ad\.php\?counter=\d+|i) {
+    doQthCom($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?qrz\.com/(db\|lookup)/[A-Z0-9]+|i) {
     doQrzDb($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.\|smile\.)?amazon\.(com\|co\.jp\|ca\|co\.uk)/(.*/)?dp/\w+/?|i) {
@@ -653,6 +652,9 @@ sub doReddit {
 sub doQthCom {
   my $url = shift;
   my ($title, $desc, $call);
+
+  # Temporary proxy - TODO: permanent URL?
+  $url =~ s|https?://swap\.qth\.com/view_ad\.php\?counter=|https://app-oa25k.lamp.app/qth-proxy.php?id=|i;
 
   open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
