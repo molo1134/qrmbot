@@ -14,10 +14,10 @@ binmode(STDOUT, ":utf8");
 use Cwd 'realpath';
 use File::Basename;
 
-my @subreddits = ("antennasporn", "hamfest", "hamradio", "rtlsdr",
-	"amateurradio", "hamdevs", "morse", "MMDVM", "hampota", "hamspots",
-	"PDXhamradio", "CHIhamradio", "baofeng", "EmComm", "diytubes",
-	"hamcasters");
+my @subreddits = ("antennasporn", "hamfest", "hamdevs", "morse", "MMDVM",
+	"hampota", "hamspots", "PDXhamradio", "CHIhamradio", "baofeng",
+	"EmComm", "diytubes", "hamcasters", "hamradio", "rtlsdr",
+	"amateurradio");
 
 #my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0";
 my $useragent = "foo";
@@ -82,7 +82,7 @@ our @blacklist = (
   "J300BLK", "R820T", "B3RIA", "1OF3S", "TW010F", "A2BTLC", "XP2FAN", "KT315I",
   "B2311E", "L00PEE", "TH3BFG", "NO99SUM", "NO3FCC", "R4808N", "0D1USA",
   "W4NEWS", "F8HP", "K20A", "5R7W", "6AQ7GT", "C0LBW", "D073N", "QU1EN",
-  "RY4NY", "S1OED");
+  "RY4NY", "S1OED", "G8BBC");
 
 # load nicks
 our $nickfile = "$ENV{'HOME'}/.nicks.csv";
@@ -158,7 +158,7 @@ foreach my $baseurl (@baseurls) {
 	    $ts = $v;
 	    $ts =~ s/\.0*$//g;
 	  } elsif ($k eq "body" or $k eq "selftext") {
-	    if ($v =~ /(\\n|73.*?|DE|-)(\s|\\n)*([A-Z0-9Øø∅]+)(\s|\\n)*$/i) {
+	    if ($v =~ /(\\n|73.*?|DE|-)(\s|\\n)*([A-Z0-9Øø∅]+)(\.|\s|\\n)*$/i) {
 	      my $tmp = $3;
 	      if ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
 		$c = uc $tmp;
