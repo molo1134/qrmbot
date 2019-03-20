@@ -241,6 +241,7 @@ sub updateResult {
   my $ts = shift;
   my $u = shift;
   return if $u =~ /\[deleted\]/;
+  return if $u = "pongo000";
   #print STDERR "found: $c /u/$u \@$ts\n";
   if (defined($results{$c})) {
     my ($oldts,$oldval) = split(/,/, $results{$c});
