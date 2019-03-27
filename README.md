@@ -91,7 +91,9 @@ needed.
 8. Add a preferred wx station in addition to `!setgeo` geo coords
 9. Find nearest ionosonde for !muf/!muf2
 10. ~~A command to get elevation data at a location~~
-11. AE7Q scraping
+11. ~~AE7Q scraping~~
 12. If no callsign is specified with `!spots` use irc nick.
 13. Requested by K1NZ: `!untappd` for beer info
+14. Current dxpedition list by scraping https://www.ng3k.com/misc/adxo.html
+15. Replace wunderground APIs which are now dead
 
