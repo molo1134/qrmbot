@@ -18,6 +18,7 @@ use Encode qw(decode);
 use I18N::Langinfo qw(langinfo CODESET);
 use URI::Escape;
 use POSIX qw(strftime);
+use MIME::Base64;
 
 use Cwd 'realpath';
 use File::Basename;
@@ -652,8 +653,12 @@ sub getAndParseData {
       exit $exitnonzeroonerror;
     }
 
-    if (/This call sign record has incomplete details/) {
-      $incomplete = 1;
+    if (/biodata.*Base64\.decode\("([^"]*)"/) {
+      my $biodata = decode_base64($1);
+      #print "$biodata\n";
+      if ($biodata =~ /This call sign record has incomplete details/) {
+	$incomplete = 1;
+      }
     }
 
     if (/begin calldata/) {
