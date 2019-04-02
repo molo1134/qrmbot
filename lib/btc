@@ -175,9 +175,11 @@ if (!defined($id)) {
   exit 0;
 }
 
-my $url = "https://api.coinmarketcap.com/v1/ticker/$id/?convert=$fiat";
+#my $url = "https://api.coinmarketcap.com/v1/ticker/$id/?convert=$fiat";
+my $url = "https://app-oa25k.lamp.app/coinmarketcap-proxy.php?id=$id&fiat=$fiat";
 my %results;
 
+#print "$url\n";
 open(HTTP, '-|', "curl --max-time 5 -s -k -L '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
