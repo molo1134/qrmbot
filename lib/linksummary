@@ -1074,6 +1074,7 @@ sub unescape {
   $s =~ s/\\n/ /g;
   $s =~ s/\\"/"/g;
   $s =~ s|\\/|/|g;
+  $s =~ s|\\u([0-9a-f]{4})|chr hex $1|eg;
   return $s;
 }
 
