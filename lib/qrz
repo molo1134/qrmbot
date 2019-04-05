@@ -1011,8 +1011,8 @@ sub updateDMRfiles {
   my $userFile="$ENV{HOME}/.dmr-id-users.csv";
   my $rptrFile="$ENV{HOME}/.dmr-id-repeaters.csv";
 
-  my $usersUrl="https://www.radioid.net/static/users.csv";
-  my $rptrsUrl="https://www.radioid.net/static/rptrs.csv";
+  my $usersUrl="https://www.radioid.net/api/dmr/user/?country=%25&format=csv";
+  my $rptrsUrl="https://www.radioid.net/api/dmr/repeater/?country=%25&format=csv";
 
   my $maxage=604800; # 1 week
   my $now = time();
@@ -1057,7 +1057,7 @@ sub getDMRidsForCall {
     while (<USERFILE>) {
       chomp;
       my ($id, $filecall) = split /,/;
-      push @results, $id if uc($filecall) eq $call;
+      push @results, $id if defined $id and defined $filecall and uc($filecall) eq $call;
     }
     close(USERFILE);
   }
@@ -1067,7 +1067,7 @@ sub getDMRidsForCall {
     while (<RPTRFILE>) {
       chomp;
       my ($id, $filecall) = split /,/;
-      push @results, $id if uc($filecall) eq $call;
+      push @results, $id if defined $id and defined $filecall and uc($filecall) eq $call;
     }
     close(RPTRFILE);
   }
