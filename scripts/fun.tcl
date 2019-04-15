@@ -96,18 +96,6 @@ proc spacex_msg {nick uhand handle input} {
 	close $fd
 }
 
-bind msg - !canteen canteen_msg
-
-proc canteen_msg {nick uhand handle input} {
-	putlog "canteen msg: $nick $uhand $handle $input"
-	set cmd [list /usr/bin/elinks {https://www.studierendenwerk-aachen.de/speiseplaene/ahornstrasse-w.html} -dump 1 -dump-width 256 \| sed -e {s/\^ [A-Z0-9,]\+//g} \| perl -lne {use POSIX qw(strftime); $d = strftime("%d.%m.%Y", localtime); $f = 0 if /[0-9]{2}\.[0-9]{2}\.[0-9]{4}/; $f = 1 if /$d/; print if $f == 1} \| grep + \| sed -e {s/  */ /g; s/+/: /g} ]
-	catch {exec {*}$cmd } data
-	set output [split $data "\n"]
-	foreach line $output {
-		putmsg $nick [encoding convertto utf-8 "$line"]
-	}
-}
-
 bind pub - !stock stock_pub
 bind msg - !stock stock_msg
 set stockbin "/home/eggdrop/bin/stock"
