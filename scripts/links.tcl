@@ -47,11 +47,12 @@ proc http_msg { nick host hand text } {
 
 	set params [sanitize_url [string trim ${text}]]
 	putlog "http msg: $nick $host $hand $params"
-	catch {exec ${linkbin} ${params}} data
-	set output [split $data "\n"]
-	foreach line $output {
-		putmsg $nick [encoding convertto utf-8 "$line"]
+	set fd [open "|${linkbin} ${params}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
 	}
+	close $fd
 }
 
 # TODO FIXME XXX: add a blacklist of users that we don't process.
@@ -69,11 +70,12 @@ proc http_pub { nick host hand chan text } {
 
 	set params [sanitize_url [string trim ${text}]]
 	putlog "http pub: $nick $host $hand $chan $params"
-	catch {exec ${linkbin} ${params}} data
-	set output [split $data "\n"]
-	foreach line $output {
-		putchan $chan [encoding convertto utf-8 "$line"]
+	set fd [open "|${linkbin} ${params}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
 	}
+	close $fd
 }
 
 proc ae7q { nick host hand chan text } {
@@ -84,11 +86,12 @@ proc ae7q { nick host hand chan text } {
 		set input "10"
 	}
 	set url "http://www.ae7q.com/query/list/GenLicAvail.php?REGION=$input"
-	catch {exec ${linkbin} ${url}} data
-	set output [split $data "\n"]
-	foreach line $output {
-		putchan $chan [encoding convertto utf-8 "$line"]
+	set fd [open "|${linkbin} ${url}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
 	}
+	close $fd
 }
 proc msg_ae7q {nick uhand handle input} {
 	global linkbin
@@ -98,9 +101,10 @@ proc msg_ae7q {nick uhand handle input} {
 		set input "10"
 	}
 	set url "http://www.ae7q.com/query/list/GenLicAvail.php?REGION=${input}"
-	catch {exec ${linkbin} ${url}} data
-	set output [split $data "\n"]
-	foreach line $output {
-		putmsg $nick [encoding convertto utf-8 "$line"]
+	set fd [open "|${linkbin} ${url}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
 	}
+	close $fd
 }

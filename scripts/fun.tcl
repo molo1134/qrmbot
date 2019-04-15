@@ -19,12 +19,12 @@ proc phoneticise { nick host hand chan text } {
 
 	putlog "phonetics pub: $nick $host $hand $chan $param"
 
-	catch {exec ${phoneticsbin} ${param} } data
-
-	set output [split $data "\n"]
-	foreach line $output {
+	set fd [open "|${phoneticsbin} ${param}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
+	close $fd
 }
 
 bind pub - !sandwich sandwich
@@ -39,11 +39,12 @@ set colortestbin "/home/eggdrop/bin/colortest"
 proc msg_colortest {nick uhand handle input} {
 	global colortestbin
 	putlog "colortest msg: $nick $uhand $handle $input"
-	catch {exec ${colortestbin}} data
-	set output [split $data "\n"]
-	foreach line $output {
+	set fd [open "|${colortestbin}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
+	close $fd
 }
 
 bind pub - !debt debt_pub
@@ -53,20 +54,22 @@ set debtbin "/home/eggdrop/bin/debt"
 proc debt_msg {nick uhand handle input} {
 	global debtbin
 	putlog "debt msg: $nick $uhand $handle $input"
-	catch {exec ${debtbin}} data
-	set output [split $data "\n"]
-	foreach line $output {
+	set fd [open "|${debtbin}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
+	close $fd
 }
 proc debt_pub { nick host hand chan text } {
 	global debtbin
 	putlog "debt pub: $nick $host $hand $chan"
-	catch {exec ${debtbin}} data
-	set output [split $data "\n"]
-	foreach line $output {
+	set fd [open "|${debtbin}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
+	close $fd
 }
 
 bind msg - !spacex spacex_msg
@@ -75,20 +78,22 @@ set spacexbin "/home/eggdrop/bin/spacex"
 proc spacex_pub { nick host hand chan text } {
 	global spacexbin
 	putlog "spacex pub: $nick $host $hand $chan $text"
-	catch {exec ${spacexbin}} data
-	set output [split $data "\n"]
-	foreach line $output {
-		putchan $chan [encoding convertto utf-8 "$line"]
+	set fd [open "|${spacexbin}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
 	}
+	close $fd
 }
 proc spacex_msg {nick uhand handle input} {
 	global spacexbin
 	putlog "spacex msg: $nick $uhand $handle $input"
-	catch {exec ${spacexbin}} data
-	set output [split $data "\n"]
-	foreach line $output {
-		putmsg $nick [encoding convertto utf-8 "$line"]
+	set fd [open "|${spacexbin}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
 	}
+	close $fd
 }
 
 bind msg - !canteen canteen_msg
@@ -112,22 +117,23 @@ proc stock_pub { nick host hand chan text } {
 
 	putlog "stock pub: $nick $host $hand $chan $param"
 
-	catch {exec ${stockbin} ${param} } data
-
-	set output [split $data "\n"]
-	foreach line $output {
-		putchan $chan [encoding convertto utf-8 "$line"]
+	set fd [open "|${stockbin} ${param} " r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
 	}
+	close $fd
 }
 proc stock_msg {nick uhand handle input} {
 	global stockbin
 	set param [sanitize_string [string trim ${input}]]
 	putlog "stock msg: $nick $uhand $handle $param"
-	catch {exec ${stockbin} ${param} } data
-	set output [split $data "\n"]
-	foreach line $output {
-		putmsg $nick [encoding convertto utf-8 "$line"]
+	set fd [open "|${stockbin} ${param} " r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
 	}
+	close $fd
 }
 
 bind pub - !wwv wwv_pub

@@ -12,14 +12,15 @@ proc adsb { nick host hand chan text } {
 	set geo [qrz_getgeo $hand]
 	putlog "adsb pub: $nick $host $hand $chan $query $geo"
 	if [string equal "" $query] then {
-		catch {exec ${adsbbin} --geo $geo } data
+		set fd [open "|${adsbbin} --geo $geo" r]
 	} else {
-		catch {exec ${adsbbin} ${query} } data
+		set fd [open "|${adsbbin} ${query}" r]
 	}
-	set output [split $data "\n"]
-	foreach line $output {
-		putchan $chan [encoding convertto utf-8 "$line"]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
 	}
+	close $fd
 }
 
 proc adsb_msg {nick uhand handle input} {
@@ -28,12 +29,14 @@ proc adsb_msg {nick uhand handle input} {
 	set geo [qrz_getgeo $handle]
 	putlog "adsb msg: $nick $uhand $handle $query $geo"
 	if [string equal "" $query] then {
-		catch {exec ${adsbbin} --geo $geo } data
+		set fd [open "|${adsbbin} --geo $geo" r]
 	} else {
-		catch {exec ${adsbbin} ${query}} data
+		set fd [open "|${adsbbin} ${query}" r]
 	}
+	fconfigure $fd -translation binary
 	set output [split $data "\n"]
-	foreach line $output {
-		putmsg $nick [encoding convertto utf-8 "$line"]
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
 	}
+	close $fd
 }

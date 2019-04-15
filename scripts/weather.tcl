@@ -39,19 +39,19 @@ proc wx { nick host hand chan text } {
 	putlog "wx pub: $nick $host $hand $chan $loc $geo"
 
 	if [string equal "" $geo] then {
-		catch {exec ${wxbin} ${loc} } data
+		set fd [open "|${wxbin} ${loc} " r]
 	} else {
 		if [string equal "" ${loc}] then {
-			catch {exec ${wxbin} ${geo} } data
+			set fd [open "|${wxbin} ${geo} " r]
 		} else {
-			catch {exec ${wxbin} ${loc} } data
+			set fd [open "|${wxbin} ${loc} " r]
 		}
 	}
-
-	set output [split $data "\n"]
-	foreach line $output {
-		putchan $chan [encoding convertto utf-8 "$line"]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
 	}
+	close $fd
 }
 
 proc msg_wx {nick uhand handle input} {
@@ -63,19 +63,19 @@ proc msg_wx {nick uhand handle input} {
 	putlog "wx msg: $nick $uhand $handle $loc $geo"
 
 	if [string equal "" $geo] then {
-		catch {exec ${wxbin} ${loc} } data
+		set fd [open "|${wxbin} ${loc} " r]
 	} else {
 		if [string equal "" ${loc}] then {
-			catch {exec ${wxbin} ${geo} } data
+			set fd [open "|${wxbin} ${geo} " r]
 		} else {
-			catch {exec ${wxbin} ${loc} } data
+			set fd [open "|${wxbin} ${loc} " r]
 		}
 	}
-
-	set output [split $data "\n"]
-	foreach line $output {
-		putmsg $nick [encoding convertto utf-8 "$line"]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
 	}
+	close $fd
 }
 
 proc wxfull { nick host hand chan text } {
@@ -87,19 +87,19 @@ proc wxfull { nick host hand chan text } {
 	putlog "wxfull pub: $nick $host $hand $chan $loc $geo"
 
 	if [string equal "" $geo] then {
-		catch {exec ${wxbin} --full ${loc} } data
+		set fd [open "|${wxbin} --full ${loc} " r]
 	} else {
 		if [string equal "" ${loc}] then {
-			catch {exec ${wxbin} --full ${geo} } data
+			set fd [open "|${wxbin} --full ${geo} " r]
 		} else {
-			catch {exec ${wxbin} --full ${loc} } data
+			set fd [open "|${wxbin} --full ${loc} " r]
 		}
 	}
-
-	set output [split $data "\n"]
-	foreach line $output {
-		putchan $chan [encoding convertto utf-8 "$line"]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
 	}
+	close $fd
 }
 
 proc msg_wxfull {nick uhand handle input} {
@@ -111,19 +111,19 @@ proc msg_wxfull {nick uhand handle input} {
 	putlog "wxfull msg: $nick $uhand $handle $loc $geo"
 
 	if [string equal "" $geo] then {
-		catch {exec ${wxbin} --full ${loc} } data
+		set fd [open "|${wxbin} --full ${loc} " r]
 	} else {
 		if [string equal "" ${loc}] then {
-			catch {exec ${wxbin} --full ${geo} } data
+			set fd [open "|${wxbin} --full ${geo} " r]
 		} else {
-			catch {exec ${wxbin} --full ${loc} } data
+			set fd [open "|${wxbin} --full ${loc} " r]
 		}
 	}
-
-	set output [split $data "\n"]
-	foreach line $output {
-		putmsg $nick [encoding convertto utf-8 "$line"]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
 	}
+	close $fd
 }
 
 proc wxf { nick host hand chan text } {
@@ -135,19 +135,19 @@ proc wxf { nick host hand chan text } {
 	putlog "wxf pub: $nick $host $hand $chan $loc $geo"
 
 	if [string equal "" $geo] then {
-		catch {exec ${wxfbin} --short ${loc} } data
+		set fd [open "|${wxfbin} --short ${loc} " r]
 	} else {
 		if [string equal "" ${loc}] then {
-			catch {exec ${wxfbin} --short ${geo} } data
+			set fd [open "|${wxfbin} --short ${geo} " r]
 		} else {
-			catch {exec ${wxfbin} --short ${loc} } data
+			set fd [open "|${wxfbin} --short ${loc} " r]
 		}
 	}
-
-	set output [split $data "\n"]
-	foreach line $output {
-		putchan $chan [encoding convertto utf-8 "$line"]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
 	}
+	close $fd
 }
 
 proc msg_wxf {nick uhand handle input} {
@@ -159,19 +159,19 @@ proc msg_wxf {nick uhand handle input} {
 	putlog "wxf msg: $nick $uhand $handle $loc $geo"
 
 	if [string equal "" $geo] then {
-		catch {exec ${wxfbin} --short ${loc} } data
+		set fd [open "|${wxfbin} --short ${loc} " r]
 	} else {
 		if [string equal "" ${loc}] then {
-			catch {exec ${wxfbin} --short ${geo} } data
+			set fd [open "|${wxfbin} --short ${geo} " r]
 		} else {
-			catch {exec ${wxfbin} --short ${loc} } data
+			set fd [open "|${wxfbin} --short ${loc} " r]
 		}
 	}
-
-	set output [split $data "\n"]
-	foreach line $output {
-		putmsg $nick [encoding convertto utf-8 "$line"]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
 	}
+	close $fd
 }
 
 proc wxflong { nick host hand chan text } {
@@ -183,19 +183,19 @@ proc wxflong { nick host hand chan text } {
 	putlog "wxflong pub: $nick $host $hand $chan $loc $geo"
 
 	if [string equal "" $geo] then {
-		catch {exec ${wxfbin} ${loc} } data
+		set fd [open "|${wxfbin} ${loc} " r]
 	} else {
 		if [string equal "" ${loc}] then {
-			catch {exec ${wxfbin} ${geo} } data
+			set fd [open "|${wxfbin} ${geo} " r]
 		} else {
-			catch {exec ${wxfbin} ${loc} } data
+			set fd [open "|${wxfbin} ${loc} " r]
 		}
 	}
-
-	set output [split $data "\n"]
-	foreach line $output {
-		putchan $chan [encoding convertto utf-8 "$line"]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
 	}
+	close $fd
 }
 
 proc msg_wxflong_pub { nick host hand chan text } {
@@ -211,19 +211,19 @@ proc msg_wxflong {nick uhand handle input} {
 	putlog "wxflong msg: $nick $uhand $handle $loc $geo"
 
 	if [string equal "" $geo] then {
-		catch {exec ${wxfbin} ${loc} } data
+		set fd [open "|${wxfbin} ${loc} " r]
 	} else {
 		if [string equal "" ${loc}] then {
-			catch {exec ${wxfbin} ${geo} } data
+			set fd [open "|${wxfbin} ${geo} " r]
 		} else {
-			catch {exec ${wxfbin} ${loc} } data
+			set fd [open "|${wxfbin} ${loc} " r]
 		}
 	}
-
-	set output [split $data "\n"]
-	foreach line $output {
-		putmsg $nick [encoding convertto utf-8 "$line"]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
 	}
+	close $fd
 }
 
 proc metar {nick host hand chan text} {
@@ -232,12 +232,12 @@ proc metar {nick host hand chan text} {
 
 	putlog "metar pub: $nick $host $hand $chan $loc"
 	
-	catch {exec ${metarbin} ${loc} } data
-	
-	set output [split $data "\n"]
-	foreach line $output {
-		putchan $chan [encoding convertto utf-8 "$line"]
+	set fd [open "|${metarbin} ${loc} " r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
 	}
+	close $fd
 }
 
 proc msg_metar {nick uhand handle input} { 
@@ -246,12 +246,12 @@ proc msg_metar {nick uhand handle input} {
 	
 	putlog "metar msg: $nick $uhand $handle $loc"
 
-	catch {exec ${metarbin} ${loc} } data
-
-	set output [split $data "\n"]
-	foreach line $output {
-		putmsg $nick [encoding convertto utf-8 "$line"]
+	set fd [open "|${metarbin} ${loc} " r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
 	}
+	close $fd
 }
 
 proc taf {nick host hand chan text} {
@@ -260,12 +260,12 @@ proc taf {nick host hand chan text} {
 
 	putlog "taf pub: $nick $host $hand $chan $loc"
 	
-	catch {exec ${tafbin} ${loc} } data
-	
-	set output [split $data "\n"]
-	foreach line $output {
-		putchan $chan [encoding convertto utf-8 "$line"]
+	set fd [open "|${tafbin} ${loc} " r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
 	}
+	close $fd
 }
 
 proc msg_taf {nick uhand handle input} { 
@@ -274,12 +274,12 @@ proc msg_taf {nick uhand handle input} {
 	
 	putlog "taf msg: $nick $uhand $handle $loc"
 
-	catch {exec ${tafbin} ${loc} } data
-
-	set output [split $data "\n"]
-	foreach line $output {
-		putmsg $nick [encoding convertto utf-8 "$line"]
+	set fd [open "|${tafbin} ${loc} " r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
 	}
+	close $fd
 }
 
 
