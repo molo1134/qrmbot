@@ -513,7 +513,7 @@ proc msg_bands {nick uhand handle input} {
 proc solar { nick host hand chan text } {
 	global bandsbin
 	putlog "solar pub: $nick $host $hand $chan $text"
-	set fd [open "|${bandsbin} "-q"" r]
+	set fd [open "|${bandsbin} -q" r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
@@ -524,7 +524,7 @@ proc solar { nick host hand chan text } {
 proc msg_solar {nick uhand handle input} {
 	global bandsbin
 	putlog "solar msg: $nick $uhand $handle $input"
-	set fd [open "|${bandsbin} "-q"" r]
+	set fd [open "|${bandsbin} -q" r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
