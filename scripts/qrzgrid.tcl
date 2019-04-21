@@ -56,6 +56,8 @@ bind msg - !lotw msg_lotw
 bind pub - !eqsl eqsl
 bind msg - !eqsl msg_eqsl
 
+bind pub - !oqrs pub_clublog
+bind msg - !oqrs msg_clublog
 bind pub - !clublog pub_clublog
 bind msg - !clublog msg_clublog
 
