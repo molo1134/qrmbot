@@ -286,11 +286,11 @@ if (defined $sta2) {
   @passes2 = sort {$a->{time} <=> $b->{time}} @passes2;
   my ($i, $j) = (0,0);
   my $found = 0;
-  my ($maxel1, $maxel2) = (0.0,0.0);
   while ($i < $#passes and $j < $#passes2) {
     #print "i, j: $i, $j\n";
     my ($p1s, $p1e) = getStartEnd($passes[$i]);
     my ($p2s, $p2e) = getStartEnd($passes2[$j]);
+    my ($maxel1, $maxel2) = (0.0,0.0);
 
     if ($p1e < $p2s) {
       $i++; next;
@@ -334,8 +334,12 @@ if (defined $sta2) {
 #	$grid1, rad2deg($elev1), rad2deg($azim1),
 #	$grid2, rad2deg($elev2), rad2deg($azim2);
     }
-    printf "%s %s: %s :%s; max el ~%.0f\n", $grid1, strftime("%Y-%m-%d %H:%Mz", gmtime $start), $sparkline1, strftime("%H:%Mz", gmtime $end), $maxel1;
-    printf "%s %s: %s :%s; max el ~%.0f\n", $grid2, strftime("%Y-%m-%d %H:%Mz", gmtime $start), $sparkline2, strftime("%H:%Mz", gmtime $end), $maxel2;
+    printf "%s %s: %s :%s; max el ~%.0f\n", $grid1,
+      strftime("%Y-%m-%d %H:%Mz", gmtime $start), $sparkline1,
+      strftime("%H:%Mz", gmtime $end), $maxel1;
+    printf "%s %s: %s :%s; max el ~%.0f\n", $grid2,
+      strftime("%Y-%m-%d %H:%Mz", gmtime $start), $sparkline2,
+      strftime("%H:%Mz", gmtime $end), $maxel2;
     $found++;
     $i++; $j++;
 
