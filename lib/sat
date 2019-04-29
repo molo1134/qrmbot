@@ -577,20 +577,20 @@ sub getStartEnd {
 }
 
 sub elToSpark {
-  my $az = shift;
-  if ($az > 70.0) {
+  my $el = shift;
+  if ($el > 70.0) {
     return green("█");
-  } elsif ($az > 60.0) {
+  } elsif ($el > 60.0) {
     return green("▇");
-  } elsif ($az > 50.0) {
+  } elsif ($el > 50.0) {
     return green("▆");
-  } elsif ($az > 40.0) {
+  } elsif ($el > 40.0) {
     return green("▅");
-  } elsif ($az > 30.0) {
+  } elsif ($el > 30.0) {
     return yellow("▄");
-  } elsif ($az > 20.0) {
+  } elsif ($el > 20.0) {
     return yellow("▃");
-  } elsif ($az > 10.0) {
+  } elsif ($el > 10.0) {
     return red("▂");
   } else {
     return red("▁");
