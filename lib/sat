@@ -288,8 +288,8 @@ if (defined $sta2) {
   my $found = 0;
   while ($i < $#passes and $j < $#passes2) {
     #print "i, j: $i, $j\n";
-    my ($p1s, $p1e) = getStartEnd($passes[$i]);
-    my ($p2s, $p2e) = getStartEnd($passes2[$j]);
+    my ($p1s, $p1e, $saz1, $eaz1) = getStartEnd($passes[$i]);
+    my ($p2s, $p2e, $saz2, $eaz2) = getStartEnd($passes2[$j]);
     my ($maxel1, $maxel2) = (0.0,0.0);
 
     if ($p1e < $p2s) {
@@ -334,11 +334,13 @@ if (defined $sta2) {
 #	$grid1, rad2deg($elev1), rad2deg($azim1),
 #	$grid2, rad2deg($elev2), rad2deg($azim2);
     }
-    printf "%s %s: %s :%s; max el ~%.0f\n", $grid1,
-      strftime("%Y-%m-%d %H:%Mz", gmtime $start), $sparkline1,
+    printf "%s %s: %3s %s %-3s :%s; max el ~%.0f°\n", $grid1,
+      strftime("%Y-%m-%d %H:%Mz", gmtime $start),
+      azToNEWS($saz1), $sparkline1, azToNEWS($eaz1),
       strftime("%H:%Mz", gmtime $end), $maxel1;
-    printf "%s %s: %s :%s; max el ~%.0f\n", $grid2,
-      strftime("%Y-%m-%d %H:%Mz", gmtime $start), $sparkline2,
+    printf "%s %s: %3s %s %-3s :%s; max el ~%.0f°\n", $grid2,
+      strftime("%Y-%m-%d %H:%Mz", gmtime $start),
+      azToNEWS($saz2), $sparkline2, azToNEWS($eaz2),
       strftime("%H:%Mz", gmtime $end), $maxel2;
     $found++;
     $i++; $j++;
@@ -563,17 +565,19 @@ sub isNumeric {
 
 sub getStartEnd {
   my $pass = shift;
-  my ($start, $end);
+  my ($start, $end, $saz, $eaz);
 
   foreach my $event (@{$pass->{events}}) {
     if ($event->{event} eq "rise") {
       $start = $event->{time};
+      $saz = rad2deg($event->{azimuth});
     }
     if ($event->{event} eq "set") {
       $end = $event->{time};
+      $eaz = rad2deg($event->{azimuth});
     }
   }
-  return ($start, $end);
+  return ($start, $end, $saz, $eaz);
 }
 
 sub elToSpark {
@@ -595,4 +599,26 @@ sub elToSpark {
   } else {
     return red("▁");
   }
+}
+
+sub azToNEWS {
+  my $az = shift;
+  return "N"   if $az >= 0.0 and $az < 11.25;
+  return "NNE" if $az < 33.75;
+  return "NE"  if $az < 56.25;
+  return "ENE" if $az < 78.75;
+  return "E"   if $az < 101.25;
+  return "ESE" if $az < 123.75;
+  return "SE"  if $az < 146.25;
+  return "SSE" if $az < 168.75;
+  return "S"   if $az < 191.25;
+  return "SSW" if $az < 213.75;
+  return "SW"  if $az < 236.25;
+  return "WSW" if $az < 258.75;
+  return "W"   if $az < 281.25;
+  return "WNW" if $az < 303.75;
+  return "NW"  if $az < 326.25;
+  return "NNW" if $az < 348.75;
+  return "N"   if $az <= 360.0;
+  return undef;
 }
