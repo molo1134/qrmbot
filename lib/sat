@@ -288,8 +288,8 @@ if (defined $sta2) {
   my $found = 0;
   while ($i < $#passes and $j < $#passes2) {
     #print "i, j: $i, $j\n";
-    my ($p1s, $p1e, $saz1, $eaz1) = getStartEnd($passes[$i]);
-    my ($p2s, $p2e, $saz2, $eaz2) = getStartEnd($passes2[$j]);
+    my ($p1s, $p1e) = getStartEnd($passes[$i]);
+    my ($p2s, $p2e) = getStartEnd($passes2[$j]);
     my ($maxel1, $maxel2) = (0.0,0.0);
 
     if ($p1e < $p2s) {
@@ -310,6 +310,9 @@ if (defined $sta2) {
     my $sparkline1 = "";
     my $sparkline2 = "";
 
+    my ($saz1, $eaz1) = (undef, undef);
+    my ($saz2, $eaz2) = (undef, undef);
+
     for (my $time = $start; $time < $end; $time += $delta) {
       $body1->{station} = $sta;
       eval {$body1->universal($time); 1;} or do {
@@ -319,6 +322,8 @@ if (defined $sta2) {
       my ($azim1, $elev1, $range1) = $body1->azel();
       $sparkline1 .= elToSpark(rad2deg($elev1));
       $maxel1 = rad2deg($elev1) if rad2deg($elev1) > $maxel1;
+      $saz1 = rad2deg($azim1) if not defined $saz1;
+      $eaz1 = rad2deg($azim1);
 
       $body2->{station} = $sta2;
       eval {$body2->universal($time); 1;} or do {
@@ -328,6 +333,8 @@ if (defined $sta2) {
       my ($azim2, $elev2, $range2) = $body2->azel();
       $sparkline2 .= elToSpark(rad2deg($elev2));
       $maxel2 = rad2deg($elev2) if rad2deg($elev2) > $maxel2;
+      $saz2 = rad2deg($azim2) if not defined $saz2;
+      $eaz2 = rad2deg($azim2);
 
 #      printf "%s:: %s: %.1f el @ %.0f az ;\t%s: %.1f el @ %.0f az\n",
 #	strftime("%H:%Mz", gmtime $time),
@@ -565,19 +572,17 @@ sub isNumeric {
 
 sub getStartEnd {
   my $pass = shift;
-  my ($start, $end, $saz, $eaz);
+  my ($start, $end);
 
   foreach my $event (@{$pass->{events}}) {
     if ($event->{event} eq "rise") {
       $start = $event->{time};
-      $saz = rad2deg($event->{azimuth});
     }
     if ($event->{event} eq "set") {
       $end = $event->{time};
-      $eaz = rad2deg($event->{azimuth});
     }
   }
-  return ($start, $end, $saz, $eaz);
+  return ($start, $end);
 }
 
 sub elToSpark {
