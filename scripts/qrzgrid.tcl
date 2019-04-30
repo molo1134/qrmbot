@@ -1368,7 +1368,7 @@ proc sat_pub { nick host hand chan text } {
 	if {(( [string equal "" $geo] )  )} then {
 		set fd [open "|${satbin} ${params}" r]
 	} else {
-		set fd [open "|${satbin} ${geo} ${params}" r]
+		set fd [open "|${satbin} ${params} --geo ${geo}" r]
 	}
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
@@ -1389,7 +1389,7 @@ proc sat_msg {nick uhand handle input} {
 	if {(( [string equal "" $geo] ))} then {
 		set fd [open "|${satbin} ${params}" r]
 	} else {
-		set fd [open "|${satbin} ${params} ${geo}" r]
+		set fd [open "|${satbin} ${params} --geo ${geo}" r]
 	}
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {

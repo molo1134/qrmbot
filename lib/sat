@@ -108,6 +108,8 @@ while ($i <= $#ARGV) {
     $sat = $ARGV[$i];
   } elsif ($ARGV[$i] eq "--commonpass") {
     $station2 = 1;
+  } elsif ($ARGV[$i] eq "--geo") {
+    $station2 = 0;
   } else {
     if ($station2 == 0) {
       $query .= " " unless $i == 1;
