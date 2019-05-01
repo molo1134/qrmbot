@@ -90,7 +90,6 @@ if (not defined($datestamp)) {
   exit 0;
 }
 
-print "Kp index prediction as of $datestamp:\n";
 print "$d1|$d2|$d3: $plot\n";
 #print "$d1: ", (join( "", @l1), "\n");
 #print "$d2: ", (join( "", @l2), "\n");
