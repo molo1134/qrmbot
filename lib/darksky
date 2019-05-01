@@ -1,10 +1,10 @@
 #!/usr/bin/perl
 # DarkSky API client -- current conditions.  2-clause BSD license.
 
-# Substantially hustled fro the qrm's original wx script which is
+# Substantially hustled from the qrm's original wx script which is
 # Copyright 2018 /u/molo1134. All rights reserved.
 
-# requires an API key from wunderground.com  Place into the file $HOME/.darksky as follows:
+# requires an API key from DarkSky.com  Place into the file $HOME/.darksky as follows:
 #
 # $apikey = "0123456789abcdef";
 #
