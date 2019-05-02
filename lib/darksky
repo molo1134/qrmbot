@@ -135,7 +135,7 @@ for ($units){
         print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
         print "Dew point: " . sprintf("%1d",$results{dewPoint}) . "°F ";
         
-        if ($results{nearestStormDistance} ne '') {
+        if ($results{nearestStormDistance} ne "0"  {
             print "Nearest storm is ". sprintf("%1d",$results{nearestStormDistance}) . " miles away, bearing " . $results{nearestStormBearing} . "° ";
         }
 
@@ -169,14 +169,13 @@ for ($units){
         print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
         print "Dew point: " . sprintf("%1d",$results{dewPoint}) . "°C ";
 
-        if ($results{nearestStormDistance} ne '') {
+        if ($results{nearestStormDistance} ne "0") {
             print "Nearest storm is ". sprintf("%1d",$results{nearestStormDistance}) . " miles away, bearing " . $results{nearestStormBearing} . "° ";
         }
 
         if ($results{windspeed} ne '') {
             print "Wind: " . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° \n";
         }
-        
         
         print "Forecast: " . $forecast;
 
