@@ -39,6 +39,9 @@ use strict;
 use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
+
+use URI::Escape;
+
 use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
@@ -55,6 +58,16 @@ if (-e ($apikeyfile)) {
 }
 die "error: no API key set" unless defined($apikey);
 
+my $i = 0;
+while ($i <= $#ARGV) {
+  if (defined($loc)) {
+    $loc = $loc . " " . $ARGV[$i];
+  } else {
+    $loc = $ARGV[$i];
+  }
+  $i++;
+}
+
 my $geo = argToCoords($loc);
 $loc = $geo if defined $geo;
 #print "loc: $loc\n";
@@ -62,7 +75,7 @@ my $encodedloc = uri_escape($loc);
 
 
 #my $url = "https://api.darksky.net/forecast/$apikey/$ARGV[0]?units=auto&exclude=hourly,minutely";
-my $url = "https://api.darksky.net/forecast/$apikey/$loc?units=auto&exclude=hourly,minutely";
+my $url = "https://api.darksky.net/forecast/$apikey/$encodedloc?units=auto&exclude=hourly,minutely";
 
 # darksky returns US Imperial units by default, but the units can be tweaked via
 # the query parameter 'units' as seen above. Their docs spell out the following
