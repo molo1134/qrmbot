@@ -4,7 +4,7 @@
 # Substantially hustled from the qrm's original wx script which is
 # Copyright 2018 /u/molo1134. All rights reserved.
 
-# requires an API key from DarkSky.com  Place into the file $HOME/.darksky as follows:
+# requires an API key from DarkSky.com  Place into $HOME/.darksky:
 #
 # $apikey = "0123456789abcdef";
 #
@@ -29,7 +29,7 @@
 #  "uvIndex": 5,
 #  "visibility": 9.27,
 #  "ozone": 320.06
-#}
+# }
 #
 # Weather data: 
 # Powered by Dark Sky
@@ -154,13 +154,12 @@ for ($units){
             print $windlabel . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° ";
         }
 
-        print $fclabel . $forecast;
+        print $fclabel . $forecast . "\n";
 
         if ($results{title} ne ''){
 
             # note that this only prints the last alert if multiple alerts are
             # returned.
-            #
 
             my $alertmsg = red("Alert");
             print "\n" . $alertmsg . ": " . $results{title} . " -> " . $results{uri} . "\n";
