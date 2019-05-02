@@ -48,12 +48,12 @@ proc crypto_msg {nick uhand handle input} {
 
 	putlog "crypto msg: $nick $uhand $handle $input"
 
-	catch {exec ${btcbin} ${input}} data
-
-	set output [split $data "\n"]
-	foreach line $output {
-		putmsg $nick [encoding convertto utf-8 "$line"]
+	set fd [open "|${btcbin} ${input}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
 	}
+	close $fd
 }
 
 proc btc_pub { nick host hand chan input } {
@@ -75,12 +75,12 @@ proc crypto_pub { nick host hand chan input } {
 
 	putlog "crypto pub: $nick $host $hand $chan $input"
 
-	catch {exec ${btcbin} ${input}} data
-
-	set output [split $data "\n"]
-	foreach line $output {
-		putchan $chan [encoding convertto utf-8 "$line"]
+	set fd [open "|${btcbin} ${input}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
 	}
+	close $fd
 }
 
 putlog "Crypto utils loaded."

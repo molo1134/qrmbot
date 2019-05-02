@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+
+if ($#ARGV < 0) {
+	print "usage: !metar <airportcode>\n";
+	exit 0;
+}
+
+my $code = uc $ARGV[0];
+
+if (length($code) != 4) {
+	print "invalid input: $code\n";
+	exit 0;
+}
+
+my $url = "http://tgftp.nws.noaa.gov/data/observations/metar/stations/$code.TXT";
+#print "$url\n";
+my $found = 0;
+
+open(HTTP, '-|', "curl -f --max-time 10 -s -k -L '$url'");
+while(<HTTP>) {
+	next if (m|^\d{4}/\d{2}/\d{2} \d{2}:\d{2}$|);
+	$found = 1;
+	print;
+}
+
+if ($found == 0) {
+	print("not found: $code\n");
+}

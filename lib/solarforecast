@@ -82,8 +82,8 @@ indicateEvent($lastday, "RTTY Roundup", getFullWeekendInMonth(1, "Jan"), 2);		# 
 indicateEvent($lastday, "NA CW QSOP", getFullWeekendInMonth(2, "Jan"), 2);			# 2nd full weekend in January
 indicateEvent($lastday, "NA SSB QSOP", getFullWeekendInMonth(3, "Jan"), 2);			# 3rd full weekend in January
 indicateEvent($lastday, "CQ 160m CW", getFullWeekendInMonth(5, "Jan"), 2);			# last full weekend Jan
-indicateEvent($lastday, "School Club Roundup", getIterDayInMonth(2, "Monday", "Feb"), 5);	# 2nd full school week in Feb
 indicateEvent($lastday, "CQ WPX RTTY", getFullWeekendInMonth(2, "Feb"), 2);			# 2nd full weekend Feb
+indicateEvent($lastday, "School Club Roundup", getIterDayInMonth(2, "Monday", "Feb"), 5);	# 2nd full school week in Feb
 indicateEvent($lastday, "ARRL Intl DX CW", getFullWeekendInMonth(3, "Feb"), 2);			# 3rd full weekend in Feb
 indicateEvent($lastday, "CQ 160m SSB", getFullWeekendInMonth(5, "Feb"), 2);			# last full weekend Feb
 indicateEvent($lastday, "NA RTTY QSOP", getIterDayInMonth(5, "Saturday", "Feb"), 2);		# last Saturday in Feburary
@@ -105,7 +105,6 @@ indicateEvent($lastday, "ARRL Rookie Roundup, RTTY", getIterDayInMonth(3, "Sunda
 indicateEvent($lastday, "All Asian DX Phone", getFullWeekendInMonth(1, "Sep"), 2);		# 1st Saturday in Sept
 indicateEvent($lastday, "WAE DX SSB", getFullWeekendInMonth(2, "Sep"), 2);			# 2nd full weekend in September
 indicateEvent($lastday, "CQ WW RTTY DX", getFullWeekendInMonth(5, "Sep"), 2);			# last full weekend of september
-indicateEvent($lastday, "ARRL Rookie Roundup, CW", getIterDayInMonth(3, "Sunday", "Dec"), 1);	# 3rd Sunday in December
 indicateEvent($lastday, "School Club Roundup", getIterDayInMonth(3, "Monday", "Oct"), 5);	# 3rd full school week in October
 indicateEvent($lastday, "CQ WW DX SSB", getFullWeekendInMonth(5, "Oct"), 2);			# last full weekend Oct
 indicateEvent($lastday, "ARRL Sweepstakes, CW", getFullWeekendInMonth(1, "Nov"), 3);		# 1st full weekend in Nov

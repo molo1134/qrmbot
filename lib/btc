@@ -36,11 +36,13 @@ $fiat = "USD" unless defined($fiat);
 
 # list comes from here: https://api.coinmarketcap.com/v1/ticker/
 my %ids = (
+  "ABBC" => "abbc-coin",
   "ADA" => "cardano",
   "ADX" => "adx-net",
   "AE" => "aeternity",
   "AGI" => "singularitynet",
   "AION" => "aion",
+  "AOA" => "aurora",
   "ARDR" => "ardor",
   "ARK" => "ark",
   "ATM" => "attention-token-of-media",
@@ -48,34 +50,43 @@ my %ids = (
   "BAT" => "basic-attention-token",
   "BAY" => "bitbay",
   "BCC" => "bitconnect",
+  "BCD" => "bitcoin-diamond",
   "BCH" => "bitcoin-cash",
   "BCN" => "bytecoin-bcn",
   "BDL" => "bitdeal",
+  "BIX" => "bibox-token",
   "BLOCK" => "blocknet",
   "BNB" => "binance-coin",
   "BNT" => "bancor",
   "BQX" => "bitquence",
+  "BSV" => "bitcoin-sv",
   "BTC" => "bitcoin",
   "BTCD" => "bitcoindark",
   "BTG" => "bitcoin-gold",
   "BTM" => "bytom",
   "BTS" => "bitshares",
+  "BTT" => "bittorrent",
   "BTX" => "bitcore",
   "CND" => "cindicator",
   "CNX" => "cryptonex",
+  "CRO" => "crypto-com-chain",
   "CVC" => "civic",
+  "DAI" => "dai",
   "DASH" => "dash",
   "DCN" => "dentacoin",
   "DCR" => "decred",
   "DENT" => "dent",
   "DGB" => "digibyte",
   "DGD" => "digixdao",
+  "DGTX" => "digitex-futures",
   "DOGE" => "dogecoin",
   "DRGN" => "dragonchain",
   "EDG" => "edgeless",
+  "ELA" => "elastos",
   "ELF" => "aelf",
   "EMC" => "emercoin",
   "ENG" => "enigma-project",
+  "ENJ" => "enjin-coin",
   "EOS" => "eos",
   "ETC" => "ethereum-classic",
   "ETH" => "ethereum",
@@ -90,11 +101,17 @@ my %ids = (
   "GBYTE" => "byteball",
   "GNO" => "gnosis-gno",
   "GNT" => "golem-network-tokens",
+  "GUSD" => "gemini-dollar",
+  "GXC" => "gxchain",
   "GXS" => "gxshares",
+  "HC" => "hypercash",
+  "HOT" => "holo",
   "HSR" => "hshare",
+  "HT" => "huobi-token",
   "ICN" => "iconomi",
   "ICX" => "icon",
   "IGNIS" => "ignis",
+  "INB" => "insight-chain",
   "IOST" => "iostoken",
   "KCS" => "kucoin-shares",
   "KIN" => "kin",
@@ -102,25 +119,35 @@ my %ids = (
   "KNC" => "kyber-network",
   "LINK" => "chainlink",
   "LKK" => "lykke",
+  "LOOM" => "loom-network",
   "LRC" => "loopring",
   "LSK" => "lisk",
   "LTC" => "litecoin",
   "MAID" => "maidsafecoin",
+  "MANA" => "decentraland",
+  "MCO" => "crypto-com",
   "MCO" => "monaco",
   "MGO" => "mobilego",
   "MIOTA" => "iota",
   "MKR" => "maker",
   "MONA" => "monacoin",
   "MTL" => "metal",
+  "MXM" => "maximine-coin",
+  "NANO" => "nano",
   "NAS" => "nebulas-token",
   "NAV" => "nav-coin",
   "NEBL" => "neblio",
   "NEO" => "neo",
+  "NPXS" => "pundi-x",
+  "NULS" => "nuls",
   "NXS" => "nexus",
   "NXT" => "nxt",
   "OMG" => "omisego",
+  "ONT" => "ontology",
   "OTN" => "open-trading-network",
+  "PAI" => "project-pai",
   "PART" => "particl",
+  "PAX" => "paxos-standard-token",
   "PAY" => "tenx",
   "PIVX" => "pivx",
   "PLR" => "pillar",
@@ -128,6 +155,7 @@ my %ids = (
   "PPT" => "populous",
   "PURA" => "pura",
   "QASH" => "qash",
+  "QBIT" => "qubitica",
   "QSP" => "quantstamp",
   "QTUM" => "qtum",
   "RCN" => "ripio-credit-network",
@@ -137,6 +165,7 @@ my %ids = (
   "REQ" => "request-network",
   "RHOC" => "rchain",
   "R" => "revain",
+  "RVN" => "ravencoin",
   "SALT" => "salt",
   "SC" => "siacoin",
   "SMART" => "smartcash",
@@ -146,19 +175,28 @@ my %ids = (
   "STORJ" => "storj",
   "STRAT" => "stratis",
   "SYS" => "syscoin",
+  "THETA" => "theta",
+  "THR" => "thorecoin",
   "TRX" => "tron",
+  "TUSD" => "trueusd",
   "UBQ" => "ubiq",
+  "USDC" => "usd-coin",
   "USDT" => "tether",
   "VEN" => "vechain",
   "VERI" => "veritaseum",
+  "VET" => "vechain",
   "VTC" => "vertcoin",
   "WAVES" => "waves",
+  "WAX" => "wax",
   "WTC" => "walton",
+  "WTC" => "waltonchain",
   "XEM" => "nem",
+  "XIN" => "mixin",
   "XLM" => "stellar",
   "XMR" => "monero",
   "XRB" => "raiblocks",
   "XRP" => "ripple",
+  "XTZ" => "tezos",
   "XVG" => "verge",
   "XZC" => "zcoin",
   "ZCL" => "zclassic",
@@ -168,6 +206,7 @@ my %ids = (
   "ZRX" => "0x",
   "ZSC" => "zeusshield",
 );
+
 my $id = $ids{$crypto};
 
 if (!defined($id)) {
@@ -175,14 +214,20 @@ if (!defined($id)) {
   exit 0;
 }
 
-my $url = "https://api.coinmarketcap.com/v1/ticker/$id/?convert=$fiat";
+#my $url = "https://api.coinmarketcap.com/v1/ticker/$id/?convert=$fiat";
+my $url = "https://app-oa25k.lamp.app/coinmarketcap-proxy.php?id=$id&fiat=$fiat";
 my %results;
 
+#print "$url\n";
 open(HTTP, '-|', "curl --max-time 5 -s -k -L '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   #print;
   chomp;
+  if (/Access denied/i) {
+    print "Access denied.\n";
+    exit 0
+  }
   if (/"(\w+)":\s*"?(.*?)"?,?\s*$/) {
     my ($key, $value) = ($1, $2);
     $results{$key} = $value;

@@ -176,7 +176,7 @@ my %qcodes = (
 # removing codes that conflict with ARRL codes
 
 #"QNE" => "What indication will my altimeter give on landing at ... (place) at ... hours, my sub-scale being set to 1013.2 millibars (29.92 inches)? / On landing at ... (place) at ... hours, with your sub-scale being set to 1013.2 millibars (29.92 inches), your altimeter will indicate ... (figures and units).",
-#"QNH" => "What should I set on the subscale of my altimeter so that the instrument would indicate its elevation if my aircraft were on the ground at your station? / If you set the subscale of your altimeter to read ... millibars, the instrument would indicate its elevation if your aircraft were on the ground at my station at ... hours.  --Note-- When the setting is given in hundredths of inch the abbreviation INS is used to identify the units.",
+"QNH" => "What should I set on the subscale of my altimeter so that the instrument would indicate its elevation if my aircraft were on the ground at your station? / If you set the subscale of your altimeter to read ... millibars, the instrument would indicate its elevation if your aircraft were on the ground at my station at ... hours.  --Note-- When the setting is given in hundredths of inch the abbreviation INS is used to identify the units.",
 #"QNI" => "Between what heights above ... (datum) has turbulence been observed at ... (position or zone)? / Turblence has been observed at ... (position or zone) with an intensity of ... between ... (figures and units) and ... (figures and units) heights above ... (datum).",
 #"QNO" => "I am not equipped to give the information (or provide the facility) requested.",
 #"QNR" => "I am approaching my point of no return.",
@@ -192,7 +192,7 @@ my %qcodes = (
 "QNE" => "Entire net stand by.",
 "QNF" => "Net is Free (not controlled).",
 "QNG" => "Take over as net control station.",
-"QNH" => "Your net frequency is High.",
+#"QNH" => "Your net frequency is High.",
 "QNI" => "Net stations report In. / I am reporting into the net. (Follow with a list or traffic or QRU).",
 #"QNI" => "May I join the net? / You may check in...",
 "QNJ" => "Can you copy me? Can you copy ...?",

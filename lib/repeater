@@ -52,12 +52,6 @@ my $encoded = uri_escape($searchterm);
 my $url = "https://repeaterbook.com/repeaters/keyword.php?func=result&keyword=${encoded}&state_id=0";
 #print "$url\n";
 
-my $infreq = 0;
-my $inloc = 0;
-my $instate = 0;
-my $incounty = 0;
-my $incall = 0;
-
 if (defined($band) and !($band =~ /^((10|6|4|2|1\.25)m)|((70|33|23)cm)$/)) {
   print "valid bands: 10m 6m 4m 2m 1.25m 70cm 33cm 23cm\n";
   exit 0;
@@ -114,58 +108,27 @@ while (<HTTP>) {
 
   chomp;
 
-  if (/<!-- freq -->/) {
-    $infreq = 1;
-  }
-  if ($infreq == 1 && />([0-9.]+)([-+xs])/) {
+  if (m|title="View Details.">([0-9.]+)([-+xs])</a>|) {
     $freq = $1;
     $offset = $2;
   }
-  #print "$_\n" if $infreq == 1;
-  if ($infreq == 1 && /^(.*)<\/td>/) {
+  if (defined($freq) and not defined($squelch) and /^([^<]+)<\/td>\s*$/) {
     $squelch = $1;
   }
-
-  if (/<!-- Location -->/) {
-    $infreq = 0;
-    $inloc = 1;
-    #print "inloc\n";
-  }
-  if ($inloc == 1 && /.*>([^<]*)</) {
+  if (not defined($location) and m|^<td NOWRAP>([^<]*)</td>\s*$|) {
     $location = $1;
   }
-
-  if (/<!-- State\/Province -->/) {
-    $inloc = 0;
-    $instate = 1;
-    #print "instate\n";
-  }
-  if ($instate == 1 && /.*>([^<]*)<\/font/) {
+  if (defined($location) and m|^<td NOWRAP class="w3-center">([^<]+)</td>\s*$|){
     $state = $1;
   }
-
-  if (/<!-- County -->/) {
-    $instate = 0;
-    $incounty = 1;
-    #print "incounty\n";
-  }
-  #print "$_\n" if $incounty == 1;
-  if ($incounty == 1 && /.*>([^<]*)<\/font>/) {
+  if (defined($location) and m|^<td NOWRAP>([^<]*)</td>\s*$|) {
     $county = $1;
   }
-
-  if (/<!-- Callsign. -->/) {
-    $incounty = 0;
-    $incall = 1;
-    #print "incall\n";
-  }
-  if ($incall == 1 && /.*>([^<]*)</) {
-    #print "$_\n";
+  if (defined($location) and not defined($callsign) and /^([^<]+)<\/td>\s*$/) {
     $callsign = $1;
   }
 
-  if (/<!-- Use -->/) {
-    $incall = 0;
+  if (defined($freq) and defined($location) and m|</tr>|) {
     $vals{"$freq,$location"} = join("::", $freq, $offset, $squelch, $location, $state, $county, $callsign);
     $freq = $offset = $squelch = $location = $state = $county = $callsign = undef;
     #print "added $freq: " . $vals{"$freq,$location"} . "\n";
@@ -219,43 +182,26 @@ binmode(HTTP, ":encoding(cp1252)");
 while (<HTTP>) {
 	#print;
   chomp;
-  if (/<!-- freq -->/) {
-    $infreq = 1;
-  }
-  if ($infreq == 1 && />([0-9.]+)</) {
+  if (/View Details.*?>([0-9.]+)</) {
     $freq = $1;
   }
-  if ($infreq == 1 && /^([^>]+)<\/td>/) {
+  if (defined $freq and /^([^>]+)<\/td>\s*$/) {
     $squelch = $1;
   }
 
-  if (/<!-- Location -->/) {
-    $infreq = 0;
-    $inloc = 1;
-  }
-  if ($inloc == 1 && /.*>([^<]*)</) {
+  if (/^<td NOWRAP><font CLASS="normal">([^<]*)<\/td>\s*$/) {
     $location = $1;
   }
 
-  if (/<!-- Country -->/) {
-    $inloc = 0;
-    $instate = 1;
-  }
-  if ($instate == 1 && /.*>([^<]+)</) {
+  if (m|<td NOWRAP ALIGN="center"><font CLASS="normal">([^<]+)</font></td>|) {
     $state = $1;
   }
 
-  if (/<!-- Callsign. -->/) {
-    $instate = 0;
-    $incall = 1;
-  }
-  if ($incall == 1 && /.*>([^<]*)</) {
-    #print "$_\n";
+  if (m|<font CLASS="normal">([A-Z0-9]+)</td>|) {
     $callsign = $1;
   }
 
-  if (/<!-- Use -->/) {
-    $incall = 0;
+  if (m|</tr>| and defined($freq) and defined($location)) {
     $squelch = "" if !defined($squelch);
     $vals{"$freq,$location"} = join("::", $freq, $squelch, $location, $state, $callsign);
     #print "added $freq: " . $vals{"$freq,$location"} . "\n";

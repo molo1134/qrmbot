@@ -74,8 +74,10 @@ if (!defined($loc)) {
 
 $loc =~ s/^\s*//;
 $loc =~ s/\s*$//;
-my $geo = argToCoords($loc);
-$loc = $geo if defined $geo;
+if (not $loc =~ m/^PWS:/i) {
+  my $geo = argToCoords($loc);
+  $loc = $geo if defined $geo;
+}
 
 $loc =~ s/\s/_/g;
 my $encodedloc = uri_escape($loc);
@@ -84,7 +86,7 @@ my $url = "http://api.wunderground.com/api/$apikey/geolookup/q/$encodedloc.json"
 my %geo;
 my $in_location = 0;
 
-open(HTTP, '-|', "curl -s -L --insecure '$url'");
+open(HTTP, '-|', "curl -s -L --compressed --insecure '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
 	#print;
@@ -120,7 +122,7 @@ my $lon = nearest(.1, $geo{'lon'}) if defined $geo{'lon'};
 my @alerts;
 
 $url = "http://api.wunderground.com/api/$apikey/alerts/q/$encodedloc.json";
-open(HTTP, '-|', "curl -s -L --insecure '$url'");
+open(HTTP, '-|', "curl -s -L --compressed --insecure '$url'");
 binmode(HTTP, ":utf8");
 my $inalerts = 0;
 my $description = undef;
@@ -173,7 +175,13 @@ while (<HTTP>) {
     tzset;
     $end = strftime("%a %H:%M %Z", localtime($end)); # e.g. Sun 11:00 PDT
 
-    push(@alerts, bold("Alert").": ".bold($description)." until ${end}");
+    my $alertmsg = bold("Alert");
+    $alertmsg = yellow("Alert") if $description =~ /yellow/i;
+    $alertmsg = darkYellow("Alert") if $description =~ /orange/i;
+    $alertmsg = red("Alert") if $description =~ /red/i;
+    $alertmsg = darkRed("Alert") if $description =~ /(dark ?red|dunkelrot)/i;
+
+    push(@alerts, "${alertmsg}: ".bold($description)." until ${end}");
 
     $description = $zone = undef;
     $end = 0;
@@ -188,8 +196,8 @@ my $in_forecast;
 my $error = 0;
 my %rec;
 
-#print "$url\n";
-open(HTTP, '-|', "curl -s -L --insecure '$url'");
+#print "curl -s -L --insecure --compressed '$url'";
+open(HTTP, '-|', "curl -s -L --insecure --compressed '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   chomp;
@@ -251,7 +259,7 @@ close(HTTP);
 #
 
 my $units = "_metric";
-$units = "" if $geo{'country_iso3166'} eq "US";
+$units = "" if defined $geo{'country_iso3166'} and $geo{'country_iso3166'} eq "US";
 
 if (!defined $rec{date} or $rec{date} eq "") {
   print "Forecast for $place not found.\n" if defined $place;
@@ -259,7 +267,11 @@ if (!defined $rec{date} or $rec{date} eq "") {
   exit $exitnonzeroonerror;
 }
 
-print "Forecast for ", bold($place), " ($lat,$lon) as of $rec{'date'}:\n";
+$place = "?" if not defined $place;
+
+print "Forecast for ", bold($place);
+print " ($lat,$lon)" if defined $lat and defined $lon;
+print " as of $rec{'date'}:\n";
 
 foreach my $alert (@alerts) {
   print " $alert\n";

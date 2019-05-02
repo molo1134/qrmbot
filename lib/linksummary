@@ -38,13 +38,14 @@ $highlight = "irc" if $username eq "eggdrop";
 
 # eggdrop doesn't split args on spaces
 @ARGV=split(' ', join(' ',@ARGV));
+@ARGV = uniq(@ARGV);	# deduplicate - no reason to process the same url twice
 
 my $i = 0;
 while ($i <= $#ARGV) {
 
   $ARGV[$i] =~ s/'//g; # sanitize
 
-  if ($ARGV[$i] =~ m|^https?://(www\.)?youtube\.com/watch\?v=([\w-]+)|i) {
+  if ($ARGV[$i] =~ m|^https?://(www\.\|m\.)?youtube\.com/watch\?v=([\w-]+)|i) {
     printYouTubeMetaData($2);
   } elsif ($ARGV[$i] =~ m|^https?://youtu\.be/([\w-]+)|i) {
     printYouTubeMetaData($1);
@@ -74,8 +75,12 @@ while ($i <= $#ARGV) {
   } elsif ($ARGV[$i] =~ m|^https?://goo\.gl/maps/|i or
 	  $ARGV[$i] =~ m|^https?://(www\.)?google\.com/maps/|i) {
     # noop
-  } elsif ($ARGV[$i] =~ m|^https?://(\w+\.)?imgur.com/|) {
+  } elsif ($ARGV[$i] =~ m|^https?://(\w+\.)?imgur\.com/|) {
     doImgur($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://wireless2\.fcc\.gov/UlsApp/ApplicationSearch/.*\?applID=|) {
+    doFccApp($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?ae7q\.com/query/list/GenLicAvail.php\?REGION=|) {
+    doAe7qRegion($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://| and
 	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
     doHtml($ARGV[$i]);
@@ -88,6 +93,7 @@ sub printYouTubeMetaData {
   my $id = shift;
   my $url = "https://youtube.com/watch?v=$id";
   my $shortcut = "http://youtu.be/$id";
+  my $vidimg = "https://i.ytimg.com/vi/$id/hqdefault.jpg";
   my $done = 0;
   my ($title, $len, $desc, $count, $pubdate, $genre, $nsfw, $unlisted, $paid, $author, $likes, $dislikes, $live);
   open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
@@ -118,11 +124,11 @@ sub printYouTubeMetaData {
 #    }
     if (/"like this video along with ([0-9,]+) other people"/) {
       $likes = $1;
-      $likes =~ s/,//;
+      $likes =~ s/,//g;
     }
     if (/"dislike this video along with ([0-9,]+) other people"/) {
       $dislikes = $1;
-      $dislikes =~ s/,//;
+      $dislikes =~ s/,//g;
     }
     if (/"livestream":"1"/) {
       $live = 1;
@@ -152,7 +158,7 @@ sub printYouTubeMetaData {
   print red(" [NSFW]") if $nsfw == 1;
   print green(" [PAID]") if $paid == 1;
   print yellow(" [UNLISTED]") if $unlisted == 1;
-  print ": $desc $shortcut\n";
+  print ": $desc $shortcut img: $vidimg\n";
 }
 
 
@@ -647,10 +653,13 @@ sub doQthCom {
   my $url = shift;
   my ($title, $desc, $call);
 
+  # Temporary proxy - TODO: permanent URL?
+  $url =~ s|https?://swap\.qth\.com/view_ad\.php\?counter=|https://app-oa25k.lamp.app/qth-proxy.php?id=|i;
+
   open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
-    if (m|<font size=3 face="Arial,Helvetica">\s*([^<]+)</font></B>|) {
+    if (m|<font size=3 face="Arial,Helvetica">\s*(.*?)\s*</font></B>|) {
       $title = $1;
     }
     if (not defined($desc) and
@@ -913,7 +922,150 @@ sub doImgur {
   print yellow(" [sound]")
     if defined $data{has_sound} and $data{has_sound} eq "true";
   print red(" [NSFW]") if defined $data{nsfw} and $data{nsfw} eq "true";
+  print " preview: http://i.imgur.com/${hash}l.jpg" if $isimg == 1 and
+	($data{width} > 640 or $data{height} > 640);
   print ": $desc" if defined $desc;
+  print "\n";
+}
+
+sub doFccApp {
+  my $url = shift;
+  my ($appId, $call, $status, $receipt, $action, $systematic, $relative, $req);
+  my $purpose;
+  if ($url =~ m|https?://wireless2.fcc.gov/UlsApp/ApplicationSearch/.*\?applID=(\d+)|) {
+    $appId = $1;
+  }
+  $url = "http://wireless2.fcc.gov/UlsApp/ApplicationSearch/applMain.jsp?applID=$appId";
+  #print "$url\n";
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  my $inStatus = 0;
+  my $inReceipt = 0;
+  my $inAction = 0;
+  while(<HTTP>) {
+    #print;
+    if (m|title="Link to License in new window" target="_new">([^<]+)</a>|) {
+      $call = $1;
+      #print "call $call\n"
+    }
+    $purpose = "Administrative Update" if /Administrative Update/;
+    $purpose = "Renewal" if /Renewal Only/;
+    $purpose = "New License" if /NE - New/;
+    $inStatus = 1 if />Application Status</;
+    if ($inStatus and /-\s*(\w+)\s*$/) {
+      $status = $1;
+      #print "status: $status\n";
+      $inStatus = 0;
+    }
+    $inReceipt = 1 if />Receipt Date</;
+    if ($inReceipt and m|\s*([01][0-9]/[0-3][0-9]/\d{4})(&nbsp;)?<|) {
+      $receipt = $1;
+      #print "receipt: $receipt\n";
+      $inReceipt = 0;
+    }
+    $inAction = 1 if />Action Date</;
+    if ($inAction and m|\s*([01][0-9]/[0-3][0-9]/\d{4})(&nbsp;)?<|) {
+      $action = $1;
+      #print "action: $action\n";
+      $inAction = 0;
+    }
+  }
+  close(HTTP);
+
+  $url = "http://wireless2.fcc.gov/UlsApp/ApplicationSearch/applServiceSpecific.jsp?applID=$appId";
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  my $inSystematic = 0;
+  my $inPreflist = 0;
+  my $inReq = 0;
+  my @vanities;
+  while(<HTTP>) {
+    $inSystematic = 1 if />Request to change a station call sign systematically\?</;
+    if ($inSystematic and /\s*(.*)&nbsp;</) {
+      $systematic = $1;
+      #print "systematic: $systematic\n";
+      $systematic = undef if $systematic eq "";
+      $inSystematic = 0;
+    }
+    if (/Close Relative of Former Holder - (.+?)\s*$/) {
+      $relative = $1;
+    }
+    $inReq = 1 if />Requested Call Sign</;
+    if ($inReq and /^\s*([A-Z0-9]+)\s*&nbsp;</) {
+      $req = $1;
+      $inReq = 0;
+    }
+    $inPreflist = 1 if /Reference Copy Displays Call Sign Preference Information Out Of Order/;
+    if ($inPreflist and /(&nbsp;)*(\d+)\.(&nbsp;)*([A-Z0-9]+)\s*</) {
+      my ($n, $c) = ($2, $4);
+      #print "$n: $c\n";
+      $vanities[$n-1] = $c;
+    }
+  }
+  close(HTTP);
+
+  if (defined $call) {
+    print bold($call), ": ";
+    $status = lightblue($status) if $status eq "Pending";
+    $status = green($status) if $status eq "Granted";
+    $status = red($status) if $status eq "Dismissed";
+    $status = yellow($status) if $status eq "Inactive";
+    print "$status -- ";
+    print "$purpose; " if defined $purpose;
+    print "systematic; " if defined $systematic and $systematic ne "N";
+    print "received $receipt, last action $action; " if defined $receipt;
+    print "vanity list: ", join(", ", @vanities) if defined $vanities[0];
+    print "relative: $relative " if defined $relative;
+    print "requested: $req" if defined $req;
+    print "\n";
+  }
+}
+
+sub doAe7qRegion {
+  my $url = shift;
+
+  my $region;
+  if ($url =~ m|REGION=(\d+)|) {
+    $region = $1;
+  }
+
+  my $numavail = 0;
+  my $numpending = 0;
+  my @avail;
+  my @pending;
+  my $lastcall;
+  my $inCallTable = 0;
+  my $ae7qTimeout = $timeout * 2;
+  open(HTTP, '-|', "curl --max-time $ae7qTimeout -L -k -s '$url'");
+  while(<HTTP>) {
+    if (m|<tr><th class='Database' colspan='[23]'> Totals </th><td class='DatabaseField' align='right'> (\d+) </td><td class='DatabaseField' align='right'> (\d+) <|) {
+      $numavail = $1;
+      $numpending = $2;
+      #print "$numavail, $numpending\n";
+    }
+    $inCallTable = 1 if (m|>\s*[12]x[12] callsigns\s*<|);
+    if (not defined $lastcall and $inCallTable and m|<a href='/query/data/CallHistory\.php\?CALL=([A-Z0-9]+)'|) {
+      $lastcall = $1;
+      #print "lastcall: $lastcall\n";
+    }
+    if (defined $lastcall and m|</td><td class='DatabaseField' align='center'>\d+</td><td class="Database" style='background-color:#([0-9A-F]+);|) {
+      my $color = $1;
+      if ($color eq "99CCFF") {
+	push @pending, $lastcall;
+	#print "pending: $lastcall\n";
+      }
+      if ($color eq "99FF66") {
+	push @avail, $lastcall;
+	#print "avail $lastcall\n";
+      }
+      $lastcall = undef;
+    }
+
+  }
+  close(HTTP);
+
+  print "Region $region: ", green($numavail), " available";
+  print ": ", green(join(", ", @avail)) if $numavail > 0;
+  print "; ", lightblue($numpending), " pending";
+  print ": ", lightblue(join(", ", @pending)) if $numpending > 0;
   print "\n";
 }
 
@@ -922,5 +1074,11 @@ sub unescape {
   $s =~ s/\\n/ /g;
   $s =~ s/\\"/"/g;
   $s =~ s|\\/|/|g;
+  $s =~ s|\\u([0-9a-f]{4})|chr hex $1|eg;
   return $s;
+}
+
+sub uniq {
+  my %seen;
+  grep !$seen{$_}++, @_;
 }

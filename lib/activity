@@ -89,11 +89,20 @@ my $url="https://pskreporter.info/cgi-bin/psk-freq.pl?mode=$mode&grid=$grid&time
 
 my %scores;
 
-open (HTTP, '-|', "curl -L -k -4 -s '$url'");
+#print "$url\n";
+open (HTTP, '-|', "curl --max-time 15 -L -k -4 -s '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   #print;
   chomp;
+
+  next if /<!DOCTYPE/;
+  next if /<!--/;
+  next if /<head/;
+  if (/<title>pskreporter.info | (.*)<\/title>/) {
+    print "error retrieving data from $url: $1\n";
+    exit 0
+  }
 
   if (/The storm clouds are gathering/i) {
     print "error retrieving data from $url\n";

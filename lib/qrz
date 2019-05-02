@@ -18,6 +18,7 @@ use Encode qw(decode);
 use I18N::Langinfo qw(langinfo CODESET);
 use URI::Escape;
 use POSIX qw(strftime);
+use MIME::Base64;
 
 use Cwd 'realpath';
 use File::Basename;
@@ -144,6 +145,19 @@ if ($call =~ /^(grid:)? ?([A-R]{2}[0-9]{2}([a-x]{2})?$)/i) {
 } elsif ($call =~ /^\s*([a-z0-9]*\*[a-z0-9]*)\s*$/i) {	# wildcards
   $call = $1;
   $type = "callsign";
+} elsif ($call =~ /^dmr:([0-9]+)$/i) {
+  my $dmr = $1;
+  updateDMRfiles();
+  my $results = findCallForDmr($dmr);
+  if ($results =~ /,/) {
+    foreach my $e (split(/,/, $results)) {
+      print "$e\n";
+    }
+    exit 0;
+  } else {
+    $call = $results;
+    $type = "callsign";
+  }
 } elsif ($call =~ m|^/u/|i ) {
   my $r = getCallForRedditId($call);
   if (! defined($r)) {
@@ -639,8 +653,12 @@ sub getAndParseData {
       exit $exitnonzeroonerror;
     }
 
-    if (/This call sign record has incomplete details/) {
-      $incomplete = 1;
+    if (/biodata.*Base64\.decode\("([^"]*)"/) {
+      my $biodata = decode_base64($1);
+      #print "$biodata\n";
+      if ($biodata =~ /This call sign record has incomplete details/) {
+	$incomplete = 1;
+      }
     }
 
     if (/begin calldata/) {
@@ -993,8 +1011,8 @@ sub updateDMRfiles {
   my $userFile="$ENV{HOME}/.dmr-id-users.csv";
   my $rptrFile="$ENV{HOME}/.dmr-id-repeaters.csv";
 
-  my $usersUrl="https://www.radioid.net/static/users.csv";
-  my $rptrsUrl="https://www.radioid.net/static/rptrs.csv";
+  my $usersUrl="https://www.radioid.net/api/dmr/user/?country=%25&format=csv";
+  my $rptrsUrl="https://www.radioid.net/api/dmr/repeater/?country=%25&format=csv";
 
   my $maxage=604800; # 1 week
   my $now = time();
@@ -1039,7 +1057,7 @@ sub getDMRidsForCall {
     while (<USERFILE>) {
       chomp;
       my ($id, $filecall) = split /,/;
-      push @results, $id if uc($filecall) eq $call;
+      push @results, $id if defined $id and defined $filecall and uc($filecall) eq $call;
     }
     close(USERFILE);
   }
@@ -1049,7 +1067,37 @@ sub getDMRidsForCall {
     while (<RPTRFILE>) {
       chomp;
       my ($id, $filecall) = split /,/;
-      push @results, $id if uc($filecall) eq $call;
+      push @results, $id if defined $id and defined $filecall and uc($filecall) eq $call;
+    }
+    close(RPTRFILE);
+  }
+
+  return join(",", @results);
+}
+
+sub findCallForDmr {
+  my $dmr = shift;
+  my $userFile="$ENV{HOME}/.dmr-id-users.csv";
+  my $rptrFile="$ENV{HOME}/.dmr-id-repeaters.csv";
+
+  my @results;
+
+  if (-e $userFile) {
+    open (USERFILE, "<", $userFile);
+    while (<USERFILE>) {
+      chomp;
+      my ($id, $filecall) = split /,/;
+      push @results, $filecall if $id eq $dmr;
+    }
+    close(USERFILE);
+  }
+
+  if (-e $rptrFile) {
+    open (RPTRFILE, "<", $rptrFile);
+    while (<RPTRFILE>) {
+      chomp;
+      my ($id, $filecall) = split /,/;
+      push @results, $filecall if $id eq $dmr;
     }
     close(RPTRFILE);
   }

@@ -121,12 +121,24 @@ $args = decode($codeset, $args);
 
 @ARGV=split(' ', $args);
 
+my $weight = 0;
 my $target;
+my $i = 0;
 while ($target = shift(@ARGV)) {
-  foreach my $val (split('', $target)) {
-    print morse($val), " ";
+  if ($target eq "--weight") {
+    $weight = 1;
+    next;
   }
-  print "  ";
+  $i++;
+  if (not $weight) {
+    foreach my $val (split('', $target)) {
+      print morse($val), " ";
+    }
+    print "  ";
+  } else {
+    print "; " if $i > 1;
+    print "$target: ", weight($target);
+  }
 }
 print "\n";
 exit 0;
@@ -135,6 +147,24 @@ sub morse {
   my $char = shift;
   #print "char: $char, ", uc($char), "\n";
   return $morse{uc($char)} || return "�";
+}
+
+sub weight {
+  my $word = shift;
+  my $weight = 0;
+  foreach my $val (split('', $word)) {
+    my $m = morse($val);
+    my $numdash = () = $m =~ /\Q-/g;
+    my $numdot = () = $m =~ /\Q./g;
+    my $letterweight = 0;
+    $letterweight += $numdash * 3;
+    $letterweight += $numdot;
+    $letterweight += (($numdot + $numdash) - 1);
+    $letterweight += 3;
+    #print "$m $numdash $numdot :: $letterweight\n";
+    $weight += $letterweight;
+  }
+  return $weight;
 }
 
 

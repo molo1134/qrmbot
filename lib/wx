@@ -78,8 +78,10 @@ if (!defined($loc) or length($loc) == 0) {
   exit $exitnonzeroonerror;
 }
 
-my $geo = argToCoords($loc);
-$loc = $geo if defined $geo;
+if (not $loc =~ m/^PWS:/i) {
+  my $geo = argToCoords($loc);
+  $loc = $geo if defined $geo;
+}
 
 #print "loc: $loc\n";
 my $encodedloc = uri_escape($loc);
@@ -99,7 +101,7 @@ my @results;	  # array of hash references
 my $count = 0;
 
 #print "$url\n";
-open(HTTP, '-|', "curl -s -L --insecure '$url'");
+open(HTTP, '-|', "curl -s -L --compressed --insecure '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   #print;
@@ -166,13 +168,13 @@ if ($multiple == 1) {
 #  print "do something.\n";
   print "multiple results: ";
   my $i = 0;
-  while (%rec = %{shift @results}) {
+  while (@results and %rec = %{shift @results}) {
     #print $i++ . "\n";
     if ($rec{'name'} ne $rec{'city'}) {
       print "$rec{'name'}, ";
     }
     print "$rec{'city'}, ";
-    print "$rec{'state'}, " if (defined $rec{state} and length $rec{state} > 0);
+    print "$rec{'state'}, " if (defined $rec{'state'} and length $rec{'state'} > 0);
     print ($rec{'country_name'} || $rec{'country'});
     print "; ";
   }
@@ -180,7 +182,7 @@ if ($multiple == 1) {
   exit $exitnonzeroonerror;
 }
 
-if (not defined $rec{'temp_c'} and not defined $rec{'conditions'}) {
+if (not defined $rec{'temp_c'} and not defined $rec{'temp_f'}) {
   # didn't get valid data
   print "error encountered: no data\n";
   exit $exitnonzeroonerror;
@@ -188,7 +190,8 @@ if (not defined $rec{'temp_c'} and not defined $rec{'conditions'}) {
 
 my $lat = nearest(.1, $rec{'disp_latitude'});
 my $lon = nearest(.1, $rec{'disp_longitude'});
-my $elev = nearest(1, $rec{'disp_elevation'});
+my $elev = undef;
+$elev = nearest(1, $rec{'disp_elevation'}) if defined $rec{'disp_elevation'} and length($rec{'disp_elevation'}) > 0;
 my $pressure_trend = $rec{'pressure_trend'};
 if (defined($pressure_trend)) {
   $pressure_trend =~ s/\+/↑/;
@@ -214,12 +217,13 @@ if (defined($pressure_trend)) {
 #
 
 
-$elev = "${elev}m/" . nearest(1, $elev * 3.2808399) . "ft";
+$elev = "${elev}m/" . nearest(1, $elev * 3.2808399) . "ft" if defined($elev);
 
 print "Weather for ", bold($rec{'disp_full'});
 
 #full
-print " ($lat,$lon)  Elev: $elev\n" if ($full == 1);
+print " ($lat,$lon) " if $full == 1;
+print " Elev: $elev\n" if $full == 1 and defined($elev);
 if (defined($rec{'estimated'}) and $rec{'estimated'} == 1) {
   print " *estimated ";
   print "conditions only\n" if ($full == 1);
@@ -296,7 +300,7 @@ my $europe = 0;
 
 $url = "http://api.wunderground.com/api/$apikey/alerts/q/$encodedloc.json";
 #print "$url\n";
-open(HTTP, '-|', "curl -s -L --insecure '$url'");
+open(HTTP, '-|', "curl -s -L --compressed --insecure '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   chomp;
@@ -343,7 +347,12 @@ while (<HTTP>) {
     tzset;
     $end = strftime("%a %H:%M %Z", localtime($end)); # e.g. Sun 11:00 PDT
 
-    print " ", bold("Alert"), ": ", bold(${description}), " until $end";
+    my $alertmsg = bold("Alert");
+    $alertmsg = yellow("Alert") if $description =~ /yellow/i;
+    $alertmsg = darkYellow("Alert") if $description =~ /orange/i;
+    $alertmsg = red("Alert") if $description =~ /red/i;
+    $alertmsg = darkRed("Alert") if $description =~ /(dark ?red|dunkelrot)/i;
+    print " ${alertmsg}: ", bold(${description}), " until $end";
     print "\n" if $full == 1;
     print " " if $full == 0;
 

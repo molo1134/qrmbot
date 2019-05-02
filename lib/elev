@@ -1,0 +1,95 @@
+#!/usr/bin/perl -w
+
+# Time/timezone lookup.  2-clause BSD license.
+
+# Copyright 2018 /u/molo1134. All rights reserved.
+
+use strict;
+use utf8;
+use Encode qw(decode);
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use DateTime;
+use Math::Round;
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !elev <grid>|<lat>,<lon>|<qth>\n";
+  } else {
+    print "usage: $0 <grid>|<lat>,<lon>|<qth>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+# eggdrop doesn't split args on spaces
+#@ARGV=split(' ', join(' ',@ARGV));
+
+my $i = 0;
+#while ($i <= $#ARGV) {
+#  print "$i: $ARGV[$i++]\n";
+#}
+#$i = 0;
+
+my $query = undef;
+my $de = undef;
+
+while ($i <= $#ARGV) {
+  if (!defined($de) and $ARGV[$i] =~ /^(--geo|de|from)$/i) {
+    $i++;
+    $de = $ARGV[$i];
+    $i++;
+    next;
+  }
+  if (defined($de) and $ARGV[$i] =~ /^--geo$/) {
+    # in case we have "de XXX --geo abc,xyz"
+    last;
+  }
+  if (defined($de)) {
+    $de = $de . " " . $ARGV[$i];
+    $i++;
+    next;
+  }
+  if (defined($query)) {
+    $query = $query ." ". $ARGV[$i];
+  } else {
+    $query = $ARGV[$i];
+  }
+  $i++;
+}
+
+my $result = argToCoords($query);
+if (!defined $result) {
+  print "error: unable to find \"$query\"\n";
+  exit $exitnonzeroonerror;
+}
+
+my ($lat, $lon) = split(',', $result);
+my $elev = coordToElev($lat, $lon);
+
+print "error: no elevation returned for $lat, $lon\n" if not defined $elev;
+exit $exitnonzeroonerror if not defined $elev;
+
+my $grid = coordToGrid($lat, $lon);
+my $placename = geolocate($lat, $lon);
+
+print bold($grid), ": $lat, $lon";
+if (defined($placename)) {
+  print ": $placename";
+}
+my $elev_ft = round($elev * 3.2808399 * 10) / 10;
+my $elev_m = round($elev * 10) / 10;
+print ": ", bold("$elev_m m")," ($elev_ft ft)\n";
+
