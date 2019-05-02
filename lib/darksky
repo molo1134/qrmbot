@@ -46,6 +46,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Location;
+use Colors;
 
 our $apikey = undef;
 my $loc;
@@ -127,31 +128,42 @@ for ($units){
 
     if (/us/) {
 
-        print "Temp: " . sprintf("%1d",$results{temperature}) . "°F ";
-        print "Feels like: " .sprintf("%1d",$results{apparentTemperature}) . "°F ";
-        print "Humidity: " . sprintf("%.1f%%",100 * $results{humidity}) . " ";
-        print "Barometer: " . sprintf("%2d",$results{pressure}) . "mb ";
-        print "Visibility: " . sprintf("%1d",$results{visibility}) . " miles ";
+        my $templabel = bold("Temp: ");
+        my $feelslabel = bold("Feels like: ");
+        my $humidlabel = bold("Humidity: ");
+        my $baromlabel = bold("Barometer: ");
+        my $vislabel = bold("Visibility: ");
+        my $dewlabel = bold("Dew point: ");
+        my $windlabel = bold("Wind: ");
+        my $stormlabel = bold("Nearest storm: ");
+        my $fclabel = bold("Forecast: ");
+
+        print $templabel . sprintf("%1d",$results{temperature}) . "°F ";
+        print $feelslabel . sprintf("%1d",$results{apparentTemperature}) . "°F ";
+        print $humidlabel . sprintf("%.1f%%",100 * $results{humidity}) . " ";
+        print $baromlabel . sprintf("%2d",$results{pressure}) . "mb ";
+        print $vislabel . sprintf("%1d",$results{visibility}) . " miles ";
         print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
-        print "Dew point: " . sprintf("%1d",$results{dewPoint}) . "°F ";
-        
-        if ($results{nearestStormDistance} ne "0"  {
-            print "Nearest storm is ". sprintf("%1d",$results{nearestStormDistance}) . " miles away, bearing " . $results{nearestStormBearing} . "° ";
+        print $dewlabel . sprintf("%1d",$results{dewPoint}) . "°F ";
+
+        if ($results{nearestStormDistance} ne '0')  {
+            print $stormlabel . $results{nearestStormDistance} . " miles away, bearing " . $results{nearestStormBearing} . "° ";
         }
 
         if ($results{windspeed} ne '') {
-            print "Wind: " . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° \n";
+            print $windlabel . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° \n";
         }
 
-        print "Forecast: " . $forecast;
+        print $fclabel . $forecast;
 
         if ($results{title} ne ''){
 
             # note that this only prints the last alert if multiple alerts are
             # returned.
+            #
 
-            print "\nAlert: " . $results{title};
-            print "\nURL: " . $results{uri} . "\n";
+            my $alertmsg = red("Alert");
+            print "\n" . $alertmsg . ": " . $results{title} . " -> " . $results{uri} . "\n";
         }
 
         # print " Powered by Dark Sky.\n";
@@ -161,28 +173,39 @@ for ($units){
 
     else {
 
-        print "Temp: " . sprintf("%1d",$results{temperature}) . "°C ";
-        print "Feels like: " .sprintf("%1d",$results{apparentTemperature}) . "°C ";
-        print "Humidity: " . sprintf("%.1f%%",100 * $results{humidity}) . " ";
-        print "Barometer: " . sprintf("%2d",$results{pressure}) . "hPa ";
-        print "Visibility: " . sprintf("%1d",$results{visibility}) . "km ";
-        print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
-        print "Dew point: " . sprintf("%1d",$results{dewPoint}) . "°C ";
+        my $templabel = bold("Temp: ");
+        my $feelslabel = bold("Feels like: ");
+        my $humidlabel = bold("Humidity: ");
+        my $baromlabel = bold("Barometer: ");
+        my $vislabel = bold("Visibility: ");
+        my $dewlabel = bold("Dew point: ");
+        my $windlabel = bold("Wind: ");
+        my $stormlabel = bold("Nearest storm: ");
+        my $fclabel = bold("Forecast: ");
 
-        if ($results{nearestStormDistance} ne "0") {
-            print "Nearest storm is ". sprintf("%1d",$results{nearestStormDistance}) . " miles away, bearing " . $results{nearestStormBearing} . "° ";
+        print $templabel . sprintf("%1d",$results{temperature}) . "°C ";
+        print $feelslabel . sprintf("%1d",$results{apparentTemperature}) . "°C ";
+        print $humidlabel . sprintf("%.1f%%",100 * $results{humidity}) . " ";
+        print $baromlabel . sprintf("%2d",$results{pressure}) . "hPa ";
+        print $vislabel . sprintf("%1d",$results{visibility}) . "km ";
+        print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
+        print $dewlabel . sprintf("%1d",$results{dewPoint}) . "°C ";
+
+        if ($results{nearestStormDistance} ne '') {
+            print $stormlabel . $results{nearestStormDistance} . " km away, bearing " . $results{nearestStormBearing} . "° ";
         }
 
         if ($results{windspeed} ne '') {
-            print "Wind: " . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° \n";
+            print $windlabel . sprintf("%1d",$results{windSpeed}) . " km/h, direction: " . $results{windBearing} . "° \n";
         }
-        
-        print "Forecast: " . $forecast;
+
+        print $fclabel . $forecast;
 
         if ($results{title} ne ''){
 
-            print "\nAlert: " . $results{title};
-            print "\nURL: " . $results{uri} . "\n";
+            my $alertmsg = red("Alert");
+            print "\n" . $alertmsg . ": " . $results{title} . " -> " . $results{uri} . "\n";
+
         }
 
         # print " Powered by Dark Sky.\n";
