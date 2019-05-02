@@ -126,6 +126,7 @@ for ($units){
 
     if (/us/) {
 
+        my $currlabel = bold("Currently: ");
         my $templabel = bold("Temp: ");
         my $feelslabel = bold("Feels like: ");
         my $humidlabel = bold("Humidity: ");
@@ -136,6 +137,7 @@ for ($units){
         my $stormlabel = bold("Nearest storm: ");
         my $fclabel = bold("Forecast: ");
 
+        print $currlabel . $results{summary} . " ";
         print $templabel . sprintf("%1d",$results{temperature}) . "°F ";
         print $feelslabel . sprintf("%1d",$results{apparentTemperature}) . "°F ";
         print $humidlabel . sprintf("%.1f%%",100 * $results{humidity}) . " ";
@@ -148,8 +150,8 @@ for ($units){
             print $stormlabel . $results{nearestStormDistance} . " miles away, bearing " . $results{nearestStormBearing} . "° ";
         }
 
-        if ($results{windspeed} ne '') {
-            print $windlabel . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° \n";
+        if ($results{windspeed} ne '0') {
+            print $windlabel . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° ";
         }
 
         print $fclabel . $forecast;
@@ -171,6 +173,7 @@ for ($units){
 
     else {
 
+        my $currlabel = bold("Currently: ");
         my $templabel = bold("Temp: ");
         my $feelslabel = bold("Feels like: ");
         my $humidlabel = bold("Humidity: ");
@@ -181,6 +184,7 @@ for ($units){
         my $stormlabel = bold("Nearest storm: ");
         my $fclabel = bold("Forecast: ");
 
+        print $currlabel . $results{summary} . " ";
         print $templabel . sprintf("%1d",$results{temperature}) . "°C ";
         print $feelslabel . sprintf("%1d",$results{apparentTemperature}) . "°C ";
         print $humidlabel . sprintf("%.1f%%",100 * $results{humidity}) . " ";
@@ -193,8 +197,8 @@ for ($units){
             print $stormlabel . $results{nearestStormDistance} . " km away, bearing " . $results{nearestStormBearing} . "° ";
         }
 
-        if ($results{windspeed} ne '') {
-            print $windlabel . sprintf("%1d",$results{windSpeed}) . " km/h, direction: " . $results{windBearing} . "° \n";
+        if ($results{windspeed} ne '0') {
+            print $windlabel . sprintf("%1d",$results{windSpeed}) . " km/h, direction: " . $results{windBearing} . "° ";
         }
 
         print $fclabel . $forecast;
