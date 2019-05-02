@@ -40,9 +40,9 @@ our $apikey = undef;
 
 my $apikeyfile = $ENV{'HOME'} . "/.darksky";
 if (-e ($apikeyfile)) {
-  require($apikeyfile);
+    require($apikeyfile);
 } else {
-  die "error: unable to read file $apikeyfile"
+    die "error: unable to read file $apikeyfile"
 }
 die "error: no API key set" unless defined($apikey);
 
@@ -70,7 +70,7 @@ my %rec;
 my $units;
 my $forecast;
 
-open(HTTP, '-|', "curl -s -L --insecure '$url' | jq -r '.daily.summary,.currently,.flags.units'");
+open(HTTP, '-|', "curl -s -L --insecure '$url' | jq -r '.daily.summary,[.currently,.alerts],.flags.units'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
     chomp;
@@ -101,8 +101,17 @@ for ($units){
         print "Nearest storm is ". sprintf("%1d",$results{nearestStormDistance}) . " miles away, bearing " . $results{nearestStormBearing} . "° ";
         print "Wind: " . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° \n";
         print "Forecast: " . $forecast;
-    }
 
+        if ($results{title} ne ''){
+
+            # note that this only prints the last alert if multiple alerts are
+            # returned.
+
+            print "\nAlert: " . $results{title};
+            print "\nURL: " . $results{uri} . "\n";
+        }
+    }
+    
     # everyone else gets SI/metric 
 
     else {
@@ -117,6 +126,12 @@ for ($units){
         print "Nearest storm is ". sprintf("%1d",$results{nearestStormDistance}) . "km away, bearing " . $results{nearestStormBearing} . "° ";
         print "Wind: " . sprintf("%1d",$results{windSpeed}) . " km/h, direction: " . $results{windBearing} . "° \n";
         print "Forecast: " . $forecast;
+
+        if ($results{title} ne ''){
+
+            print "\nAlert: " . $results{title};
+            print "\nURL: " . $results{uri} . "\n";
+        }
     }
 }
 exit 0;
