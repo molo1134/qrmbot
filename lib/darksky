@@ -154,7 +154,7 @@ for ($units){
             print "\nURL: " . $results{uri} . "\n";
         }
 
-        print " Powered by Dark Sky.\n";
+        # print " Powered by Dark Sky.\n";
     }
 
     # everyone else gets SI/metric 
@@ -186,7 +186,7 @@ for ($units){
             print "\nURL: " . $results{uri} . "\n";
         }
 
-        print " Powered by Dark Sky.\n";
+        # print " Powered by Dark Sky.\n";
     }
 }
 exit 0;
