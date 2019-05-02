@@ -60,12 +60,12 @@ die "error: no API key set" unless defined($apikey);
 
 my $i = 0;
 while ($i <= $#ARGV) {
-  if (defined($loc)) {
-    $loc = $loc . " " . $ARGV[$i];
-  } else {
-    $loc = $ARGV[$i];
-  }
-  $i++;
+    if (defined($loc)) {
+        $loc = $loc . " " . $ARGV[$i];
+    } else {
+        $loc = $ARGV[$i];
+    }
+    $i++;
 }
 
 my $geo = argToCoords($loc);
@@ -125,10 +125,17 @@ for ($units){
         print "Humidity: " . sprintf("%.1f%%",100 * $results{humidity}) . " ";
         print "Barometer: " . sprintf("%2d",$results{pressure}) . "mb ";
         print "Visibility: " . sprintf("%1d",$results{visibility}) . " miles ";
-        print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover.";
+        print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
         print "Dew point: " . sprintf("%1d",$results{dewPoint}) . "°F ";
-        print "Nearest storm is ". sprintf("%1d",$results{nearestStormDistance}) . " miles away, bearing " . $results{nearestStormBearing} . "° ";
-        print "Wind: " . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° \n";
+        
+        if ($results{nearestStormDistance} ne '') {
+            print "Nearest storm is ". sprintf("%1d",$results{nearestStormDistance}) . " miles away, bearing " . $results{nearestStormBearing} . "° ";
+        }
+
+        if ($results{windspeed} ne '') {
+            print "Wind: " . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° \n";
+        }
+
         print "Forecast: " . $forecast;
 
         if ($results{title} ne ''){
@@ -142,7 +149,7 @@ for ($units){
 
         print " Powered by Dark Sky.\n";
     }
-    
+
     # everyone else gets SI/metric 
 
     else {
@@ -154,8 +161,16 @@ for ($units){
         print "Visibility: " . sprintf("%1d",$results{visibility}) . "km ";
         print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
         print "Dew point: " . sprintf("%1d",$results{dewPoint}) . "°C ";
-        print "Nearest storm is ". sprintf("%1d",$results{nearestStormDistance}) . "km away, bearing " . $results{nearestStormBearing} . "° ";
-        print "Wind: " . sprintf("%1d",$results{windSpeed}) . " km/h, direction: " . $results{windBearing} . "° \n";
+
+        if ($results{nearestStormDistance} ne '') {
+            print "Nearest storm is ". sprintf("%1d",$results{nearestStormDistance}) . " miles away, bearing " . $results{nearestStormBearing} . "° ";
+        }
+
+        if ($results{windspeed} ne '') {
+            print "Wind: " . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° \n";
+        }
+        
+        
         print "Forecast: " . $forecast;
 
         if ($results{title} ne ''){
