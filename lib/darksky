@@ -30,6 +30,10 @@
 #  "visibility": 9.27,
 #  "ozone": 320.06
 #}
+#
+# Weather data: 
+# Powered by Dark Sky
+# https://darksky.net/poweredby/
 
 use strict;
 use utf8;
@@ -110,6 +114,8 @@ for ($units){
             print "\nAlert: " . $results{title};
             print "\nURL: " . $results{uri} . "\n";
         }
+
+        print " Powered by Dark Sky.\n";
     }
     
     # everyone else gets SI/metric 
@@ -132,6 +138,8 @@ for ($units){
             print "\nAlert: " . $results{title};
             print "\nURL: " . $results{uri} . "\n";
         }
+
+        print " Powered by Dark Sky.\n";
     }
 }
 exit 0;
