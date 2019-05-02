@@ -39,8 +39,10 @@ use strict;
 use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
+use Location;
 
 our $apikey = undef;
+my $loc;
 
 my $apikeyfile = $ENV{'HOME'} . "/.darksky";
 if (-e ($apikeyfile)) {
@@ -50,7 +52,14 @@ if (-e ($apikeyfile)) {
 }
 die "error: no API key set" unless defined($apikey);
 
-my $url = "https://api.darksky.net/forecast/$apikey/$ARGV[0]?units=auto&exclude=hourly,minutely";
+my $geo = argToCoords($loc);
+$loc = $geo if defined $geo;
+#print "loc: $loc\n";
+my $encodedloc = uri_escape($loc);
+
+
+#my $url = "https://api.darksky.net/forecast/$apikey/$ARGV[0]?units=auto&exclude=hourly,minutely";
+my $url = "https://api.darksky.net/forecast/$apikey/$loc?units=auto&exclude=hourly,minutely";
 
 # darksky returns US Imperial units by default, but the units can be tweaked via
 # the query parameter 'units' as seen above. Their docs spell out the following
@@ -100,7 +109,7 @@ for ($units){
         print "Humidity: " . sprintf("%.1f%%",100 * $results{humidity}) . " ";
         print "Barometer: " . sprintf("%2d",$results{pressure}) . "mb ";
         print "Visibility: " . sprintf("%1d",$results{visibility}) . " miles ";
-        print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. \n";
+        print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover.";
         print "Dew point: " . sprintf("%1d",$results{dewPoint}) . "°F ";
         print "Nearest storm is ". sprintf("%1d",$results{nearestStormDistance}) . " miles away, bearing " . $results{nearestStormBearing} . "° ";
         print "Wind: " . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° \n";
@@ -125,7 +134,7 @@ for ($units){
         print "Temp: " . sprintf("%1d",$results{temperature}) . "°C ";
         print "Feels like: " .sprintf("%1d",$results{apparentTemperature}) . "°C ";
         print "Humidity: " . sprintf("%.1f%%",100 * $results{humidity}) . " ";
-        print "Barometer: " . sprintf("%2d",$results{pressure}) . "hPa \n";
+        print "Barometer: " . sprintf("%2d",$results{pressure}) . "hPa ";
         print "Visibility: " . sprintf("%1d",$results{visibility}) . "km ";
         print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
         print "Dew point: " . sprintf("%1d",$results{dewPoint}) . "°C ";
