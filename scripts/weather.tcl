@@ -22,7 +22,7 @@ bind msg - !metar msg_metar
 bind pub - !taf taf
 bind msg - !taf msg_taf
 
-set wxbin "/home/eggdrop/bin/wx"
+set wxbin "/home/eggdrop/bin/darksky"
 set wxfbin "/home/eggdrop/bin/wxf"
 set metarbin "/home/eggdrop/bin/metar"
 set tafbin "/home/eggdrop/bin/taf"
