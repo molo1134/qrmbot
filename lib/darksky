@@ -68,6 +68,13 @@ while ($i <= $#ARGV) {
     $i++;
 }
 
+if ($ARGV[0] =~ /about/i){
+    print "Weather: Powered by Dark Sky.\n";
+    print "https://darksky.net/poweredby/\n";
+    exit 0;
+}
+
+
 my $geo = argToCoords($loc);
 $loc = $geo if defined $geo;
 #print "loc: $loc\n";
