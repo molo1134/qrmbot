@@ -39,6 +39,9 @@ use strict;
 use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
 use Location;
 
 our $apikey = undef;
