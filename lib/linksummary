@@ -137,8 +137,8 @@ sub printYouTubeMetaData {
   close(HTTP);
 
   $desc = "(no description)" if $desc =~ /^\s*$/;
-  if (length $desc > 300) {
-    $desc = substr($desc, 0, 300) . "…";
+  if (length $desc > 100) {
+    $desc = substr($desc, 0, 100) . "…";
   }
 
   use integer;
@@ -154,11 +154,12 @@ sub printYouTubeMetaData {
   print " $count views";
   print green(" ${likes}↑") if defined $likes;
   print red(" ${dislikes}↓") if defined $dislikes;
-  print " ($genre)" if defined $genre;
+#  print " ($genre)" if defined $genre;
   print red(" [NSFW]") if $nsfw == 1;
   print green(" [PAID]") if $paid == 1;
   print yellow(" [UNLISTED]") if $unlisted == 1;
-  print ": $desc $shortcut img: $vidimg\n";
+#  print ": $desc $shortcut img: $vidimg\n";
+  print ": $desc img: $vidimg\n";
 }
 
 
@@ -897,8 +898,8 @@ sub doImgur {
   my $desc = $data{description};
   if (defined $desc) {
     $desc = unescape($desc);
-    if (length $desc > 300) {
-      $desc = substr($desc, 0, 300) . "…";
+    if (length $desc > 100) {
+      $desc = substr($desc, 0, 100) . "…";
     }
   }
 
@@ -906,8 +907,8 @@ sub doImgur {
   print "$url";
   print bold(" \"$title\"") if defined $title;
   print " by \@$data{account_url}" if defined $data{account_url};
-  print " on ", scalar(gmtime($data{datetime})), " UTC;"
-    if defined $data{datetime};
+#  print " on ", scalar(gmtime($data{datetime})), " UTC;"
+#    if defined $data{datetime};
   print " $data{views} views" if defined $data{views};
   print green(" $data{ups}↑") if defined $data{ups};
   print red(" $data{downs}↓") if defined $data{downs};
