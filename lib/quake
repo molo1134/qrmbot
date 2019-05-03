@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+
+# earthquake data for qrmbot
+# written by aa4jq
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+use DateTime;
+
+my @line;
+my $f = 0;
+
+if ($ARGV[0] =~ /about/i){
+    print "Returns M 2.5+ earthquakes in the last hour.\n";
+    print "Data provided by USGS, https://earthquake.usgs.gov\n";
+    exit 0;
+}
+
+# all magnitude 2.5+ quakes in the last hour
+# more detailed feeds are available, but the lists get l o o n g
+
+my $url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_hour.geojson";
+
+open(HTTP, '-|', "curl -s -L --insecure '$url' | jq -c '.features[0,1,2] | [.properties.time,.properties.title]'");
+
+binmode(HTTP, ":utf8");
+while ( my $line = <HTTP>) {
+    chomp;
+
+    my ($time, $event) = split(/,/,$line,2);
+
+    $time =~ s/\[//;
+    $event =~ s/"\]//;
+    $event =~ s/"//;
+
+    if ($time ne "null") {
+        my $utc = DateTime->from_epoch(epoch=>($time/1000),time_zone=> "UTC");
+        print $utc->hms . " UTC " . $event;
+        $f = 1;
+    }
+}
+close(HTTP);
+
+if ($f == 0){
+    print "No earthquakes M2.5+ in the last hour.\n";
+}
+
+exit 0;
