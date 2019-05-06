@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+
 # DarkSky API client -- current conditions.  2-clause BSD license.
 
 # Substantially hustled from the qrm's original wx script which is
@@ -50,6 +51,9 @@ use Colors;
 
 our $apikey = undef;
 my $loc;
+my $lat;
+my $lon;
+my $placename;
 
 my $apikeyfile = $ENV{'HOME'} . "/.darksky";
 if (-e ($apikeyfile)) {
@@ -81,6 +85,12 @@ $loc = $geo if defined $geo;
 #print "loc: $loc\n";
 my $encodedloc = uri_escape($loc);
 
+($lat, $lon) = split(/,/,$loc);
+$placename = geolocate($lat, $lon);
+
+#print "Lat: " . $lat;
+#print "Lon: " . $lon;
+#print "place: " . $placename;
 
 #my $url = "https://api.darksky.net/forecast/$apikey/$ARGV[0]?units=auto&exclude=hourly,minutely";
 my $url = "https://api.darksky.net/forecast/$apikey/$encodedloc?units=auto&exclude=hourly,minutely";
@@ -128,6 +138,7 @@ for ($units){
 
     if (/us/) {
 
+        my $placelabel = bold("Location: ");
         my $currlabel = bold("Currently: ");
         my $templabel = bold("Temp: ");
         my $feelslabel = bold("Feels like: ");
@@ -139,6 +150,7 @@ for ($units){
         my $stormlabel = bold("Nearest storm: ");
         my $fclabel = bold("Forecast: ");
 
+        print $placelabel . $placename . " ";
         print $currlabel . $results{summary} . " ";
         print $templabel . sprintf("%1d",$results{temperature}) . "°F ";
         print $feelslabel . sprintf("%1d",$results{apparentTemperature}) . "°F ";
@@ -167,13 +179,13 @@ for ($units){
             print "\n" . $alertmsg . ": " . $results{title} . " -> " . $results{uri} . "\n";
         }
 
-        # print " Powered by Dark Sky.\n";
     }
 
     # everyone else gets SI/metric 
 
     else {
 
+        my $placelabel = bold("Location: ");
         my $currlabel = bold("Currently: ");
         my $templabel = bold("Temp: ");
         my $feelslabel = bold("Feels like: ");
@@ -185,6 +197,7 @@ for ($units){
         my $stormlabel = bold("Nearest storm: ");
         my $fclabel = bold("Forecast: ");
 
+        print $placelabel . $placename . " ";
         print $currlabel . $results{summary} . " ";
         print $templabel . sprintf("%1d",$results{temperature}) . "°C ";
         print $feelslabel . sprintf("%1d",$results{apparentTemperature}) . "°C ";
@@ -211,7 +224,6 @@ for ($units){
 
         }
 
-        # print " Powered by Dark Sky.\n";
     }
 }
 exit 0;
