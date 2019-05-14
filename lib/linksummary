@@ -1199,7 +1199,7 @@ sub doAe7qCall {
 	$pred = lightblue($pred) if $pred =~ /^(Competition|Available)/;
 	$pred = italic($pred) if $pred =~ /^Unneeded/;
 	$pred = yellow($pred) if $pred =~ /^Offlined/;
-	$pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv)/;
+	$pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv|Inactive)/;
       }
       if (m|</table>|) {
 	$inPredTable = 0;
