@@ -658,7 +658,7 @@ sub doQthCom {
   my ($title, $desc, $call);
 
   # Temporary proxy - TODO: permanent URL?
-  $url =~ s|https?://swap\.qth\.com/view_ad\.php\?counter=|https://app-oa25k.lamp.app/qth-proxy.php?id=|i;
+  $url =~ s|https?://swap\.qth\.com/view_ad\.php\?counter=|https://app-oa25k.lamp.app/phpproxy/qth-proxy.php?id=|i;
 
   open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
