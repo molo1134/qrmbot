@@ -85,7 +85,11 @@ proc ae7q { nick host hand chan text } {
 	if [string equal "0" $input] then {
 		set input "10"
 	}
-	set url "http://www.ae7q.com/query/list/GenLicAvail.php?REGION=$input"
+	if [string is digit $input] then {
+		set url "http://ae7q.com/query/list/GenLicAvail.php?REGION=$input"
+	} else {
+		set url "http://ae7q.com/query/data/CallHistory.php?CALL=$input"
+	}
 	set fd [open "|${linkbin} ${url}" r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
@@ -100,7 +104,11 @@ proc msg_ae7q {nick uhand handle input} {
 	if [string equal "0" $input] then {
 		set input "10"
 	}
-	set url "http://www.ae7q.com/query/list/GenLicAvail.php?REGION=${input}"
+	if [string is digit $input] then {
+		set url "http://ae7q.com/query/list/GenLicAvail.php?REGION=$input"
+	} else {
+		set url "http://ae7q.com/query/data/CallHistory.php?CALL=$input"
+	}
 	set fd [open "|${linkbin} ${url}" r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {

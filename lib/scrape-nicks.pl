@@ -28,9 +28,9 @@ my @baseurls;
 foreach my $subreddit (@subreddits) {
   push @baseurls, "https://www.reddit.com/r/${subreddit}/new/.json";
   push @baseurls, "https://www.reddit.com/r/${subreddit}/comments/.json";
-  #push @baseurls, "https://www.reddit.com/r/${subreddit}/top/.json?t=all";
-  #push @baseurls, "https://www.reddit.com/r/${subreddit}/gilded/.json";
-  #push @baseurls, "https://www.reddit.com/r/${subreddit}/controversial/.json";
+#  push @baseurls, "https://www.reddit.com/r/${subreddit}/top/.json?t=all";
+#  push @baseurls, "https://www.reddit.com/r/${subreddit}/gilded/.json";
+#  push @baseurls, "https://www.reddit.com/r/${subreddit}/controversial/.json";
 }
 #push @baseurls, ".json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/asxn9e/what_was_your_first_ham_mistake/.json";
@@ -51,6 +51,7 @@ foreach my $subreddit (@subreddits) {
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8fd9vb/its_not_much_but_its_mine_shack_edition/dy6mkg7/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8ydhs6/2way_radio_recommendations/e2a6fcq/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/ayyp9l/calibration_instructions_for_a_daiwa_cn501h/.json";
+#push @baseurls, "https://www.reddit.com/r/amateurradio/comments/bewqre/morsecodeme_online_morse_code_radio/.json";
 
 our %nicks;
 our %results;
@@ -83,7 +84,8 @@ our @blacklist = (
   "B2311E", "L00PEE", "TH3BFG", "NO99SUM", "NO3FCC", "R4808N", "0D1USA",
   "W4NEWS", "F8HP", "K20A", "5R7W", "6AQ7GT", "C0LBW", "D073N", "QU1EN",
   "RY4NY", "S1OED", "G8BBC", "D74A", "D72A", "MR3MPTY", "4X4PLAY", "PN2222A",
-  "D868UV", "T430S", "T351A", "D878UV", "MD25X", "GL0WL", "0X64ON", "E85WRX");
+  "D868UV", "T430S", "T351A", "D878UV", "MD25X", "GL0WL", "0X64ON", "E85WRX",
+  "E440QF");
 
 # load nicks
 our $nickfile = "$ENV{'HOME'}/.nicks.csv";
@@ -126,16 +128,24 @@ foreach my $baseurl (@baseurls) {
       $_ =~ s/(\d|true|false|null), /$1\n/g;
       @_ = split "\n";
       foreach my $e (@_) {
-    #    print STDERR "$e\n";
+#	print "$e\n";
+#	if (/"crosspost_parent_list":/) {
+#	  if (defined $u and defined $c) {
+#	    print "$c :: $u :: $ts\n";
+#	    updateResult($c, $ts, $u);
+#	  }
+#	  $u = $c = $ts = undef;
+#	}
 	if ($e =~ /"(\w+)": (-?[\d.]+|null|true|false|".+"$)/) {
 	  my ($k, $v) = ($1, $2);
 	  $v =~ s/^"(.*)"$/$1/;
 	  $v =~ s/\\u([0-9a-f]{4})/chr(hex($1))/egi;
-	  #print STDERR "$k => $v\n";
+	  #print "$k => $v\n";
 
 	  if ($k eq "after") {
 	    $after = $v;
 	  } elsif ($k eq "author") {
+	    #print "author: $v\n";
 	    $u = $v;
 	    if ($u =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
 	      # username is callsign
@@ -143,6 +153,7 @@ foreach my $baseurl (@baseurls) {
 	      $c =~ s/[Øø∅]/0/g;
 	    }
 	  } elsif ($k eq "author_flair_text") {
+	    #print "author_flair_text: $v\n";
 	    $f = $v;
 	    next if $f eq "null";
 	    my ($tmp, undef) = grep {$_ ne ''} split(/[\s\W]/, $f);
@@ -155,7 +166,7 @@ foreach my $baseurl (@baseurls) {
 	      $c = uc $tmp;
 	      $c =~ s/[Øø∅]/0/g;
 	    }
-	  } elsif ($k eq "created_utc") {
+	  } elsif ($k eq "created_utc" or $k eq "created") {
 	    $ts = $v;
 	    $ts =~ s/\.0*$//g;
 	  } elsif ($k eq "body" or $k eq "selftext") {
@@ -166,8 +177,9 @@ foreach my $baseurl (@baseurls) {
 		printf STDERR "%s :: %s => %s\n", $c, $k, substr($v,-25);
 	      }
 	    }
-	  } elsif ($k eq "kind") {
+	  } elsif ($k eq "kind" or $k eq "banned_by") {
 	    # moving on to new entry
+	    #print "NEXT: $k\n";
 	    if (defined $c and defined $u) {
 	      if (not any { /^$c$/i } @blacklist and $u ne "[deleted]") {
 		updateResult($c, $ts, $u);
@@ -243,7 +255,8 @@ sub updateResult {
   my $u = shift;
   return if $u =~ /\[deleted\]/;
   return if $u eq "pongo000";
-  #print STDERR "found: $c /u/$u \@$ts\n";
+  $ts = time if not defined $ts;
+  print "found: $c /u/$u \@$ts\n";
   if (defined($results{$c})) {
     my ($oldts,$oldval) = split(/,/, $results{$c});
     if ($ts > $oldts) {
