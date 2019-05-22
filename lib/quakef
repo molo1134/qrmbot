@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # earthquake data for qrmbot
-# written by aa4jq
+# written by aa4jq, inspired by /u/molo1134's qrmbot script collection
 
 use strict;
 use utf8;
