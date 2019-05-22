@@ -18,6 +18,8 @@ use URI::Escape;
 use Encode qw(/decode/);
 use Time::Local;
 use Time::Piece ();
+use List::Util qw[min max];
+use POSIX qw(strftime);
 
 our $bitly_apikey=undef;
 my $bitlykeyfile = $ENV{'HOME'} . "/.bitlyapikey";
@@ -1089,6 +1091,7 @@ sub doAe7qCall {
     $call = uc $1;
   }
   my ($frn, $name, $class, $status, $state, $grant, $eff, $cxl, $expire);
+  my $availdate;
   my ($receipt, $process, $appl, $filenum, $type, $seq, $pred);
   my $callStatus;
   my $inLicTable = 0;
@@ -1145,6 +1148,7 @@ sub doAe7qCall {
 	}
       }
       if (m|</tr>| and defined $name) {
+	$availdate = getAvailDate($expire, $cxl);
 	print bold($call), ": $callStatus";
 	print " - previous licensee:" if $status ne "Active";
 	print " - $name (FRN $frn; $state) - ";
@@ -1157,7 +1161,9 @@ sub doAe7qCall {
 
 	print " - Grant $grant; Effective $eff; ";
 	print "Cancel $cxl; " if defined $cxl and length($cxl) > 0;
-	print "Expire $expire\n";
+	print "Expire $expire";
+	print italic("; Avail $availdate") if defined $availdate;
+	print "\n";
 	$name = $frn = $class = $status = $grant = $eff = $cxl = $expire = undef;
 	$found = 1;
 	$inLicTable = 0;
@@ -1215,6 +1221,37 @@ sub doAe7qCall {
   close(HTTP);
 
   print bold($call), ": $callStatus\n" if defined $callStatus and not $found;
+}
+
+sub getAvailDate {
+  my $exp = shift;
+  my $cxl = shift;
+
+  return undef if not defined $exp;
+
+  # convert from localtime in washington
+  $ENV{TZ} = "EST5EDT";
+  my ($y, $m, $d) = split('-', $exp);
+  my $expdate = timelocal(0, 0, 0, $d, $m-1, $y+2);
+  #my $expdate = scalar(localtime($time));
+  print "exp: $exp $expdate\n";
+  $expdate += (24 * 60 * 60);
+
+  my $cxldate = 9999999999;
+  if (defined $cxl and length($cxl) > 0) {
+    ($y, $m, $d) = split('-', $cxl);
+    $cxldate = timelocal(0, 0, 0, $d, $m-1, $y+2);
+    #$cxldate = scalar(localtime($time));
+    print "cxl: $cxl $cxldate\n";
+    $cxldate += (24 * 60 * 60);
+  }
+
+  my $availdate = min($expdate, $cxldate);
+
+  my $format = "%Y-%m-%d";
+  $format = bold($format) if $availdate <= time() + (24*60*60*31);
+
+  return strftime($format, localtime($availdate))
 }
 
 sub unescape {
