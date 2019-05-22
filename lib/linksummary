@@ -1233,21 +1233,18 @@ sub getAvailDate {
   $ENV{TZ} = "EST5EDT";
   my ($y, $m, $d) = split('-', $exp);
   my $expdate = timelocal(0, 0, 0, $d, $m-1, $y+2);
-  #my $expdate = scalar(localtime($time));
-  print "exp: $exp $expdate\n";
+  #print "exp: $exp $expdate\n";
   $expdate += (24 * 60 * 60);
 
   my $cxldate = 9999999999;
   if (defined $cxl and length($cxl) > 0) {
     ($y, $m, $d) = split('-', $cxl);
     $cxldate = timelocal(0, 0, 0, $d, $m-1, $y+2);
-    #$cxldate = scalar(localtime($time));
-    print "cxl: $cxl $cxldate\n";
+    #print "cxl: $cxl $cxldate\n";
     $cxldate += (24 * 60 * 60);
   }
 
   my $availdate = min($expdate, $cxldate);
-
   my $format = "%Y-%m-%d";
   $format = bold($format) if $availdate <= time() + (24*60*60*31);
 
