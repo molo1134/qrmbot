@@ -214,8 +214,9 @@ if (!defined($id)) {
   exit 0;
 }
 
+# example: https://api.coinmarketcap.com/v1/ticker/bitcoin/?convert=USD
 #my $url = "https://api.coinmarketcap.com/v1/ticker/$id/?convert=$fiat";
-my $url = "https://app-oa25k.lamp.app/coinmarketcap-proxy.php?id=$id&fiat=$fiat";
+my $url = "https://app-oa25k.lamp.app/phpproxy/coinmarketcap-proxy.php?id=$id&fiat=$fiat";
 my %results;
 
 #print "$url\n";

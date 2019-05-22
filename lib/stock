@@ -90,6 +90,10 @@ open(HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
 	chomp; chomp; # // CRLF
+	if (/if you would like to target a higher API call frequency./) {
+		print "rate exceeded. slow down.\n";
+		exit $exitnonzeroonerror;
+	}
 	s/\r//g;
 	next if $. < 2; # this skips the first line of CSV headers
 
@@ -98,7 +102,6 @@ while (<HTTP>) {
 close(HTTP);
 
 if (not defined($ticker) or not defined($pct)) {
-
 	my $encquote = uri_escape($quote);
 	my $url = "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=$encquote&apikey=$apikey&datatype=csv";
 	my $found = 0;
@@ -107,6 +110,10 @@ if (not defined($ticker) or not defined($pct)) {
 	binmode(HTTP, ":utf8");
 	while (<HTTP>) {
 		next if m/^symbol,/;
+		if (/if you would like to target a higher API call frequency./) {
+			print "rate exceeded. slow down.\n";
+			exit $exitnonzeroonerror;
+		}
 		my ($symb,$name,$type,$reg) = split(',');
 		print(bold($symb), ": $name - $type, $reg; ");
 		$found = 1;

@@ -17,6 +17,7 @@ use Location;
 use URI::Escape;
 use Encode qw(/decode/);
 use Time::Local;
+use Time::Piece ();
 
 our $bitly_apikey=undef;
 my $bitlykeyfile = $ENV{'HOME'} . "/.bitlyapikey";
@@ -81,6 +82,8 @@ while ($i <= $#ARGV) {
     doFccApp($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?ae7q\.com/query/list/GenLicAvail.php\?REGION=|) {
     doAe7qRegion($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?ae7q\.com/query/data/CallHistory\.php\?CALL=|) {
+    doAe7qCall($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://| and
 	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
     doHtml($ARGV[$i]);
@@ -137,8 +140,8 @@ sub printYouTubeMetaData {
   close(HTTP);
 
   $desc = "(no description)" if $desc =~ /^\s*$/;
-  if (length $desc > 300) {
-    $desc = substr($desc, 0, 300) . "…";
+  if (length $desc > 100) {
+    $desc = substr($desc, 0, 100) . "…";
   }
 
   use integer;
@@ -154,11 +157,12 @@ sub printYouTubeMetaData {
   print " $count views";
   print green(" ${likes}↑") if defined $likes;
   print red(" ${dislikes}↓") if defined $dislikes;
-  print " ($genre)" if defined $genre;
+#  print " ($genre)" if defined $genre;
   print red(" [NSFW]") if $nsfw == 1;
   print green(" [PAID]") if $paid == 1;
   print yellow(" [UNLISTED]") if $unlisted == 1;
-  print ": $desc $shortcut img: $vidimg\n";
+#  print ": $desc $shortcut img: $vidimg\n";
+  print ": $desc img: $vidimg\n";
 }
 
 
@@ -654,7 +658,7 @@ sub doQthCom {
   my ($title, $desc, $call);
 
   # Temporary proxy - TODO: permanent URL?
-  $url =~ s|https?://swap\.qth\.com/view_ad\.php\?counter=|https://app-oa25k.lamp.app/qth-proxy.php?id=|i;
+  $url =~ s|https?://swap\.qth\.com/view_ad\.php\?counter=|https://app-oa25k.lamp.app/phpproxy/qth-proxy.php?id=|i;
 
   open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
@@ -850,7 +854,7 @@ sub doImgur {
     $hash = $1;
     $isalb = 1;
   }
-  if ($url =~ m!imgur.com/([0-9A-Za-z_]+)(\.(png|gif|jpg|gifv|mp4))?$!i) {
+  if ($url =~ m!imgur.com/+([0-9A-Za-z_]+)(\.(png|gif|jpg|gifv|mp4))?$!i) {
     $hash = $1;
     $isimg = 1;
   }
@@ -894,20 +898,21 @@ sub doImgur {
 
   my $title = $data{title};
   $title = unescape($title) if defined $title;
+  $title = "Untitled" if not defined $title;
   my $desc = $data{description};
   if (defined $desc) {
     $desc = unescape($desc);
-    if (length $desc > 300) {
-      $desc = substr($desc, 0, 300) . "…";
+    if (length $desc > 100) {
+      $desc = substr($desc, 0, 100) . "…";
     }
   }
 
   use integer;
-  print "$url";
+  #print "$url";
   print bold(" \"$title\"") if defined $title;
   print " by \@$data{account_url}" if defined $data{account_url};
-  print " on ", scalar(gmtime($data{datetime})), " UTC;"
-    if defined $data{datetime};
+#  print " on ", scalar(gmtime($data{datetime})), " UTC;"
+#    if defined $data{datetime};
   print " $data{views} views" if defined $data{views};
   print green(" $data{ups}↑") if defined $data{ups};
   print red(" $data{downs}↓") if defined $data{downs};
@@ -1031,6 +1036,7 @@ sub doAe7qRegion {
   my $numpending = 0;
   my @avail;
   my @pending;
+  my @upcoming;
   my $lastcall;
   my $inCallTable = 0;
   my $ae7qTimeout = $timeout * 2;
@@ -1046,15 +1052,20 @@ sub doAe7qRegion {
       $lastcall = $1;
       #print "lastcall: $lastcall\n";
     }
-    if (defined $lastcall and m|</td><td class='DatabaseField' align='center'>\d+</td><td class="Database" style='background-color:#([0-9A-F]+);|) {
+    if (defined $lastcall and m|</td><td class='DatabaseField' align='center'>\d+</td><td class="Database" style='background-color:#([0-9A-F]+);.*center'>([0-9-]+)|) {
       my $color = $1;
-      if ($color eq "99CCFF") {
+      my $date = $2;
+      if ($color eq "99CCFF") { # blue
 	push @pending, $lastcall;
 	#print "pending: $lastcall\n";
       }
-      if ($color eq "99FF66") {
+      if ($color eq "99FF66") { # green
 	push @avail, $lastcall;
 	#print "avail $lastcall\n";
+      }
+      if ($color eq "FFFF66" or $color eq "FF99CC") { # yellow, red
+	my $datestamp = Time::Piece->strptime($date, "%Y-%m-%d")->epoch;
+	push (@upcoming, $lastcall) if $datestamp < (time() + (7 * 24*60*60));
       }
       $lastcall = undef;
     }
@@ -1066,7 +1077,144 @@ sub doAe7qRegion {
   print ": ", green(join(", ", @avail)) if $numavail > 0;
   print "; ", lightblue($numpending), " pending";
   print ": ", lightblue(join(", ", @pending)) if $numpending > 0;
+  print "; ", yellow(scalar @upcoming), " upcoming";
+  print ": ", yellow(join(", ", @upcoming)) if scalar @upcoming > 0;
   print "\n";
+}
+
+sub doAe7qCall {
+  my $url = shift;
+  my $call;
+  if ($url =~ m|CALL=([A-Z0-9]+)|i) {
+    $call = uc $1;
+  }
+  my ($frn, $name, $class, $status, $state, $grant, $eff, $cxl, $expire);
+  my ($receipt, $process, $appl, $filenum, $type, $seq, $pred);
+  my $callStatus;
+  my $inLicTable = 0;
+  my $inPredTable = 0;
+  my $pending = 0;
+  my $found = 0;
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  while(<HTTP>) {
+    $inLicTable = 1 if m|<table class='Database' cellpadding='4' align='center'><tbody class='Database'>|;
+    if ($inLicTable and m|title='Show licensee FRN history for (\d+)'>(.*)</a></td>|) {
+      ($frn, $name) = ($1, $2);
+    }
+    if (m|<kbd>$call</kbd> is canceled, but is not yet|) {
+      $callStatus = red("Canceled, but not yet available");
+    }
+    if (m|<kbd>$call</kbd> is expired, but is not yet|) {
+      $callStatus = red("Expired, but not yet available");
+    }
+    if (m|style='background-color:#99CCFF; '><kbd>$call</kbd> is (expired\|canceled) and is <|) {
+      $callStatus = lightblue("Application Pending");
+      $pending = 1;
+    }
+    if (m|style='background-color:#99FF66; '><kbd>$call</kbd> is (expired\|canceled) and is <|) {
+      $callStatus = green("Available");
+    }
+    if (m|style='background-color:#99FF66; '><kbd>$call</kbd> is  <|) {
+      $callStatus = green("Available");
+    }
+    if (m|style='background-color:#99CCFF; '><kbd>$call</kbd> is  <|) {
+      $callStatus = lightblue("Application Pending");
+      $pending = 1;
+    }
+    if ($inLicTable) {
+      if (/^<td class='Database'>(Technician|General|Amateur Extra|Novice|Advanced)<\/td>$/) {
+	$class = $1;
+      }
+      if (/^<td class='Database' style='background-color:#[0-9A-F]+;\s*'>(Canceled|Active|Expired)<\/td>$/) {
+	$status = $1;
+      }
+      if (m|</a> / ([A-Z]+)</td>|) {
+	$state = $1;
+      }
+      if (m|href='/query/list/ProcessDate.php\?DATE=([0-9-]+)'|){
+	$grant = $1;
+      }
+      if (m|title='Show callsign detail for [A-Z0-9]+'>([0-9-]+)</a>|) {
+	$eff = $1;
+      }
+      if (m|<td class='Database'> ([0-9-]*)&nbsp;</td>|) {
+	if (not defined $cxl) {
+	  $cxl = $1;
+	} else {
+	  $expire = $1;
+	}
+      }
+      if (m|</tr>| and defined $name) {
+	print bold($call), ": $callStatus";
+	print " - previous licensee:" if $status ne "Active";
+	print " - $name (FRN $frn; $state) - ";
+	print "$class - " if defined $class and length($class) > 0;
+
+	print "Status: ";
+	print green($status) if $status eq "Active";
+	print red($status) if $status eq "Expired";
+	print yellow($status) if $status eq "Canceled";
+
+	print " - Grant $grant; Effective $eff; ";
+	print "Cancel $cxl; " if defined $cxl and length($cxl) > 0;
+	print "Expire $expire\n";
+	$name = $frn = $class = $status = $grant = $eff = $cxl = $expire = undef;
+	$found = 1;
+	$inLicTable = 0;
+      }
+      $inLicTable = 0 if />Callsign</; # for trustee section
+    }
+    if (m|^\s*<table class="Database" cellpadding="4" align="center">\s*$|) {
+      print bold($call), ": $callStatus\n" if defined $callStatus and not $found;
+      $found = 1;
+      $inPredTable = 1;
+      $state = $class = undef;
+      #print "----\n";
+    }
+    if ($inPredTable) {
+      if (m|</tr>| and defined $appl) {
+	#print "$receipt $process $appl $class $state $filenum $seq $pred\n";
+	printf "%-6s ($state) $seq $pred\n", $appl;
+	$appl = $state = $class = $filenum = $seq = $pred = undef;
+      }
+      if (m|<td class="DatabaseField" style='background-color:White; Text-Align: right'><a href='/query/list/AppByReceipt.php\?DATE=([0-9-]+)' title='Show vanity applications received on [0-9-]+'>\w+ [0-9-]+</a></td><td class="DatabaseField" style='background-color:White; Text-Align: right'><a href='/query/list/ProcessDate.php\?DATE=([0-9-]+)' title='Show application &amp; license processing for [0-9-]+'>\w+ [0-9-]+</a></td>|) {
+	($receipt, $process) = ($1, $2);
+      }
+      if (m|<td class="DatabaseField" style='background-color:White; Text-Align: right'><a href='/query/list/AppByReceipt.php\?DATE=([0-9-]+)' title='Show vanity applications received on [0-9-]+'>\w+ [0-9-]+</a>.*Offlined by FCC|) {
+	($receipt, $process) = ($1, "offlined");
+      }
+      if (m/<kbd\s+style='font-weight:(Normal|Bold)'>([A-Z0-9]+)<\/kbd><\/a><\/td>/) {
+	$appl = $2;
+      }
+      if (m/<td class="DatabaseField">(Technician|General|Amateur Extra|Novice|Advanced)&nbsp;<\/td>/) {
+	$class = $1;
+      }
+      if (m|</a> / ([A-Z]+)</td>|) {
+	$state = $1;
+      }
+      if (m|href='/query/data/AppDetail.php\?UFN=(\d+)'|) {
+	$filenum = $1;
+      }
+      if (m|<td class='DatabaseField' align='right'> (\d+/\d+)</td>|) {
+	$seq = $1;
+      }
+      if (m|href='/query/list/Prediction.php\?PREDICT=(.*?)'|) {
+	$pred = $1;
+	$pred =~ s/_/ /g;
+	$pred = green($pred) if $pred eq "Assignment";
+	$pred = lightblue($pred) if $pred =~ /^(Competition|Available)/;
+	$pred = italic($pred) if $pred =~ /^Unneeded/;
+	$pred = yellow($pred) if $pred =~ /^Offlined/;
+	$pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv|Inactive)/;
+      }
+      if (m|</table>|) {
+	$inPredTable = 0;
+      }
+    }
+  }
+  close(HTTP);
+
+  print bold($call), ": $callStatus\n" if defined $callStatus and not $found;
 }
 
 sub unescape {

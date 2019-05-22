@@ -248,7 +248,7 @@ our ($retcall, $country, $name, $sk, $class, $mail, $grid, $lat, $lon, $geosrc,
   $born, @prevcalls, $email, $codes, $website, $iota, $lotw, $eqsl,
   $mailqsl, $qsl, $expiration, @othercalls, $trustee, $incomplete, $addr1,
   $addr2, $state, $zip, $mailcountry, $county, $ituzone, $cqzone, $qrzserial,
-  $qrzadmin, $effective);
+  $qrzadmin, $effective, $dxcc);
 
 getAndParseData();
 
@@ -310,8 +310,8 @@ if ($xml == 1) {
 
   print("    <call>$retcall</call>\n");
   print("    <xref>",uc($call),"</xref>\n") if uc($retcall) ne uc($call);
-  # TODO: dxcc entity ID
   print("    <aliases>".join(",", @othercalls)."</aliases>\n") if @othercalls;
+  print("    <dxcc>$dxcc</dxcc>\n") if defined $dxcc;
 
   my $lname = $name;
   $lname =~ s/\s*$//;
@@ -670,6 +670,9 @@ sub getAndParseData {
       exit $exitnonzeroonerror;
     }
 
+    if ($calldata and m|onclick="window.location='https://www\.qrz\.com/atlas\?dxcc=(\d+)'">|) {
+      $dxcc = $1;
+    }
     if ($calldata and /\/atlas.*<span style="position:relative;top[^>]*>([^<]*)</) {
       $country = $1;
       #next;
