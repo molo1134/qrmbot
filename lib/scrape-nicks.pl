@@ -174,6 +174,7 @@ foreach my $baseurl (@baseurls) {
 	      my $tmp = $3;
 	      if ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
 		$c = uc $tmp;
+		$c =~ s/[Øø∅]/0/g;
 		printf STDERR "%s :: %s => %s\n", $c, $k, substr($v,-25);
 	      }
 	    }
