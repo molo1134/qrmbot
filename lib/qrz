@@ -1014,8 +1014,8 @@ sub updateDMRfiles {
   my $userFile="$ENV{HOME}/.dmr-id-users.csv";
   my $rptrFile="$ENV{HOME}/.dmr-id-repeaters.csv";
 
-  my $usersUrl="https://www.radioid.net/api/dmr/user/?country=%25&format=csv";
-  my $rptrsUrl="https://www.radioid.net/api/dmr/repeater/?country=%25&format=csv";
+  my $usersUrl="https://www.radioid.net/static/cbridge_simple_user.csv";
+  my $rptrsUrl="https://www.radioid.net/static/cbridge_simple_rptr.csv";
 
   my $maxage=604800; # 1 week
   my $now = time();
@@ -1033,6 +1033,8 @@ sub updateDMRfiles {
     $needUsers = 1
   }
 
+  $needUsers = 1 if defined $size and $size < 10000;
+
   (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $rptrFile;
   if (defined $mtime) {
     my $age = $now - $mtime;
@@ -1040,6 +1042,8 @@ sub updateDMRfiles {
   } else {
     $needRptrs = 1
   }
+
+  $needRptrs = 1 if defined $size and $size < 10000;
 
   system "curl -s -k -L -o $userFile '$usersUrl'" if $needUsers == 1;
   system "curl -s -k -L -o $rptrFile '$rptrsUrl'" if $needRptrs == 1;
@@ -1059,7 +1063,8 @@ sub getDMRidsForCall {
     open (USERFILE, "<", $userFile);
     while (<USERFILE>) {
       chomp;
-      my ($id, $filecall) = split /,/;
+      s/\s*$//;
+      my ($filecall, undef, undef, $id) = split /[,\s]/;
       push @results, $id if defined $id and defined $filecall and uc($filecall) eq $call;
     }
     close(USERFILE);
@@ -1069,7 +1074,8 @@ sub getDMRidsForCall {
     open (RPTRFILE, "<", $rptrFile);
     while (<RPTRFILE>) {
       chomp;
-      my ($id, $filecall) = split /,/;
+      s/\s*$//;
+      my ($filecall, undef, undef, $id) = split /[,\s]/;
       push @results, $id if defined $id and defined $filecall and uc($filecall) eq $call;
     }
     close(RPTRFILE);
@@ -1089,8 +1095,9 @@ sub findCallForDmr {
     open (USERFILE, "<", $userFile);
     while (<USERFILE>) {
       chomp;
-      my ($id, $filecall) = split /,/;
-      push @results, $filecall if $id eq $dmr;
+      s/\s*$//;
+      my ($filecall, undef, undef, $id) = split /[,\s]/;
+      push @results, $filecall if defined $id and $id == $dmr;
     }
     close(USERFILE);
   }
@@ -1099,8 +1106,9 @@ sub findCallForDmr {
     open (RPTRFILE, "<", $rptrFile);
     while (<RPTRFILE>) {
       chomp;
-      my ($id, $filecall) = split /,/;
-      push @results, $filecall if $id eq $dmr;
+      s/\s*$//;
+      my ($filecall, undef, undef, $id) = split /[,\s]/;
+      push @results, $filecall if defined $id and $id == $dmr;
     }
     close(RPTRFILE);
   }
