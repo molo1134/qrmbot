@@ -140,6 +140,9 @@ bind pub - !q qcode_pub
 bind pub - !qsl qslcheck_pub
 bind msg - !qsl qslcheck_msg
 
+bind pub - !dxped dxpeditions_pub
+bind msg - !dxped dxpeditions_msg
+
 set qrzbin "/home/eggdrop/bin/qrz"
 set gridbin "/home/eggdrop/bin/grid"
 set drivebin "/home/eggdrop/bin/drivetime"
@@ -165,6 +168,7 @@ set muf2bin "/home/eggdrop/bin/muf2"
 set astrobin "/home/eggdrop/bin/astro"
 set satbin "/home/eggdrop/bin/sat"
 set qcodebin "/home/eggdrop/bin/qcode"
+set dxpedbin "/home/eggdrop/bin/dxpeditions"
 
 set spotfile spotlist
 
@@ -1441,6 +1445,29 @@ proc qslcheck_msg {nick uhand handle input} {
 	msg_lotw    "$nick" "$uhand" "$handle" "$input"
 	msg_eqsl    "$nick" "$uhand" "$handle" "$input"
 	msg_clublog "$nick" "$uhand" "$handle" "$input"
+}
+
+proc dxpeditions_pub { nick host hand chan text } {
+	global dxpedbin
+	set params [sanitize_string [string trim ${text}]]
+	putlog "dxped pub: $nick $host $hand $chan $params"
+	set fd [open "|${dxpedbin}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc dxpeditions_msg {nick uhand handle input} {
+	global dxpedbin
+	set params [sanitize_string [string trim ${input}]]
+	putlog "dxped msg: $nick $uhand $handle $params"
+	set fd [open "|${dxpedbin}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
 }
 
 putlog "Ham utils loaded."

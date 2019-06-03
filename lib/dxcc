@@ -189,7 +189,9 @@ while (<MW>) {
       $mostwantedByPrefix{"3B6"} = $rank;
       $mostwantedByName{"AGALEGA & ST. BRANDON"} = $rank;
     }
-
+    if ($name eq "VIET NAM") {
+      $mostwantedByName{"VIETNAM"} = $rank;
+    }
   }
 }
 close(MW);

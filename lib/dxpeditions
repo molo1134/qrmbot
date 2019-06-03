@@ -1,0 +1,110 @@
+#!/usr/bin/perl
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+my $highlight="vt220";
+$highlight = "none" if ! -t STDOUT;
+$highlight = "irc" if $username eq "eggdrop";
+
+use Time::Piece ();
+use POSIX qw(strftime);
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+# load mostwanted summary from $HOME/.mostwanted.txt, which will be populated
+# by the scrapeMW() subroutine.
+my $mostwantedfile=$ENV{'HOME'} . "/.mostwanted.txt";
+
+# load mostwanted summary from $HOME/.mostwanted.txt, if present
+my %mostwantedByPrefix;
+my %mostwantedByName;
+open(MW, "<", $mostwantedfile) or goto SKIPMW;
+while (<MW>) {
+  chomp;
+  if (/^\d/) {
+    my ($rank, $prefix, $name) = split /,/;
+    #print "$prefix => $rank\n";
+    $mostwantedByPrefix{$prefix} = $rank;
+    $mostwantedByName{$name} = $rank;
+
+    # hack. this place is called 'San Andres & Providencia' in cty.dat, but
+    # 'SAN ANDRES ISLAND' by clublog and LoTW.
+    if ($name eq "SAN ANDRES ISLAND") {
+      $mostwantedByName{"SAN ANDRES & PROVIDENCIA"} = $rank;
+    }
+    # hack. this place is 3B6 in cty.dat but 3B7 in clublog.
+    if ($name eq "AGALEGA & ST BRANDON ISLANDS") {
+      $mostwantedByPrefix{"3B6"} = $rank;
+      $mostwantedByName{"AGALEGA & ST. BRANDON"} = $rank;
+    }
+    if ($name eq "VIET NAM") {
+      $mostwantedByName{"VIETNAM"} = $rank;
+    }
+
+  }
+}
+close(MW);
+
+my $url = "https://www.ng3k.com/misc/adxo.html";
+my $timeout = 10;
+
+my ($start, $end, $cty, $call, $dxurl);
+open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+while(<HTTP>) {
+  if (m|<td class="date">(\d+ [A-Z]+[0-9]+)</td><td class="date">(\d+ [A-Z]+[0-9]+)</td><td class="cty">(.*?)</td>|i) {
+    ($start, $end, $cty) = ($1, $2, $3);
+  }
+  if (m|<span class="call"><a href="(.*?)">(.*?)</a></span>|i) {
+    ($dxurl, $call) = ($1, $2);
+    $dxurl =~ s|^https://|http://|;
+    $dxurl =~ s|://www.|://|;
+    $dxurl =~ s|qrz.com/lookup/|qrz.com/db/|;
+  } elsif (m|<span class="call">(.*?)</span>|i) {
+    $call = $1;
+  }
+  if (m|<td class="info">.*?as\s+([A-Z0-9/]+)\s*|) {
+    $call = $1;
+  }
+  if (m|<tr class="adxoitem"|) {
+    if (defined $cty) {
+      my $startstamp = Time::Piece->strptime($start, "%Y %b%d")->epoch;
+      my $endstamp =   Time::Piece->strptime($end,   "%Y %b%d")->epoch;
+      my $now = time();
+      my $tomorrow = $now + (24 * 60 * 60);
+      #print "HERE\n" if $cty =~ /Eritrea/;
+      #print "$startstamp; $now; $endstamp; $tomorrow
+      if ($startstamp < $now and ($endstamp > $now or $endstamp < $tomorrow)) {
+	my $mw = undef;
+	foreach my $n (keys %mostwantedByName) {
+	  my $term = quotemeta($cty);
+	  if ($n =~ m/$term/i) {
+	    $mw = $mostwantedByName{uc($n)};
+	    last;
+	  }
+	}
+	print italic($cty), "(#";
+	print bold($mw) if $mw < 150;
+	print $mw if $mw >= 150;
+	print "): ", bold($call);
+	print " until ", strftime("%b %d", gmtime($endstamp));
+	print " - $dxurl " if defined $dxurl;
+	print "\n" if $username ne "eggdrop";
+	print "; " if $username eq "eggdrop";
+      }
+    }
+    ($start, $end, $cty, $call, $dxurl) = (undef, undef, undef, undef, undef);
+  }
+}
+close(HTTP);
+
