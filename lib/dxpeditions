@@ -98,7 +98,7 @@ while(<HTTP>) {
 	print bold($mw) if $mw < 150;
 	print $mw if $mw >= 150;
 	print "): ", bold($call);
-	print " until ", strftime("%b %d", gmtime($endstamp));
+	print " to ", strftime("%b %d", gmtime($endstamp));
 	print " - $dxurl " if defined $dxurl;
 	print "\n" if $username ne "eggdrop";
 	print "; " if $username eq "eggdrop";
