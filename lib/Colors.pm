@@ -7,7 +7,7 @@
 package Colors;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(darkRed red yellow green lightblue darkYellow lightGrey grey cyan lightcyan bold underline inverse italic strikethrough blink monospace);
+@EXPORT = qw(darkRed red yellow green lightblue darkYellow lightGrey grey cyan lightcyan bold underline inverse italic strikethrough blink monospace unicodeStrike1 unicodeStrike2);
 
 BEGIN {
   our $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
@@ -188,6 +188,25 @@ sub strikethrough {
     return $s;
   }
 }
+
+sub unicodeStrike1 {
+  return unicodeStrike(shift, "\x{0335}");
+}
+sub unicodeStrike2 {
+  return unicodeStrike(shift, "\x{0336}");
+}
+require Encode;
+sub unicodeStrike{
+  my $text = shift;
+  my $strikechar = shift;
+  my $result = "";
+
+  foreach my $c (split //, $text) {
+    $result .= "$c$strikechar";
+  }
+  return $result;
+}
+
 # ctrl-f in irc client
 sub blink {
   my $s = shift;
