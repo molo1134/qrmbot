@@ -7,7 +7,7 @@
 package Colors;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(darkRed red yellow green lightblue darkYellow lightGrey grey cyan lightcyan bold underline inverse italic strikethrough blink monospace unicodeStrike1 unicodeStrike2);
+@EXPORT = qw(darkRed red yellow green lightblue darkYellow lightGrey grey cyan lightcyan bold underline inverse italic strikethrough blink monospace);
 
 BEGIN {
   our $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
@@ -175,9 +175,14 @@ sub italic {
     return $s;
   }
 }
+
+sub strikethrough {
+  return unicodeStrike2(shift);
+}
+
 # ctrl-^ in irc client ?
 # only supported by textual irc now
-sub strikethrough {
+sub terminalStrikethrough {
   my $s = shift;
   return undef if not defined($s);
   if ($highlight eq "irc") {
