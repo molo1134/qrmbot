@@ -54,5 +54,5 @@ if ($username eq "eggdrop") {
 }
 
 print "Strike: ", strikethrough("terminal/irc strikethrough"), " || ",
-	unicodeStrike1("uncode strike1"), " || ",
-	unicodeStrike2("uncode strike2"), "\n";
+	unicodeStrike1("unicode strike1"), " || ",
+	unicodeStrike2("unicode strike2"), "\n";
