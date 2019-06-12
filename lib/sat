@@ -315,7 +315,7 @@ if (defined $sta2) {
     my ($saz1, $eaz1) = (undef, undef);
     my ($saz2, $eaz2) = (undef, undef);
 
-    for (my $time = $start; $time < $end; $time += $delta) {
+    for (my $time = $start; $time <= $end; $time += $delta) {
       $body1->{station} = $sta;
       eval {$body1->universal($time); 1;} or do {
 	warn $@;
@@ -610,6 +610,7 @@ sub elToSpark {
 
 sub azToNEWS {
   my $az = shift;
+  return undef if not defined $az;
   return "N"   if $az >= 0.0 and $az < 11.25;
   return "NNE" if $az < 33.75;
   return "NE"  if $az < 56.25;
