@@ -52,7 +52,7 @@ proc send_help {nick} {
   putmsg $nick "  !rig -- describe a radio or other gear"
   putmsg $nick "  !lotw -- last upload date to LoTW for a callsign"
   putmsg $nick "  !eqsl -- last login to eqsl.cc for a callsign"
-  putmsg $nick "  !clublog -- log and OQRS records on clublog.org"
+  putmsg $nick "  !clublog !oqrs -- log and OQRS info on clublog.org"
   putmsg $nick "  !qsl -- check all of the above qsl methods"
   putmsg $nick "  !contests -- list current and upcoming contests"
   putmsg $nick "  !wx !wxfull -- show current weather conditions"
@@ -67,6 +67,9 @@ proc send_help {nick} {
   putmsg $nick "  !transit -- compute transit time and route"
   putmsg $nick "  !stock -- financial quotes"
   putmsg $nick "  !elev -- get elevation data for a place"
+  putmsg $nick "  !adsb -- get plane information"
+  putmsg $nick "  !ae7q -- get callsign availability info"
+  putmsg $nick "  !dxped -- get current dxpedition info"
 #  putmsg $nick "  !topic -- print current topic"
 #  putmsg $nick "  !topicrefresh -- reset the topic"
 #  putmsg $nick [encoding convertto utf-8 "  !myquit -- print your last signoff message †"]
