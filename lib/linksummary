@@ -578,7 +578,7 @@ sub doHtml {
   #print "desc: $desc\n";
 
   $shortUrl = shortenUrl($url)
-	if not defined($shortUrl) or length($shortUrl) > 60;
+	if not defined($shortUrl) or length($shortUrl) > 50;
 
   return if not defined($title) and not defined($desc) and not defined($shortUrl);
 
@@ -599,7 +599,7 @@ sub doHtml {
 
 sub shortenUrl {
   my $url = shift;
-  return undef if length($url) < 60;
+  return undef if length($url) < 50;
 
   my $shortUrl;
   my $encodedUrl = uri_escape($url);
