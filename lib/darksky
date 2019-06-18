@@ -81,16 +81,19 @@ if ($ARGV[0] =~ /about/i){
 
 
 my $geo = argToCoords($loc);
-$loc = $geo if defined $geo;
-#print "loc: $loc\n";
-my $encodedloc = uri_escape($loc);
 
-($lat, $lon) = split(/,/,$loc);
+if (not defined $geo) {
+    print "place not found\n";
+    exit 0;
+}
+
+my $encodedloc = uri_escape($geo);
+($lat, $lon) = split(/,/,$geo);
 $placename = geolocate($lat, $lon);
 
-#print "Lat: " . $lat;
-#print "Lon: " . $lon;
-#print "place: " . $placename;
+#print "Lat: $lat\n";
+#print "Lon: $lon\n";
+#print "place: $placename\n";
 
 #my $url = "https://api.darksky.net/forecast/$apikey/$ARGV[0]?units=auto&exclude=hourly,minutely";
 my $url = "https://api.darksky.net/forecast/$apikey/$encodedloc?units=auto&exclude=hourly,minutely";
