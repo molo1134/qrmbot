@@ -193,6 +193,8 @@ sub indicateEvent {
   my $now = time();
 
   my ($y, $m, $d) = split(/ /, $lastDay);
+  #print "graph end: '$y ", monthNameToNum($m), " $d'\n";
+  #print "event date: '$eventDate'\n";
   my $graphEnd = $dtparser->parse_datetime("$y " . monthNameToNum($m) . " $d");
 
   my $eventStart = $dtparser->parse_datetime($eventDate);
@@ -208,10 +210,10 @@ sub indicateEvent {
 
   #print "todayStart: ". $todayStart->epoch() . "\n";
   #print "eventEnd  : $eventEnd\n";
-  #print "eventStart: ". $eventStart->epoch(). "\n";
-  #print "graphEnd  : " . $graphEnd->epoch()."\n";
   #print '$todayStart->epoch() < $eventEnd ? ' .
   #    ($todayStart->epoch() < $eventEnd) . "\n";
+  #print "eventStart: ". $eventStart->epoch(). "\n";
+  #print "graphEnd  : " . $graphEnd->epoch()."\n";
   #print '$eventStart->epoch() < $graphEnd->epoch() ? ' .
   #    ($eventStart->epoch() < $graphEnd->epoch()) . "\n";
 

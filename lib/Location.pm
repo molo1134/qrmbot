@@ -553,7 +553,7 @@ sub getYearForDate {
   my $query = "$m $d $year";
   my $date = ParseDate($query);
   my $query_ts = UnixDate($date, "%s");
-  if ($query_ts < $today_ts) {
+  if ($query_ts < ($today_ts - (7 * 24 * 60 * 60))) {
     $year = $nextyear;
     $query = "$m $d $year";
     $date = ParseDate($query);
