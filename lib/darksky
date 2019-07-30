@@ -163,9 +163,10 @@ for ($units){
         print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
         print $dewlabel . sprintf("%1d",$results{dewPoint}) . "°F ";
 
-        if ($results{nearestStormDistance} ne '0')  {
-            print $stormlabel . $results{nearestStormDistance} . " miles away, bearing " . $results{nearestStormBearing} . "° ";
-        }
+# hot garbage
+#        if ($results{nearestStormDistance} ne '0')  {
+#            print $stormlabel . $results{nearestStormDistance} . " miles away, bearing " . $results{nearestStormBearing} . "° ";
+#        }
 
         if ($results{windspeed} ne '0') {
             print $windlabel . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° ";
