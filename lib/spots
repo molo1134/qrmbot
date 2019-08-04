@@ -347,9 +347,7 @@ sub doDXWatch
 	#say $vals;
 	$csv->parse($vals) or say "unable to parse csv: $vals";
 	($de, $freq, $dx, $cmt, $datetime, $age, $x, $y) = $csv->fields();
-	$cmt =~ s/&lt;/</g;
-	$cmt =~ s/&gt;/>/g;
-	$cmt =~ s/&amp;/&/g;
+	$cmt = decodeEntities($cmt);
       }
 
       my ($ts, $dt);

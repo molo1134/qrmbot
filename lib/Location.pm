@@ -417,6 +417,7 @@ sub decodeEntities {
   $s =~ s/&yacute;/ý/g;
   $s =~ s/&Yacute;/Ý/g;
   $s =~ s/&yuml;/ÿ/g;
+  $s =~ s/&divide;/÷/g;
 
   $s =~ s/&lt;/</g;
   $s =~ s/&gt;/>/g;
