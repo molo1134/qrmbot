@@ -404,6 +404,9 @@ if (defined($iota)) {
 if (defined($codes) && $compact ne 1) {
   print " -- codes: $codes $codetext";
 }
+if (defined($vanity) and $vanity eq 1 and $compact eq 1) {
+  print " -- (vanity)";
+}
 if (@prevcalls) {
   my @uniqprevcalls = uniq(@prevcalls);
   print " -- prev " . join(", ", @uniqprevcalls);
