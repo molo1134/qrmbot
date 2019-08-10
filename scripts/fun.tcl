@@ -7,8 +7,10 @@ bind pub - !phonetics phoneticise
 bind pub - !phoneticise phoneticise
 bind pub - !phoneticize phoneticise
 bind pub - !metard metard
+bind pub - !brexit brexit
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
+set brexitbin "/home/eggdrop/bin/brexit"
 
 # load utility methods
 source scripts/util.tcl
@@ -164,6 +166,17 @@ proc do_wwv_beep_pub { chan } {
 
 proc metard { nick host hand chan text} {
 	putchan $chan "$nick you tard" 
+}
+
+proc brexit { nick host hand chan text } {
+	global brexit
+	putlog "brexit: $nick $host $hand $chan"
+	set fd [open "|${brexitbin}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
 }
 
 putlog "fun.tcl loaded."
