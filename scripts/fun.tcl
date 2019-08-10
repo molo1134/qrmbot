@@ -169,7 +169,7 @@ proc metard { nick host hand chan text} {
 }
 
 proc brexit { nick host hand chan text } {
-	global brexit
+	global brexitbin
 	putlog "brexit: $nick $host $hand $chan"
 	set fd [open "|${brexitbin}" r]
 	fconfigure $fd -translation binary
