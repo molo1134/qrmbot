@@ -17,6 +17,11 @@ my $d2 = DateTime->new(
 #                       ($d2->subtract_datetime_absolute($d1)));
 my $dur = $d2->epoch() - $d1->epoch();
 
+if ($dur < 0) {
+	print "Stop, Brexit time! https://i.imgur.com/eKejAcG.gifv\n";
+	exit 0;
+}
+
 my $m = floor($dur / (30 * 24 * 60 * 60));
 my $d = floor($dur % (30 * 24 * 60 * 60) / (24 * 60 * 60));
 my $h = floor($dur % (24 * 60 * 60) / (60 * 60));
