@@ -25,7 +25,7 @@ my @line;
 my $f = 0;
 
 if ($ARGV[0] =~ /about/i){
-    print "Returns four most recent M 2.5+ earthquakes over the last 24 hours.\n";
+    print "Returns top 5 strongest M 2.5+ earthquakes over the last 24 hours.\n";
     print "Data provided by USGS, https://earthquake.usgs.gov\n";
     exit 0;
 }
@@ -34,9 +34,9 @@ if ($ARGV[0] =~ /about/i){
 
 my $url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson";
 
-print "Most recent 2.5+ earthquakes of the last 24 hours:\n";
+print "Largest 2.5+ earthquakes of the last 24 hours:\n";
 
-open(HTTP, '-|', "curl -s -L --insecure '$url' | jq -c '.features[0,1,2,3] | [.properties.time,.properties.title]'");
+open(HTTP, '-|', "curl -s -L --insecure '$url' | jq -c '.features[] | [.properties.time,.properties.title]' | sort -rn -k2 | head -5");
 
 binmode(HTTP, ":utf8");
 while ( my $line = <HTTP>) {
