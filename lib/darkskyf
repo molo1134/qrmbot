@@ -1,0 +1,241 @@
+#!/usr/bin/perl
+
+# DarkSky API client -- current conditions.  2-clause BSD license.
+
+# Substantially hustled from the qrm's original wx script which is
+# Copyright 2019 /u/molo1134. /u/asternitix. All rights reserved.
+
+# requires an API key from DarkSky.com  Place into $HOME/.darksky:
+#
+# $apikey = "0123456789abcdef";
+#
+# The current conditions object ("currently") returns data as follows:
+# {
+#  "time": 1556741044,
+#  "summary": "Mostly Cloudy",
+#  "icon": "partly-cloudy-day",
+#  "nearestStormDistance": 12,
+#  "nearestStormBearing": 195,
+#  "precipIntensity": 0,
+#  "precipProbability": 0,
+#  "temperature": 84.35,
+#  "apparentTemperature": 85.93,
+#  "dewPoint": 64.51,
+#  "humidity": 0.52,
+#  "pressure": 1008.38,
+#  "windSpeed": 7.95,
+#  "windGust": 8.71,
+#  "windBearing": 139,
+#  "cloudCover": 0.8,
+#  "uvIndex": 5,
+#  "visibility": 9.27,
+#  "ozone": 320.06
+# }
+#
+# Weather data: 
+# Powered by Dark Sky
+# https://darksky.net/poweredby/
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use URI::Escape;
+use Time::Piece;
+use Time::Seconds;
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Location;
+use Colors;
+
+our $apikey = undef;
+my $loc;
+my $lat;
+my $lon;
+my $placename;
+
+my $apikeyfile = $ENV{'HOME'} . "/.darksky";
+if (-e ($apikeyfile)) {
+    require($apikeyfile);
+} else {
+    die "error: unable to read file $apikeyfile"
+}
+die "error: no API key set" unless defined($apikey);
+
+my $i = 0;
+while ($i <= $#ARGV) {
+    if (defined($loc)) {
+        $loc = $loc . " " . $ARGV[$i];
+    } else {
+        $loc = $ARGV[$i];
+    }
+    $i++;
+}
+
+if ($ARGV[0] =~ /about/i){
+    print "Weather: Powered by Dark Sky.\n";
+    print "https://darksky.net/poweredby/\n";
+    exit 0;
+}
+
+
+my $geo = argToCoords($loc);
+
+if (not defined $geo) {
+    print "place not found\n";
+    exit 0;
+}
+
+my $encodedloc = uri_escape($geo);
+($lat, $lon) = split(/,/,$geo);
+$placename = geolocate($lat, $lon);
+
+my $t1 = time();
+my $d1 = $t1 += ONE_DAY; # add 1 day (constant from Time::Seconds)
+my $d2 = $d1 += ONE_DAY; # Sequence 2
+my $d3 = $d2 += ONE_DAY; # Sequence 3
+
+#print "Lat: $lat\n";
+#print "Lon: $lon\n";
+#print "place: $placename\n";
+
+#my $url = "https://api.darksky.net/forecast/$apikey/$ARGV[0]?units=auto&exclude=hourly,minutely";
+my $url0 = "https://api.darksky.net/forecast/$apikey/$encodedloc?units=auto&exclude=hourly,minutely";
+my $url1 = "https://api.darksky.net/forecast/$apikey/$encodedloc,$d1?units=auto&exclude=currently,flags";
+my $url2 = "https://api.darksky.net/forecast/$apikey/$encodedloc,$d2?units=auto&exclude=currently,flags";
+my $url3 = "https://api.darksky.net/forecast/$apikey/$encodedloc,$d3?units=auto&exclude=currently,flags";
+# darksky returns US Imperial units by default, but the units can be tweaked via
+# the query parameter 'units' as seen above. Their docs spell out the following
+# options:
+#
+# auto: automatically select units based on geographic location
+# ca: same as si, except that windSpeed and windGust are in kilometers per hour
+# uk2: same as si, except that nearestStormDistance and visibility are in miles, and windSpeed and windGust in miles per hour
+# us: Imperial units (the default)
+# si: SI units
+#
+# as it happens, the .flags.units object will return the units used in the
+# data. 
+#
+# The 'exclude' block just does that - reduce the size of the response a bit
+# since we don't need data that granular.
+
+my %results;
+my $rec_ref;
+my %rec;
+my $units;
+my $forecast;
+
+open(HTTP, '-|', "curl -s -L --insecure '$url0' | jq -r '.daily.summary,[.currently,.alerts],.flags.units'");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+    chomp;
+
+    $forecast = $_ if ($. == 1);
+
+    if (/"(\w+)":\s*"?(.*?)"?,?\s*$/) {
+        my ($key, $value) = ($1, $2);
+        $results{$key} = $value;
+        #print "$key -> $value\n";
+    }
+
+    $units = $_ if eof;
+}
+close(HTTP);
+
+for ($units){
+
+    if (/us/) {
+
+        my $placelabel = bold("Location: ");
+        my $currlabel = bold("Currently: ");
+        my $templabel = bold("Temp: ");
+        my $feelslabel = bold("Feels like: ");
+        my $humidlabel = bold("Humidity: ");
+        my $baromlabel = bold("Barometer: ");
+        my $vislabel = bold("Visibility: ");
+        my $dewlabel = bold("Dew point: ");
+        my $windlabel = bold("Wind: ");
+        my $stormlabel = bold("Nearest storm: ");
+        my $fclabel = bold("Forecast: ");
+
+        print $placelabel . $placename . " ";
+        print $currlabel . $results{summary} . " ";
+        print $templabel . sprintf("%1d",$results{temperature}) . "°F ";
+        print $feelslabel . sprintf("%1d",$results{apparentTemperature}) . "°F ";
+        print $humidlabel . sprintf("%.1f%%",100 * $results{humidity}) . " ";
+        print $baromlabel . sprintf("%2d",$results{pressure}) . "mb ";
+        print $vislabel . sprintf("%1d",$results{visibility}) . " miles ";
+        print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
+        print $dewlabel . sprintf("%1d",$results{dewPoint}) . "°F ";
+
+# hot garbage
+#        if ($results{nearestStormDistance} ne '0')  {
+#            print $stormlabel . $results{nearestStormDistance} . " miles away, bearing " . $results{nearestStormBearing} . "° ";
+#        }
+
+        if ($results{windspeed} ne '0') {
+            print $windlabel . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° ";
+        }
+
+        print $fclabel . $forecast . "\n";
+
+        if ($results{title} ne ''){
+
+            # note that this only prints the last alert if multiple alerts are
+            # returned.
+
+            my $alertmsg = red("Alert");
+            print "\n" . $alertmsg . ": " . $results{title} . " -> " . $results{uri} . "\n";
+        }
+
+    }
+
+    # everyone else gets SI/metric 
+
+    else {
+
+        my $placelabel = bold("Location: ");
+        my $currlabel = bold("Currently: ");
+        my $templabel = bold("Temp: ");
+        my $feelslabel = bold("Feels like: ");
+        my $humidlabel = bold("Humidity: ");
+        my $baromlabel = bold("Barometer: ");
+        my $vislabel = bold("Visibility: ");
+        my $dewlabel = bold("Dew point: ");
+        my $windlabel = bold("Wind: ");
+        my $stormlabel = bold("Nearest storm: ");
+        my $fclabel = bold("Forecast: ");
+
+        print $placelabel . $placename . " ";
+        print $currlabel . $results{summary} . " ";
+        print $templabel . sprintf("%1d",$results{temperature}) . "°C ";
+        print $feelslabel . sprintf("%1d",$results{apparentTemperature}) . "°C ";
+        print $humidlabel . sprintf("%.1f%%",100 * $results{humidity}) . " ";
+        print $baromlabel . sprintf("%2d",$results{pressure}) . "hPa ";
+        print $vislabel . sprintf("%1d",$results{visibility}) . "km ";
+        print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
+        print $dewlabel . sprintf("%1d",$results{dewPoint}) . "°C ";
+
+	#if ($results{nearestStormDistance} ne '') {
+	#    print $stormlabel . $results{nearestStormDistance} . " km away, bearing " . $results{nearestStormBearing} . "° ";
+	#}
+
+        if ($results{windspeed} ne '0') {
+            print $windlabel . sprintf("%1d",$results{windSpeed}) . " km/h, direction: " . $results{windBearing} . "° ";
+        }
+
+        print $fclabel . $forecast;
+
+        if ($results{title} ne ''){
+
+            my $alertmsg = red("Alert");
+            print "\n" . $alertmsg . ": " . $results{title} . " -> " . $results{uri} . "\n";
+
+        }
+
+    }
+}
+exit 0;
