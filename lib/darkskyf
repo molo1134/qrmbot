@@ -3,7 +3,7 @@
 # DarkSky API client -- current conditions.  2-clause BSD license.
 
 # Substantially hustled from the qrm's original wx script which is
-# Copyright 2019 /u/molo1134. /u/asternitix. All rights reserved.
+# Copyright 2018 /u/molo1134. All rights reserved.
 
 # requires an API key from DarkSky.com  Place into $HOME/.darksky:
 #
@@ -42,8 +42,7 @@ use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
 use URI::Escape;
-use Time::Piece;
-use Time::Seconds;
+
 use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
@@ -92,20 +91,13 @@ my $encodedloc = uri_escape($geo);
 ($lat, $lon) = split(/,/,$geo);
 $placename = geolocate($lat, $lon);
 
-my $t1 = time();
-my $d1 = $t1 += ONE_DAY; # add 1 day (constant from Time::Seconds)
-my $d2 = $d1 += ONE_DAY; # Sequence 2
-my $d3 = $d2 += ONE_DAY; # Sequence 3
-
 #print "Lat: $lat\n";
 #print "Lon: $lon\n";
 #print "place: $placename\n";
 
 #my $url = "https://api.darksky.net/forecast/$apikey/$ARGV[0]?units=auto&exclude=hourly,minutely";
-my $url0 = "https://api.darksky.net/forecast/$apikey/$encodedloc?units=auto&exclude=hourly,minutely";
-my $url1 = "https://api.darksky.net/forecast/$apikey/$encodedloc,$d1?units=auto&exclude=currently,flags";
-my $url2 = "https://api.darksky.net/forecast/$apikey/$encodedloc,$d2?units=auto&exclude=currently,flags";
-my $url3 = "https://api.darksky.net/forecast/$apikey/$encodedloc,$d3?units=auto&exclude=currently,flags";
+my $url = "https://api.darksky.net/forecast/$apikey/$encodedloc?units=auto&exclude=hourly,minutely";
+
 # darksky returns US Imperial units by default, but the units can be tweaked via
 # the query parameter 'units' as seen above. Their docs spell out the following
 # options:
@@ -128,7 +120,7 @@ my %rec;
 my $units;
 my $forecast;
 
-open(HTTP, '-|', "curl -s -L --insecure '$url0' | jq -r '.daily.summary,[.currently,.alerts],.flags.units'");
+open(HTTP, '-|', "curl -s -L --insecure '$url' | jq -r '.daily.summary,[.currently,.alerts],.flags.units'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
     chomp;
