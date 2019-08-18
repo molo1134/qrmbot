@@ -97,3 +97,10 @@ needed.
 14. ~~Current dxpedition list~~ by scraping https://www.ng3k.com/misc/adxo.html
 15. Replace wunderground APIs which are now dead
 
+## Contributors
+
+* K2CR
+* AA4JQ
+* VK3DAN
+* W9VFR
+
