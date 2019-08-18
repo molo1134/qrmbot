@@ -101,7 +101,7 @@ sub printYouTubeMetaData {
   my $vidimg = "https://i.ytimg.com/vi/$id/hqdefault.jpg";
   my $done = 0;
   my ($title, $len, $desc, $count, $pubdate, $genre, $nsfw, $unlisted, $paid, $author, $likes, $dislikes, $live);
-  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  open(HTTP, '-|', "curl -4 --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     if (/Our systems have detected unusual traffic from your computer network./) {
