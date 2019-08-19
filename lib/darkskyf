@@ -303,18 +303,18 @@ for ($units3){
         print $vislabel . sprintf("%1d",$results{visibility}) . " miles ";
         print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
         print $dewlabel . sprintf("%1d",$results{dewPoint}) . "°F ";
-	}
+	
+
+
+        if ($results{windspeed} ne '0') {
+            print $windlabel . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° ";
+        }
+}
 }
 # hot garbage
 #        if ($results{nearestStormDistance} ne '0')  {
 #            print $stormlabel . $results{nearestStormDistance} . " miles away, bearing " . $results{nearestStormBearing} . "° ";
 #        }
-
-        if ($results{windspeed} ne '0') {
-            print $windlabel . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° ";
-        }
-
-        print $fclabel . $forecast . "\n";
 
         if ($results{title} ne ''){
 
@@ -371,5 +371,5 @@ for ($units3){
         }
 
       } 
-}
+
 exit 0;
