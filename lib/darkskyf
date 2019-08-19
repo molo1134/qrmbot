@@ -131,7 +131,7 @@ my $units2;
 my $units3;
 my $forecast;
 
-open(HTTP, '-|', "curl -s -L --insecure '$url0' | jq -r 'daily.summary,[.currently,.alerts],.flags.units'");
+open(HTTP, '-|', "curl -s -L --insecure '$url0' | jq -r '.daily,.summary,.[.currently,.alerts],.flags.units'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
     chomp;
