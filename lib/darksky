@@ -59,9 +59,9 @@ my $apikeyfile = $ENV{'HOME'} . "/.darksky";
 if (-e ($apikeyfile)) {
     require($apikeyfile);
 } else {
-    die "error: unable to read file $apikeyfile"
+    print "warning: unable to read file $apikeyfile\n"
 }
-die "error: no API key set" unless defined($apikey);
+#die "error: no API key set" unless defined($apikey);
 
 my $i = 0;
 while ($i <= $#ARGV) {
@@ -120,6 +120,7 @@ my %rec;
 my $units;
 my $forecast;
 
+#print ("curl -s -L --insecure '$url' | jq -r '.daily.summary,[.currently,.alerts],.flags.units'\n");
 open(HTTP, '-|', "curl -s -L --insecure '$url' | jq -r '.daily.summary,[.currently,.alerts],.flags.units'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {

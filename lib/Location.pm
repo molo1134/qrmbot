@@ -22,7 +22,7 @@ sub getGeocodingAPIKey {
   if (-e ($apikeyfile)) {
     require($apikeyfile);
   } else {
-    die "error: unable to read file $apikeyfile";
+    print "error: unable to read file $apikeyfile\n";
   }
   return $geocodingapikey;
 }
@@ -98,6 +98,8 @@ sub qthToCoords {
   my $apikey = getGeocodingAPIKey();
   my $url = "https://maps.googleapis.com/maps/api/geocode/xml?address=$place&sensor=false&key=$apikey";
 
+  return undef if not defined $apikey;
+
   open (HTTP, '-|', "curl --stderr - -N -k -s -L '$url'");
   binmode(HTTP, ":utf8");
   GET: while (<HTTP>) {
@@ -132,6 +134,7 @@ sub geolocate {
   my $lat = shift;
   my $lon = shift;
   my $apikey = getGeocodingAPIKey();
+  return undef if not defined $apikey;
 
   my $url = "https://maps.googleapis.com/maps/api/geocode/xml?latlng=$lat,$lon&sensor=false&key=$apikey";
 
@@ -285,6 +288,7 @@ sub coordToTZ {
   my $lat = shift;
   my $lon = shift;
   my $apikey = getGeocodingAPIKey();
+  return undef if not defined $apikey;
 
   my $now = time();
   my $url = "https://maps.googleapis.com/maps/api/timezone/json?location=$lat,$lon&timestamp=$now&key=$apikey";
@@ -586,6 +590,7 @@ sub coordToElev {
   my $lat = shift;
   my $lon = shift;
   my $apikey = getGeocodingAPIKey();
+  return undef if not defined $apikey;
 
   my $url = "https://maps.googleapis.com/maps/api/elevation/json?locations=$lat,$lon&key=$apikey";
 
