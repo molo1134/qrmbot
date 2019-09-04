@@ -126,9 +126,12 @@ my %results;
 my $rec_ref;
 my %rec;
 my $units;
+my $units1;
+my $units2;
+my $units3;
 my $forecast;
 
-open(HTTP, '-|', "curl -s -L --insecure '$url0' | jq -r '.daily.summary,[.currently,.alerts],.flags.units'");
+open(HTTP, '-|', "curl -s -L --insecure '$url0' | jq -r '.daily,.summary,[.currently,.alerts],.flags.units'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
     chomp;
@@ -170,17 +173,148 @@ for ($units){
         print $vislabel . sprintf("%1d",$results{visibility}) . " miles ";
         print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
         print $dewlabel . sprintf("%1d",$results{dewPoint}) . "°F ";
+	}
+}
+open(HTTP1, '-|', "curl -s -L --insecure '$url1' | jq -r '.daily.summary,[.currently,.alerts],.flags.units'");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+    chomp;
 
-# hot garbage
-#        if ($results{nearestStormDistance} ne '0')  {
-#            print $stormlabel . $results{nearestStormDistance} . " miles away, bearing " . $results{nearestStormBearing} . "° ";
-#        }
+    $forecast = $_ if ($. == 1);
+
+    if (/"(\w+)":\s*"?(.*?)"?,?\s*$/) {
+        my ($key, $value) = ($1, $2);
+        $results{$key} = $value;
+        #print "$key -> $value\n";
+    }
+
+    $units1 = $_ if eof;
+}
+close(HTTP1);
+
+for ($units1){
+
+    if (/us/) {
+
+        my $placelabel = bold("Location: ");
+        my $currlabel = bold("Currently: ");
+        my $templabel = bold("Temp: ");
+        my $feelslabel = bold("Feels like: ");
+        my $humidlabel = bold("Humidity: ");
+        my $baromlabel = bold("Barometer: ");
+        my $vislabel = bold("Visibility: ");
+        my $dewlabel = bold("Dew point: ");
+        my $windlabel = bold("Wind: ");
+        my $stormlabel = bold("Nearest storm: ");
+        my $fclabel = bold("Forecast: ");
+
+        print $placelabel . $placename . " ";
+        print $currlabel . $results{summary} . " ";
+        print $templabel . sprintf("%1d",$results{temperature}) . "°F ";
+        print $feelslabel . sprintf("%1d",$results{apparentTemperature}) . "°F ";
+        print $humidlabel . sprintf("%.1f%%",100 * $results{humidity}) . " ";
+        print $baromlabel . sprintf("%2d",$results{pressure}) . "mb ";
+        print $vislabel . sprintf("%1d",$results{visibility}) . " miles ";
+        print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
+        print $dewlabel . sprintf("%1d",$results{dewPoint}) . "°F ";
+	}
+}
+open(HTTP2, '-|', "curl -s -L --insecure '$url2' | jq -r '.daily.summary,[.currently,.alerts],.flags.units'");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+    chomp;
+
+    $forecast = $_ if ($. == 1);
+
+    if (/"(\w+)":\s*"?(.*?)"?,?\s*$/) {
+        my ($key, $value) = ($1, $2);
+        $results{$key} = $value;
+        #print "$key -> $value\n";
+    }
+
+    $units2 = $_ if eof;
+}
+close(HTTP2);
+for ($units2){
+
+    if (/us/) {
+
+        my $placelabel = bold("Location: ");
+        my $currlabel = bold("Currently: ");
+        my $templabel = bold("Temp: ");
+        my $feelslabel = bold("Feels like: ");
+        my $humidlabel = bold("Humidity: ");
+        my $baromlabel = bold("Barometer: ");
+        my $vislabel = bold("Visibility: ");
+        my $dewlabel = bold("Dew point: ");
+        my $windlabel = bold("Wind: ");
+        my $stormlabel = bold("Nearest storm: ");
+        my $fclabel = bold("Forecast: ");
+
+        print $placelabel . $placename . " ";
+        print $currlabel . $results{summary} . " ";
+        print $templabel . sprintf("%1d",$results{temperature}) . "°F ";
+        print $feelslabel . sprintf("%1d",$results{apparentTemperature}) . "°F ";
+        print $humidlabel . sprintf("%.1f%%",100 * $results{humidity}) . " ";
+        print $baromlabel . sprintf("%2d",$results{pressure}) . "mb ";
+        print $vislabel . sprintf("%1d",$results{visibility}) . " miles ";
+        print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
+        print $dewlabel . sprintf("%1d",$results{dewPoint}) . "°F ";
+	}
+}
+open(HTTP3, '-|', "curl -s -L --insecure '$url3' | jq -r '.daily.summary,[.currently,.alerts],.flags.units'");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+    chomp;
+
+    $forecast = $_ if ($. == 1);
+
+    if (/"(\w+)":\s*"?(.*?)"?,?\s*$/) {
+        my ($key, $value) = ($1, $2);
+        $results{$key} = $value;
+        #print "$key -> $value\n";
+    }
+
+    $units3 = $_ if eof;
+}
+close(HTTP3);
+for ($units3){
+
+    if (/us/) {
+
+        my $placelabel = bold("Location: ");
+        my $currlabel = bold("Currently: ");
+        my $templabel = bold("Temp: ");
+        my $feelslabel = bold("Feels like: ");
+        my $humidlabel = bold("Humidity: ");
+        my $baromlabel = bold("Barometer: ");
+        my $vislabel = bold("Visibility: ");
+        my $dewlabel = bold("Dew point: ");
+        my $windlabel = bold("Wind: ");
+        my $stormlabel = bold("Nearest storm: ");
+        my $fclabel = bold("Forecast: ");
+
+        print $placelabel . $placename . " ";
+        print $currlabel . $results{summary} . " ";
+        print $templabel . sprintf("%1d",$results{temperature}) . "°F ";
+        print $feelslabel . sprintf("%1d",$results{apparentTemperature}) . "°F ";
+        print $humidlabel . sprintf("%.1f%%",100 * $results{humidity}) . " ";
+        print $baromlabel . sprintf("%2d",$results{pressure}) . "mb ";
+        print $vislabel . sprintf("%1d",$results{visibility}) . " miles ";
+        print "with " . sprintf(100 * $results{cloudCover}) . "% cloud cover. ";
+        print $dewlabel . sprintf("%1d",$results{dewPoint}) . "°F ";
+	
+
 
         if ($results{windspeed} ne '0') {
             print $windlabel . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° ";
         }
-
-        print $fclabel . $forecast . "\n";
+}
+}
+# hot garbage
+#        if ($results{nearestStormDistance} ne '0')  {
+#            print $stormlabel . $results{nearestStormDistance} . " miles away, bearing " . $results{nearestStormBearing} . "° ";
+#        }
 
         if ($results{title} ne ''){
 
@@ -191,7 +325,7 @@ for ($units){
             print "\n" . $alertmsg . ": " . $results{title} . " -> " . $results{uri} . "\n";
         }
 
-    }
+    
 
     # everyone else gets SI/metric 
 
@@ -236,6 +370,6 @@ for ($units){
 
         }
 
-    }
-}
+      } 
+
 exit 0;
