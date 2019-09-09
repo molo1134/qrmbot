@@ -46,6 +46,8 @@ bind pub - !solarforecast solarforecast
 bind msg - !solarforecast msg_solarforecast
 bind pub - !forecast solarforecast
 bind msg - !forecast msg_solarforecast
+bind pub - !longterm longtermforecast
+bind msg - !longterm msg_longtermforecast
 
 bind pub - !xray xray
 bind msg - !xray msg_xray
@@ -151,6 +153,7 @@ set elevbin "/home/eggdrop/bin/elev"
 set bandsbin "/home/eggdrop/bin/bands"
 set xraybin "/home/eggdrop/bin/xray"
 set forecastbin "/home/eggdrop/bin/solarforecast"
+set longtermforecastbin "/home/eggdrop/bin/longtermforecast"
 set lotwbin "/home/eggdrop/bin/lotwcheck"
 set eqslbin "/home/eggdrop/bin/eqslcheck"
 set clublogbin "/home/eggdrop/bin/checkclublog"
@@ -551,6 +554,26 @@ proc solarforecast { nick host hand chan text } {
 proc msg_solarforecast {nick uhand handle input} {
 	global forecastbin
 	set fd [open "|${forecastbin} " r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
+}
+
+proc longtermforecast { nick host hand chan text } {
+	global longtermforecastbin
+	set fd [open "|${longtermforecastbin} " r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc msg_longtermforecast {nick uhand handle input} {
+	global longtermforecastbin
+	set fd [open "|${longtermforecastbin} " r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"

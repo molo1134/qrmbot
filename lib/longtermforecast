@@ -1,0 +1,168 @@
+#!/usr/bin/perl
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+
+my $url = "https://services.swpc.noaa.gov/text/predicted-sunspot-radio-flux.txt";
+
+my ($datestamp, $lastmonth, $firstmonth);
+my (%sfi, %sn);
+my $maxsfi = -1.0;
+my $minsfi = 10000000.0;
+my $maxsn = -1.0;
+my $minsn = 10000.0;
+my $count = 0;
+
+open (HTTP, '-|', "curl -L -k -s $url");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+  $datestamp = $1 if /^:Created:\s*(.*)$/;
+  if (/^20/) {
+    my ($y, $m, $spots, undef, undef, $flux, undef, undef) = split(/\s+/);
+    $count++;
+    if ($spots ne -1) {
+      $sn{"$y-$m"} = $spots;
+      $maxsn = $spots if $spots > $maxsn;
+      $minsn = $spots if $spots < $minsn;
+    }
+    if ($flux ne -1) {
+      $sfi{"$y-$m"} = $flux;
+      $maxsfi = $flux if $flux > $maxsfi;
+      $minsfi = $flux if $flux < $minsfi;
+    }
+    $firstmonth = "$y-$m" if not defined $firstmonth;
+    $lastmonth = "$y-$m";
+  }
+}
+close HTTP;
+
+print "Monthly forecast as of: $datestamp; $firstmonth to $lastmonth\n";
+#print "Max SFI: $maxsfi; Min SFI: $minsfi\n";
+#print "Max SN $maxsn; Min SN $minsn\n";
+
+printf "     %s\n", yearMarkers(sort keys %sfi);
+printf "SFI: %s range $minsfi-$maxsfi\n", join("", sfiToColorBlocks($minsfi, $maxsfi, \%sfi));
+printf "SN:  %s range $minsn-$maxsn\n", join("", snToColorBlocks($minsn, $maxsn, \%sn));
+
+# SFI   < 80: dark red
+# SFI  81-94: red
+# SFI 95-119: yellow
+# SFI  > 120: green
+sub sfiToColorBlocks {
+
+  my $minsfi = shift;
+  my $maxsfi = shift;
+  my $hashref = shift;
+  my %sfi = %$hashref;
+
+  my $chr = undef;
+  my @result;
+
+  foreach my $k (sort(keys(%sfi))) {
+    my $v = $sfi{$k};
+
+    $chr = valToBlock($v, $minsfi, $maxsfi);
+
+    # year boundary
+    push @result,"|" if ($k =~ /-01$/);
+
+    if ($v < 81.0) {
+      push @result, darkRed($chr);
+    } elsif ($v < 95.0) {
+      push @result, red($chr);
+    } elsif ($v < 120.0) {
+      push @result, yellow($chr);
+    } else {
+      push @result, green($chr);
+    }
+  }
+  return @result;
+}
+
+# SN   < 16: dark red
+# SN  17-36: red
+# SN  37-64 yellow
+# SN  > 65 green
+sub snToColorBlocks {
+
+  my $minsn = shift;
+  my $maxsn = shift;
+  my $hashref = shift;
+  my %sn = %$hashref;
+
+  my $chr = undef;
+  my @result;
+
+  foreach my $k (sort(keys(%sn))) {
+    my $v = $sn{$k};
+
+    $chr = valToBlock($v, $minsn, $maxsn);
+
+    # year boundary
+    push @result,"|" if ($k =~ /-01$/);
+
+    if ($v < 16.0) {
+      push @result, darkRed($chr);
+    } elsif ($v < 37.0) {
+      push @result, red($chr);
+    } elsif ($v < 65.0) {
+      push @result, yellow($chr);
+    } else {
+      push @result, green($chr);
+    }
+  }
+  return @result;
+}
+
+# relative to min/max
+sub valToBlock {
+  my $v = shift;
+  my $min = shift;
+  my $max = shift;
+  my $step = ($max - $min)/8;
+  my $chr = " ";
+
+  if ($v <= ($min + ($step * 1))) {
+    $chr = "▁";
+  } elsif ($v <= ($min + ($step * 2))) {
+    $chr = "▂";
+  } elsif ($v <= ($min + ($step * 3))) {
+    $chr = "▃";
+  } elsif ($v <= ($min + ($step * 4))) {
+    $chr = "▄";
+  } elsif ($v <= ($min + ($step * 5))) {
+    $chr = "▅";
+  } elsif ($v <= ($min + ($step * 6))) {
+    $chr = "▆";
+  } elsif ($v <= ($min + ($step * 7))) {
+    $chr = "▇";
+  } elsif ($v <= ($min + ($step * 8))) {
+    $chr = "▇";
+  } else {
+    $chr = "↑";
+  }
+  return $chr;
+}
+
+sub yearMarkers {
+  my @vals = @_;
+  my $ret = "";
+  my $i = 0;
+  for ($i = 0; $i < $#vals; $i++) {
+    if ($vals[$i] =~ /(\d{4})-01/) {
+      $ret .= "| $1";
+      $i += 4;
+    } else {
+      $ret .= " ";
+    }
+  }
+  return $ret;
+}
