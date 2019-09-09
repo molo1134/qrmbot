@@ -29,5 +29,8 @@ my $min = ($dur / 60) % 60;
 my $sec = $dur % 60;
 
 print "Brexit countdown! ";
-print "$m months, " if $m > 0;
-print "$d days, $h hours, $min min, $sec sec\n";
+print "$m month, " if $m == 1;
+print "$m months, " if $m > 1;
+print "$d day, " if $d == 1;
+print "$d days, " if $d > 1;
+print "$h hours, $min min, $sec sec\n";
