@@ -49,8 +49,8 @@ print "Monthly forecast as of: $datestamp; $firstmonth to $lastmonth\n";
 #print "Max SN $maxsn; Min SN $minsn\n";
 
 printf "     %s\n", yearMarkers(sort keys %sfi);
-printf "SFI: %s range $minsfi-$maxsfi\n", join("", sfiToColorBlocks($minsfi, $maxsfi, \%sfi));
-printf "SN:  %s range $minsn-$maxsn\n", join("", snToColorBlocks($minsn, $maxsn, \%sn));
+printf "SFI: %s : $minsfi-$maxsfi\n", join("", sfiToColorBlocks($minsfi, $maxsfi, \%sfi));
+printf "SN:  %s : $minsn-$maxsn\n", join("", snToColorBlocks($minsn, $maxsn, \%sn));
 
 # SFI   < 80: dark red
 # SFI  81-94: red
