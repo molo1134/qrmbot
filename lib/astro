@@ -490,10 +490,10 @@ sub phaseText {
     $unicode = "🌕";
   } elsif (202.5 <= $phase && $phase < 247.5) {
     $text = "wan. gibb.";
-    $unicode = "🌔";
+    $unicode = "🌖";
   } elsif (247.5 <= $phase && $phase < 292.5) {
     $text = "3rd qrtr.";
-    $unicode = "🌓";
+    $unicode = "🌗";
   } elsif (292.5 <= $phase && $phase < 337.5) {
     $text = "wan. cres.";
     $unicode = "🌘";
