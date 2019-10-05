@@ -260,7 +260,7 @@ sub updateResult {
   return if $u =~ /\[deleted\]/;
   return if $u eq "pongo000";
   $ts = time if not defined $ts;
-  print "found: $c /u/$u \@$ts\n";
+  #print "found: $c /u/$u \@$ts\n";
   if (defined($results{$c})) {
     my ($oldts,$oldval) = split(/,/, $results{$c});
     if ($ts > $oldts) {
