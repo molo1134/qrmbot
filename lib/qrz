@@ -58,15 +58,22 @@ our $skipCA = 1;
 
 our $login_callsign = undef;
 our $login_password = undef;
-my $loginfile = $ENV{'HOME'} . "/.qrzlogin";
-my $cookiefile = $ENV{'HOME'} . "/.qrzcookies";
+my $loginfile = undef;
+my $cookiefile = undef;
+if (exists $ENV{'HOME'}) {
+  $loginfile = $ENV{'HOME'} . "/.qrzlogin";
+  $cookiefile = $ENV{'HOME'} . "/.qrzcookies";
+} else {
+  $loginfile = "./.qrzlogin";
+  $cookiefile = "/tmp/.qrzcookies";
+}
 my $baseurl = "https://www.qrz.com";
 
 if (-e ($loginfile)) {
   chmod 0600, $loginfile;
   require($loginfile);
 } else {
-  die "error: unable to read file \$HOME/.qrzlogin"
+  die "error: unable to read file $loginfile"
 }
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
@@ -225,7 +232,7 @@ if (!-e $cookiefile) {
   doLogin();
 }
 
-updateDMRfiles();
+updateDMRfiles() unless $xml == 1;
 
 # note: this code depends on the netscape cookie format (used by wget and curl)
 my $needlogin = 0;
@@ -304,8 +311,8 @@ if ($csv == 1) {
 }
 
 if ($xml == 1) {
-  print("<?xml version=\"1.0\" ?>\n");
-  print("<QRZDatabase version=\"1.33\">\n");
+  #print("<?xml version=\"1.0\" ?>\n");
+  #print("<QRZDatabase version=\"1.33\">\n");
   print("  <Callsign>\n");
 
   print("    <call>$retcall</call>\n");
@@ -372,7 +379,7 @@ if ($xml == 1) {
   print("    <user>$qrzadmin</user>\n") if defined($qrzadmin); # QRZ user who manages this record
   print("    <iota>$iota</iota>\n") if defined($iota);
   print("  </Callsign>\n");
-  print("</QRZDatabase>\n");
+#  print("</QRZDatabase>\n");
   exit 0;
 }
 
@@ -956,9 +963,8 @@ sub parsecodes {
 # This is completely optional.
 sub getUserInfo {
   my $call = shift;
-  if (! defined $call) {
-    return;
-  }
+  return if not defined $call;
+  return if not exists $ENV{'HOME'};
   my ($userid, $ircnick) = (undef, undef);
   my $nickfile = "$ENV{'HOME'}/.nicks.csv";
   if (! -e $nickfile) {
