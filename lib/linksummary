@@ -122,10 +122,10 @@ sub printYouTubeMetaData {
       $unlisted = $v eq "True" ? 1 : 0 if $k eq "unlisted";
       $paid = $v eq "True" ? 1 : 0 if $k eq "paid";
     }
-    if (/"author":"([^"]+)"/) {
+    if (/"author\\":\\"([^"]+)\\"/) {
       $author = $1;
     }
-    if (/"length_seconds":"(\d+)"/) {
+    if (/dur=(\d+)/) {
       $len = $1;
     }
 #    if (/"shortDescription":"([^"]+)"/) {
@@ -139,7 +139,7 @@ sub printYouTubeMetaData {
       $dislikes = $1;
       $dislikes =~ s/,//g;
     }
-    if (/"livestream":"1"/) {
+    if (/"isLiveNow\\":true/) {
       $live = 1;
     }
   }
