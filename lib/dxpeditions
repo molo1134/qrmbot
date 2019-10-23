@@ -58,6 +58,7 @@ close(MW);
 
 my $url = "https://www.ng3k.com/misc/adxo.html";
 my $timeout = 10;
+my $found = 0;
 
 my ($start, $end, $cty, $call, $dxurl);
 open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
@@ -65,6 +66,7 @@ while(<HTTP>) {
   if (m|<td class="date">(\d+ [A-Z]+[0-9]+)</td><td class="date">(\d+ [A-Z]+[0-9]+)</td><td class="cty">(.*?)</td>|i) {
     ($start, $end, $cty) = ($1, $2, $3);
     $cty =~ s/&amp;/&/g;
+    $cty =~ s/\s*Is?$//;
   }
   if (m|<span class="call"><a href="(.*?)">(.*?)</a></span>|i) {
     ($dxurl, $call) = ($1, $2);
@@ -95,10 +97,15 @@ while(<HTTP>) {
 	    last;
 	  }
 	}
-	print italic($cty), "(#";
-	print bold($mw) if $mw < 150;
-	print $mw if $mw >= 150;
-	print "): ", bold($call);
+	$found = 1;
+	print italic($cty);
+	if (defined $mw) {
+	  print "(#";
+	  print bold($mw) if $mw < 150;
+	  print $mw if $mw >= 150;
+	  print ")";
+	}
+	print ": ", bold($call);
 	print " to ", strftime("%b %d", gmtime($endstamp));
 	print " - $dxurl " if defined $dxurl;
 	print "\n" if $username ne "eggdrop";
@@ -109,4 +116,8 @@ while(<HTTP>) {
   }
 }
 close(HTTP);
+
+if ($found == 0) {
+  print "no results, please try again.";
+}
 
