@@ -5,16 +5,14 @@ use POSIX;
 
 my $d1 = DateTime->now;
 my $d2 = DateTime->new(
-    year       => 2019,
-    month      => 10,
+    year       => 2020,
+    month      => 01,
     day        => 31,
     hour       => 23,
     minute     => 59,
     second     => 59,
 );
 
-#my $dur = ($d1 > $d2 ? ($d1->subtract_datetime_absolute($d2)) :
-#                       ($d2->subtract_datetime_absolute($d1)));
 my $dur = $d2->epoch() - $d1->epoch();
 
 if ($dur < 0) {
