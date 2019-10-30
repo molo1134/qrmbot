@@ -590,10 +590,10 @@ sub doHtml {
     $desc = substr($desc, 0, 300) . "…";
   }
 
-  $title =~ tr/\n\r/  / if defined($title);
-  $desc =~ tr/\n\r/  / if defined($desc);
   $title = decodeEntities($title) if defined($title);
   $desc = decodeEntities($desc) if defined($desc);
+  $title =~ tr/\n\r/  / if defined($title);
+  $desc =~ tr/\n\r/  / if defined($desc);
 
   print bold("\"$title\"") if defined ($title);
   print " $shortUrl" if defined($shortUrl) and length($shortUrl) > 0;
