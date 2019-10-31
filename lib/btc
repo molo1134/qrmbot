@@ -225,9 +225,13 @@ binmode(HTTP, ":utf8");
 while (<HTTP>) {
   #print;
   chomp;
+  if (/Bad gateway/i) {
+    print "Bad gateway (502)\n";
+    exit 0;
+  }
   if (/Access denied/i) {
     print "Access denied.\n";
-    exit 0
+    exit 0;
   }
   if (/"(\w+)":\s*"?(.*?)"?,?\s*$/) {
     my ($key, $value) = ($1, $2);
