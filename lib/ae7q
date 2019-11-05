@@ -111,7 +111,7 @@ sub doAe7qRegion {
 }
 
 sub doAe7qCall {
-  my $call = shift;
+  my $call = uc shift;
   my $url = "http://www.ae7q.com/query/data/CallHistory.php?CALL=$call";
 
   my ($frn, $name, $class, $status, $state, $grant, $eff, $cxl, $expire);
