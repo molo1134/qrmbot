@@ -108,6 +108,12 @@ sub printYouTubeMetaData {
       print;
       exit 0;
     }
+    if (/This video is no longer available/) {
+      s/^\s*//; s/\s*$//;
+      print;
+      print "\n";
+      exit 0;
+    }
     if (/<meta itemprop="(\w+)" content="([^"]*)">/) {
       my ($k, $v) = ($1, $2);
       $v = decodeEntities($v);
