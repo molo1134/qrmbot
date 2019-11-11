@@ -636,7 +636,7 @@ sub getAndParseData {
 	  }
 	}
       }
-      if ($matches >= $limit) {
+      if ($matches >= $limit or $count < $matches) {
 	print "truncated. $matches matches found. see $url\n";
       }
       exit $exitnonzeroonerror;
