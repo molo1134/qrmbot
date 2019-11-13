@@ -134,6 +134,11 @@ sub printYouTubeMetaData {
     if (/dur=(\d+)/) {
       $len = $1;
     }
+    if (/([0-9,]+) watching now/i) {
+      my $t = $1;
+      $t =~ s/,//g;
+      $count = $t if $t > 2;
+    }
 #    if (/"shortDescription":"([^"]+)"/) {
 #      $desc = $1;
 #    }
@@ -166,7 +171,8 @@ sub printYouTubeMetaData {
   print "${m}m" if $m > 0;
   print "${s}s;" if $s > 0;
   print red("[LIVE]") if $live == 1;
-  print " $count views";
+  print " $count views" if not defined $live or $live != 1;
+  print " $count watching" if $live == 1;
   print green(" ${likes}↑") if defined $likes;
   print red(" ${dislikes}↓") if defined $dislikes;
 #  print " ($genre)" if defined $genre;
