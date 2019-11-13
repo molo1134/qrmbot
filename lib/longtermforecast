@@ -91,7 +91,7 @@ close HTTP;
 
 print "NASA Monthly forecast as of: $currmonth; $firstmonth to $lastmonth\n";
 
-printf "     %s\n", yearMarkers(sort keys %sfi);
+#printf "     %s\n", yearMarkers(sort keys %sfi);
 printf "SFI: %s : $minsfi-$maxsfi\n", join("", sfiToColorBlocks($minsfi, $maxsfi, \%sfi));
 printf "AP:  %s : $minap-$maxap\n", join("", apToColorBlocks($minap, $maxap, \%ap));
 
