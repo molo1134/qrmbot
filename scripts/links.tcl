@@ -121,12 +121,12 @@ proc msg_ae7q {nick uhand handle input} {
 }
 
 proc github { nick host hand chan } {
-    global githublink
+	global githublink
 	putlog "github pub: $nick $host $hand $chan"
-    putchan $chan "$githublink"
+	putchan $chan "$githublink"
 }
 proc msg_github { nick uhand handle } {
-    global githublink
+	global githublink
 	putlog "github msg: $nick $uhand $handle"
-    putmsg $nick "$githublink"
+	putmsg $nick "$githublink"
 }
