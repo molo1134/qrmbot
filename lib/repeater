@@ -11,6 +11,10 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq 'eggdrop') {
@@ -96,6 +100,7 @@ goto WORLD if $world == 1;
 
 #print "$url\n";
 open (HTTP, '-|', "curl --max-time 5 --retry 1 --insecure -L -s '$url'");
+# TODO: is this actually 1252? or does it lie and do utf-8 as the international page does?
 binmode(HTTP, ":encoding(cp1252)");
 while (<HTTP>) {
 	#print;
@@ -178,7 +183,8 @@ $url = "https://www.repeaterbook.com/row_repeaters/keyResult.php?keyword=${encod
 
 #print "$url\n";
 open (HTTP, '-|', "curl --max-time 5 --retry 1 --insecure -L -s '$url'");
-binmode(HTTP, ":encoding(cp1252)");
+#binmode(HTTP, ":encoding(cp1252)");
+binmode(HTTP, ":utf8");	# page headers say cp1252, but it's actually utf8.
 while (<HTTP>) {
 	#print;
   chomp;
