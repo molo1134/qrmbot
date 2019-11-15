@@ -120,12 +120,12 @@ proc msg_ae7q {nick uhand handle input} {
 	close $fd
 }
 
-proc github { nick host hand chan } {
+proc github { nick host hand chan text } {
 	global githublink
 	putlog "github pub: $nick $host $hand $chan"
 	putchan $chan "$githublink"
 }
-proc msg_github { nick uhand handle } {
+proc msg_github { nick uhand handle input } {
 	global githublink
 	putlog "github msg: $nick $uhand $handle"
 	putmsg $nick "$githublink"
