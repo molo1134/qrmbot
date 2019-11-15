@@ -75,6 +75,8 @@ while ($i <= $#ARGV) {
     doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?xkcd.com/(\d+)/?$|) {
     doXkcd($2);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?google.com/maps/.*@([0-9.-]+),([0-9.-]+)|i) {
+    doQth($2,$3);
   } elsif ($ARGV[$i] =~ m|^https?://goo\.gl/maps/|i or
 	  $ARGV[$i] =~ m|^https?://(www\.)?google\.com/maps/|i) {
     # noop
@@ -723,6 +725,14 @@ sub doQrzDb {
   }
 
   exec "$libdir/qrz", "--compact", "$call" or die "error execing qrz for $call";
+}
+
+sub doQth {
+  my ($lat, $lon) = $@;
+  my $libdir = dirname(realpath(__FILE__));
+  if (-e "$libdir/grid") {
+    exec "$libdir/grid", "$2,$3" or die "error execing grid for $2,$3";
+  }
 }
 
 sub doAmazon {
