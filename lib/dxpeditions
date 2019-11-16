@@ -55,6 +55,7 @@ while (<MW>) {
   }
 }
 close(MW);
+SKIPMW:
 
 my $url = "https://www.ng3k.com/misc/adxo.html";
 my $timeout = 10;
