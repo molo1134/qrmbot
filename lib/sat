@@ -436,7 +436,7 @@ $first = 1;
 open(TX, '-|', "curl -4 -s --max-time 10 -L -k $satnogsurl");
 while (<TX>) {
   #print;
-  s/}.{/},\n{/g;
+  s/}.\{/},\n{/g;
   @_ = split "\n";
   foreach my $e (@_) {
     #print STDERR "$e\n" if $e =~ /$id/;
