@@ -737,8 +737,9 @@ sub doQth {
 
 sub doAmazon {
   my $url = shift;
-  #my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0";
-  my $useragent = "foo";
+  my $shortUrl = shortenUrl($url);
+  my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0";
+  #my $useragent = "foo";
   my ($price, $curr, $stars, $prime, $vendor, $fulfilled, $title);
   open(HTTP, '-|', "curl -A \"$useragent\" --compressed --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
@@ -747,6 +748,14 @@ sub doAmazon {
     #$pricespan = 1 if /span id="price_inside_buybox"/;
     #if ($pricespan == 1 and /\$([0-9.]+)\s*$/) {
     #}
+    if (/Sorry, we just need to make sure you're not a robot./) {
+      print "Captcha encountered; $shortUrl\n";
+      return;
+    }
+    if (/discuss automated access/) {
+      print "Amazon anti-scraper filter encountered; $shortUrl\n";
+      return;
+    }
     if (/<title>(Amazon.com\s*:|Amazon\s*\|)?\s*([^<]*?)(-?\s*Amazon.com|-?\s*Amazon Canada)?<\/title>/) {
       $title = decodeEntities($2);
       $title =~ s/Amazon.co.uk:\s*//;
