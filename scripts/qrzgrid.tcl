@@ -1472,7 +1472,7 @@ proc qslcheck_pub { nick host hand chan text } {
 }
 proc qslcheck_msg {nick uhand handle input} {
 	msg_qrz     "$nick" "$uhand" "$handle" "$input"
-	msg_lotw    "$nick" "$uhand" "$handle" "$input"
+	msg_lotw    "$nick" "$uhand" "$handle" "^$input$"
 	msg_eqsl    "$nick" "$uhand" "$handle" "$input"
 	msg_clublog "$nick" "$uhand" "$handle" "$input"
 }
