@@ -569,7 +569,8 @@ proc longtermforecast { nick host hand chan text } {
 	set fd [open "|${longtermforecastbin} " r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
+		#putchan $chan "$line" # too long
+		putmsg $nick "$line"
 	}
 	close $fd
 }
