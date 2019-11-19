@@ -114,7 +114,7 @@ if ($found == 0) {
   exit 0;
 }
 
-print bold($call), ": ";
+print bold($call), ": eQSL ";
 print bold("(AG)"), " " if $ag == 1;
 print yellow("✪") . " "	    if defined($member) and $member eq "Au";
 print lightGrey("✪") . " "  if defined($member) and $member eq "Ag";

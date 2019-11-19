@@ -97,7 +97,7 @@ if (scalar(keys(%rec)) == 0 or
     (not defined $rec{firstqso} and
       not defined $rec{lastqso} and
       not defined $rec{lastupload})) {
-  print "$call not found\n";
+  print "$call not found on clublog\n";
   exit 0;
 }
 
@@ -111,7 +111,7 @@ my ($start, undef) = split(" ",$rec{firstqso});
 my ($end, undef) = split(" ",$rec{lastqso});
 my ($upload, undef) = split(" ", $rec{lastupload});
 
-print bold($call), ": from $start to $end; last upload $upload";
+print bold($call), ": clublog from $start to $end; last upload $upload";
 print "; " . bold("OQRS") if $rec{oqrs} eq "true";
 print "\n";
 

@@ -71,7 +71,7 @@ if (-r $cachefile) {
     my ($dxcall, $d, $t) = split(/,/);
     if ($dxcall =~ /$call/) {
       $dxcall =~ s/$call/bold($&)/e;
-      print "$dxcall: $d $t\n";
+      print "$dxcall: LoTW $d $t\n";
       $i++;
     }
     last if $i > 5 and $username eq "eggdrop";
@@ -82,7 +82,7 @@ if (-r $cachefile) {
 }
 
 if ($i == 0) {
-  print bold($call), ": not found\n";
+  print bold($call), ": LoTW not found\n";
   exit $exitnonzeroonerror;
 }
 
