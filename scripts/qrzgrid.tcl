@@ -543,6 +543,7 @@ proc msg_solar {nick uhand handle input} {
 ##
 proc solarforecast { nick host hand chan text } {
 	global forecastbin
+	putlog "forecast pub: $nick $host $hand $chan $text"
 	set fd [open "|${forecastbin} " r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
@@ -553,6 +554,7 @@ proc solarforecast { nick host hand chan text } {
 
 proc msg_solarforecast {nick uhand handle input} {
 	global forecastbin
+	putlog "forecast msg: $nick $uhand $handle $input"
 	set fd [open "|${forecastbin} " r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
@@ -563,6 +565,7 @@ proc msg_solarforecast {nick uhand handle input} {
 
 proc longtermforecast { nick host hand chan text } {
 	global longtermforecastbin
+	putlog "longterm pub: $nick $host $hand $chan $text"
 	set fd [open "|${longtermforecastbin} " r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
@@ -573,6 +576,7 @@ proc longtermforecast { nick host hand chan text } {
 
 proc msg_longtermforecast {nick uhand handle input} {
 	global longtermforecastbin
+	putlog "longterm msg: $nick $uhand $handle $input"
 	set fd [open "|${longtermforecastbin} " r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
@@ -583,6 +587,7 @@ proc msg_longtermforecast {nick uhand handle input} {
 
 proc xray { nick host hand chan text } {
 	global xraybin
+	putlog "xray pub: $nick $host $hand $chan $text"
 	set fd [open "|${xraybin} " r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
@@ -593,6 +598,7 @@ proc xray { nick host hand chan text } {
 
 proc msg_xray {nick uhand handle input} {
 	global xraybin
+	putlog "xray msg: $nick $uhand $handle $input"
 	set fd [open "|${xraybin} " r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
