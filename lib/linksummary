@@ -756,6 +756,11 @@ sub doAmazon {
       print "Amazon anti-scraper filter encountered; $shortUrl\n";
       return;
     }
+    if (/Something Went Wrong/i) {
+      print "Something went wrong; $shortUrl\n";
+      return;
+    }
+
     if (/<title>(Amazon.com\s*:|Amazon\s*\|)?\s*([^<]*?)(-?\s*Amazon.com|-?\s*Amazon Canada)?<\/title>/) {
       $title = decodeEntities($2);
       $title =~ s/Amazon.co.uk:\s*//;
