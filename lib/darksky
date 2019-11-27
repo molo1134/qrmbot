@@ -181,7 +181,10 @@ for ($units){
             # returned.
 
             my $alertmsg = red("Alert");
-            print "\n" . $alertmsg . ": " . $results{title} . " -> " . $results{uri} . "\n";
+	    my $uri = $results{uri};
+	    $uri =~ s/x=[A-F0-9]+\.[A-Za-z]+\.[A-F0-9]+\.[A-Z]+\./x=..../;
+
+            print "\n" . $alertmsg . ": " . $results{title} . " -> " . $uri . "\n";
         }
 
     }
@@ -225,7 +228,9 @@ for ($units){
         if ($results{title} ne ''){
 
             my $alertmsg = red("Alert");
-            print "\n" . $alertmsg . ": " . $results{title} . " -> " . $results{uri} . "\n";
+	    my $uri = $results{uri};
+	    $uri =~ s/x=[A-F0-9]+\.[A-Za-z]+\.[A-F0-9]+\.[A-Z]+\./x=..../;
+            print "\n" . $alertmsg . ": " . $results{title} . " -> " . $uri . "\n";
 
         }
 
