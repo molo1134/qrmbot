@@ -7,7 +7,7 @@ bind pub - !phonetics phoneticise
 bind pub - !phoneticise phoneticise
 bind pub - !phoneticize phoneticise
 bind pub - !metard metard
-bind pub - !brexit
+bind pub - !brexit brexit
 bind pub - !christmas christmas
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
