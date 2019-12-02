@@ -3,9 +3,28 @@ use strict;
 use DateTime;
 use POSIX;
 
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Location;
+
 my $d1 = DateTime->now;
+my ($curryear, $currmon, $currdate) = split / /, strftime("%Y %m %d", gmtime($d1->epoch()));
+my ($thxyear, $thxmon, $thxdate) = split / /, getIterDayInMonth(4, "Thursday", "Nov");	# 4th Thursday in Nov
+#print "$curryear, $currmon, $currdate\n";
+#print "$thxyear, $thxmon, $thxdate\n";
+
+if (($currmon > 1 or ($currmon == 1 and $currdate > 6))
+    and ($thxmon > $currmon or ($thxmon == $currmon and $thxdate > $currdate))) {
+  print "It's not even Thanksgiving yet!\n";
+  exit 0;
+}
+
+my $xmasyear = $curryear;
+$xmasyear-- if $currmon == 1 and $currdate < 7;
+
 my $d2 = DateTime->new(
-    year       => 2019,
+    year       => $xmasyear,
     month      => 12,
     day        => 24,
     hour       => 23,
@@ -16,7 +35,7 @@ my $d2 = DateTime->new(
 my $dur = $d2->epoch() - $d1->epoch();
 
 if ($dur < 0) {
-	print "Merry Christmas everyone! https://giphy.com/gifs/christmas-merry-tree-gNke2UrUTopOg\n";
+	print "Merry Christmas everyone! https://media.giphy.com/media/gNke2UrUTopOg/giphy.gif\n";
 	exit 0;
 }
 
