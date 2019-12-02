@@ -1,0 +1,34 @@
+#!/usr/bin/perl
+use strict;
+use DateTime;
+use POSIX;
+
+my $d1 = DateTime->now;
+my $d2 = DateTime->new(
+    year       => 2019,
+    month      => 12,
+    day        => 24,
+    hour       => 23,
+    minute     => 59,
+    second     => 59,
+);
+
+my $dur = $d2->epoch() - $d1->epoch();
+
+if ($dur < 0) {
+	print "Merry Christmas everyone! https://giphy.com/gifs/christmas-merry-tree-gNke2UrUTopOg\n";
+	exit 0;
+}
+
+my $m = floor($dur / (30 * 24 * 60 * 60));
+my $d = floor($dur % (30 * 24 * 60 * 60) / (24 * 60 * 60));
+my $h = floor($dur % (24 * 60 * 60) / (60 * 60));
+my $min = ($dur / 60) % 60;
+my $sec = $dur % 60;
+
+print "Christmas countdown! ";
+print "$m month, " if $m == 1;
+print "$m months, " if $m > 1;
+print "$d day, " if $d == 1;
+print "$d days, " if $d > 1;
+print "$h hours, $min min, $sec sec\n";
