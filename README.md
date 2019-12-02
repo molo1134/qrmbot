@@ -99,8 +99,9 @@ needed.
 
 ## Contributors
 
-* K2CR
+* Chris K2CR
 * AA4JQ
-* VK3DAN
+* Dan VK3DAN
 * W9VFR
+* Oliver M6WRF
 
