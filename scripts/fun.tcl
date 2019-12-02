@@ -7,10 +7,12 @@ bind pub - !phonetics phoneticise
 bind pub - !phoneticise phoneticise
 bind pub - !phoneticize phoneticise
 bind pub - !metard metard
-bind pub - !brexit brexit
+bind pub - !brexit
+bind pub - !christmas christmas
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
+set christmasbin "/home/eggdrop/bin/christmas"
 
 # load utility methods
 source scripts/util.tcl
@@ -172,6 +174,17 @@ proc brexit { nick host hand chan text } {
 	global brexitbin
 	putlog "brexit: $nick $host $hand $chan"
 	set fd [open "|${brexitbin}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc christmas { nick host hand chan text } {
+	global christmasbin
+	putlog "christmas: $nick $host $hand $chan"
+	set fd [open "|${christmasbin}" r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
