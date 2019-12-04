@@ -23,7 +23,7 @@ proc seen_pub { nick host hand chan text } {
 		return
 	}
 	if {${target} == [string tolower ${botnick}] } {
-		putchan $chan "https://www.youtube.com/watch?v=8qpQhBFBhwg&t=6m40s"
+		putchan $chan "https://www.youtube.com/watch?v=JHAc9nw2qrs&feature=youtu.be&t=381"
 		return
 	}
 
