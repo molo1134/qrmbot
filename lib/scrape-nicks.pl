@@ -28,9 +28,9 @@ my @baseurls;
 foreach my $subreddit (@subreddits) {
   push @baseurls, "https://www.reddit.com/r/${subreddit}/new/.json";
   push @baseurls, "https://www.reddit.com/r/${subreddit}/comments/.json";
-#  push @baseurls, "https://www.reddit.com/r/${subreddit}/top/.json?t=all";
 #  push @baseurls, "https://www.reddit.com/r/${subreddit}/gilded/.json";
-#  push @baseurls, "https://www.reddit.com/r/${subreddit}/controversial/.json";
+#  push @baseurls, "https://www.reddit.com/r/${subreddit}/top/.json?sort=top&t=all"; # doesn't work
+#  push @baseurls, "https://www.reddit.com/r/${subreddit}/controversial/.json"; # doesn't work
 }
 #push @baseurls, ".json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/asxn9e/what_was_your_first_ham_mistake/.json";
@@ -148,7 +148,12 @@ foreach my $baseurl (@baseurls) {
 	  #print "$k => $v\n";
 
 	  if ($k eq "after") {
-	    $after = $v;
+	    if (defined $after and $after eq $v) {
+	      #print "duplicate AFTER - infinite loop\n"
+	      $after = "null";
+	    } else {
+	      $after = $v;
+	    }
 	  } elsif ($k eq "author") {
 	    #print "author: $v\n";
 	    $u = $v;
