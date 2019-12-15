@@ -255,7 +255,7 @@ our ($retcall, $country, $name, $sk, $class, $mail, $grid, $lat, $lon, $geosrc,
   $born, @prevcalls, $email, $codes, $website, $iota, $lotw, $eqsl,
   $mailqsl, $qsl, $expiration, @othercalls, $trustee, $incomplete, $addr1,
   $addr2, $state, $zip, $mailcountry, $county, $ituzone, $cqzone, $qrzserial,
-  $qrzadmin, $effective, $dxcc);
+  $qrzadmin, $effective, $dxcc, $subscriber, $twofa);
 
 getAndParseData();
 
@@ -386,7 +386,17 @@ if ($xml == 1) {
 my $dmrIds = getDMRidsForCall($retcall);
 $dmrIds =~ s/,/, /g if defined $dmrIds;
 
+$subscriber = 0 if not defined $subscriber;
+$twofa = 0 if not defined $twofa;
+
 print bold($retcall), ": $country: $name";
+print green("✔") if $twofa == 1;
+print darkRed(" (★)") if $subscriber == 1;
+print cyan(" (★)") if $subscriber == 2;
+print lightGrey(" (★)") if $subscriber == 3;
+print yellow(" ("), cyan("★"), yellow(")") if $subscriber == 4;
+print red(" (★)") if $subscriber == 6;
+print red(" ("), yellow("★"), red(")") if $subscriber == 7;
 if (defined($expiration) && ($expiration lt strftime("%Y-%m-%d", gmtime))) {
   print " ", bold("\[EXPIRED\]");
 }
@@ -718,6 +728,16 @@ sub getAndParseData {
       $mailcountry =~ s/^.*<br *\/>(.*?)<\/p>/$1/;
       next;
     }
+
+    $subscriber = 1 if />XML Subscriber</ or /title="XML Data Subscriber"/;
+    $subscriber = 2 if />Premium Subscriber</ or /title="Premium Subscriber"/;
+    $subscriber = 3 if />Platinum Subscriber</ or /title="Platinum Subscriber"/;
+    $subscriber = 4 if />QRZ Lifetime Member/ or /title="Lifetime/;
+    $subscriber = 6 if />Super Moderator/ or /title="QRZ Administrator"/;
+    $subscriber = 7 if /title="QRZ HQ Staff/;
+
+    $twofa = 1 if /href='\/identity-verification/ or /\/badges\/idv_112x24.png/;
+
     if (/<b>QSL:<\/b>\s*([^<]+)\s*</) {
       $qsl = $1;
     }
