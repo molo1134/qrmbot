@@ -159,3 +159,13 @@
 {No Q-code available.}
 {You are over-deviating.}
 {You are under-deviating.}
+{N0ES has an antenna in the air.}
+{Operator experiencing dipolar episode.}
+{Random wire not actually random due to CVE-2008-0166.}
+{Victim of internet Enlarge Your Dipole Organically scam.}
+{Semiconductor banned from competition due to doping scandal.}
+{Aerial confiscated by BBC for not paying TV Licence fee.}
+{Front-end fell off of receiver.}
+{Tube amplifier vaporlocked.}
+{Prefix discrimination.}
+{Discriminator tainted by unconscious bias.}
