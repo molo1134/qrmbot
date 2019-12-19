@@ -159,3 +159,42 @@
 {No Q-code available.}
 {You are over-deviating.}
 {You are under-deviating.}
+{Takeoff angle too low. Tilt radio up.}
+{Age detected under 65. Get off my lawn.}
+{You are 5kc off frequency.}
+{NO CARRIER}
+{Increase polarity.}
+{Poor SNR - Switch to obtuse phase polarization.}
+{ADIF log detected. Please convert to Cabrillo.}
+{Insufficient space for reasonable antenna. Purchase new house.}
+{Hotspot too hot. Change spot.}
+{Don't buy wire antennas. Harvest NM 14/2 from neighbor's house.}
+{Always QBM before the contest starts.}
+{High SWR: Balun may be full.}
+{Piss jug coupling is affecting antenna radiation pattern.}
+{Low power output. Check electron reservoir.}
+{RF detected in shack. Move hotspot out of mom's basement.}
+{Too many amperes}
+{You're splattering.}
+{Your PLL is unlocked.}
+{Your modulation trapezoid looks like a pentagram.}
+{Cold solder joint. Heat in microwave oven.}
+{High SWR: Clean out coax with shop vac.}
+{Water in coax, submerge radio to match impedance. }
+{QRM detected. Increase power.}
+{No decode. Reverse waterfall direction.}
+{vape causing serial port conflict}
+{Offset mismatch, try switching.}
+{GLONASS CRCs incorrect.}
+{Signal swallowed by South Atlantic Anomaly}
+{MUF Eglin is below the Mendoza line.}
+{White Claws, no laws. QRO.}
+{Cool down antenna for lower noise figure. }
+{Clip a ferrite on the choke.}
+{Add signal tape.}
+{Grid too precise.}
+{Switch from inverted L to obtuse M}
+{Low T. See a physician.}
+{Preferred pronoun mismatch.}
+{Ladder line / window line mismatch.}
+{Wrong antenna selected. Check switch.}
