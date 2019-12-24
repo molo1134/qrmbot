@@ -11,6 +11,10 @@ bind pub - !quotesearch q_pubquotesearch
 proc q_addquote { nick uhost hand chan arg } {
   set quotefile "quotelist-$chan"
 
+  if { string length $arg } {
+    putchan $chan "usage: !addquote <msg>"
+  }
+
   if { [file exists $quotefile] } {
     set qf [open $quotefile a]
   } else {
