@@ -76,9 +76,9 @@ while (<JSON>) {
   #print;
   if (/^\s*{$/) {
     if (defined $code) {
-      if ((not defined $cs or ($cs > 20)) and	      # confidence score > 20
-	  (defined $mufd or defined $fof2) and	      # need either MUF or FoF2
-	  (defined $ts and $ts > (time() - 3600))) {  # updated in the last hour
+      if ((not defined $cs or ($cs > 20)) and					    # confidence score > 20
+	  ((defined $mufd and $mufd > 0.0) or (defined $fof2 and $fof2 > 0.0)) and  # need either MUF or FoF2
+	  (defined $ts and $ts > (time() - 3600))) {				    # updated in the last hour
 	$lon = $lon - 360.0 if defined $lon and $lon > 180;
 	my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
 	#print "Adding $code $name $fof2 $mufd $lat,$lon $dist $bearing\n";
@@ -136,9 +136,9 @@ my ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs, $dist, $bearing) =
 my $grid = substr(coordToGrid($lat, $lon), 0, 4);
 
 print bold($name), " ($grid ", floor($dist), " km) @ ", strftime("%Y-%m-%d %H%Mz", gmtime($ts)), ": ";
-print bold("MUF $mufd MHz") if length $mufd > 0;
-print ", " if length $mufd > 0 and length $fof2 > 0;
-print "FoF2 $fof2 MHz" if length $fof2 > 0;
-print " with M(D) ${md}x" if length $fof2 > 0 and length $md > 0;
+print bold("MUF $mufd MHz") if length $mufd > 0 and $mufd > 0.0;
+print ", " if length $mufd > 0 and $mufd > 0.0 and length $fof2 > 0 and $fof2 > 0.0;
+print "FoF2 $fof2 MHz" if length $fof2 > 0 and $fof2 > 0.0;
+print " with M(D) ${md}x" if length $fof2 > 0 and $fof2 > 0.0 and length $md > 0;
 print "\n";
 
