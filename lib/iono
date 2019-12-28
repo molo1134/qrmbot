@@ -84,10 +84,10 @@ while (<JSON>) {
 	#print "Adding $code $name $fof2 $mufd $lat,$lon $dist $bearing\n";
 	$result{$code} = join("^^", ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs, $dist, $bearing));
       } else {
-	#print "Discarding $code $cs\n";
+	#print "Discarding $code $name age:", time()-$ts, " CS:$cs MUF(D):$mufd FoF2:$fof2\n";
       }
     }
-    ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs) = (undef);
+    ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs) = (undef, undef, undef, undef, undef, undef, undef, undef, undef);
   }
   if (/"(\w+)": (".*"|null|\d+)/) {
     my ($k, $v) = ($1, $2);
