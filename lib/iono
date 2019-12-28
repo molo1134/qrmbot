@@ -12,6 +12,9 @@ use lib dirname(realpath(__FILE__));
 use Colors;
 use Location;
 
+use Time::Piece ();
+use POSIX qw(strftime);
+
 @ARGV = map { decode "utf-8", $_ } @ARGV;
 # eggdrop doesn't split args on spaces
 @ARGV=split(' ', join(' ',@ARGV));
@@ -72,7 +75,9 @@ while (<JSON>) {
   #print;
   if (/^\s*{$/) {
     if (defined $code) {
-      if ((not defined $cs or ($cs > 20)) and (defined $mufd or defined $fof2)) {
+      if ((not defined $cs or ($cs > 20)) and	      # confidence score > 20
+	  (defined $mufd or defined $fof2) and	      # need either MUF or FoF2
+	  (defined $ts and $ts > (time() - 3600))) {  # updated in the last hour
 	$lon = $lon - 360.0 if defined $lon and $lon > 180;
 	my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
 	#print "Adding $code $name $fof2 $mufd $lat,$lon $dist $bearing\n";
@@ -96,8 +101,11 @@ while (<JSON>) {
     $name = $v if $k eq "name";
     $lat = $v if $k eq "latitude";
     $lon = $v if $k eq "longitude";
-    $ts = $v if $k eq "time";
     $cs = $v if $k eq "cs";
+    if ($k eq "time") {
+      $ENV{TZ} = "UTC";
+      $ts = Time::Piece->strptime($v, "%Y-%m-%d %H:%M:%S")->epoch;
+    }
   }
 }
 close(JSON);
@@ -116,10 +124,15 @@ foreach my $s (keys %result) {
   }
 }
 
+if (not defined $closest) {
+  print "error: no stations found\n";
+  exit $exitnonzeroonerror;
+}
+
 my ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs, $dist, $bearing) =
   split(/\^\^/,$result{$closest});
 
-print bold($name), " ($lat, $lon) @ $ts UTC: ";
+print bold($name), " ($lat, $lon) @ ", strftime("%Y-%m-%d %H:%M UTC", gmtime($ts)), ": ";
 print bold("MUF $mufd MHz") if length $mufd > 0;
 print ", " if length $mufd > 0 and length $fof2 > 0;
 print "FoF2 $fof2 MHz" if length $fof2 > 0;
