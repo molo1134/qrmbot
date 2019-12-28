@@ -7,7 +7,7 @@
 package Location;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum getGeocodingAPIKey coordToElev);
+@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum getGeocodingAPIKey coordToElev azToNEWS);
 
 use utf8;
 use Math::Trig;
@@ -625,4 +625,27 @@ sub coordToElev {
   close(HTTP);
 
   return $elev;
+}
+
+sub azToNEWS {
+  my $az = shift;
+  return undef if not defined $az;
+  return "N"   if $az >= 0.0 and $az < 11.25;
+  return "NNE" if $az < 33.75;
+  return "NE"  if $az < 56.25;
+  return "ENE" if $az < 78.75;
+  return "E"   if $az < 101.25;
+  return "ESE" if $az < 123.75;
+  return "SE"  if $az < 146.25;
+  return "SSE" if $az < 168.75;
+  return "S"   if $az < 191.25;
+  return "SSW" if $az < 213.75;
+  return "SW"  if $az < 236.25;
+  return "WSW" if $az < 258.75;
+  return "W"   if $az < 281.25;
+  return "WNW" if $az < 303.75;
+  return "NW"  if $az < 326.25;
+  return "NNW" if $az < 348.75;
+  return "N"   if $az <= 360.0;
+  return undef;
 }

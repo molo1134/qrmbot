@@ -89,25 +89,7 @@ if ($vals{type} eq "w") {
   $vals{rain_24h_inch} = round($vals{rain_24h} * 0.039370079 * 100)/100;
   $vals{rain_midnight_inch} = round($vals{rain_mn} * 0.039370079 * 100)/100;
 
-  my $dir = $vals{wind_direction};
-  if (defined($dir)) {
-    $vals{wind_dir} = "N"   if $dir > 348.75 || $dir < 11.25;
-    $vals{wind_dir} = "NNE" if $dir > 11.25 && $dir < 33.75;
-    $vals{wind_dir} = "NE"  if $dir > 33.75 && $dir < 56.25;
-    $vals{wind_dir} = "ENE" if $dir > 56.25 && $dir < 78.75;
-    $vals{wind_dir} = "E"   if $dir > 78.75 && $dir < 101.25;
-    $vals{wind_dir} = "ESE" if $dir > 101.25 && $dir < 123.75;
-    $vals{wind_dir} = "SE"  if $dir > 123.75 && $dir < 146.25;
-    $vals{wind_dir} = "SSE" if $dir > 146.25 && $dir < 168.75;
-    $vals{wind_dir} = "S"   if $dir > 168.75 && $dir < 191.25;
-    $vals{wind_dir} = "SSW" if $dir > 191.25 && $dir < 213.75;
-    $vals{wind_dir} = "SW"  if $dir > 213.75 && $dir < 236.25;
-    $vals{wind_dir} = "WSW" if $dir > 236.25 && $dir < 258.75;
-    $vals{wind_dir} = "W"   if $dir > 258.75 && $dir < 281.25;
-    $vals{wind_dir} = "WNW" if $dir > 281.25 && $dir < 303.75;
-    $vals{wind_dir} = "NW"  if $dir > 303.75 && $dir < 326.25;
-    $vals{wind_dir} = "NNW" if $dir > 326.25 && $dir < 348.75;
-  }
+  $vals{wind_dir} = azToNEWS($vals{wind_direction}) if defined $vals{wind_direction};
   $vals{pressure_inhg} = round($vals{pressure} * 0.029529983 * 100)/100;
 }
 
