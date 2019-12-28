@@ -117,6 +117,8 @@ bind msg - !muf muf_msg
 bind pub - !muf muf_pub
 bind msg - !muf2 muf2_msg
 bind pub - !muf2 muf2_pub
+bind msg - !iono iono_msg
+bind pub - !iono iono_pub
 
 bind msg - !eme eme_msg
 bind pub - !eme eme_pub
@@ -168,6 +170,7 @@ set repeaterbin "/home/eggdrop/bin/repeater"
 set aprsbin "/home/eggdrop/bin/aprs"
 set mufbin "/home/eggdrop/bin/muf"
 set muf2bin "/home/eggdrop/bin/muf2"
+set ionobin "/home/eggdrop/bin/iono"
 set astrobin "/home/eggdrop/bin/astro"
 set satbin "/home/eggdrop/bin/sat"
 set qcodebin "/home/eggdrop/bin/qcode"
@@ -1499,6 +1502,46 @@ proc dxpeditions_msg {nick uhand handle input} {
 	}
 	close $fd
 }
+
+proc iono_pub { nick host hand chan text } {
+	global ionobin
+	set iono [sanitize_string [string trim ${text}]]
+	set geo [qrz_getgeo $hand]
+
+	putlog "iono pub: $nick $host $hand $chan $iono $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${ionobin} ${iono}" r]
+	} else {
+		set fd [open "|${ionobin} ${iono} --geo $geo" r]
+	}
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+
+proc iono_msg {nick uhand handle input} {
+	global ionobin
+	set iono [sanitize_string [string trim ${input}]]
+	set geo [qrz_getgeo $handle]
+
+	putlog "iono msg: $nick $uhand $handle $iono $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${ionobin} ${iono}" r]
+	} else {
+		set fd [open "|${ionobin} ${iono} --geo $geo" r]
+	}
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
+}
+
 
 putlog "Ham utils loaded."
 

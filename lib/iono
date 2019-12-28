@@ -1,0 +1,128 @@
+#!/usr/bin/perl
+
+use strict;
+use utf8;
+use Encode qw(decode);
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+
+@ARGV = map { decode "utf-8", $_ } @ARGV;
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+my $geo = undef;
+my $query = undef;
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if (!defined($geo) and $ARGV[$i] =~ /^--geo$/i) {
+    $i++;
+    $geo = $ARGV[$i];
+    $i++;
+    next;
+  }
+  if (defined($query)) {
+    $query = $query ." ". $ARGV[$i];
+  } else {
+    $query = $ARGV[$i];
+  }
+  $i++;
+}
+
+if (not defined $query and not defined $geo) {
+  if ($username eq 'eggdrop') {
+    print "usage: !iono <grid>|<lat>,<lon>|<qth>\n";
+  } else {
+    print "usage: $0 <grid>|<lat>,<lon>|<qth>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $result = argToCoords($query) if defined $query;
+
+if (defined $query and not defined $result) {
+  print "error: unable to find \"$query\"\n";
+  exit $exitnonzeroonerror;
+}
+
+my ($mylat, $mylon) = split(',', $geo) if defined $geo;
+($mylat, $mylon) = split(',', $result) if defined $result;
+
+#print "$mylat, $mylon\n";
+
+my $url = "https://prop.kc2g.com/stations.json";
+my $timeout = 10;	# 10 seconds
+
+my ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs);
+my %result;
+
+open (JSON, '-|', "curl -s -k -L --max-time $timeout --retry 1 \"${url}\" | jq -M .");
+while (<JSON>) {
+  #print;
+  if (/^\s*{$/) {
+    if (defined $code) {
+      if ((not defined $cs or ($cs > 20)) and (defined $mufd or defined $fof2)) {
+	$lon = $lon - 360.0 if defined $lon and $lon > 180;
+	my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
+	#print "Adding $code $name $fof2 $mufd $lat,$lon $dist $bearing\n";
+	$result{$code} = join("^^", ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs, $dist, $bearing));
+      } else {
+	#print "Discarding $code $cs\n";
+      }
+    }
+    ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs) = (undef);
+  }
+  if (/"(\w+)": (".*"|null|\d+)/) {
+    my ($k, $v) = ($1, $2);
+    $v =~ s/^"(.*)"$/$1/;
+    #print "$k ==> $v\n";
+    $v = undef if $v eq "null" or $v eq "" or $v == -1;
+
+    $fof2 = $v if $k eq "fof2";
+    $mufd = $v if $k eq "mufd";
+    $md = $v if $k eq "md";
+    $code = $v if $k eq "code";
+    $name = $v if $k eq "name";
+    $lat = $v if $k eq "latitude";
+    $lon = $v if $k eq "longitude";
+    $ts = $v if $k eq "time";
+    $cs = $v if $k eq "cs";
+  }
+}
+close(JSON);
+
+#print "results: ", scalar %result, "\n";
+
+my $mindist = 20000.0;
+my $closest = undef;
+foreach my $s (keys %result) {
+  #print "result: $result{$s}\n";
+  my ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs, $dist, $bearing) =
+    split(/\^\^/,$result{$s});
+  if ($dist < $mindist) {
+    $closest = $s;
+    $mindist = $dist;
+  }
+}
+
+my ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs, $dist, $bearing) =
+  split(/\^\^/,$result{$closest});
+
+print bold($name), " ($lat, $lon) @ $ts UTC: ";
+print bold("MUF $mufd MHz") if length $mufd > 0;
+print ", " if length $mufd > 0 and length $fof2 > 0;
+print "FoF2 $fof2 MHz" if length $fof2 > 0;
+print " with M(D) ${md}x" if length $fof2 > 0 and length $md > 0;
+print "\n";
+
