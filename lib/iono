@@ -12,6 +12,7 @@ use lib dirname(realpath(__FILE__));
 use Colors;
 use Location;
 
+use Math::Round;
 use Time::Piece ();
 use POSIX qw(floor);
 use POSIX qw(strftime);
@@ -95,7 +96,7 @@ while (<JSON>) {
     #print "$k ==> $v\n";
     $v = undef if $v eq "null" or $v eq "" or $v == -1;
 
-    $fof2 = $v if $k eq "fof2";
+    $fof2 = round($v * 1000.0)/1000.0 if $k eq "fof2" and defined $v;
     $mufd = $v if $k eq "mufd";
     $md = $v if $k eq "md";
     $code = $v if $k eq "code";
