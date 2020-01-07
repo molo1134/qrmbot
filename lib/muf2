@@ -14,6 +14,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Location;
 
 my $timeout = 20;	# 20 seconds
 
@@ -199,7 +200,7 @@ if (!defined $ursiCode or $place eq "list") {
 }
 
 my $dataUrl = "https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=${ursiCode}&charName=MUFD&DMUF=3000";
-my ($lat, $lon, $utc, $cs, $mufd, $minmuf, $maxmuf, $mintime, $maxtime, $name);
+my ($grid, $lat, $lon, $utc, $cs, $mufd, $minmuf, $maxmuf, $mintime, $maxtime, $name);
 my ($last, $ts, $sec, $min, $hour, $day, $mon, $year);
 
 $maxmuf = -999.0;
@@ -218,6 +219,7 @@ while (<DATA>) {
     $lon *= -1 if $4 eq "W";
     $lon = $lon - 360 if $4 eq "E" and $lon > 180;
     $station = $6;
+    $grid = substr(coordToGrid($lat, $lon), 0, 4);
   }
 
   if (/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).\d{3}Z\s+(\d+)\s+(.*?)\s+\/\/\s*$/) {
@@ -248,7 +250,7 @@ if ($last > 0) {
   my $old = "";
   $old = yellow(" [old]") if $last < (time() - (30*60));  # 30 min
   $old = red(" [old]") if $last < (time() - (120*60));    # 2 hour
-  print bold($station), " ($lat, $lon): MUF @ $datetime$old: ",
+  print bold($station), " ($grid): MUF @ $datetime$old: ",
 	bold("$mufrecords{$last} MHz"),
 	"; recent high: $maxmuf at $maxtime; low $minmuf at $mintime\n";
 } else {
