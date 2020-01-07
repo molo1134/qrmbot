@@ -135,8 +135,11 @@ my ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs, $dist, $bearing) =
   split(/\^\^/,$result{$closest});
 
 my $grid = substr(coordToGrid($lat, $lon), 0, 4);
+my $old = "";
+$old = yellow(" [old]") if $ts < (time() - (30*60));  # 30 min
+$old = red(" [old]") if $ts < (time() - (120*60));    # 2 hour
 
-print bold($name), " ($grid ", floor($dist), " km ", azToNEWS($bearing),") @ ", strftime("%Y-%m-%d %H%Mz", gmtime($ts)), ": ";
+print bold($name), " ($grid ", floor($dist), " km ", azToNEWS($bearing),") @ ", strftime("%Y-%m-%d %H%Mz", gmtime($ts)), "$old: ";
 print bold("MUF $mufd MHz") if length $mufd > 0 and $mufd > 0.0;
 print ", " if length $mufd > 0 and $mufd > 0.0 and length $fof2 > 0 and $fof2 > 0.0;
 print "FoF2 $fof2 MHz" if length $fof2 > 0 and $fof2 > 0.0;
