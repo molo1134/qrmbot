@@ -79,7 +79,8 @@ while (<JSON>) {
     if (defined $code) {
       if ((not defined $cs or ($cs > 20)) and					    # confidence score > 20
 	  ((defined $mufd and $mufd > 0.0) or (defined $fof2 and $fof2 > 0.0)) and  # need either MUF or FoF2
-	  (defined $ts and $ts > (time() - 3600))) {				    # updated in the last hour
+	  (defined $ts and $ts > (time() - 3600)) and				    # updated in the last hour
+	  $code ne "WI937") {							    # station only gives fof2, but WP937 gives both
 	$lon = $lon - 360.0 if defined $lon and $lon > 180;
 	my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
 	#print "Adding $code $name $fof2 $mufd $lat,$lon $dist $bearing\n";
