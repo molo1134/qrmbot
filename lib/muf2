@@ -245,7 +245,10 @@ if ($last > 0) {
   $year += 1900;
   $mon++;
   my $datetime = sprintf("%4u-%02u-%02u %02u%02uz", $year, $mon, $mday, $hour, $min);
-  print bold($station), " ($lat, $lon): MUF @ $datetime: ", 
+  my $old = "";
+  $old = yellow(" [old]") if $last < (time() - (30*60));  # 30 min
+  $old = red(" [old]") if $last < (time() - (120*60));    # 2 hour
+  print bold($station), " ($lat, $lon): MUF @ $datetime$old: ",
 	bold("$mufrecords{$last} MHz"),
 	"; recent high: $maxmuf at $maxtime; low $minmuf at $mintime\n";
 } else {
