@@ -8,10 +8,13 @@ use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
+use Time::Piece ();
+
 use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Location;
 
 my $url = 'ftp://ftp.swpc.noaa.gov/pub/lists/iono_day/';
 my $stationMap = 'KML map: http://pastebin.com/Ni9tRV7N -- gmap: https://www.google.com/maps/d/viewer?mid=1tUa3CdSB6CVXYITH7cmF0Zmlu6fdt_wA';
@@ -30,7 +33,7 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 if ($ARGV[0] eq "list") {
   my $stations = "";
   open (FTP, '-|', "curl -s --max-time 4 --retry 1 $url | grep _iono | awk '{if (\$8 != 2012 && \$5 > 700) print \$9}' | sed -e 's/_iono.txt//'");
-  
+
   binmode(FTP, ":utf8");
   while (<FTP>) {
     chomp;
@@ -56,9 +59,9 @@ open (FTP, '-|', "curl -s --max-time 4 --retry 1 $url");
 binmode(FTP, ":utf8");
 
 my ($y, $m, $d, $t, $fof2, $hmf2, $mufd, $D, $hF, $yF2, $fmuf, $h, $fxI, $foF1, $foE, $hmE, $foEs, $itec);
-my ($issued, $ns, $ew, $lat, $lon, $hightime, $lowtime);
+my ($issued, $ns, $ew, $lat, $lon, $grid, $hightime, $lowtime);
 
-my ($muf, $lastmuf, $lasttime);
+my ($muf, $lastmuf, $lasttime, $lastts);
 
 my $high=0;
 my $low=1000;
@@ -84,6 +87,7 @@ while (<FTP>) {
       $lon = $lon * -1;
     }
     #print ("$lat, $lon\n");
+    $grid = substr(coordToGrid($lat, $lon), 0, 4);
   }
   if (/^#/ or /^:Product/) {
     next;
@@ -96,11 +100,13 @@ while (<FTP>) {
     next;
   }
   ($y, $m, $d, $t, $fof2, $hmf2, $mufd, $D, $hF, $yF2, $fmuf, $h, $fxI, $foF1, $foE, $hmE, $foEs, $itec) = split(/\s+/);
-  
+
   if (defined($fof2) && $fof2 > 0 && defined($mufd) && $mufd > 0) {
     $muf = $fof2 * $mufd;
     $lastmuf = $muf;
     $lasttime = "$y-$m-$d ${t}z";
+    $lastts = Time::Piece->strptime("$y-$m-$d $t", "%Y-%m-%d %H%M")->epoch;
+    #print "lastts: $lasttime $lastts\n";
 
     if ($muf > $high) {
       $high = $muf;
@@ -144,5 +150,8 @@ if (!defined $lastmuf) {
 #$muf3 = int($muf3 * 10) / 10;
 
 #print "$place ($lat,$lon) MUF @ $y-$m-$d ${t}z: h:${h}km d:${D}km foF2:$fof2 fMUF:$fmuf calc1:$muf calc2:$muf2 calc3:$muf3\n";
-print bold($place), " ($lat,$lon) MUF @ $lasttime: ", bold("$lastmuf MHz"), "; recent high: $high at ${hightime}z; low: $low at ${lowtime}z\n";
+my $old = "";
+$old = yellow(" [old]") if $lastts < (time() - (30*60));  # 30 min
+$old = red(" [old]") if $lastts < (time() - (120*60));    # 2 hour
+print bold($place), " ($grid) MUF @ $lasttime$old: ", bold("$lastmuf MHz"), "; recent high: $high at ${hightime}z; low: $low at ${lowtime}z\n";
 
