@@ -1,0 +1,253 @@
+#!/usr/bin/perl
+
+use strict;
+use utf8;
+use Encode qw(decode);
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+@ARGV = map { decode "utf-8", $_ } @ARGV;
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !translate [sourcelang] <targetlang> <text>\n";
+  } else {
+    print "usage: $0 [sourcelang] <targetlang> <text>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+# from https://cloud.google.com/translate/docs/languages  on  2020-01-09
+my %lang;
+$lang{af} = "Afrikaans";
+$lang{sq} = "Albanian";
+$lang{am} = "Amharic";
+$lang{ar} = "Arabic";
+$lang{hy} = "Armenian";
+$lang{az} = "Azerbaijani";
+$lang{eu} = "Basque";
+$lang{be} = "Belarusian";
+$lang{bn} = "Bengali";
+$lang{bs} = "Bosnian";
+$lang{bg} = "Bulgarian";
+$lang{ca} = "Catalan";
+$lang{ceb} = "Cebuano";
+$lang{zh} = "Chinese (Simplified)";
+$lang{"zh-TW"} = "Chinese (Traditional)";
+$lang{co} = "Corsican";
+$lang{hr} = "Croatian";
+$lang{cs} = "Czech";
+$lang{da} = "Danish";
+$lang{nl} = "Dutch";
+$lang{en} = "English";
+$lang{eo} = "Esperanto";
+$lang{et} = "Estonian";
+$lang{fi} = "Finnish";
+$lang{fr} = "French";
+$lang{fy} = "Frisian";
+$lang{gl} = "Galician";
+$lang{ka} = "Georgian";
+$lang{de} = "German";
+$lang{el} = "Greek";
+$lang{gu} = "Gujarati";
+$lang{ht} = "Haitian Creole";
+$lang{ha} = "Hausa";
+$lang{haw} = "Hawaiian";
+$lang{he} = "Hebrew";
+$lang{hi} = "Hindi";
+$lang{hmn} = "Hmong";
+$lang{hu} = "Hungarian";
+$lang{is} = "Icelandic";
+$lang{ig} = "Igbo";
+$lang{id} = "Indonesian";
+$lang{ga} = "Irish";
+$lang{it} = "Italian";
+$lang{ja} = "Japanese";
+$lang{jv} = "Javanese";
+$lang{kn} = "Kannada";
+$lang{kk} = "Kazakh";
+$lang{km} = "Khmer";
+$lang{ko} = "Korean";
+$lang{ku} = "Kurdish";
+$lang{ky} = "Kyrgyz";
+$lang{lo} = "Lao";
+$lang{la} = "Latin";
+$lang{lv} = "Latvian";
+$lang{lt} = "Lithuanian";
+$lang{lb} = "Luxembourgish";
+$lang{mk} = "Macedonian";
+$lang{mg} = "Malagasy";
+$lang{ms} = "Malay";
+$lang{ml} = "Malayalam";
+$lang{mt} = "Maltese";
+$lang{mi} = "Maori";
+$lang{mr} = "Marathi";
+$lang{mn} = "Mongolian";
+$lang{my} = "Myanmar (Burmese)";
+$lang{ne} = "Nepali";
+$lang{no} = "Norwegian";
+$lang{ny} = "Nyanja (Chichewa)";
+$lang{ps} = "Pashto";
+$lang{fa} = "Persian";
+$lang{pl} = "Polish";
+$lang{pt} = "Portuguese (Portugal, Brazil)";
+$lang{pa} = "Punjabi";
+$lang{ro} = "Romanian";
+$lang{ru} = "Russian";
+$lang{sm} = "Samoan";
+$lang{gd} = "Scots Gaelic";
+$lang{sr} = "Serbian";
+$lang{st} = "Sesotho";
+$lang{sn} = "Shona";
+$lang{sd} = "Sindhi";
+$lang{si} = "Sinhala (Sinhalese)";
+$lang{sk} = "Slovak";
+$lang{sl} = "Slovenian";
+$lang{so} = "Somali";
+$lang{es} = "Spanish";
+$lang{su} = "Sundanese";
+$lang{sw} = "Swahili";
+$lang{sv} = "Swedish";
+$lang{tl} = "Tagalog (Filipino)";
+$lang{tg} = "Tajik";
+$lang{ta} = "Tamil";
+$lang{te} = "Telugu";
+$lang{th} = "Thai";
+$lang{tr} = "Turkish";
+$lang{uk} = "Ukrainian";
+$lang{ur} = "Urdu";
+$lang{uz} = "Uzbek";
+$lang{vi} = "Vietnamese";
+$lang{cy} = "Welsh";
+$lang{xh} = "Xhosa";
+$lang{yi} = "Yiddish";
+$lang{yo} = "Yoruba";
+$lang{zu} = "Zulu";
+
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my ($source, $target, $query) = (undef, undef, undef);
+my ($lang1, $lang2);
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ((not defined $lang1 or not defined $lang2) and not defined $query) {
+
+    my $found = 0;
+    foreach my $k (keys %lang) {
+      $found = 1 if $ARGV[$i] eq $k;
+    }
+
+    if ($found) {
+      $lang2 = $ARGV[$i] if defined $lang1 and not defined $lang2;
+      $lang1 = $ARGV[$i] if not defined $lang1;
+      $i++;
+      next;
+    } else {
+      if (defined $lang1) {
+	if (defined($query)) {
+	  $query = $query ." ". $ARGV[$i];
+	} else {
+	  $query = $ARGV[$i];
+	}
+	$i++;
+	next;
+      } else {
+	print "error: invalid language $ARGV[$i]\n";
+	exit $exitnonzeroonerror;
+      }
+    }
+  }
+
+  if (defined($query)) {
+    $query = $query ." ". $ARGV[$i];
+  } else {
+    $query = $ARGV[$i];
+  }
+  $i++;
+}
+
+#print "lang1: $lang1\n";
+#print "lang2: $lang2\n";
+#print "query: $query\n";
+
+if (not defined $lang1) {
+  print "error: unable to find target language\n";
+  exit $exitnonzeroonerror;
+}
+
+if (defined $lang1 and defined $lang2 and $lang1 eq $lang2) {
+  print "error: source and target languages are the same\n";
+  exit $exitnonzeroonerror;
+}
+
+$query =~ s/^\s*// if defined $query;
+$query =~ s/\s*$// if defined $query;
+
+if (not defined $query or length $query == 0) {
+  print "error: missing query\n";
+  exit $exitnonzeroonerror;
+}
+
+if (defined $lang2) {
+  $source = $lang1;
+  $target = $lang2;
+} else {
+  $source = undef;
+  $target = $lang1;
+}
+
+my $url = "https://translation.googleapis.com/language/translate/v2";
+my $apikey = getTranslateAPIKey();
+
+my $sourcedata = "";
+$sourcedata = "source=$source" if defined $source;
+
+#print("curl --stderr - -N -k -s -L '$url' -d 'format=text&${sourcedata}&target=$target&key=$apikey&q=$query'", "\n");
+
+my $result;
+
+open(HTTP, '-|', "curl --stderr - -N -k -s -L '$url' -d 'format=text&${sourcedata}&target=$target&key=$apikey&q=$query'");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+  #  print;
+
+#        "translatedText": "guten Morgen",
+#        "detectedSourceLanguage": "en"
+  if (/"translatedText": "(.*)"/) {
+    $result = $1;
+  }
+  if (/"detectedSourceLanguage": "(.*)"/) {
+    $source = $1;
+  }
+}
+close(HTTP);
+
+if (not defined $result) {
+  print "error: no result?\n";
+  exit $exitnonzeroonerror;
+}
+
+print "$lang{$source} to $lang{$target}: \"$query\" ⇒ \"$result\"\n";
+
+sub getTranslateAPIKey {
+  my $apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
+  our $translateapikey;
+  if (-e ($apikeyfile)) {
+    require($apikeyfile);
+  } else {
+    print "error: unable to read file $apikeyfile\n";
+  }
+  return $translateapikey;
+}

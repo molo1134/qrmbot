@@ -9,10 +9,12 @@ bind pub - !phoneticize phoneticise
 bind pub - !metard metard
 bind pub - !brexit brexit
 bind pub - !christmas christmas
+bind pub - !translate translate
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
 set christmasbin "/home/eggdrop/bin/christmas"
+set translatebin "/home/eggdrop/bin/translate"
 
 # load utility methods
 source scripts/util.tcl
@@ -191,6 +193,21 @@ proc christmas { nick host hand chan text } {
 	}
 	close $fd
 }
+
+proc translate { nick host hand chan text } {
+	global translatebin
+	set query [sanitize_string [string trim ${text}]]
+
+	putlog "translate pub: $nick $host $hand $chan $query"
+
+	set fd [open "|${translatebin} ${query}" r]
+	fconfigure $fd -translation binary
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
 
 putlog "fun.tcl loaded."
 
