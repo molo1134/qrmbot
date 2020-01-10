@@ -206,11 +206,11 @@ proc chars2hexlist {string} {
 proc translate { nick host hand chan text } {
 	global translatebin
 
-	putchan [chars2hexlist ${text}]
+	putchan $chan [chars2hexlist ${text}]
 	set query [sanitize_string [string trim ${text}]]
-	putchan [chars2hexlist ${query}]
+	putchan $chan [chars2hexlist ${query}]
 	set query [encoding convertto utf-8 "${query}"]
-	putchan [chars2hexlist ${query}]
+	putchan $chan [chars2hexlist ${query}]
 
 	putlog "translate pub: $nick $host $hand $chan $query"
 
