@@ -169,7 +169,7 @@ proc do_wwv_beep_pub { chan } {
 }
 
 proc metard { nick host hand chan text} {
-	putchan $chan "$nick you tard" 
+	putchan $chan "$nick you tard"
 }
 
 proc brexit { nick host hand chan text } {
@@ -194,9 +194,23 @@ proc christmas { nick host hand chan text } {
 	close $fd
 }
 
+proc chars2hexlist {string} {
+	binary scan $string c* ints
+	set list {}
+	foreach i $ints {
+		lappend list [format %0.2X [expr {$i & 0xFF}]]
+	}
+	set list; # faster than return...
+}
+
 proc translate { nick host hand chan text } {
 	global translatebin
+
+	putchan [chars2hexlist ${query}]
 	set query [sanitize_string [string trim ${text}]]
+	putchan [chars2hexlist ${query}]
+	set query [encoding convertto utf-8 "${query}"]
+	putchan [chars2hexlist ${query}]
 
 	putlog "translate pub: $nick $host $hand $chan $query"
 
