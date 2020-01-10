@@ -206,6 +206,7 @@ proc chars2hexlist {string} {
 proc translate { nick host hand chan text } {
 	global translatebin
 
+	putlog "encoding: [encoding system]"
 	putlog [chars2hexlist ${text}]
 	set query [sanitize_string [string trim ${text}]]
 	putlog [chars2hexlist ${query}]
