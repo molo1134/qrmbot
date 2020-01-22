@@ -64,6 +64,7 @@ my $maxap = -1.0;
 my $minap = 10000.0;
 $count = 0;
 $firstmonth = undef;
+my $firstyear = undef;
 
 open (HTTP, '-|', "curl -L -k -s $url");
 binmode(HTTP, ":utf8");
@@ -73,7 +74,8 @@ while (<HTTP>) {
     $count++;
 
     $y =~ s/\.[0-9]+$//;
-    next if $y > $curryear + 3; # truncate the forecast to 3 years
+    $firstyear = $y if not defined $firstyear;
+    next if $y > $firstyear + 3; # truncate the forecast to 3 years
     $m = monToNum($m);
     $firstmonth = "$y-$m" if not defined $firstmonth;
     $lastmonth = "$y-$m";
