@@ -904,6 +904,10 @@ sub doImgur {
     $hash = $1;
     $isimg = 1;
   }
+  if ($url =~ m!imgur.com/t/\w+/([0-9A-Za-z_]+)/?$!) {
+    $hash = $1;
+    $isgal = 1;
+  }
 
   my $apiurl = undef;
   $apiurl = "https://api.imgur.com/3/image/$hash" if $isimg == 1;
