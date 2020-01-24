@@ -16,8 +16,8 @@ use File::Basename;
 
 my @subreddits = ("antennasporn", "hamfest", "hamdevs", "morse", "MMDVM",
 	"hampota", "hamspots", "PDXhamradio", "CHIhamradio", "baofeng",
-	"EmComm", "diytubes", "hamcasters", "hamradio", "rtlsdr",
-	"amateurradio");
+	"EmComm", "diytubes", "electricalengineering", "hamcasters",
+	"hamradio", "rtlsdr", "amateurradio");
 
 #my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0";
 my $useragent = "foo";
@@ -90,7 +90,8 @@ our @blacklist = (
   "4Y3NI", "A2MAIL", "E3BU", "HG766VBC", "S1IDER", "SC0TOMA", "SH0T", "T4W",
   "WH1SPER", "N17MAN", "OS2MAC", "N1ETSI", "BF17C", "T70A", "WA4415SWL",
   "UV5R", "2V4ZHNO", "G7T", "EN55PD", "KR00GA", "D710GA", "D7AG", "AB2ETFL",
-  "T400FAN", "X333X", "A62OKAY", "M1200AK", "T1S", "NU773R", "T0S", "N4LQ");
+  "T400FAN", "X333X", "A62OKAY", "M1200AK", "T1S", "NU773R", "T0S", "N4LQ",
+  "C3MER", "ST0PX", "XO28XO" );
 
 # load nicks
 our $nickfile = "$ENV{'HOME'}/.nicks.csv";
