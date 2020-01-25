@@ -6,11 +6,11 @@ use POSIX;
 my $d1 = DateTime->now;
 my $d2 = DateTime->new(
     year       => 2020,
-    month      => 01,
+    month      => 1,
     day        => 31,
     hour       => 23,
-    minute     => 59,
-    second     => 59,
+    minute     => 0,
+    second     => 0,
 );
 
 my $dur = $d2->epoch() - $d1->epoch();
