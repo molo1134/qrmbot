@@ -217,20 +217,18 @@ proc encodingdebug { from keyword text } {
 proc translate { nick host hand chan text } {
 	global translatebin
 
-	putlog "encoding: [encoding system]"
-	putlog ${text}
-	putlog [chars2hexlist ${text}]
+	#putlog "encoding: [encoding system]"
+	#putlog ${text}
+	#putlog [chars2hexlist ${text}]
 	set cleantext [sanitize_string [string trim ${text}]]
-	putlog [chars2hexlist ${cleantext}]
-	set query [encoding convertto utf-8 "${cleantext}"]
-	putlog [chars2hexlist ${query}]
+	#putlog [chars2hexlist ${cleantext}]
 
 	putlog "translate pub: $nick $host $hand $chan $cleantext"
 
 	set fd [open "|${translatebin} ${cleantext}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putchan $chan [encoding convertfrom utf-8 "${line}"]
+		putchan $chan "${line}"
 	}
 	close $fd
 }
