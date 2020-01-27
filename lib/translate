@@ -17,7 +17,26 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
+print "input:\n";
+my $j = 0;
+while ($j <= $#ARGV) {
+  my $hex = $ARGV[$j];
+  $hex =~ s/(.)/sprintf("%02X ", ord($1))/eg;
+  print "ARGV[$j] = $hex\n";
+  $j++;
+}
+
 @ARGV = map { decode "utf-8", $_ } @ARGV;
+
+print "decoded:\n";
+$j = 0;
+while ($j <= $#ARGV) {
+  my $hex = $ARGV[$j];
+  $hex =~ s/(.)/sprintf("%02X ", ord($1))/eg;
+  print "ARGV[$j] = $hex\n";
+  $j++;
+}
+
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq 'eggdrop') {

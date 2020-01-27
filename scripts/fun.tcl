@@ -205,12 +205,13 @@ proc chars2hexlist {string} {
 }
 
 proc encodingdebug { from keyword text } {
-	putlog "encoding: [encoding system]"
-	putlog ${text}
-	putlog [chars2hexlist ${text}]
-	set text [encoding convertto utf-8 "${text}"]
-	putlog [chars2hexlist ${text}]
-	return 0
+	return 0;
+#	putlog "encoding: [encoding system]"
+#	putlog ${text}
+#	putlog [chars2hexlist ${text}]
+#	set text [encoding convertto utf-8 "${text}"]
+#	putlog [chars2hexlist ${text}]
+#	return 0
 }
 
 proc translate { nick host hand chan text } {
@@ -219,14 +220,14 @@ proc translate { nick host hand chan text } {
 	putlog "encoding: [encoding system]"
 	putlog ${text}
 	putlog [chars2hexlist ${text}]
-	set query [sanitize_string [string trim ${text}]]
-	putlog [chars2hexlist ${query}]
-	set query [encoding convertto utf-8 "${query}"]
+	set cleantext [sanitize_string [string trim ${text}]]
+	putlog [chars2hexlist ${cleantext}]
+	set query [encoding convertto utf-8 "${cleantext}"]
 	putlog [chars2hexlist ${query}]
 
-	putlog "translate pub: $nick $host $hand $chan $query"
+	putlog "translate pub: $nick $host $hand $chan $cleantext"
 
-	set fd [open "|${translatebin} ${query}" r]
+	set fd [open "|${translatebin} ${cleantext}" r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
 		putchan $chan [encoding convertfrom utf-8 "${line}"]
