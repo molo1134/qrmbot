@@ -217,10 +217,10 @@ proc translate { nick host hand chan text } {
 	global translatebin
 
 	putlog "encoding: [encoding system]"
+	putlog ${text}
 	putlog [chars2hexlist ${text}]
 	set query [sanitize_string [string trim ${text}]]
 	putlog [chars2hexlist ${query}]
-	set query [encoding convertfrom "${query}"]
 	set query [encoding convertto utf-8 "${query}"]
 	putlog [chars2hexlist ${query}]
 
