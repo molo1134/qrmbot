@@ -47,7 +47,7 @@ proc msg_colortest {nick uhand handle input} {
 	global colortestbin
 	putlog "colortest msg: $nick $uhand $handle $input"
 	set fd [open "|${colortestbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
