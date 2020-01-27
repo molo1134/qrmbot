@@ -10,6 +10,7 @@ bind pub - !metard metard
 bind pub - !brexit brexit
 bind pub - !christmas christmas
 bind pub - !translate translate
+bind raw - "PRIVMSG" encodingdebug
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
@@ -201,6 +202,12 @@ proc chars2hexlist {string} {
 		lappend list [format %0.2X [expr {$i & 0xFF}]]
 	}
 	set list; # faster than return...
+}
+
+proc encodingdebug { from keyword text } {
+	putlog "encoding: [encoding system]"
+	putlog [chars2hexlist ${text}]
+	return 0
 }
 
 proc translate { nick host hand chan text } {
