@@ -206,6 +206,7 @@ proc chars2hexlist {string} {
 
 proc encodingdebug { from keyword text } {
 	putlog "encoding: [encoding system]"
+	putlog ${text}
 	putlog [chars2hexlist ${text}]
 	return 0
 }
