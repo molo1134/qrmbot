@@ -229,7 +229,7 @@ proc translate { nick host hand chan text } {
 	set fd [open "|${translatebin} ${query}" r]
 	fconfigure $fd -translation binary
 	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
+		putchan $chan [encoding convertfrom utf-8 "${line}"]
 	}
 	close $fd
 }
