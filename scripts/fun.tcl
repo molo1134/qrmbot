@@ -27,7 +27,7 @@ proc phoneticise { nick host hand chan text } {
 	putlog "phonetics pub: $nick $host $hand $chan $param"
 
 	set fd [open "|${phoneticsbin} ${param}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -62,7 +62,7 @@ proc debt_msg {nick uhand handle input} {
 	global debtbin
 	putlog "debt msg: $nick $uhand $handle $input"
 	set fd [open "|${debtbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -72,7 +72,7 @@ proc debt_pub { nick host hand chan text } {
 	global debtbin
 	putlog "debt pub: $nick $host $hand $chan"
 	set fd [open "|${debtbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -86,7 +86,7 @@ proc spacex_pub { nick host hand chan text } {
 	global spacexbin
 	putlog "spacex pub: $nick $host $hand $chan $text"
 	set fd [open "|${spacexbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -96,7 +96,7 @@ proc spacex_msg {nick uhand handle input} {
 	global spacexbin
 	putlog "spacex msg: $nick $uhand $handle $input"
 	set fd [open "|${spacexbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -113,7 +113,7 @@ proc stock_pub { nick host hand chan text } {
 	putlog "stock pub: $nick $host $hand $chan $param"
 
 	set fd [open "|${stockbin} ${param} " r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -124,7 +124,7 @@ proc stock_msg {nick uhand handle input} {
 	set param [sanitize_string [string trim ${input}]]
 	putlog "stock msg: $nick $uhand $handle $param"
 	set fd [open "|${stockbin} ${param} " r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -177,7 +177,7 @@ proc brexit { nick host hand chan text } {
 	global brexitbin
 	putlog "brexit: $nick $host $hand $chan"
 	set fd [open "|${brexitbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -188,7 +188,7 @@ proc christmas { nick host hand chan text } {
 	global christmasbin
 	putlog "christmas: $nick $host $hand $chan"
 	set fd [open "|${christmasbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}

@@ -49,7 +49,7 @@ proc crypto_msg {nick uhand handle input} {
 	putlog "crypto msg: $nick $uhand $handle $input"
 
 	set fd [open "|${btcbin} ${input}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -76,7 +76,7 @@ proc crypto_pub { nick host hand chan input } {
 	putlog "crypto pub: $nick $host $hand $chan $input"
 
 	set fd [open "|${btcbin} ${input}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}

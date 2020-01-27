@@ -194,7 +194,7 @@ proc qrz { nick host hand chan text } {
 	} else {
 		set fd [open "|${qrzbin} ${callsign} --compact --geo $geo" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -213,7 +213,7 @@ proc msg_qrz {nick uhand handle input} {
 	} else {
 		set fd [open "|${qrzbin} ${callsign} --geo $geo " r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -317,7 +317,7 @@ proc grid { nick host hand chan text } {
 	} else {
 		set fd [open "|${gridbin} ${grid} --geo $geo" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -337,7 +337,7 @@ proc msg_grid {nick uhand handle input} {
 	} else {
 		set fd [open "|${gridbin} ${grid} --geo $geo" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -356,7 +356,7 @@ proc drive_msg {nick uhand handle input} {
 	} else {
 		set fd [open "|${drivebin} ${grid} --geo $geo" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -375,7 +375,7 @@ proc drive_pub { nick host hand chan text } {
 	} else {
 		set fd [open "|${drivebin} ${grid} --geo $geo" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -394,7 +394,7 @@ proc transit_msg {nick uhand handle input} {
 	} else {
 		set fd [open "|${drivebin} --transit ${grid} --geo $geo" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -413,7 +413,7 @@ proc transit_pub { nick host hand chan text } {
 	} else {
 		set fd [open "|${drivebin} --transit ${grid} --geo $geo" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -433,7 +433,7 @@ proc timezone { nick host hand chan text } {
 	} else {
 		set fd [open "|${tzbin} ${timezone} --geo $geo" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -453,7 +453,7 @@ proc msg_timezone {nick uhand handle input} {
 	} else {
 		set fd [open "|${tzbin} ${timezone} --geo $geo " r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -472,7 +472,7 @@ proc elev { nick host hand chan text } {
 	} else {
 		set fd [open "|${elevbin} ${elev} --geo $geo " r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -492,7 +492,7 @@ proc msg_elev {nick uhand handle input} {
 	} else {
 		set fd [open "|${elevbin} ${elev} --geo $geo " r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -504,7 +504,7 @@ proc bands { nick host hand chan text } {
 	global bandsbin
 	putlog "bands pub: $nick $host $hand $chan $text"
 	set fd [open "|${bandsbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -515,7 +515,7 @@ proc msg_bands {nick uhand handle input} {
 	global bandsbin
 	putlog "bands msg: $nick $uhand $handle $input"
 	set fd [open "|${bandsbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -526,7 +526,7 @@ proc solar { nick host hand chan text } {
 	global bandsbin
 	putlog "solar pub: $nick $host $hand $chan $text"
 	set fd [open "|${bandsbin} -q" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -537,7 +537,7 @@ proc msg_solar {nick uhand handle input} {
 	global bandsbin
 	putlog "solar msg: $nick $uhand $handle $input"
 	set fd [open "|${bandsbin} -q" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -548,7 +548,7 @@ proc solarforecast { nick host hand chan text } {
 	global forecastbin
 	putlog "forecast pub: $nick $host $hand $chan $text"
 	set fd [open "|${forecastbin} " r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -559,7 +559,7 @@ proc msg_solarforecast {nick uhand handle input} {
 	global forecastbin
 	putlog "forecast msg: $nick $uhand $handle $input"
 	set fd [open "|${forecastbin} " r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -570,7 +570,7 @@ proc longtermforecast { nick host hand chan text } {
 	global longtermforecastbin
 	putlog "longterm pub: $nick $host $hand $chan $text"
 	set fd [open "|${longtermforecastbin} " r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		#putchan $chan "$line" # too long
 		putmsg $nick "$line"
@@ -582,7 +582,7 @@ proc msg_longtermforecast {nick uhand handle input} {
 	global longtermforecastbin
 	putlog "longterm msg: $nick $uhand $handle $input"
 	set fd [open "|${longtermforecastbin} " r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -593,7 +593,7 @@ proc xray { nick host hand chan text } {
 	global xraybin
 	putlog "xray pub: $nick $host $hand $chan $text"
 	set fd [open "|${xraybin} " r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -604,7 +604,7 @@ proc msg_xray {nick uhand handle input} {
 	global xraybin
 	putlog "xray msg: $nick $uhand $handle $input"
 	set fd [open "|${xraybin} " r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -616,7 +616,7 @@ proc lotw { nick host hand chan text } {
 	set call [sanitize_string [string trim ${text}]]
 	putlog "lotw pub: $nick $host $hand $chan $call"
 	set fd [open "|${lotwbin} ${call}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -627,7 +627,7 @@ proc msg_lotw {nick uhand handle input} {
 	set call [sanitize_string [string trim ${input}]]
 	putlog "lotw msg: $nick $uhand $handle $call"
 	set fd [open "|${lotwbin} ${call}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -639,7 +639,7 @@ proc eqsl { nick host hand chan text } {
 	set call [sanitize_string [string trim ${text}]]
 	putlog "eqsl pub: $nick $host $hand $chan $call"
 	set fd [open "|${eqslbin} ${call}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -650,7 +650,7 @@ proc msg_eqsl {nick uhand handle input} {
 	set call [sanitize_string [string trim ${input}]]
 	putlog "eqsl msg: $nick $uhand $handle $call"
 	set fd [open "|${eqslbin} ${call}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -662,7 +662,7 @@ proc pub_clublog { nick host hand chan text } {
 	set call [sanitize_string [string trim ${text}]]
 	putlog "clublog pub: $nick $host $hand $chan $call"
 	set fd [open "|${clublogbin} ${call}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -673,7 +673,7 @@ proc msg_clublog {nick uhand handle input} {
 	set call [sanitize_string [string trim ${input}]]
 	putlog "clublog msg: $nick $uhand $handle $call"
 	set fd [open "|${clublogbin} ${call}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -686,7 +686,7 @@ proc dxcc { nick host hand chan text } {
 	set call [sanitize_string [string trim ${text}]]
 	putlog "dxcc pub: $nick $host $hand $chan $call"
 	set fd [open "|${dxccbin} ${call}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -697,7 +697,7 @@ proc msg_dxcc {nick uhand handle input} {
 	set call [sanitize_string [string trim ${input}]]
 	putlog "dxcc msg: $nick $uhand $handle $call"
 	set fd [open "|${dxccbin} ${call}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -709,7 +709,7 @@ proc spots { nick host hand chan text } {
 	set input [sanitize_string [string trim ${text}]]
 	putlog "spots pub: $nick $host $hand $chan $input"
 	set fd [open "|${spotsbin} ${input}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -720,7 +720,7 @@ proc msg_spots {nick uhand handle input} {
 	set input [sanitize_string [string trim ${input}]]
 	putlog "spots msg: $nick $uhand $handle $input"
 	set fd [open "|${spotsbin} ${input}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1066,7 +1066,7 @@ proc contests { nick host hand chan text } {
 	global contestsbin
 	putlog "contests pub: $nick $host $hand $chan $text"
 	set fd [open "|${contestsbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -1076,7 +1076,7 @@ proc contests_msg {nick uhand handle input} {
 	global contestsbin
 	putlog "contests msg: $nick $uhand $handle $input"
 	set fd [open "|${contestsbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1088,7 +1088,7 @@ proc activity { nick host hand chan text } {
 	set params [sanitize_string [string trim ${text}]]
 	putlog "activity pub: $nick $host $hand $chan $params"
 	set fd [open "|${activitybin} ${params}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -1099,7 +1099,7 @@ proc activity_msg {nick uhand handle input} {
 	set params [sanitize_string [string trim ${input}]]
 	putlog "activity msg: $nick $uhand $handle $params"
 	set fd [open "|${activitybin} ${params}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1110,7 +1110,7 @@ proc kindex { nick host hand chan text } {
 	global kindexbin
 	putlog "kindex pub: $nick $host $hand $chan $text"
 	set fd [open "|${kindexbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -1120,7 +1120,7 @@ proc kindex_msg {nick uhand handle input} {
 	global kindexbin
 	putlog "kindex msg: $nick $uhand $handle $input"
 	set fd [open "|${kindexbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1132,7 +1132,7 @@ proc morse_pub { nick host hand chan text } {
 	set msg [sanitize_string [string trim ${text}]]
 	putlog "morse pub: $nick $host $hand $chan $msg"
 	set fd [open "|${morsebin} ${msg}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -1143,7 +1143,7 @@ proc morse_msg {nick uhand handle input} {
 	set msg [sanitize_string [string trim ${input}]]
 	putlog "morse msg: $nick $uhand $handle $msg"
 	set fd [open "|${morsebin} ${msg}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1155,7 +1155,7 @@ proc unmorse_pub { nick host hand chan text } {
 	set msg [sanitize_string [string trim ${text}]]
 	putlog "unmorse pub: $nick $host $hand $chan $msg"
 	set fd [open "|${unmorsebin} ${msg}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -1166,7 +1166,7 @@ proc unmorse_msg {nick uhand handle input} {
 	set msg [sanitize_string [string trim ${input}]]
 	putlog "unmorse msg: $nick $uhand $handle $msg"
 	set fd [open "|${unmorsebin} ${msg}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1178,7 +1178,7 @@ proc repeater_pub { nick host hand chan text } {
 	set msg [sanitize_string [string trim ${text}]]
 	putlog "repeater pub: $nick $host $hand $chan $msg"
 	set fd [open "|${repeaterbin} ${msg}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -1189,7 +1189,7 @@ proc repeater_msg {nick uhand handle input} {
 	set msg [sanitize_string [string trim ${input}]]
 	putlog "repeater msg: $nick $uhand $handle $msg"
 	set fd [open "|${repeaterbin} ${msg}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1201,7 +1201,7 @@ proc aprs_pub { nick host hand chan text } {
 	set params [sanitize_string [string trim ${text}]]
 	putlog "aprs pub: $nick $host $hand $chan $params"
 	set fd [open "|${aprsbin} ${params}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -1212,7 +1212,7 @@ proc aprs_msg {nick uhand handle input} {
 	set params [sanitize_string [string trim ${input}]]
 	putlog "aprs msg: $nick $uhand $handle $params"
 	set fd [open "|${aprsbin} ${params}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1224,7 +1224,7 @@ proc muf_pub { nick host hand chan text } {
 	set params [sanitize_string [string trim ${text}]]
 	putlog "muf pub: $nick $host $hand $chan $params"
 	set fd [open "|${mufbin} ${params}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		# list via msg
 		if [string equal "list" $params] then {
@@ -1240,7 +1240,7 @@ proc muf_msg {nick uhand handle input} {
 	set params [sanitize_string [string trim ${input}]]
 	putlog "muf msg: $nick $uhand $handle $params"
 	set fd [open "|${mufbin} ${params}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1252,7 +1252,7 @@ proc muf2_pub { nick host hand chan text } {
 	set params [sanitize_string [string trim ${text}]]
 	putlog "muf2 pub: $nick $host $hand $chan $params"
 	set fd [open "|${muf2bin} ${params}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		# list via msg
 		if [string equal "list" $params] then {
@@ -1268,7 +1268,7 @@ proc muf2_msg {nick uhand handle input} {
 	set params [sanitize_string [string trim ${input}]]
 	putlog "muf2 msg: $nick $uhand $handle $params"
 	set fd [open "|${muf2bin} ${params}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1285,7 +1285,7 @@ proc eme_pub { nick host hand chan text } {
 	} else {
 		set fd [open "|${astrobin} --eme ${geo} ${params}" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -1301,7 +1301,7 @@ proc eme_msg {nick uhand handle input} {
 	} else {
 		set fd [open "|${astrobin} --eme ${geo} ${params}" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1318,7 +1318,7 @@ proc moon_pub { nick host hand chan text } {
 	} else {
 		set fd [open "|${astrobin} --moon ${geo} ${params}" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -1334,7 +1334,7 @@ proc moon_msg {nick uhand handle input} {
 	} else {
 		set fd [open "|${astrobin} --moon ${geo} ${params}" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1351,7 +1351,7 @@ proc sun_pub { nick host hand chan text } {
 	} else {
 		set fd [open "|${astrobin} --sun ${geo} ${params}" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -1367,7 +1367,7 @@ proc sun_msg {nick uhand handle input} {
 	} else {
 		set fd [open "|${astrobin} --sun ${geo} ${params}" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1379,7 +1379,7 @@ proc graves_pub { nick host hand chan text } {
 	set params [sanitize_string [string trim ${text}]]
 	putlog "graves pub: $nick $host $hand $chan $params"
 	set fd [open "|${astrobin} --graves ${params}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -1390,7 +1390,7 @@ proc graves_msg {nick uhand handle input} {
 	set params [sanitize_string [string trim ${input}]]
 	putlog "graves msg: $nick $uhand $handle $params"
 	set fd [open "|${astrobin} --graves ${params}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1407,7 +1407,7 @@ proc sat_pub { nick host hand chan text } {
 	} else {
 		set fd [open "|${satbin} ${params} --geo ${geo}" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		# list via msg
 		if [string equal "list" $params] then {
@@ -1428,7 +1428,7 @@ proc sat_msg {nick uhand handle input} {
 	} else {
 		set fd [open "|${satbin} ${params} --geo ${geo}" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1452,7 +1452,7 @@ proc qcode_pub { nick host hand chan text } {
 	set msg [sanitize_string [string trim ${text}]]
 	putlog "qcode pub: $nick $host $hand $chan $msg"
 	set fd [open "|${qcodebin} ${msg}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -1463,7 +1463,7 @@ proc qcode_msg {nick uhand handle input} {
 	set msg [sanitize_string [string trim ${input}]]
 	putlog "qcode msg: $nick $uhand $handle $msg"
 	set fd [open "|${qcodebin} ${msg}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1485,7 +1485,7 @@ proc dxpeditions_pub { nick host hand chan text } {
 	set params [sanitize_string [string trim ${text}]]
 	putlog "dxped pub: $nick $host $hand $chan $params"
 	set fd [open "|${dxpedbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -1496,7 +1496,7 @@ proc dxpeditions_msg {nick uhand handle input} {
 	set params [sanitize_string [string trim ${input}]]
 	putlog "dxped msg: $nick $uhand $handle $params"
 	set fd [open "|${dxpedbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -1515,7 +1515,7 @@ proc iono_pub { nick host hand chan text } {
 	} else {
 		set fd [open "|${ionobin} ${iono} --geo $geo" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -1535,7 +1535,7 @@ proc iono_msg {nick uhand handle input} {
 	} else {
 		set fd [open "|${ionobin} ${iono} --geo $geo" r]
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}

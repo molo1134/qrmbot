@@ -55,7 +55,7 @@ proc wx { nick host hand chan text } {
 			set fd [open "|${wxbin} ${loc} " r]
 		}
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -79,7 +79,7 @@ proc msg_wx {nick uhand handle input} {
 			set fd [open "|${wxbin} ${loc} " r]
 		}
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -103,7 +103,7 @@ proc wxfull { nick host hand chan text } {
 			set fd [open "|${wxbin} --full ${loc} " r]
 		}
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -127,7 +127,7 @@ proc msg_wxfull {nick uhand handle input} {
 			set fd [open "|${wxbin} --full ${loc} " r]
 		}
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -151,7 +151,7 @@ proc wxf { nick host hand chan text } {
 			set fd [open "|${wxfbin} --short ${loc} " r]
 		}
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -175,7 +175,7 @@ proc msg_wxf {nick uhand handle input} {
 			set fd [open "|${wxfbin} --short ${loc} " r]
 		}
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -199,7 +199,7 @@ proc wxflong { nick host hand chan text } {
 			set fd [open "|${wxfbin} ${loc} " r]
 		}
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -227,7 +227,7 @@ proc msg_wxflong {nick uhand handle input} {
 			set fd [open "|${wxfbin} ${loc} " r]
 		}
 	}
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -241,7 +241,7 @@ proc metar {nick host hand chan text} {
 	putlog "metar pub: $nick $host $hand $chan $loc"
 
 	set fd [open "|${metarbin} ${loc} " r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -255,7 +255,7 @@ proc msg_metar {nick uhand handle input} {
 	putlog "metar msg: $nick $uhand $handle $loc"
 
 	set fd [open "|${metarbin} ${loc} " r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -269,7 +269,7 @@ proc taf {nick host hand chan text} {
 	putlog "taf pub: $nick $host $hand $chan $loc"
 
 	set fd [open "|${tafbin} ${loc} " r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -283,7 +283,7 @@ proc msg_taf {nick uhand handle input} {
 	putlog "taf msg: $nick $uhand $handle $loc"
 
 	set fd [open "|${tafbin} ${loc} " r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -295,7 +295,7 @@ proc quake_pub {nick host hand chan text} {
 	global quakebin
 	putlog "quake pub: $nick $host $hand $chan"
 	set fd [open "|${quakebin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -305,7 +305,7 @@ proc quake_msg {nick uhand handle input} {
 	global quakebin
 	putlog "quake msg: $nick $uhand $handle"
 	set fd [open "|${quakebin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -317,7 +317,7 @@ proc quakef_pub {nick host hand chan text} {
 	global quakefbin
 	putlog "quakef pub: $nick $host $hand $chan"
 	set fd [open "|${quakefbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -327,7 +327,7 @@ proc quakef_msg {nick uhand handle input} {
 	global quakefbin
 	putlog "quakef msg: $nick $uhand $handle"
 	set fd [open "|${quakefbin}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}

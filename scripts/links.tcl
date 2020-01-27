@@ -51,7 +51,7 @@ proc http_msg { nick host hand text } {
 	set params [sanitize_url [string trim ${text}]]
 	putlog "http msg: $nick $host $hand $params"
 	set fd [open "|${linkbin} ${params}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
@@ -74,7 +74,7 @@ proc http_pub { nick host hand chan text } {
 	set params [sanitize_url [string trim ${text}]]
 	putlog "http pub: $nick $host $hand $chan $params"
 	set fd [open "|${linkbin} ${params}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -94,7 +94,7 @@ proc ae7q { nick host hand chan text } {
 		set url "http://ae7q.com/query/data/CallHistory.php?CALL=$input"
 	}
 	set fd [open "|${linkbin} ${url}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
@@ -113,7 +113,7 @@ proc msg_ae7q {nick uhand handle input} {
 		set url "http://ae7q.com/query/data/CallHistory.php?CALL=$input"
 	}
 	set fd [open "|${linkbin} ${url}" r]
-	fconfigure $fd -translation binary
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
