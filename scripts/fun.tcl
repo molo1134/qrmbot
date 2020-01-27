@@ -210,6 +210,7 @@ proc translate { nick host hand chan text } {
 	putlog [chars2hexlist ${text}]
 	set query [sanitize_string [string trim ${text}]]
 	putlog [chars2hexlist ${query}]
+	set query [encoding convertfrom "${query}"]
 	set query [encoding convertto utf-8 "${query}"]
 	putlog [chars2hexlist ${query}]
 
