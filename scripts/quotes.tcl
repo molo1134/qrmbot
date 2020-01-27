@@ -21,6 +21,7 @@ proc q_addquote { nick uhost hand chan arg } {
   } else {
     set qf [open $quotefile w]
   }
+  fconfigure $qf -encoding utf-8
   
   set entry [list]
   lappend entry $arg
