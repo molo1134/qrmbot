@@ -208,3 +208,66 @@
 {Tube amplifier vaporlocked.}
 {Prefix discrimination.}
 {Discriminator tainted by unconscious bias.}
+{Extra-terrestrial protomolecule detected. Alert Eros.}
+{Local birdie on satellite downlink frequency.}
+{Not enough dog poop on radials.  }
+{Too much dog poop on radials.  }
+{Not enough SWR spray.}
+{Grid square oversaturated.}
+{Accidentally purchased Sportswear-Defined Radio.}
+{asked for a bug for Xmas and was given a pet tarantula }
+{New years propagation}
+{CQ CQ CQ NO LIDS NO KIDS NO SPACE CADETS CLASS A OPERATORS ONLY}
+{No code extra detected. Walk 20 miles in a blizzard to the nearest FCC office to take the code test.}
+{Too many dits.}
+{Hotspot not Y2K20 compliant.}
+{Fresnel zone mis-calculated. Add longer rubber ducky.}
+{Warning: Unexpected impedance, please move into awkward position to match.}
+{Press PTT button harder.}
+{QRV? QTP QTO QTP QTO.. QRQ? QRQ! QRQ! QRS! QSB, QRT. }
+{Got an itch to get on air? make sure you are using genuine Kepler gain powder!}
+{Not enough club affiliations on QSL card.}
+{Remove baofeng antenna from ass before checking SWR.}
+{Transmitter is actually a mislabeled garage door opener.}
+{Remove radio from box before attempting to operate.}
+{3x4 callsign not supported}
+{3x4 callsign does not fit in log}
+{QRM from 5G}
+{QRM by HOA}
+{Horizontal polarisation must apply to antenna only, not entire tower}
+{Antenna polarisation inverted by Coriolis effect}
+{dielectric grease is not a sexual lubricant}
+{GPS locked oscillator too accurate}
+{entropy driven VFO}
+{PLL drifted into sandbank}
+{Oscillator miscalibrated due to tongue at wrong angle}
+{Operator suffered blindness and hairy palms due to excessive self-spotting}
+{Antenna less excited than operator}
+{Hardware store air ducting insufficient to cross Tasman}
+{Tank circuit flooded}
+{Radio inaccessible due to piles of junk on desk}
+{After reconnecting the battery, your radio is locked and the security pin must be entered as an anti-theft measure. Contact an authorised servicing department if you have lost your pin.}
+{Antenna ground is floating. Move to higher ground immediately.}
+{QRM from woodpecker - consider replacing wooden antenna tower with metal construction}
+{Antenna polarisation must be inverted before attempting to call CQ VK}
+{Operator dialect so strong FCC is threatening § 97.113 action}
+{PA circuit burnt out to protect fuse}
+{Rotator cuff tear}
+{S9 noise floor from the voices in my head}
+{Install FORTRAN compiler}
+{Insufficient hotspot isolation. Install commercial-grade 60db cans.}
+{Hotspot phase mismatch.}
+{Balun off balance.}
+{UP 5 UP 5}
+{Back-end overload.}
+{Near-field violation.}
+{Standing wave sitting.}
+{QTC Off-sides.}
+{Re-insert codeplug.}
+{Re-run with a Smith chart}
+{Virtual serial port is physical.}
+{Cat knocked over magloop.}
+{Balanced feline unbalanced, check foodbowl}
+{k1jt has qso's if you have coin}
+{Real men don't shave their sidebands.}
+{SWR affected by cat in nearfield}
