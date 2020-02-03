@@ -4,7 +4,7 @@
 
 bind pub - !see see_pub
 
-proc seen_pu { nick host hand chan text } {
+proc see_pub { nick host hand chan text } {
 	global botnick
 	putlog "see pub: $nick $host $hand $chan $text"
 	set origQuery [sanitize_string [string trim ${text}]]
