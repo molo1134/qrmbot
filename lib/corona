@@ -1,0 +1,54 @@
+#!/usr/bin/perl
+  
+# coronavirus info for qrmbot
+# written by aa4jq
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+my @line;
+my $total;
+my $num;
+
+if ($ARGV[0] =~ /about/i){
+    print "Returns current global coronavirus cases as reported by WHO.\n";
+    print "Data scraped and hosted at https://github.com/alext234/coronavirus-stats\n";
+    exit 0;
+}
+
+my $url = "https://raw.githubusercontent.com/alext234/coronavirus-stats/master/data/who-global-cases.csv";
+
+open(HTTP, '-|', "curl -s -L --insecure '$url' | tail -1");
+
+binmode(HTTP, ":utf8");
+while ( my $line = <HTTP>) {
+
+    chomp;
+
+    my @fields = split /,/, $line;
+    $total = commify($fields[1]);
+
+
+    print "As of " . $fields[0] . ": " . $total . " cases reported worldwide.\n";
+
+
+
+}
+
+    close(HTTP);
+
+sub commify {
+  my $num = shift;
+  my ($whole, $frac);
+  if ($num =~ /\./) {
+    ($whole, $frac) = split(/\./, $num, 2);
+    $num = $whole;
+  }
+  $num =~ s/(\d)(?=(\d{3})+(\D|$|\.\d*))/$1\,/g;
+  $num = "$num.$frac" if defined($frac);
+  return $num;
+  }
+
+exit 0;
