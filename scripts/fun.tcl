@@ -226,8 +226,9 @@ proc translate { nick host hand chan text } {
 
 proc corona { nick host hand chan text } {
 	global coronabin
-	putlog "corona: $nick $host $hand $chan"
-	set fd [open "|${coronabin}" r]
+	set cleantext [sanitize_string [string trim ${text}]]
+	putlog "corona: $nick $host $hand $chan $cleantext"
+	set fd [open "|${coronabin} ${cleantext}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
