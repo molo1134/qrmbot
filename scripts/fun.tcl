@@ -10,9 +10,11 @@ bind pub - !metard metard
 bind pub - !brexit brexit
 bind pub - !christmas christmas
 bind pub - !translate translate
+bind pub - !corona corona
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
+set coronabin "/home/eggdrop/bin/corona"
 set christmasbin "/home/eggdrop/bin/christmas"
 set translatebin "/home/eggdrop/bin/translate"
 
@@ -218,6 +220,17 @@ proc translate { nick host hand chan text } {
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "${line}"
+	}
+	close $fd
+}
+
+proc corona { nick host hand chan text } {
+	global coronabin
+	putlog "corona: $nick $host $hand $chan"
+	set fd [open "|${coronabin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
 	}
 	close $fd
 }
