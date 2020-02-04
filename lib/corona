@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-  
+
 # coronavirus info for qrmbot
 # written by aa4jq
 
@@ -7,6 +7,11 @@ use strict;
 use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
+
+use Cwd 'realpath';
+use File::Basename;
+use lib dirname(realpath(__FILE__));
+use Location;
 
 my @line;
 my $total;
@@ -24,31 +29,13 @@ open(HTTP, '-|', "curl -s -L --insecure '$url' | tail -1");
 
 binmode(HTTP, ":utf8");
 while ( my $line = <HTTP>) {
-
     chomp;
 
     my @fields = split /,/, $line;
     $total = commify($fields[1]);
 
-
-    print "As of " . $fields[0] . ": " . $total . " cases reported worldwide.\n";
-
-
-
+    print "As of $fields[0]: $total cases reported worldwide.\n";
 }
-
-    close(HTTP);
-
-sub commify {
-  my $num = shift;
-  my ($whole, $frac);
-  if ($num =~ /\./) {
-    ($whole, $frac) = split(/\./, $num, 2);
-    $num = $whole;
-  }
-  $num =~ s/(\d)(?=(\d{3})+(\D|$|\.\d*))/$1\,/g;
-  $num = "$num.$frac" if defined($frac);
-  return $num;
-  }
+close(HTTP);
 
 exit 0;

@@ -7,7 +7,7 @@
 package Location;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum getGeocodingAPIKey coordToElev azToNEWS);
+@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum getGeocodingAPIKey coordToElev azToNEWS commify);
 
 use utf8;
 use Math::Trig;
@@ -648,4 +648,16 @@ sub azToNEWS {
   return "NNW" if $az < 348.75;
   return "N"   if $az <= 360.0;
   return undef;
+}
+
+sub commify {
+  my $num = shift;
+  my ($whole, $frac);
+  if ($num =~ /\./) {
+    ($whole, $frac) = split(/\./, $num, 2);
+    $num = $whole;
+  }
+  $num =~ s/(\d)(?=(\d{3})+(\D|$|\.\d*))/$1\,/g;
+  $num = "$num.$frac" if defined($frac);
+  return $num;
 }

@@ -12,6 +12,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Location;
 
 my $fiat = undef;
 
@@ -264,16 +265,3 @@ print bold("$crypto$fiat"). " $trendsymbol" . $results{"price_$target"} . " $tre
 
 exit 0;
 
-
-
-sub commify {
-  my $num = shift;
-  my ($whole, $frac);
-  if ($num =~ /\./) {
-    ($whole, $frac) = split(/\./, $num, 2);
-    $num = $whole;
-  }
-  $num =~ s/(\d)(?=(\d{3})+(\D|$|\.\d*))/$1\,/g;
-  $num = "$num.$frac" if defined($frac);
-  return $num;
-}

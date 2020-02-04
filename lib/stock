@@ -26,6 +26,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Location;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
@@ -163,14 +164,3 @@ print red($pct) if not $trend;
 
 print "%) open: $open volume: $vol\n";
 
-sub commify {
-  my $num = shift;
-  my ($whole, $frac);
-  if ($num =~ /\./) {
-    ($whole, $frac) = split(/\./, $num, 2);
-    $num = $whole;
-  }
-  $num =~ s/(\d)(?=(\d{3})+(\D|$|\.\d*))/$1\,/g;
-  $num = "$num.$frac" if defined($frac);
-  return $num;
-}
