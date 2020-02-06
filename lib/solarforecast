@@ -15,7 +15,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
-use Location;
+use Util;
 
 my $url="https://services.swpc.noaa.gov/text/27-day-outlook.txt";
 

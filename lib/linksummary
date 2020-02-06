@@ -12,7 +12,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
-use Location;
+use Util;
 
 use URI::Escape;
 use Encode qw(/decode/);

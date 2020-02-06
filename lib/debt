@@ -10,7 +10,7 @@ binmode(STDOUT, ":utf8");
 use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
-use Location;
+use Util;
 
 my $url = "https://treasurydirect.gov/NP/debt/rss";
 my ($date, $public, $intra, $total);
