@@ -4,7 +4,7 @@
 #
 # Copyright 2020 /u/molo1134. All rights reserved.
 
-package Util
+package Util;
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify);
