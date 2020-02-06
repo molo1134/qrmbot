@@ -200,6 +200,8 @@ sub doPSKreporter
 	my $msg = "";
 	$msg .= "$rec{mode} " if defined $rec{mode};
 	$msg .= "$rec{sNR} dB " if defined $rec{sNR};
+	$rec{receiverLocator} = substr($rec{receiverLocator},0,6) # \
+	  if defined $rec{receiverLocator} and length($rec{receiverLocator}) > 6;
 	if (defined($rec{receiverLocator}) && defined($rec{senderLocator})) {
 	  $msg .= "($rec{receiverLocator} " .
 		  sprintf("%.0f km)",
