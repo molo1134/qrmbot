@@ -13,6 +13,7 @@ use utf8;
 use Math::Trig;
 use Math::Trig 'great_circle_distance';
 use Math::Trig 'great_circle_bearing';
+use URI::Escape;
 
 sub getGeocodingAPIKey {
   my $apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
