@@ -8,34 +8,39 @@ use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
-use Cwd 'realpath';
-use File::Basename;
-use lib dirname(realpath(__FILE__));
-use Util;
-
 my @line;
 my $total;
 my $num;
 
 if ($ARGV[0] =~ /about/i){
-    print "Returns current global coronavirus cases as reported by WHO.\n";
-    print "Data scraped and hosted at https://github.com/alext234/coronavirus-stats\n";
+    print "Returns current global coronavirus cases as reported by WHO and others.\n";
+    print "Data scraped from https://www.worldometers.info/coronavirus/\n";
     exit 0;
 }
 
-my $url = "https://raw.githubusercontent.com/alext234/coronavirus-stats/master/data/who-global-cases.csv";
+# not updating reliably
+#my $url = "https://raw.githubusercontent.com/alext234/coronavirus-stats/master/data/who-global-cases.csv";
+my $url = "https://www.worldometers.info/coronavirus/coronavirus-cases";
 
-open(HTTP, '-|', "curl -s -L --insecure '$url' | tail -1");
+open(HTTP, '-|', "lynx --dump '$url' | grep \"There are currently\"  | sed -e 's/\\[[^][]*\\]//g'");
 
 binmode(HTTP, ":utf8");
 while ( my $line = <HTTP>) {
+
     chomp;
 
-    my @fields = split /,/, $line;
-    $total = commify($fields[1]);
+    #my @fields = split /,/, $line;
+    #$total = commify($fields[1]);
+    # print "As of " . $fields[0] . ": " . $total . " cases reported worldwide.\n";
+    #
 
-    print "As of $fields[0]: $total cases reported worldwide.\n";
+    $line =~ s/^\s+//;
+    print $line;
+
+
+
 }
-close(HTTP);
+
+    close(HTTP);
 
 exit 0;
