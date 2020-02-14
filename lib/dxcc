@@ -165,7 +165,7 @@ while (<CTYDAT>) {
       $name = $lastentity[0];
       $cont = $lastentity[3];
       $lat = $lastentity[4];
-      $lon = $lastentity[5];
+      $lon = -1 * $lastentity[5]; # sign is reversed
       $tz = -1 * $lastentity[6];  # sign is reversed
 
       $dxccmap{uc $dxcc} = join('|', $length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz);
