@@ -684,8 +684,16 @@ proc msg_clublog {nick uhand handle input} {
 proc dxcc { nick host hand chan text } {
 	global dxccbin
 	set call [sanitize_string [string trim ${text}]]
+	set geo [qrz_getgeo $hand]
+
 	putlog "dxcc pub: $nick $host $hand $chan $call"
-	set fd [open "|${dxccbin} ${call}" r]
+
+	if [string equal "" $geo] then {
+		set fd [open "|${dxccbin} ${call}" r]
+	} else {
+		set fd [open "|${dxccbin} ${call} --geo $geo" r]
+	}
+
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
@@ -695,8 +703,16 @@ proc dxcc { nick host hand chan text } {
 proc msg_dxcc {nick uhand handle input} {
 	global dxccbin
 	set call [sanitize_string [string trim ${input}]]
+	set geo [qrz_getgeo $handle]
+
 	putlog "dxcc msg: $nick $uhand $handle $call"
-	set fd [open "|${dxccbin} ${call}" r]
+
+	if [string equal "" $geo] then {
+		set fd [open "|${dxccbin} ${call}" r]
+	} else {
+		set fd [open "|${dxccbin} ${call} --geo $geo" r]
+	}
+
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
