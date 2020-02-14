@@ -89,13 +89,13 @@ needed.
 6. Use geo grid for `!activity`
 7. Cleanup needed in `qrz` script
 8. Add a preferred wx station in addition to `!setgeo` geo coords
-9. Find nearest ionosonde for !muf/!muf2
+9. ~~Find nearest ionosonde for !muf/!muf2~~
 10. ~~A command to get elevation data at a location~~
 11. ~~AE7Q scraping~~
 12. If no callsign is specified with `!spots` use irc nick.
 13. Requested by K1NZ: `!untappd` for beer info -- they are not giving out API keys. :(
 14. ~~Current dxpedition list~~ by scraping https://www.ng3k.com/misc/adxo.html
-15. Replace wunderground APIs which are now dead
+15. ~~Replace wunderground APIs which are now dead~~
 
 ## Contributors
 
@@ -104,4 +104,5 @@ needed.
 * Dan VK3DAN
 * W9VFR
 * Oliver M6WRF
+* Andrew KC2G
 
