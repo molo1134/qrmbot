@@ -13,8 +13,8 @@ my $total;
 my $num;
 
 if ($ARGV[0] =~ /about/i){
-    print "Returns current global coronavirus cases as reported by WHO and others.\n";
-    print "Data scraped from https://www.worldometers.info/coronavirus/\n";
+    print "Current global coronavirus cases as reported by WHO and others.\n";
+    print "Source: https://www.worldometers.info/coronavirus/coronavirus-cases\n";
     exit 0;
 }
 
@@ -22,7 +22,7 @@ if ($ARGV[0] =~ /about/i){
 #my $url = "https://raw.githubusercontent.com/alext234/coronavirus-stats/master/data/who-global-cases.csv";
 my $url = "https://www.worldometers.info/coronavirus/coronavirus-cases";
 
-open(HTTP, '-|', "lynx --dump '$url' | grep \"There are currently\"  | sed -e 's/\\[[^][]*\\]//g'");
+open(HTTP, '-|', "elinks --dump '$url' | grep \"There are currently\"  | sed -e 's/\\[[^][]*\\]//g; s/from[ ]*\$//;'");
 
 binmode(HTTP, ":utf8");
 while ( my $line = <HTTP>) {
