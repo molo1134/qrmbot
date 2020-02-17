@@ -6,7 +6,7 @@ use POSIX;
 use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
-use Location;
+use Util;
 
 my $d1 = DateTime->now;
 my ($curryear, $currmon, $currdate) = split / /, strftime("%Y %m %d", gmtime($d1->epoch()));
