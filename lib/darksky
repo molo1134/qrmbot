@@ -47,6 +47,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Location;
+use Util;
 use Colors;
 
 our $apikey = undef;
@@ -182,9 +183,10 @@ for ($units){
 
             my $alertmsg = red("Alert");
 	    my $uri = $results{uri};
-	    $uri =~ s/x=[A-Z0-9]+\.[A-Za-z]+\.[A-F0-9]+\.[A-Z]+\./x=..../;
+	    my $shorturl = shortenUrl($uri);
+	    my $uri = $shorturl if defined $shorturl;
 
-            print "\n" . $alertmsg . ": " . $results{title} . " -> " . $uri . "\n";
+            print "$alertmsg: $results{title} -> $uri\n";
         }
 
     }
@@ -229,7 +231,6 @@ for ($units){
 
             my $alertmsg = red("Alert");
 	    my $uri = $results{uri};
-	    $uri =~ s/x=[A-Z0-9]+\.[A-Za-z]+\.[A-F0-9]+\.[A-Z]+\./x=..../;
             print "\n" . $alertmsg . ": " . $results{title} . " -> " . $uri . "\n";
 
         }
