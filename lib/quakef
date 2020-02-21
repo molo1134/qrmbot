@@ -7,19 +7,13 @@ use strict;
 use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
-use DateTime;
 
-use strict;
-use utf8;
-use feature 'unicode_strings';
-binmode(STDOUT, ":utf8");
+use DateTime;
 use URI::Escape;
+
 use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
-use Location;
-use Colors;
-use DateTime;
 
 my @line;
 my $f = 0;

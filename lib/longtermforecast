@@ -10,7 +10,6 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
-use Location;
 
 my $url = "https://services.swpc.noaa.gov/text/predicted-sunspot-radio-flux.txt";
 
