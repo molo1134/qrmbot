@@ -21,11 +21,6 @@ use Time::Piece ();
 use List::Util qw[min max];
 use POSIX qw(strftime);
 
-our $bitly_apikey=undef;
-my $bitlykeyfile = $ENV{'HOME'} . "/.bitlyapikey";
-if (-e ($bitlykeyfile)) {
-  require($bitlykeyfile);
-}
 our $imgur_key=undef;
 my $imgurfile = $ENV{'HOME'} . "/.imgurkey";
 if (-e ($imgurfile)) {
@@ -613,32 +608,6 @@ sub doHtml {
   print " $shortUrl" if defined($shortUrl) and length($shortUrl) > 0;
   print " — $desc" if defined ($desc);
   print "\n";
-}
-
-sub shortenUrl {
-  my $url = shift;
-  return undef if length($url) < 50;
-
-  my $shortUrl;
-  my $encodedUrl = uri_escape($url);
-  our $bitly_apikey;  # loaded from file
-  return undef if not defined($bitly_apikey);
-  my $rest = "https://api-ssl.bitly.com/v3/shorten?access_token=$bitly_apikey&domain=j.mp&format=txt&longUrl=$encodedUrl";
-
-  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$rest'");
-  binmode(HTTP, ":utf8");
-  while(<HTTP>) {
-    s/[\r\n]//g;
-    $shortUrl = $_;
-  }
-  close(HTTP);
-
-  # success
-  return $shortUrl if $shortUrl =~ /^http/;
-
-  # failure case
-  print "error: $shortUrl\n";
-  return undef;
 }
 
 sub doReddit {

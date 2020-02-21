@@ -7,7 +7,7 @@
 package Util;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify);
+@EXPORT = qw(decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify shortenUrl);
 
 use URI::Escape;
 use Date::Manip;
@@ -283,4 +283,36 @@ sub commify {
   $num =~ s/(\d)(?=(\d{3})+(\D|$|\.\d*))/$1\,/g;
   $num = "$num.$frac" if defined($frac);
   return $num;
+}
+
+sub shortenUrl {
+  my $url = shift;
+  return undef if length($url) < 50;
+  my $timeout = 4;	# max 4 seconds
+
+  our $bitly_apikey=undef;
+  my $bitlykeyfile = $ENV{'HOME'} . "/.bitlyapikey";
+  if (-e ($bitlykeyfile)) {
+    require($bitlykeyfile);
+  }
+  return undef if not defined($bitly_apikey);
+
+  my $shortUrl;
+  my $encodedUrl = uri_escape($url);
+  my $rest = "https://api-ssl.bitly.com/v3/shorten?access_token=$bitly_apikey&domain=j.mp&format=txt&longUrl=$encodedUrl";
+
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$rest'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    s/[\r\n]//g;
+    $shortUrl = $_;
+  }
+  close(HTTP);
+
+  # success
+  return $shortUrl if $shortUrl =~ /^http/;
+
+  # failure case
+  print "error: $shortUrl\n";
+  return undef;
 }
