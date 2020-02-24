@@ -297,15 +297,19 @@ sub shortenUrl {
   }
   return undef if not defined($bitly_apikey);
 
-  my $shortUrl;
-  my $encodedUrl = uri_escape($url);
-  my $rest = "https://api-ssl.bitly.com/v3/shorten?access_token=$bitly_apikey&domain=j.mp&format=txt&longUrl=$encodedUrl";
+  my $shortUrl = undef;
+  my $requestdoc = "{\n\"domain\":\"j.mp\",\n\"long_url\":\"$url\"\n}\n";
+  my $rest = "https://api-ssl.bitly.com/v4/shorten";
 
-  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$rest'");
+  open(HTTP, '-|',
+	  "curl --max-time $timeout -L -k -s " .
+	  "-H 'Content-Type: application/json' " .
+	  "-H 'Authorization: Bearer $bitly_apikey' " .
+	  "--data '$requestdoc' ".
+	  "'$rest'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
-    s/[\r\n]//g;
-    $shortUrl = $_;
+    $shortUrl = $1 if /"link":\s*"(.*?)"/;
   }
   close(HTTP);
 
