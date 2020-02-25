@@ -11,12 +11,14 @@ bind pub - !brexit brexit
 bind pub - !christmas christmas
 bind pub - !translate translate
 bind pub - !corona corona
+bind pub - !primaries primaries
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
 set coronabin "/home/eggdrop/bin/corona"
 set christmasbin "/home/eggdrop/bin/christmas"
 set translatebin "/home/eggdrop/bin/translate"
+set primariesbin "/home/eggdrop/bin/primaries"
 
 # load utility methods
 source scripts/util.tcl
@@ -235,6 +237,19 @@ proc corona { nick host hand chan text } {
 	}
 	close $fd
 }
+
+proc primaries { nick host hand chan text } {
+	global primariesbin
+	set cleantext [sanitize_string [string trim ${text}]]
+	putlog "primaries: $nick $host $hand $chan $cleantext"
+	set fd [open "|${primariesbin} ${cleantext}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
 
 
 putlog "fun.tcl loaded."
