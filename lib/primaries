@@ -45,7 +45,7 @@ while(<HTTP>) {
 }
 close(HTTP);
 
-if (scalar %estimate == 0) {
+if (scalar keys %estimate == 0) {
   print "error: no data\n";
   exit 0;
 }
@@ -59,6 +59,6 @@ foreach my $name (sort { $estimate{$b} <=> $estimate{$a} } keys %estimate) {
   print bold($str) if $i == 0;
   print $str if $i != 0;
   $i++;
-  print " -- " if $i != scalar %estimate;
+  print " -- " if $i != scalar keys %estimate;
 }
 print "\n";
