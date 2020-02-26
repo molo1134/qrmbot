@@ -17,8 +17,12 @@ if ($ARGV[0] =~ /about/i){
 # not updating reliably
 #my $url = "https://raw.githubusercontent.com/alext234/coronavirus-stats/master/data/who-global-cases.csv";
 my $url = "https://www.worldometers.info/coronavirus/coronavirus-cases";
+my $params = 
+	"-eval 'set connection.receive_timeout = 10' " .
+	"-eval 'set connection.retries = 1' " .
+	"--dump";
 
-open(HTTP, '-|', "elinks --dump '$url'");
+open(HTTP, '-|', "elinks $params '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   s/^\s*//;
