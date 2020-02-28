@@ -38,13 +38,11 @@ our $apikey = undef;
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
+my $quote;
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  if ($username eq 'eggdrop') {
-    print "usage: !stock <symbol>\n";
-  } else {
-    print "usage: $0 <symbol>\n";
-  }
-  exit $exitnonzeroonerror;
+  $quote = "DJIA";
+} else {
+  $quote = $ARGV[0];
 }
 
 my $apikeyfile = $ENV{'HOME'} . "/.alphavantage";
@@ -54,8 +52,6 @@ if (-e ($apikeyfile)) {
   die "error: unable to read file $apikeyfile"
 }
 die "error: no API key set" unless defined($apikey);
-
-my $quote = $ARGV[0];
 
 # The AlphaVantage API outputs the following fields for point-in-time quotes:
 #
