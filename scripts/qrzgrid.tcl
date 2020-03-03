@@ -169,7 +169,6 @@ set unmorsebin "/home/eggdrop/bin/unmorse"
 set repeaterbin "/home/eggdrop/bin/repeater"
 set aprsbin "/home/eggdrop/bin/aprs"
 set mufbin "/home/eggdrop/bin/muf"
-set muf2bin "/home/eggdrop/bin/muf2"
 set ionobin "/home/eggdrop/bin/iono"
 set astrobin "/home/eggdrop/bin/astro"
 set satbin "/home/eggdrop/bin/sat"
@@ -1264,31 +1263,14 @@ proc muf_msg {nick uhand handle input} {
 }
 
 proc muf2_pub { nick host hand chan text } {
-	global muf2bin
 	set params [sanitize_string [string trim ${text}]]
 	putlog "muf2 pub: $nick $host $hand $chan $params"
-	set fd [open "|${muf2bin} ${params}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		# list via msg
-		if [string equal "list" $params] then {
-			putmsg $nick "$line"
-		} else {
-			putchan $chan "$line"
-		}
-	}
-	close $fd
+	putchan $chan "$nick: please use !muf"
 }
 proc muf2_msg {nick uhand handle input} {
-	global muf2bin
 	set params [sanitize_string [string trim ${input}]]
 	putlog "muf2 msg: $nick $uhand $handle $params"
-	set fd [open "|${muf2bin} ${params}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
-	}
-	close $fd
+	putmsg $nick "please use !muf"
 }
 
 proc eme_pub { nick host hand chan text } {
