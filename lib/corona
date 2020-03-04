@@ -58,4 +58,4 @@ close(HTTP);
 my $pct = sprintf("%0.1f", ($d/($d+$r)*100.0));
 print "As of $date, there are ", commify($c), " confirmed cases and ",
   commify($d), " deaths, with ", commify($r),
-  " recovered. Death rate $pct% of resolved cases.\n"
+  " recovered. Death rate $pct% of resolved cases.\n";
