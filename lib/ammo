@@ -1,0 +1,80 @@
+#!/usr/bin/perl
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+
+my $baseurl="http://www.gunbot.net/ammo.php?cat1=x&cat2=x&cat3=";
+
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !ammo <type> [count]\n";
+  } else {
+    print "usage: $0 <type> [count]\n";
+  }
+  exit 0;
+}
+
+my %cat3map = (
+  ".22" => "22short",
+  ".22lr" => "22lr",
+  ".223" => "223",
+  "5.56" => "556",
+  "5,56" => "556",
+  "762x39" => "762x39",
+  "7.62x39" => "762x39",
+  "7,62x39" => "762x39",
+  ".40" => "40sw",
+  "40" => "40sw",
+  ".40S&W" => "40sw",
+  ".45" => "45acp",
+  "45" => "45acp",
+  ".45ACP" => "45acp",
+  "hipsterpistol" => "10mm",
+  "better308" => "65creedmoor",
+  "fivedolla" => "338lapua",
+);
+
+my $type = $ARGV[0];
+my $cat3 = $cat3map{lc $type};
+$cat3 = $type if not defined $cat3;
+
+my $url = $baseurl . $cat3;
+
+my $count = 10;
+if ($username eq 'eggdrop') {
+  $count = 1;
+}
+
+if (defined $ARGV[1]) {
+  $count = $ARGV[1];
+}
+$count = 10 if $count > 10 and $username eq 'eggdrop';
+
+open(HTTP, '-|', "curl --max-time 10 -s -k -L -H 'Cookie: gbsort=price; gbview2=1; gbview3=1;' '$url' | sed -e 's/tr><tr/tr>\\n<tr/g'");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+  #<tr class="hilite"><td><a href='/go/171269' target="_blank" rel="nofollow">9mm 9x19 Ammo 147gr FMJ Speer Lawman (53620) 50 Round Box</a></td><td></td><td>[$15.59]</td><td><font style="color: #008000">in stock</font></td><td>SelfDefense</td><td> [Ammunition Store]</td></tr>
+  #<tr class="hilite"><td><a href='/go/135428' target="_blank" rel="nofollow">9mm S&B 115gr FMJ Ammo, 1000rd case.</a></td><td> $<font color='red'>0.19</font>/rd</td><td>[$189.90]</td><td><font style="color: #008000">in stock</font></td><td>FMJ</td><td> [J&G Sales]</td></tr>
+  #<tr class="hilite"><td><a href='/go/173343' target="_blank" rel="nofollow">9mm S&B 124gr FMJ Ammo, 1000rd case.</a></td><td> $<font color='red'>0.19</font>/rd</td><td>[$189.90]</td><td><font style="color: #008000">in stock</font></td><td>FMJ</td><td> [J&G Sales]</td></tr>
+  #if (m|<tr.*href='(/go/\d+)'.*?>(.*?)</a>.*?<td> \$(<font color='red'>)?([0-9.]+)(</font>)?/rd</td><td>\[\$([0-9.]+)</td><td>.*?<td>(.*?)</td><td> \[(.*?)\]</td>|) {
+  if (m|<tr.*href='(/go/\d+)'.*?>(.*?)</a>.*?<td> \$(<font color='red'>)?([0-9.]+)(</font>)?/rd</td><td>\[\$([0-9.]+)\]</td><td>.*?in stock.*?<td>(.*?)</td><td> \[(.*?)\]</td>|) {
+    my ($url, $desc, $perrnd, $perbox, $type, $vendor) = ($1, $2, $4, $6, $7, $8);
+    $url = "http://gunbot.net" . $url;
+    $type = "?" if $type eq "";
+    $count--;
+    print bold("[$vendor]"), " $desc [$type] ", red("\$$perrnd/rd"), " (\$$perbox) $url\n" if $count >= 0;
+  }
+
+}
+close(HTTP);
