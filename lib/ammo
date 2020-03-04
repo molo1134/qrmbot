@@ -26,26 +26,48 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 }
 
 my %cat3map = (
-  ".22" => "22short",
-  ".22lr" => "22lr",
-  ".223" => "223",
-  "5.56" => "556",
-  "5,56" => "556",
-  "762x39" => "762x39",
-  "7.62x39" => "762x39",
-  "7,62x39" => "762x39",
-  ".40" => "40sw",
+  "22" => "22short",
+  "25acp" => "25auto",
+  "32acp" => "32auto",
+  "327" => "327fedmag",
+  "327fed" => "327fedmag",
+  "38sp+p" => "38special",
+  "38sp" => "38special",
   "40" => "40sw",
-  ".40S&W" => "40sw",
-  ".45" => "45acp",
+  "41" => "41remmag",
+  "41rem" => "41remmag",
+  "44sp" => "44special",
   "45" => "45acp",
-  ".45ACP" => "45acp",
   "hipsterpistol" => "10mm",
   "better308" => "65creedmoor",
   "fivedolla" => "338lapua",
+  "17rem" => "17remington",
+  "222rem" => "222",
+  "243win" => "243",
+  "30-06" => "3006",
+  "30-30" => "3030",
+  "300aac" => "300blackout",
+  "300rem" => "300saum",
+  "300win" => "300winmag",
+  "308/762" => "308",
+  "308-762" => "308",
+  "308762" => "308",
+  "32win" => "32winspc",
+  "338win" => "338win",
+  "44-40" => "4440",
+  "6.5swedish" => "65x55swedish",
+  "65x55" => "65x55swedish",
+  "762x54r" => "762x54",
+  "7mmmauser" => "7x57mm",
+  "7mm-mauser" => "7x57mm",
+  "7mmrem" => "7mmremmag",
+  "7mm-08" => "7mm08",
+  "8mmmauser" => "8mm-mauser",
+  "8mm" => "8mm-mauser",
 );
 
 my $type = $ARGV[0];
+$type =~ s/[\.,&]//g;
 my $cat3 = $cat3map{lc $type};
 $cat3 = $type if not defined $cat3;
 
@@ -56,7 +78,7 @@ if ($username eq 'eggdrop') {
   $count = 1;
 }
 
-if (defined $ARGV[1]) {
+if (defined $ARGV[1] and isNumeric($ARGV[1])) {
   $count = $ARGV[1];
 }
 $count = 10 if $count > 10 and $username eq 'eggdrop';
@@ -78,3 +100,6 @@ while (<HTTP>) {
 
 }
 close(HTTP);
+
+print "no matches: $type\n" if $count != 0;
+exit 0;
