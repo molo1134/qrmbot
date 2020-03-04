@@ -9,6 +9,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Util;
 
 my $baseurl="http://www.gunbot.net/ammo.php?cat1=x&cat2=x&cat3=";
 
@@ -101,5 +102,5 @@ while (<HTTP>) {
 }
 close(HTTP);
 
-print "no matches: $type\n" if $count != 0;
+print "no further matches: $type\n" if $count > 0;
 exit 0;
