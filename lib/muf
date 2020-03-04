@@ -15,6 +15,7 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 use Location;
+use Util;
 
 my $timeout = 20;	# 20 seconds
 
@@ -258,13 +259,4 @@ if ($last > 0) {
 }
 
 exit 0;
-
-sub isNumeric {
-  my $val = shift;
-  if ( defined $val ) {
-    return $val =~ /^-?[0-9]+\.?[0-9]*$/ ? 1 : 0;
-  } else {
-    warn "isNumeric requires an argument!";
-  }
-}
 

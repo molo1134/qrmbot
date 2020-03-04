@@ -7,7 +7,7 @@
 package Util;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify shortenUrl);
+@EXPORT = qw(decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify shortenUrl isNumeric);
 
 use URI::Escape;
 use Date::Manip;
@@ -319,4 +319,13 @@ sub shortenUrl {
   # failure case
   print "error: $shortUrl\n";
   return undef;
+}
+
+sub isNumeric {
+  my $val = shift;
+  if ( defined $val ) {
+    return $val =~ /^-?[0-9]+\.?[0-9]*$/ ? 1 : 0;
+  } else {
+    warn "isNumeric requires an argument!";
+  }
 }
