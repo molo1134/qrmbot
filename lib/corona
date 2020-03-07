@@ -46,8 +46,9 @@ if ($#interest >= 0) {
   open(HTTP, '-|', "curl -s -k '$url' | sed -e 's|</tr>|</tr>\\n|g;'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
-    if (m|padding-left:3px;"> (.*?) </td>.*?align:right">\s*([0-9,]*)\s*</td>.*?align:right;">\s*([0-9,]*)\s*</td>.*?font-weight:bold;">\s*([0-9,]*)\s*</td>.*? text-align:right">\s*([0-9,]*)\s*</td.*?text-align:right">\s*([0-9,]*)\s*</td>\s*</tr>|) {
-      my ($cty, $cty_total, $cty_deaths, $cty_active, $cty_recovered, $cty_serious) = ($1, $2, $3, $4, $5, $6);
+    if (m|padding-left:3px;">\s*(.*?)\s*</td>.*?align:right;?">\s*([0-9,]*)\s*</td>.*?align:right;?">\s*([0-9,]*)\s*</td>.*?text-align:right;?">\s*([0-9,]*)\s*</td>.*?font-weight:bold;">\s*([0-9,]+)\s*</td>.*?text-align:right;?">\s*([0-9,]*)\s*</td|) {
+      my ($cty, $cty_total, $cty_deaths, $cty_recovered, $cty_active, $cty_serious) = ($1, $2, $3, $4, $5, $6);
+      #print "1:$1 2:$2 3:$3 4:$4 5:$5 6:$6\n";
       $cty =~ s/ //g;
       $cty_deaths = 0 if not defined $cty_deaths or $cty_deaths eq "";
       $cty_recovered = 0 if not defined $cty_recovered or $cty_recovered eq "";
