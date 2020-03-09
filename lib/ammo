@@ -55,6 +55,7 @@ my %cat3map = (
   "308762" => "308",
   "32win" => "32winspc",
   "338win" => "338win",
+  "338lm" => "338lapua",
   "44-40" => "4440",
   "6.5swedish" => "65x55swedish",
   "65x55" => "65x55swedish",
