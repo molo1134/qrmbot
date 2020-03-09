@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # Report cryptocurrency prices.  2-clause BSD license.
 
-# Copyright 2018 /u/molo1134. All rights reserved.
+# Copyright 2020 /u/molo1134. All rights reserved.
 
 use strict;
 use utf8;
@@ -13,6 +13,15 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 use Util;
+
+our $coinmarketcapkey = undef;
+my $coinmarketcapfile = $ENV{'HOME'} . "/.coinmarketcapkey";
+if (-e ($coinmarketcapfile)) {
+  require($coinmarketcapfile);
+}
+
+print "error: unable to get api key from $coinmarketcapfile\n" if not defined $coinmarketcapkey;
+exit 1 if not defined $coinmarketcapkey;
 
 my $fiat = undef;
 
@@ -35,219 +44,35 @@ while ($i <= $#ARGV) {
 $crypto = "BTC" unless defined($crypto);
 $fiat = "USD" unless defined($fiat);
 
-# list comes from here: https://api.coinmarketcap.com/v1/ticker/
-my %ids = (
-  "ABBC" => "abbc-coin",
-  "ADA" => "cardano",
-  "ADX" => "adx-net",
-  "AE" => "aeternity",
-  "AGI" => "singularitynet",
-  "AION" => "aion",
-  "AOA" => "aurora",
-  "ARDR" => "ardor",
-  "ARK" => "ark",
-  "ATM" => "attention-token-of-media",
-  "B3" => "b3coin",
-  "BAT" => "basic-attention-token",
-  "BAY" => "bitbay",
-  "BCC" => "bitconnect",
-  "BCD" => "bitcoin-diamond",
-  "BCH" => "bitcoin-cash",
-  "BCN" => "bytecoin-bcn",
-  "BDL" => "bitdeal",
-  "BIX" => "bibox-token",
-  "BLOCK" => "blocknet",
-  "BNB" => "binance-coin",
-  "BNT" => "bancor",
-  "BQX" => "bitquence",
-  "BSV" => "bitcoin-sv",
-  "BTC" => "bitcoin",
-  "BTCD" => "bitcoindark",
-  "BTG" => "bitcoin-gold",
-  "BTM" => "bytom",
-  "BTS" => "bitshares",
-  "BTT" => "bittorrent",
-  "BTX" => "bitcore",
-  "CND" => "cindicator",
-  "CNX" => "cryptonex",
-  "CRO" => "crypto-com-chain",
-  "CVC" => "civic",
-  "DAI" => "dai",
-  "DASH" => "dash",
-  "DCN" => "dentacoin",
-  "DCR" => "decred",
-  "DENT" => "dent",
-  "DGB" => "digibyte",
-  "DGD" => "digixdao",
-  "DGTX" => "digitex-futures",
-  "DOGE" => "dogecoin",
-  "DRGN" => "dragonchain",
-  "EDG" => "edgeless",
-  "ELA" => "elastos",
-  "ELF" => "aelf",
-  "EMC" => "emercoin",
-  "ENG" => "enigma-project",
-  "ENJ" => "enjin-coin",
-  "EOS" => "eos",
-  "ETC" => "ethereum-classic",
-  "ETH" => "ethereum",
-  "ETHOS" => "ethos",
-  "ETN" => "electroneum",
-  "ETP" => "metaverse",
-  "FAIR" => "faircoin",
-  "FCT" => "factom",
-  "FUN" => "funfair",
-  "GAME" => "gamecredits",
-  "GAS" => "gas",
-  "GBYTE" => "byteball",
-  "GNO" => "gnosis-gno",
-  "GNT" => "golem-network-tokens",
-  "GUSD" => "gemini-dollar",
-  "GXC" => "gxchain",
-  "GXS" => "gxshares",
-  "HC" => "hypercash",
-  "HOT" => "holo",
-  "HSR" => "hshare",
-  "HT" => "huobi-token",
-  "ICN" => "iconomi",
-  "ICX" => "icon",
-  "IGNIS" => "ignis",
-  "INB" => "insight-chain",
-  "IOST" => "iostoken",
-  "KCS" => "kucoin-shares",
-  "KIN" => "kin",
-  "KMD" => "komodo",
-  "KNC" => "kyber-network",
-  "LINK" => "chainlink",
-  "LKK" => "lykke",
-  "LOOM" => "loom-network",
-  "LRC" => "loopring",
-  "LSK" => "lisk",
-  "LTC" => "litecoin",
-  "MAID" => "maidsafecoin",
-  "MANA" => "decentraland",
-  "MCO" => "crypto-com",
-  "MCO" => "monaco",
-  "MGO" => "mobilego",
-  "MIOTA" => "iota",
-  "MKR" => "maker",
-  "MONA" => "monacoin",
-  "MTL" => "metal",
-  "MXM" => "maximine-coin",
-  "NANO" => "nano",
-  "NAS" => "nebulas-token",
-  "NAV" => "nav-coin",
-  "NEBL" => "neblio",
-  "NEO" => "neo",
-  "NPXS" => "pundi-x",
-  "NULS" => "nuls",
-  "NXS" => "nexus",
-  "NXT" => "nxt",
-  "OMG" => "omisego",
-  "ONT" => "ontology",
-  "OTN" => "open-trading-network",
-  "PAI" => "project-pai",
-  "PART" => "particl",
-  "PAX" => "paxos-standard-token",
-  "PAY" => "tenx",
-  "PIVX" => "pivx",
-  "PLR" => "pillar",
-  "POWR" => "power-ledger",
-  "PPT" => "populous",
-  "PURA" => "pura",
-  "QASH" => "qash",
-  "QBIT" => "qubitica",
-  "QSP" => "quantstamp",
-  "QTUM" => "qtum",
-  "RCN" => "ripio-credit-network",
-  "RDD" => "reddcoin",
-  "RDN" => "raiden-network-token",
-  "REP" => "augur",
-  "REQ" => "request-network",
-  "RHOC" => "rchain",
-  "R" => "revain",
-  "RVN" => "ravencoin",
-  "SALT" => "salt",
-  "SC" => "siacoin",
-  "SMART" => "smartcash",
-  "SNGLS" => "singulardtv",
-  "SNT" => "status",
-  "STEEM" => "steem",
-  "STORJ" => "storj",
-  "STRAT" => "stratis",
-  "SYS" => "syscoin",
-  "THETA" => "theta",
-  "THR" => "thorecoin",
-  "TRX" => "tron",
-  "TUSD" => "trueusd",
-  "UBQ" => "ubiq",
-  "USDC" => "usd-coin",
-  "USDT" => "tether",
-  "VEN" => "vechain",
-  "VERI" => "veritaseum",
-  "VET" => "vechain",
-  "VTC" => "vertcoin",
-  "WAVES" => "waves",
-  "WAX" => "wax",
-  "WTC" => "walton",
-  "WTC" => "waltonchain",
-  "XEM" => "nem",
-  "XIN" => "mixin",
-  "XLM" => "stellar",
-  "XMR" => "monero",
-  "XRB" => "raiblocks",
-  "XRP" => "ripple",
-  "XTZ" => "tezos",
-  "XVG" => "verge",
-  "XZC" => "zcoin",
-  "ZCL" => "zclassic",
-  "ZEC" => "zcash",
-  "ZEN" => "zencash",
-  "ZIL" => "zilliqa",
-  "ZRX" => "0x",
-  "ZSC" => "zeusshield",
-);
-
-my $id = $ids{$crypto};
-
-if (!defined($id)) {
-  print "undefined crypto: $crypto\n";
-  exit 0;
-}
-
 # example: https://api.coinmarketcap.com/v1/ticker/bitcoin/?convert=USD
 #my $url = "https://api.coinmarketcap.com/v1/ticker/$id/?convert=$fiat";
-my $url = "https://app-oa25k.lamp.app/phpproxy/coinmarketcap-proxy.php?id=$id&fiat=$fiat";
+#my $url = "https://app-oa25k.lamp.app/phpproxy/coinmarketcap-proxy.php?id=$id&fiat=$fiat";
+my $url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?CMC_PRO_API_KEY=$coinmarketcapkey&symbol=$crypto&convert=$fiat";
 my %results;
 
 #print "$url\n";
-open(HTTP, '-|', "curl --max-time 5 -s -k -L '$url'");
+open(HTTP, '-|', "curl --max-time 5 -s -k -L -H 'Accept: application/json' '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
-  #print;
-  chomp;
-  if (/Bad gateway/i) {
-    print "Bad gateway (502)\n";
-    exit 0;
-  }
-  if (/Access denied/i) {
-    print "Access denied.\n";
-    exit 0;
-  }
+#  print;
   if (/"(\w+)":\s*"?(.*?)"?,?\s*$/) {
     my ($key, $value) = ($1, $2);
     $results{$key} = $value;
     #print "$key :: $value\n";
+    if ($key eq "error_message" and $value ne "null") {
+      print "error: $value\n";
+      exit 0;
+    }
   }
 }
 close(HTTP);
 
 my $target = lc($fiat);
 
-my $volume = commify(int($results{"24h_volume_$target"}));
-my $qty = int ($results{"24h_volume_$target"} / $results{"price_$target"}) || 0;
-$results{"price_$target"} = commify($results{"price_$target"}) if defined($results{"price_$target"});
-$results{volume_btc} = commify($results{volume_btc}) if defined($results{volume_btc});
+my $volume = commify(int($results{"volume_24h"}));
+my $mktcap = commify(int($results{"market_cap"}));
+my $qty = int ($results{"volume_24h"} / $results{"price"}) || 0;
+$results{"price"} = commify($results{"price"}) if defined($results{"price"});
 
 my $trendsymbol;
 my $trend = $results{percent_change_24h};
@@ -260,8 +85,7 @@ if ($trend < 0) {
   $trend = green("+$trend");
 }
 
-print bold("$crypto$fiat"). " $trendsymbol" . $results{"price_$target"} . " $trend% qty $qty $crypto/24h ($volume $fiat/24h)\n";
-#print "$crypto$fiat $results{"price_$target"} qty $results{volume_btc} BTC/24h ($volume $currency/24h)\n";
+print bold("$crypto$fiat"). " $trendsymbol" . $results{"price"} . " $trend% qty $qty $crypto/24h ($volume $fiat/24h) MktCap $mktcap $fiat\n";
 
 exit 0;
 
