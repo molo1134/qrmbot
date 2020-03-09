@@ -54,8 +54,9 @@ printf "SN:  %s : $minsn-$maxsn\n", join("", snToColorBlocks($minsn, $maxsn, \%s
 
 
 my $currmonth = lc strftime("%b%Y", gmtime time);
-my $curryear = strftime("%Y", gmtime time);
+my $prevmonth = lc strftime("%b%Y", gmtime time - 30*24*60*60);
 $url = "https://www.nasa.gov/sites/default/files/atoms/files/${currmonth}f10_prd.txt";
+my $url2 = "https://www.nasa.gov/sites/default/files/atoms/files/${prevmonth}f10_prd.txt";
 my (%sfi, %ap);
 $maxsfi = -1.0;
 $minsfi = 10000000.0;
@@ -65,7 +66,7 @@ $count = 0;
 $firstmonth = undef;
 my $firstyear = undef;
 
-open (HTTP, '-|', "curl -L -k -s $url");
+open (HTTP, '-|', "curl -L -k -s -f $url $url2");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   if (/^\s*20/) {
