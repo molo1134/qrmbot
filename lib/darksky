@@ -75,8 +75,7 @@ while ($i <= $#ARGV) {
 }
 
 if ($ARGV[0] =~ /about/i){
-    print "Weather: Powered by Dark Sky.\n";
-    print "https://darksky.net/poweredby/\n";
+    print "Weather: Powered by Dark Sky. https://darksky.net/poweredby/\n";
     exit 0;
 }
 
