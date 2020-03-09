@@ -12,6 +12,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Util;
+use Colors;
 
 # disable "experimental" warning on smart match operator use
 no if $] >= 5.018, warnings => "experimental::smartmatch";
@@ -46,16 +47,19 @@ if ($#interest >= 0) {
   open(HTTP, '-|', "curl -s -k '$url' | sed -e 's|</tr>|</tr>\\n|g;'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
-    if (m|padding-left:3px;">\s*(.*?)\s*</td>.*?align:right;?">\s*([0-9,]*)\s*</td>.*?align:right;?">\s*([0-9,]*)\s*</td>.*?text-align:right;?">\s*([0-9,]*)\s*</td>.*?font-weight:bold;">\s*([0-9,]+)\s*</td>.*?text-align:right;?">\s*([0-9,]*)\s*</td|) {
-      my ($cty, $cty_total, $cty_deaths, $cty_recovered, $cty_active, $cty_serious) = ($1, $2, $3, $4, $5, $6);
-      #print "1:$1 2:$2 3:$3 4:$4 5:$5 6:$6\n";
+#   print if m|</tr>| and m/USA/;
+    if (m|<tr.*?>\s*([A-Za-z.]+ ?[ A-Za-z.]*)\s*<.*?align:right;?">\s*([0-9,]*)\s*</td>.*?>\s*(\+[0-9,]+)?\s*</td>.*?align:right;?">\s*([0-9,]*)\s*</td>.*?>\s*(\+[0-9,]+)?\s*</td.*?text-align:right;?">\s*([0-9,]*)\s*</td>.*?font-weight:bold;">\s*([0-9,]+)\s*</td>.*?text-align:right;?">\s*([0-9,]*)\s*</td|) {
+#     print "1:$1 2:$2 3:$3 4:$4 5:$5 6:$6 7:$7 8:$8 9:$9 10:$10\n" if $1 eq "USA";
+      my ($cty, $cty_total, $cty_newcases, $cty_deaths, $cty_newdeaths, $cty_recovered, $cty_active, $cty_serious) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
       $cty =~ s/ //g;
       $cty_deaths = 0 if not defined $cty_deaths or $cty_deaths eq "";
       $cty_recovered = 0 if not defined $cty_recovered or $cty_recovered eq "";
       $cty_serious = 0 if not defined $cty_serious or $cty_serious eq "";
       if ( lc $cty ~~ @interest ) {
 	print "$cty: $cty_total confirmed cases and $cty_deaths deaths";
-	print ", with $cty_recovered recovered." if $cty_recovered > 0;
+	print "; ", yellow("$cty_newcases"), " new cases" if $cty_newcases ne "";
+	print "; ", red("$cty_newdeaths"), " new deaths" if $cty_newdeaths ne "";
+	print "; $cty_recovered total recovered." if $cty_recovered > 0;
 	print("\n");
 	$found = 1;
       }
