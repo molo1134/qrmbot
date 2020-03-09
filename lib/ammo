@@ -38,6 +38,7 @@ my %cat3map = (
   "38sp+p" => "38special",
   "38sp" => "38special",
   "380" => "380acp",
+  "380auto" => "380acp",
   "40" => "40sw",
   "41" => "41remmag",
   "41rem" => "41remmag",
