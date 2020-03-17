@@ -43,6 +43,14 @@ while ($i <= $#ARGV) {
 
   $ARGV[$i] =~ s/'//g; # sanitize
 
+  if ($ARGV[$i] =~ m|^https?://[^/]*?/amp/|i) {
+    my $deamped = deamp($ARGV[$i]);
+    if (defined ($deamped)) {
+      print "⚡", yellow("DeAmped"), ": $deamped\n";
+      $ARGV[$i] = $deamped;
+    }
+  }
+
   if ($ARGV[$i] =~ m|^https?://(www\.\|m\.)?youtube\.com/watch\?v=([\w-]+)|i) {
     printYouTubeMetaData($2);
   } elsif ($ARGV[$i] =~ m|^https?://youtu\.be/([\w-]+)|i) {
@@ -1276,4 +1284,17 @@ sub unescape {
 sub uniq {
   my %seen;
   grep !$seen{$_}++, @_;
+}
+
+sub deamp {
+  my $url = shift;
+  my $deamped;
+  open (HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  while (<HTTP>) {
+    if (m|<link\s+rel="canonical"\s+href="(.*?)"\s*/>|i) {
+      $deamped = $1;
+    }
+  }
+  close(HTTP);
+  return $deamped;
 }
