@@ -69,7 +69,7 @@ if ($#interest >= 0) {
       $cty_serious = 0 if not defined $cty_serious or $cty_serious eq "";
       if ( lc $cty ~~ @interest ) {
 	print bold($cty), ": ", yellow($cty_total), " confirmed cases and ",
-	  red($cty_deaths), ", deaths";
+	  red($cty_deaths), " deaths";
 	print "; ", yellow("$cty_newcases"), " new cases" if $cty_newcases ne "";
 	print "; ", red("$cty_newdeaths"), " new deaths" if $cty_newdeaths ne "";
 	print "; ", lightblue($cty_recovered), " total recovered." if $cty_recovered > 0;
