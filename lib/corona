@@ -27,10 +27,22 @@ if ($ARGV[0] =~ /about/i){
 @ARGV=split(' ', join(' ',@ARGV));
 
 my @interest;
+my @states;
+
+my @statesandterritories = ("AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE",
+  "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA",
+  "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND",
+  "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA",
+  "WV", "WI", "WY", "DC", "GU", "AS", "MP", "PR", "VI", "UM", "FM", "MH", "PW",
+  "AA", "AE", "AP");
 
 my $i = 0;
 while ($i <= $#ARGV) {
-  push @interest, lc $ARGV[$i];
+  if ($ARGV[$i] =~ /^[A-Z][A-Z]$/i and uc $ARGV[$i] ~~ @statesandterritories) {
+    push @states, uc $ARGV[$i];
+  } else {
+    push @interest, lc $ARGV[$i];
+  }
   $i++;
 }
 
@@ -56,11 +68,31 @@ if ($#interest >= 0) {
       $cty_recovered = 0 if not defined $cty_recovered or $cty_recovered eq "";
       $cty_serious = 0 if not defined $cty_serious or $cty_serious eq "";
       if ( lc $cty ~~ @interest ) {
-	print "$cty: $cty_total confirmed cases and $cty_deaths deaths";
+	print bold($cty), ": $cty_total confirmed cases and $cty_deaths deaths";
 	print "; ", yellow("$cty_newcases"), " new cases" if $cty_newcases ne "";
 	print "; ", red("$cty_newdeaths"), " new deaths" if $cty_newdeaths ne "";
 	print "; $cty_recovered total recovered." if $cty_recovered > 0;
 	print("\n");
+	$found = 1;
+      }
+    }
+  }
+  close(HTTP);
+  print "not found\n" if $found == 0;
+  exit 0 if ($#states == -1);
+}
+
+if ($#states >= 0) {
+  my $url = "https://covidtracking.com/api/states";
+  my $found = 0;
+  open(HTTP, '-|', "curl -s -k '$url' | sed -e 's/},{/},\\n{/g'");
+  binmode(HTTP, ":utf8");
+  while (<HTTP>) {
+    if (/"state":"([A-Z]{2})","positive":(\d+),"negative":(\d+|null),"pending":(\d+|null),"death":(\d+|null),/) {
+      if ( uc $1 ~~ @states ) {
+	print "State ", bold($1)," Covid19 tests: positive: ", yellow($2), ", negative: ", green($3);
+	print ", pending: $4" if $4 ne "null" and $4 > 0;
+	print ", deaths: ", red($5), "\n";
 	$found = 1;
       }
     }
@@ -99,7 +131,7 @@ while (<HTTP>) {
 close(HTTP);
 
 my $pct = sprintf("%0.1f", ($d/($d+$r)*100.0));
-print "As of $date, there are ", commify($c), " confirmed cases and ",
-  commify($d), " deaths, with ", commify($r),
-  " recovered. Death rate $pct% of resolved cases.\n";
+print "As of $date, there are ", yellow(commify($c)), " confirmed cases and ",
+  red(commify($d)), " deaths, with ", lightblue(commify($r)),
+  " recovered. Death rate ", red("$pct%"), " of resolved cases.\n";
 exit 0;
