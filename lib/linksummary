@@ -42,12 +42,14 @@ my $i = 0;
 while ($i <= $#ARGV) {
 
   $ARGV[$i] =~ s/'//g; # sanitize
+  our $deamped = 0;
 
   if ($ARGV[$i] =~ m|^https?://[^/]*?/amp/|i) {
     my $deamped = deamp($ARGV[$i]);
     if (defined ($deamped)) {
-      print "⚡", yellow("DeAmped"), ": $deamped\n";
+      print "⚡", yellow("DeAmped"), ": ";
       $ARGV[$i] = $deamped;
+      $deamped = 1;
     }
   }
 
@@ -598,8 +600,9 @@ sub doHtml {
   #print "title: $title\n";
   #print "desc: $desc\n";
 
+  our $deamped;
   $shortUrl = shortenUrl($url)
-	if not defined($shortUrl) or length($shortUrl) > 50;
+	if not defined($shortUrl) or length($shortUrl) > 50 or $deamped == 1;
 
   return if not defined($title) and not defined($desc) and not defined($shortUrl);
 
