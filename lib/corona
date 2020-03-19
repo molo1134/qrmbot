@@ -56,14 +56,75 @@ my $params =
 
 if ($#interest >= 0) {
   my $found = 0;
-  open(HTTP, '-|', "curl -s -k '$url' | sed -e 's|</tr>|</tr>\\n|g;'");
+  my ($cty, $cty_total, $cty_newcases, $cty_deaths, $cty_newdeaths, $cty_recovered, $cty_active, $cty_serious);
+  my $in_country = 0;
+  my $in_table = 0;
+  open(HTTP, '-|', "curl -s -k '$url'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
-#   print if m|</tr>| and m/USA/;
-    if (m|<tr.*?>\s*([A-Za-z.]+ ?[ A-Za-z.]*)\s*<.*?align:right;?">\s*([0-9,]*)\s*</td>.*?>\s*(\+[0-9,]+)?\s*</td>.*?align:right;?">\s*([0-9,]*)\s*</td>.*?>\s*(\+[0-9,]+)?\s*</td.*?text-align:right;?">\s*([0-9,]*)\s*</td>.*?font-weight:bold;">\s*([0-9,]+)\s*</td>.*?text-align:right;?">\s*([0-9,]*)\s*</td|) {
-#     print "1:$1 2:$2 3:$3 4:$4 5:$5 6:$6 7:$7 8:$8 9:$9 10:$10\n" if $1 eq "USA";
-      my ($cty, $cty_total, $cty_newcases, $cty_deaths, $cty_newdeaths, $cty_recovered, $cty_active, $cty_serious) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
-      $cty =~ s/ //g;
+#   print;
+    $in_table = 1 if /<table id="main_table_countries_today"/;
+    $in_table = 0 if m|</table>|;
+    $in_country = 1 if /<tr style="">/ and $in_table == 1;
+    if (not defined $cty and $in_country == 1) {
+      $cty = $1 if
+	m|<td style="font-weight: bold; font-size:15px; text-align:left;"><a class="mt_a" href="country/.*?">(.*?)</a></td>|;
+      $cty = $1 if not defined $cty and
+	m|<td style="font-weight: bold; font-size:15px; text-align:left;"><span style="color:#00B5F0; font-style:italic;\s*">(.*?)</span></td>|;
+      $cty = $1 if not defined $cty and
+	m|<td style="font-weight: bold; font-size:15px; text-align:left;">(.*?)</td>|;
+      $cty =~ s/ //g if defined $cty;
+    }
+
+    if (defined $cty and not defined $cty_total and
+	m|<td style="font-weight: bold; text-align:right">([0-9,]+)</td>|) {
+      $cty_total = $1;
+    }
+
+    if (defined $cty_total and not defined $cty_newcases and
+        m|<td style="font-weight: bold; text-align:right;background-color:#FFEEAA;">\s*([+0-9,]*)\s*</td>|) {
+      $cty_newcases = $1;
+    }
+    if (defined $cty_total and not defined $cty_newcases and
+        m|<td style="font-weight: bold; text-align:right;"></td>|) {
+      $cty_newcases = "";
+    }
+
+    if (defined $cty_newcases and not defined $cty_deaths and
+	m|<td style="font-weight: bold; text-align:right;">\s*([0-9,]*)\s*</td>|) {
+      $cty_deaths = $1;
+    }
+
+    if (defined $cty_deaths and not defined $cty_newdeaths and
+	m|<td style="font-weight: bold; text-align:right;background-color:red; color:white">\s*([+0-9,]*)\s*</td>|) {
+      $cty_newdeaths = $1;
+    }
+    if (defined $cty_deaths and not defined $cty_newdeaths and
+	m|<td style="font-weight: bold; text-align:right;"></td>|) {
+      $cty_newdeaths = "";
+    }
+
+    if (defined $cty_newdeaths and not defined $cty_recovered and
+	m|<td style="font-weight: bold; text-align:right">([0-9,]*)</td>|) {
+      $cty_recovered = $1;
+      next;
+    }
+
+    if (defined $cty_recovered and not defined $cty_active and
+	m|<td style="text-align:right;font-weight:bold;">([0-9,]*)</td>|) {
+      $cty_active = $1;
+      next;
+    }
+
+    if (defined $cty_active and not defined $cty_serious and
+	m|<td style="font-weight: bold; text-align:right">([0-9,]*)</td>|) {
+      $cty_serious = $1;
+      #print "$cty total $cty_total newcases: $cty_newcases deaths: $cty_deaths newdeaths: $cty_newdeaths recoverd: $cty_recovered active: $cty_active serious: $cty_serious\n";
+      next;
+    }
+
+    if ($in_country == 1 and m|</tr>|) {
+      $in_country = 0;
       $cty_deaths = 0 if not defined $cty_deaths or $cty_deaths eq "";
       $cty_recovered = 0 if not defined $cty_recovered or $cty_recovered eq "";
       $cty_serious = 0 if not defined $cty_serious or $cty_serious eq "";
@@ -76,6 +137,8 @@ if ($#interest >= 0) {
 	print("\n");
 	$found = 1;
       }
+      ($cty, $cty_total, $cty_newcases, $cty_deaths, $cty_newdeaths, $cty_recovered, $cty_active, $cty_serious) =
+	(undef, undef, undef, undef, undef, undef, undef, undef);
     }
   }
   close(HTTP);
