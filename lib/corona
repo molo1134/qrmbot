@@ -152,7 +152,7 @@ if ($#states >= 0) {
   open(HTTP, '-|', "curl -s -k '$url' | sed -e 's/},{/},\\n{/g'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
-    if (/"state":"([A-Z]{2})","positive":(\d+),"negative":(\d+|null),"pending":(\d+|null),"death":(\d+|null),/) {
+    if (/"state":"([A-Z]{2})",.*?"positive":(\d+),.*?"negative":(\d+|null),.*?"pending":(\d+|null),.*?"death":(\d+|null),/) {
       if ( uc $1 ~~ @states ) {
 	print "State ", bold($1)," Covid19 tests: positive: ", yellow($2), ", negative: ", green($3);
 	print ", pending: $4" if $4 ne "null" and $4 > 0;
