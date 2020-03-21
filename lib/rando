@@ -1,0 +1,88 @@
+#!/usr/bin/perl
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Util;
+use Colors;
+
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $a = 1;
+my $x = 100;
+my @list = ();
+
+my $i = 0;
+my $intermediates = 0;
+my $unicode = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /([0-9]*)d([0-9]+)/i) {
+    $a = $1 if length($1) > 0;
+    $x = $2;
+    $intermediates = 1;
+  } elsif ($ARGV[$i] eq "--dice") {
+    $a = 2;
+    $x = 6;
+    $unicode = 1;
+    $intermediates = 1;
+  } elsif ($ARGV[$i] eq "--8ball") {
+    @list = ("It is certain.",
+      "It is decidedly so.",
+      "Without a doubt.",
+      "Yes - definitely.",
+      "You may rely on it.",
+      "As I see it, yes.",
+      "Most likely.",
+      "Outlook good.",
+      "Yes.",
+      "Signs point to yes.",
+      "Reply hazy, try again.",
+      "Ask again later.",
+      "Better not tell you now.",
+      "Cannot predict now.",
+      "Concentrate and ask again.",
+      "Don't count on it.",
+      "My reply is no.",
+      "My sources say no.",
+      "Outlook not so good.",
+      "Very doubtful.");
+  } elsif ($ARGV[$i] eq "--coinflip") {
+    @list = ("Heads", "Tails");
+  } elsif (isNumeric($ARGV[$i])) {
+    $a = 1;
+    $x = $ARGV[$i];
+  } else {
+    push @list, $ARGV[$i];
+  }
+  $i++;
+}
+
+if ($#list > 0) {
+  $a = 1;
+  $x = $#list + 1;
+}
+
+#print "A=$a; X=$x\n";
+
+my $sum = 0;
+
+$i = 0;
+while ($i < $a) {
+  my $val = int(rand($x)) + 1;
+  $sum += $val;
+  print "[$val] " if $intermediates = 1 and $unicode == 0 and $a > 1;
+  print chr(0x2680 + $val - 1), " " if $unicode == 1;
+  $i++;
+}
+print "= " if $intermediates = 1 and $a > 1;
+print "$sum\n" if not $#list > 0;
+
+if ($#list > 0) {
+  print $list[$sum - 1], "\n";
+}
