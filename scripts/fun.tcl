@@ -296,19 +296,19 @@ proc rando_pub { nick host hand chan text } {
 	}
 	close $fd
 }
-bind pubc - !flip coinflip_pub
-bind pubc - !coin coinflip_pub
-bind pubc - !coinflip coinflip_pub
+bind pub - !flip coinflip_pub
+bind pub - !coin coinflip_pub
+bind pub - !coinflip coinflip_pub
 proc coinflip_pub { nick host hand chan text } {
 	rando_pub $nick $host $hand $chan "--coinflip"
 }
-bind pubc - !dice dice_pub
+bind pub - !dice dice_pub
 proc dice_pub { nick host hand chan text } {
 	rando_pub $nick $host $hand $chan "--dice"
 }
-bind pubc - !8ball eightball_pub
-bind pubc - !magic8ball eightball_pub
-bind pubc - !eightball eightball_pub
+bind pub - !8ball eightball_pub
+bind pub - !magic8ball eightball_pub
+bind pub - !eightball eightball_pub
 proc eightball_pub { nick host hand chan text } {
 	rando_pub $nick $host $hand $chan "--8ball"
 }
