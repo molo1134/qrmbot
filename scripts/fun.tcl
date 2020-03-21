@@ -283,6 +283,35 @@ proc ammo_msg {nick uhand handle input} {
 	close $fd
 }
 
+set randobin "/home/eggdrop/bin/rando"
+bind pub - !rand rando_pub
+proc rando_pub { nick host hand chan text } {
+	global randobin
+	set param [sanitize_string [string trim ${text}]]
+	putlog "rando pub: $nick $host $hand $chan $param"
+	set fd [open "|${randobin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+bind pubc - !flip coinflip_pub
+bind pubc - !coin coinflip_pub
+bind pubc - !coinflip coinflip_pub
+proc coinflip_pub { nick host hand chan text } {
+	rando_pub $nick $host $hand $chan "--coinflip"
+}
+bind pubc - !dice dice_pub
+proc dice_pub { nick host hand chan text } {
+	rando_pub $nick $host $hand $chan "--dice"
+}
+bind pubc - !8ball eightball_pub
+bind pubc - !magic8ball eightball_pub
+bind pubc - !eightball eightball_pub
+proc eightball_pub { nick host hand chan text } {
+	rando_pub $nick $host $hand $chan "--8ball"
+}
 
 
 putlog "fun.tcl loaded."
