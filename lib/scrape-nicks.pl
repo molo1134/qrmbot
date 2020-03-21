@@ -94,7 +94,7 @@ our @blacklist = (
   "C3MER", "ST0PX", "XO28XO", "B0XCH", "J34BIT", "Z3TH", "SW7600GR", "A77ASAD",
   "GH0DAM", "S9OONS", "SP00GEY", "AW3RDE", "5X9QRM", "SW4L", "CT4677GUT",
   "TA0321TA", "CC0AYXY", "TX69ER", "P8A", "AS171ABD", "T3NCHI", "L33TOR",
-  "2X4SR", "FT450D");
+  "2X4SR", "FT450D", "D360JR");
 
 # load nicks
 our $nickfile = "$ENV{'HOME'}/.nicks.csv";
