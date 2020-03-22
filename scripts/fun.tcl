@@ -10,12 +10,10 @@ bind pub - !metard metard
 bind pub - !brexit brexit
 bind pub - !christmas christmas
 bind pub - !translate translate
-bind pub - !corona corona
 bind pub - !primaries primaries
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
-set coronabin "/home/eggdrop/bin/corona"
 set christmasbin "/home/eggdrop/bin/christmas"
 set translatebin "/home/eggdrop/bin/translate"
 set primariesbin "/home/eggdrop/bin/primaries"
@@ -226,7 +224,16 @@ proc translate { nick host hand chan text } {
 	close $fd
 }
 
-proc corona { nick host hand chan text } {
+bind pub - !corona corona_pub
+bind pub - !covid corona_pub
+bind pub - !covid19 corona_pub
+bind pub - !c19 corona_pub
+bind msg - !corona corona_msg
+bind msg - !covid corona_msg
+bind msg - !covid19 corona_msg
+bind msg - !c19 corona_msg
+set coronabin "/home/eggdrop/bin/corona"
+proc corona_pub { nick host hand chan text } {
 	global coronabin
 	set cleantext [sanitize_string [string trim ${text}]]
 	putlog "corona: $nick $host $hand $chan $cleantext"
@@ -234,6 +241,17 @@ proc corona { nick host hand chan text } {
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
+	}
+	close $fd
+}
+proc corona_msg {nick uhand handle input} {
+	global coronabin
+	set param [sanitize_string [string trim ${input}]]
+	putlog "corona msg: $nick $uhand $handle $param"
+	set fd [open "|${coronabin} ${param} " r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
 	}
 	close $fd
 }
