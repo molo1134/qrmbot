@@ -310,7 +310,7 @@ proc rando_pub { nick host hand chan text } {
 	set fd [open "|${randobin} ${param}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
+		putchan $chan "$nick: $line"
 	}
 	close $fd
 }
