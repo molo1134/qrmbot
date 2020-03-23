@@ -88,6 +88,7 @@ if ($#interest >= 0) {
     if (defined $cty_total and not defined $cty_newcases and
         m|<td style="font-weight: bold; text-align:right;"></td>|) {
       $cty_newcases = "";
+      next;
     }
 
     if (defined $cty_newcases and not defined $cty_deaths and
