@@ -2,6 +2,7 @@
 
 use strict;
 use utf8;
+use Encode qw(decode);
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
@@ -10,6 +11,8 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Util;
 use Colors;
+
+@ARGV = map { decode "utf-8", $_ } @ARGV;
 
 # eggdrop doesn't split args on spaces
 @ARGV=split(' ', join(' ',@ARGV));
