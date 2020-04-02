@@ -153,12 +153,13 @@ if ($#states >= 0) {
   open(HTTP, '-|', "curl -s -k '$url' | sed -e 's/},{/},\\n{/g'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
-    if (/"state":"([A-Z]{2})",.*?"positive":(\d+),.*?"negative":(\d+|null),.*?"pending":(\d+|null),.*?"hospitalizedCurrently":(\d+|null),.*?"death":(\d+|null),/) {
+    if (/"state":"([A-Z]{2})",.*?"positive":(\d+),.*?"negative":(\d+|null),.*?"pending":(\d+|null),.*?"hospitalizedCurrently":(\d+|null),.*?"recovered":(\d+|null).*?"death":(\d+|null),/) {
       if ( uc $1 ~~ @states ) {
 	print "State ", bold($1)," Covid19 tests: positive: ", yellow(commify($2)), ", negative: ", green(commify($3));
 	print ", pending: ", commify($4) if $4 ne "null" and $4 > 0;
 	print ", hospitalized now: ", cyan(commify($5)) if $5 ne "null" and $5 > 0;
-	print ", deaths: ", red(commify($6)), "\n";
+	print ", recovered: ", lightblue(commify($6)) if $6 ne "null" and $6 > 0;
+	print ", deaths: ", red(commify($7)), "\n";
 	$found = 1;
       }
     }
