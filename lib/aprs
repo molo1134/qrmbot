@@ -85,12 +85,12 @@ if ($vals{type} eq "w") {
   $vals{wind_gust_kph} = round($vals{wind_gust} * 3.6) if defined($vals{wind_gust});
   $vals{wind_gust_mph} = round($vals{wind_gust} * 2.2369363) if defined($vals{wind_gust});
 
-  $vals{rain_1h_inch} = round($vals{rain_1h} * 0.039370079 * 100)/100;
-  $vals{rain_24h_inch} = round($vals{rain_24h} * 0.039370079 * 100)/100;
-  $vals{rain_midnight_inch} = round($vals{rain_mn} * 0.039370079 * 100)/100;
+  $vals{rain_1h_inch} = round($vals{rain_1h} * 0.039370079 * 100)/100 if defined $vals{rain_1h};
+  $vals{rain_24h_inch} = round($vals{rain_24h} * 0.039370079 * 100)/100 if defined $vals{rain_24h};
+  $vals{rain_midnight_inch} = round($vals{rain_mn} * 0.039370079 * 100)/100 if defined $vals{rain_mn};
 
   $vals{wind_dir} = azToNEWS($vals{wind_direction}) if defined $vals{wind_direction};
-  $vals{pressure_inhg} = round($vals{pressure} * 0.029529983 * 100)/100;
+  $vals{pressure_inhg} = round($vals{pressure} * 0.029529983 * 100)/100 if defined $vals{pressure};
 }
 
 print bold($vals{name});
