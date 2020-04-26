@@ -51,10 +51,10 @@ my $url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?CMC
 my %results;
 
 #print "$url\n";
-open(HTTP, '-|', "curl --max-time 5 -s -k -L -H 'Accept: application/json' '$url'");
+open(HTTP, '-|', "curl --max-time 5 -s -k -L -H 'Accept: application/json' '$url' | jq . ");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
-#  print;
+  #print;
   if (/"(\w+)":\s*"?(.*?)"?,?\s*$/) {
     my ($key, $value) = ($1, $2);
     $results{$key} = $value;
@@ -77,8 +77,8 @@ $results{"price"} = commify($results{"price"}) if defined($results{"price"});
 
 my $trendsymbol;
 my $trend = $results{percent_change_24h};
-$trendsymbol = green("↑") if $trend ne "null" and $trend > 1;
-$trendsymbol = red("↓") if $trend ne "null" and $trend < 0;
+$trendsymbol = green("↑") if $trend ne "null" and $trend > 0.0;
+$trendsymbol = red("↓") if $trend ne "null" and $trend < 0.0;
 $trendsymbol = "·" if !defined $trendsymbol;
 if ($trend ne "null") {
   if ($trend < 0) {
