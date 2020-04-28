@@ -97,7 +97,8 @@ if ($#interest >= 0) {
     }
 
     if (defined $cty_deaths and not defined $cty_newdeaths and
-	m|<td style="font-weight: bold; text-align:right;background-color:red; color:white">\s*([+0-9,]*)\s*</td>|) {
+      #m|<td style="font-weight: bold; text-align:right;background-color:red; color:white">\s*([+0-9,]*)\s*</td>|) {
+	m|^\s*text-align:right;background-color:red; color:white">\s*([+0-9,]*)\s*</td>|) {
       $cty_newdeaths = $1;
     }
     if (defined $cty_deaths and not defined $cty_newdeaths and
