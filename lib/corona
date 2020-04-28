@@ -172,7 +172,8 @@ if ($#states >= 0) {
 my $date;
 my ($incases, $indeaths, $inrecov) = (0, 0, 0);
 my ($c, $d, $r) = (0,0,0);
-open(HTTP, '-|', "elinks $params '$url'");
+system("curl -s -k '$url' > /tmp/c19-temp.html");
+open(HTTP, '-|', "elinks --dump /tmp/c19-temp.html");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   s/^\s*//;
