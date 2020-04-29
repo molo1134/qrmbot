@@ -627,6 +627,7 @@ sub getAndParseData {
 	  $matchcall =~ s/^\*//g;
 	  $matchcall =~ s/\*$//g;
 	  $matchcall =~ s/\*/.*/g;
+	  $matchcall =~ s/\?/./g;
 	  $resultcall =~ s/($matchcall)/bold($1)/ige;
 	  $resultdetail = undef;
 	}
