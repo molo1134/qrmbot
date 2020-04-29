@@ -152,6 +152,9 @@ if ($call =~ /^(grid:)? ?([A-R]{2}[0-9]{2}([a-x]{2})?$)/i) {
 } elsif ($call =~ /^\s*([a-z0-9]*\*[a-z0-9]*)\s*$/i) {	# wildcards
   $call = $1;
   $type = "callsign";
+} elsif ($call =~ /^\s*([a-z0-9?]*\?[a-z0-9?]*)\s*$/i) {	# wildcards
+  $call = $1;
+  $type = "callsign";
 } elsif ($call =~ /^dmr:([0-9]+)$/i) {
   my $dmr = $1;
   updateDMRfiles();
