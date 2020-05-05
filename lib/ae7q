@@ -121,6 +121,7 @@ sub doAe7qCall {
   my $inPredTable = 0;
   my $pending = 0;
   my $found = 0;
+  my @frns;
   open(HTTP, '-|', "curl --max-time $ae7qTimeout -L -k -s '$url'");
   while(<HTTP>) {
     $inLicTable = 1 if m|<table class='Database' cellpadding='4' align='center'><tbody class='Database'>|;
@@ -187,6 +188,7 @@ sub doAe7qCall {
 	print "Expire $expire";
 	print italic("; Avail $availdate") if defined $availdate;
 	print "\n";
+	push(@frns, $frn) if defined $frn and $status eq "Active";
 	$name = $frn = $class = $status = $grant = $eff = $cxl = $expire = undef;
 	$found = 1;
 	$inLicTable = 0;
@@ -243,6 +245,10 @@ sub doAe7qCall {
   }
   close(HTTP);
 
+  foreach my $f (@frns) {
+    printFrnApps($f);
+  }
+
   print bold($call), ": $callStatus\n" if defined $callStatus and not $found;
 }
 
@@ -277,4 +283,41 @@ sub getAvailDate {
 sub uniq {
   my %seen;
   grep !$seen{$_}++, @_;
+}
+
+sub printFrnApps {
+  my $frn = shift;
+  my $url = "http://ae7q.com/query/data/FrnHistory.php?FRN=$frn";
+  my $inpred = 0;
+  my ($appdate, $procdate, $appid, $appcolor, $type, $seqnum, $vanity, $pred);
+  open(HTTP, '-|', "curl --max-time $ae7qTimeout -L -k -s '$url'");
+  while(<HTTP>) {
+    $inpred = 1 if /Retrieving predictions for pending applications from/;
+
+    $appdate = $1 if m|/AppByReceipt\.php\?DATE=([0-9-]+)'| and $inpred == 1;
+    $procdate = $1 if m|/ProcessDate\.php\?DATE=([0-9-]+)'| and $inpred == 1;
+    # <td class="DatabaseField" style='background-color:#99CCFF; '><a href='/query/data/AppDetail.php?UFN=0009052785'
+    if (m|background-color:#([0-9A-F]+).*/AppDetail\.php\?UFN=([0-9]+)'| and $inpred == 1) {
+      $appid = $2;
+      my $appcolor = $1;
+      $appid = lightblue($appid) if $appcolor eq "99CCFF";
+      $appid = green($appid) if $appcolor eq "99FF66";
+      $appid = yellow($appid) if $appcolor eq "FFFF66";
+      $appid = red($appid) if $appcolor eq "FF99CC";
+    }
+    $type = $1 if m|/AppByType.*>([^<]*)</a>| and $inpred == 1;
+    $seqnum = $1 if m|<td class='DatabaseField' align='right'>\s*([0-9]+)\s*</td>| and $inpred == 1;
+    $vanity = $1 if m|/CallHistory\.php\?CALL=([0-9A-Z]+)#Apps| and $inpred == 1;
+    if (m|background-color:#([0-9A-F]+);.*/Prediction\.php\?PREDICT=(.*?)'| and $inpred == 1) {
+      $pred = $2;
+      $pred =~ s/_/ /g;
+      $pred = green($pred) if $pred eq "Assignment";
+      $pred = lightblue($pred) if $pred =~ /^(Competition|Available)/;
+      $pred = italic($pred) if $pred =~ /^Unneeded/;
+      $pred = yellow($pred) if $pred =~ /^Offlined/;
+      $pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv|Inactive)/;
+
+      print "$appdate -> $procdate: App $appid ($type) #$seqnum $vanity $pred\n";
+    }
+  }
 }
