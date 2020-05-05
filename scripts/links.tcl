@@ -34,8 +34,6 @@ bind pubm - *://* http_pub
 #bind msgm - *https://* http_msg
 #bind pubm - *https://* http_pub
 
-bind pub - !ae7q ae7q
-bind msg - !ae7q msg_ae7q
 bind pub - !github github
 bind msg - !github msg_github
 
@@ -77,45 +75,6 @@ proc http_pub { nick host hand chan text } {
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
-	}
-	close $fd
-}
-
-proc ae7q { nick host hand chan text } {
-	global linkbin
-	set input [sanitize_string [string trim ${text}]]
-	putlog "ae7q pub: $nick $host $hand $chan $input"
-	if [string equal "0" $input] then {
-		set input "10"
-	}
-	if [string is digit $input] then {
-		set url "http://ae7q.com/query/list/GenLicAvail.php?REGION=$input"
-	} else {
-		set url "http://ae7q.com/query/data/CallHistory.php?CALL=$input"
-	}
-	set fd [open "|${linkbin} ${url}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
-	}
-	close $fd
-}
-proc msg_ae7q {nick uhand handle input} {
-	global linkbin
-	set input [sanitize_string [string trim ${input}]]
-	putlog "ae7q msg: $nick $uhand $handle $input"
-	if [string equal "0" $input] then {
-		set input "10"
-	}
-	if [string is digit $input] then {
-		set url "http://ae7q.com/query/list/GenLicAvail.php?REGION=$input"
-	} else {
-		set url "http://ae7q.com/query/data/CallHistory.php?CALL=$input"
-	}
-	set fd [open "|${linkbin} ${url}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
 	}
 	close $fd
 }

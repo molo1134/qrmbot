@@ -1540,6 +1540,32 @@ proc iono_msg {nick uhand handle input} {
 	close $fd
 }
 
+set ae7qbin "/home/eggdrop/bin/ae7q"
+bind pub - !ae7q pub_ae7q
+bind msg - !ae7q msg_ae7q
+
+proc pub_ae7q { nick host hand chan text } {
+	global ae7qbin
+	set input [sanitize_string [string trim ${text}]]
+	putlog "ae7q pub: $nick $host $hand $chan $input"
+	set fd [open "|${ae7qbin} ${input}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc msg_ae7q {nick uhand handle input} {
+	global ae7qbin
+	set input [sanitize_string [string trim ${input}]]
+	putlog "ae7q msg: $nick $uhand $handle $input"
+	set fd [open "|${ae7qbin} ${input}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
+}
 
 putlog "Ham utils loaded."
 
