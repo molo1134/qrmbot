@@ -256,7 +256,7 @@ sub getAvailDate {
   my $exp = shift;
   my $cxl = shift;
 
-  return undef if not defined $exp;
+  return undef if not defined $exp or $exp eq "";
 
   # convert from localtime in washington
   $ENV{TZ} = "EST5EDT";
@@ -316,6 +316,8 @@ sub printFrnApps {
       $pred = italic($pred) if $pred =~ /^Unneeded/;
       $pred = yellow($pred) if $pred =~ /^Offlined/;
       $pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv|Inactive)/;
+
+      $procdate = "????-??-??" if not defined $procdate or $pred =~ /^Offlined/;
 
       print "$appdate -> $procdate: App $appid ($type) #$seqnum $vanity $pred\n";
     }
