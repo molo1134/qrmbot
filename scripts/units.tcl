@@ -17,6 +17,9 @@ bind pub - !ctof pub_ctof
 bind pub - !gold pub_gold
 bind pub - !silver pub_silver
 bind pub - !platinum pub_plat
+bind msg - !gold msg_gold
+bind msg - !silver msg_silver
+bind msg - !platinum msg_plat
 
 set unitsbin "/usr/bin/units"
 
@@ -149,7 +152,6 @@ proc msg_ftoc {nick uhand handle arg} {
   set arg [sanitize_string $arg]
   msg_convert_units $nick $uhand $handle "tempF($arg) in tempC"
 }
-
 proc pub_ftoc {nick host hand chan arg} {
   set arg [sanitize_string $arg]
   pub_convert_units $nick $host $hand $chan "tempF($arg) in tempC"
@@ -159,7 +161,6 @@ proc msg_ctof {nick uhand handle arg} {
   set arg [sanitize_string $arg]
   msg_convert_units $nick $uhand $handle "tempC($arg) in tempF"
 }
-
 proc pub_ctof {nick host hand chan arg} {
   set arg [sanitize_string $arg]
   pub_convert_units $nick $host $hand $chan "tempC($arg) in tempF"
@@ -173,4 +174,13 @@ proc pub_silver {nick host hand chan arg} {
 }
 proc pub_plat {nick host hand chan arg} {
   pub_convert_units $nick $host $hand $chan "platinumprice * 1 troyounce in USD"
+}
+proc msg_gold {nick uhand handle arg} {
+  msg_convert_units $nick $uhand $handle "goldprice * 1 troyounce in USD"
+}
+proc msg_silver {nick uhand handle arg} {
+  msg_convert_units $nick $uhand $handle "silverprice * 1 troyounce in USD"
+}
+proc msg_platinum {nick uhand handle arg} {
+  msg_convert_units $nick $uhand $handle "platinumprice * 1 troyounce in USD"
 }
