@@ -112,6 +112,11 @@ if (not defined($ticker) or not defined($pct)) {
 			exit $exitnonzeroonerror;
 		}
 		my ($symb,$name,$type,$reg) = split(',');
+		# TODO: switch to JSON API for symbol search
+		if ($symb eq "{}") {
+		  print "not found\n";
+		  exit $exitnonzeroonerror;
+		}
 		print(bold($symb), ": $name - $type, $reg; ");
 		$found = 1;
 	}
