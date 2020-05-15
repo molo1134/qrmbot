@@ -93,6 +93,8 @@ while ($i <= $#ARGV) {
     doAe7qRegion($2);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?ae7q\.com/query/data/CallHistory\.php\?CALL=([A-Z0-9]+)|) {
     doAe7qCall($2);
+  } elsif ($ARGV[$i] =~ m|^https?://.*zoom\.us/j/[0-9]+|) {
+    # noop
   } elsif ($ARGV[$i] =~ m|^https?://| and
 	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
     doHtml($ARGV[$i]);
