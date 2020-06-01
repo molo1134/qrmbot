@@ -97,7 +97,8 @@ our @blacklist = (
   "2X4SR", "FT450D", "D360JR", "0X15E", "3E8M", "7W4773R", "AV83R", "B20BOB",
   "B3333N", "BR14NVG", "CV26TH", "H14C", "L4MB", "MH00H", "MN1H", "N00B",
   "N1A", "NC45L", "QE37QULU", "SR65K", "T0NITO", "T109J", "T1TWAN", "UP10AD",
-  "V3NGE", "G1LV", "XS400CAFE", "O3GEN", "T60R", "DJ027X",
+  "V3NGE", "G1LV", "XS400CAFE", "O3GEN", "T60R", "DJ027X", "4TR5V", "J3DUDE",
+  "LB7GUY", "RC5K", "W33T",
   # opt-out
   "N4ADK");
 
