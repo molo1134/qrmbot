@@ -13,12 +13,26 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 
-my $url = "http://www.hamqsl.com/solarxml.php";
+use Math::Round;
 
 my ($updated, $aindex, $kindex, $solarflux, $sunspots);
 my @bands;
 my @phenom;
 
+my $url = "http://beta.kc2g.com/api/essn.json";
+my ($esfi, $essn);
+open (HTTP, '-|', "curl -s -k -L $url");
+while (<HTTP>) {
+  if (/^\{"24h":\[\{"sfi":([0-9.]+),"ssn":([0-9.]+)/) {
+    ($esfi, $essn) = ($1, $2);
+    $esfi = round($esfi);
+    $essn = round($essn);
+    #print ("ESFI: $esfi; ESSN: $essn\n");
+  }
+}
+close(HTTP);
+
+$url = "http://www.hamqsl.com/solarxml.php";
 open (HTTP, '-|', "curl -s -k -L $url");
 while (<HTTP>) {
   chomp;
@@ -60,11 +74,15 @@ $aindex = colorAIndex($aindex);
 $kindex = colorKIndex($kindex);
 
 if (defined($ARGV[0]) and $ARGV[0] eq "-q") {
-  print "Conditions as of $updated: SFI=$solarflux SN=$sunspots A=$aindex K=$kindex\n";
+  print "Conditions as of $updated: SFI=$solarflux SN=$sunspots A=$aindex K=$kindex";
+  print " eSFI=" . colorSfi($esfi) ." eSSN=$essn" if defined $esfi;
+  print "\n";
   exit 0;
 }
 
-print "Bands as of $updated: SFI=$solarflux SN=$sunspots A=$aindex K=$kindex\n";
+print "Bands as of $updated: SFI=$solarflux SN=$sunspots A=$aindex K=$kindex";
+print " eSFI=" . colorSfi($esfi) ." eSSN=$essn" if defined $esfi;
+print "\n";
 
 @bands = sort { $a cmp $b } @bands;
 
