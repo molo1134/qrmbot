@@ -98,7 +98,11 @@ foreach my $p (@phenom) {
   my ($n, $l, $c) = split(/,/, $p);
   print " $n: $l $c;" if ! $c =~ /Closed/i;
 }
-print "\n";
+print "\t" . credit() . "\n";
+
+sub credit {
+	return "data from HAMQSL.com";
+}
 
 sub colorCondx {
   $_ = shift;
