@@ -31,6 +31,8 @@ print italic("italic"), $sep;
 print strikethrough("strikethrough"), $sep;
 print blink("blink"), $sep;
 print monospace("monospace"), $sep;
+print redOnWhite("red on white"), $sep;
+print blackOnWhite("black on white"), $sep;
 
 if ($username eq "eggdrop") {
   print "\nextended mirc color (shades of blue): ";

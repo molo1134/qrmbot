@@ -55,6 +55,27 @@ while ($i <= $#ARGV) {
       "My sources say no.",
       "Outlook not so good.",
       "Very doubtful.");
+  } elsif ($ARGV[$i] eq "--card") {
+    @list = (
+      blackOnWhite("2♣"), blackOnWhite("3♣"), blackOnWhite("4♣"),
+      blackOnWhite("5♣"), blackOnWhite("6♣"), blackOnWhite("7♣"),
+      blackOnWhite("8♣"), blackOnWhite("9♣"), blackOnWhite("10♣"),
+      blackOnWhite("J♣"), blackOnWhite("Q♣"), blackOnWhite("K♣"),
+      blackOnWhite("A♣"),
+      redOnWhite("2♦"), redOnWhite("3♦"), redOnWhite("4♦"), redOnWhite("5♦"),
+      redOnWhite("6♦"), redOnWhite("7♦"), redOnWhite("8♦"), redOnWhite("9♦"),
+      redOnWhite("10♦"), redOnWhite("J♦"), redOnWhite("Q♦"), redOnWhite("K♦"),
+      redOnWhite("A♦"),
+      redOnWhite("2♥"), redOnWhite("3♥"), redOnWhite("4♥"), redOnWhite("5♥"),
+      redOnWhite("6♥"), redOnWhite("7♥"), redOnWhite("8♥"), redOnWhite("9♥"),
+      redOnWhite("10♥"), redOnWhite("J♥"), redOnWhite("Q♥"), redOnWhite("K♥"),
+      redOnWhite("A♥"),
+      blackOnWhite("2♠"), blackOnWhite("3♠"), blackOnWhite("4♠"),
+      blackOnWhite("5♠"), blackOnWhite("6♠"), blackOnWhite("7♠"),
+      blackOnWhite("8♠"), blackOnWhite("9♠"), blackOnWhite("10♠"),
+      blackOnWhite("J♠"), blackOnWhite("Q♠"), blackOnWhite("K♠"),
+      blackOnWhite("A♠"),
+    );
   } elsif ($ARGV[$i] eq "--coinflip") {
     @list = ("Heads", "Tails");
   } elsif (isNumeric($ARGV[$i])) {
