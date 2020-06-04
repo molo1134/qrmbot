@@ -66,7 +66,7 @@ my ($mylat, $mylon) = split(',', $geo) if defined $geo;
 
 #print "$mylat, $mylon\n";
 
-my $url = "https://prop.kc2g.com/stations.json";
+my $url = "https://prop.kc2g.com/api/stations.json";
 my $timeout = 10;	# 10 seconds
 
 my ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs);
@@ -74,7 +74,6 @@ my %result;
 
 open (JSON, '-|', "curl -s -k -L --max-time $timeout --retry 1 \"${url}\" | jq -M .");
 while (<JSON>) {
-  #print;
   if (/^\s*{$/) {
     if (defined $code) {
       if ((not defined $cs or ($cs > 20)) and					    # confidence score > 20
@@ -107,7 +106,7 @@ while (<JSON>) {
     $cs = $v if $k eq "cs";
     if ($k eq "time") {
       $ENV{TZ} = "UTC";
-      $ts = Time::Piece->strptime($v, "%Y-%m-%d %H:%M:%S")->epoch;
+      $ts = Time::Piece->strptime($v, "%Y-%m-%dT%H:%M:%S+00:00")->epoch;
     }
   }
 }
