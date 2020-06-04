@@ -330,6 +330,10 @@ bind pub - !eightball eightball_pub
 proc eightball_pub { nick host hand chan text } {
 	rando_pub $nick $host $hand $chan "--8ball"
 }
+bind pub - !card card_pub
+proc card_pub { nick host hand chan text } {
+	rando_pub $nick $host $hand $chan "--card"
+}
 
 
 putlog "fun.tcl loaded."
