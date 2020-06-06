@@ -93,16 +93,18 @@ while ($i <= $#ARGV) {
       $i++;
     }
     $n = 52 if $n > 52;
+    my $total = 0;
     foreach my $u (@userlist) {
       my $output = "";
       my $j = 0;
-      while ($j < $n) {
+      while ($j < $n and $total < 52) {
 	my $val = int(rand(52));
 	if (defined $carddeck[$val]) {
 	  $output .= $carddeck[$val];
 	  $output .= " " if $j < $n - 1;
 	  $carddeck[$val] = undef;
 	  $j++;
+	  $total++;
 	}
       }
       print "$u: $output\n";
