@@ -334,6 +334,18 @@ bind pub - !card card_pub
 proc card_pub { nick host hand chan text } {
 	rando_pub $nick $host $hand $chan "--card"
 }
+bind pub - !draw draw_pub
+proc draw_pub { nick host hand chan text } {
+	global randobin
+	set param [sanitize_string [string trim ${text}]]
+	putlog "draw pub: $nick $host $hand $chan $param"
+	set fd [open "|${randobin} --draw ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
 
 
 putlog "fun.tcl loaded."

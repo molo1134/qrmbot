@@ -21,6 +21,27 @@ my $a = 1;
 my $x = 100;
 my @list = ();
 
+my @carddeck = (
+      blackOnWhite("2♣"), blackOnWhite("3♣"), blackOnWhite("4♣"),
+      blackOnWhite("5♣"), blackOnWhite("6♣"), blackOnWhite("7♣"),
+      blackOnWhite("8♣"), blackOnWhite("9♣"), blackOnWhite("10♣"),
+      blackOnWhite("J♣"), blackOnWhite("Q♣"), blackOnWhite("K♣"),
+      blackOnWhite("A♣"),
+      redOnWhite("2♦"), redOnWhite("3♦"), redOnWhite("4♦"), redOnWhite("5♦"),
+      redOnWhite("6♦"), redOnWhite("7♦"), redOnWhite("8♦"), redOnWhite("9♦"),
+      redOnWhite("10♦"), redOnWhite("J♦"), redOnWhite("Q♦"), redOnWhite("K♦"),
+      redOnWhite("A♦"),
+      redOnWhite("2♥"), redOnWhite("3♥"), redOnWhite("4♥"), redOnWhite("5♥"),
+      redOnWhite("6♥"), redOnWhite("7♥"), redOnWhite("8♥"), redOnWhite("9♥"),
+      redOnWhite("10♥"), redOnWhite("J♥"), redOnWhite("Q♥"), redOnWhite("K♥"),
+      redOnWhite("A♥"),
+      blackOnWhite("2♠"), blackOnWhite("3♠"), blackOnWhite("4♠"),
+      blackOnWhite("5♠"), blackOnWhite("6♠"), blackOnWhite("7♠"),
+      blackOnWhite("8♠"), blackOnWhite("9♠"), blackOnWhite("10♠"),
+      blackOnWhite("J♠"), blackOnWhite("Q♠"), blackOnWhite("K♠"),
+      blackOnWhite("A♠"),
+    );
+
 my $i = 0;
 my $intermediates = 0;
 my $unicode = 0;
@@ -56,28 +77,36 @@ while ($i <= $#ARGV) {
       "Outlook not so good.",
       "Very doubtful.");
   } elsif ($ARGV[$i] eq "--card") {
-    @list = (
-      blackOnWhite("2♣"), blackOnWhite("3♣"), blackOnWhite("4♣"),
-      blackOnWhite("5♣"), blackOnWhite("6♣"), blackOnWhite("7♣"),
-      blackOnWhite("8♣"), blackOnWhite("9♣"), blackOnWhite("10♣"),
-      blackOnWhite("J♣"), blackOnWhite("Q♣"), blackOnWhite("K♣"),
-      blackOnWhite("A♣"),
-      redOnWhite("2♦"), redOnWhite("3♦"), redOnWhite("4♦"), redOnWhite("5♦"),
-      redOnWhite("6♦"), redOnWhite("7♦"), redOnWhite("8♦"), redOnWhite("9♦"),
-      redOnWhite("10♦"), redOnWhite("J♦"), redOnWhite("Q♦"), redOnWhite("K♦"),
-      redOnWhite("A♦"),
-      redOnWhite("2♥"), redOnWhite("3♥"), redOnWhite("4♥"), redOnWhite("5♥"),
-      redOnWhite("6♥"), redOnWhite("7♥"), redOnWhite("8♥"), redOnWhite("9♥"),
-      redOnWhite("10♥"), redOnWhite("J♥"), redOnWhite("Q♥"), redOnWhite("K♥"),
-      redOnWhite("A♥"),
-      blackOnWhite("2♠"), blackOnWhite("3♠"), blackOnWhite("4♠"),
-      blackOnWhite("5♠"), blackOnWhite("6♠"), blackOnWhite("7♠"),
-      blackOnWhite("8♠"), blackOnWhite("9♠"), blackOnWhite("10♠"),
-      blackOnWhite("J♠"), blackOnWhite("Q♠"), blackOnWhite("K♠"),
-      blackOnWhite("A♠"),
-    );
+    @list = @carddeck;
   } elsif ($ARGV[$i] eq "--coinflip") {
     @list = ("Heads", "Tails");
+  } elsif ($ARGV[$i] eq "--draw") {
+    $i++;
+    my $n;
+    my @userlist;
+    while ($i <= $#ARGV) {
+      if (isNumeric($ARGV[$i])) {
+	$n = $ARGV[$i];
+      } else {
+	push @userlist, $ARGV[$i];
+      }
+      $i++;
+    }
+    foreach my $u (@userlist) {
+      my $output = "";
+      my $j = 0;
+      while ($j < $n) {
+	my $val = int(rand(52));
+	if (defined $carddeck[$val]) {
+	  $output .= $carddeck[$val];
+	  $output .= " " if $j < $n - 1;
+	  $carddeck[$val] = undef;
+	  $j++;
+	}
+      }
+      print "$u: $output\n";
+    }
+    exit 0;
   } elsif (isNumeric($ARGV[$i])) {
     $a = 1;
     $x = $ARGV[$i];
