@@ -92,6 +92,7 @@ while ($i <= $#ARGV) {
       }
       $i++;
     }
+    $n = 52 if $n > 52;
     foreach my $u (@userlist) {
       my $output = "";
       my $j = 0;
