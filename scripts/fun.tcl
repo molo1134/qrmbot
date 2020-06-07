@@ -351,7 +351,6 @@ bind pub - !cat cat_pub
 proc cat_pub { nick host hand chan text } {
 	set param [sanitize_string [string trim ${text}]]
 	putlog "cat pub: $nick $host $hand $chan $param"
-	set index [expr {int(rand()*20)}]
 	set msg(0) "cat"
 	set msg(1) "kitty"
 	set msg(2) "how cute"
@@ -366,6 +365,7 @@ proc cat_pub { nick host hand chan text } {
 	set msg(11) "dogs are better"
 	set msg(12) "you're obsessed"
 	set msg(13) "seriously, wtf"
+	set index [expr {int(rand()*[array size msg])}]
 	set command "curl -s -k -L -A foo https://www.reddit.com/r/catpictures/random.json | jq . | grep \\\"url\\\": | grep -E -v \\(preview.redd.it\\|redditstatic.com\\) | head -1 | sed -e s\\|^.*\"\\\\\\(https\\\\?://\[^\"]*\\\\\\)\".*$\\|\\\\1\\|"
 	set fd [open "|${command}" r]
 	fconfigure $fd -encoding utf-8
