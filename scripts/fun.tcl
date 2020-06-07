@@ -351,7 +351,7 @@ bind pub - !cat cat_pub
 proc cat_pub { nick host hand chan text } {
 	set param [sanitize_string [string trim ${text}]]
 	putlog "cat pub: $nick $host $hand $chan $param"
-	set command "curl -s -k -L -A foo 'https://www.reddit.com/r/catpictures/random.json' | jq . | grep '\"url\":' | grep -E -v '(preview.redd.it|redditstatic.com)' | head -1 | sed -e s|^.*\"\\(https\\?://\[^\"]*\\)\".*$|\\1|; "
+	set command "curl -s -k -L -A foo 'https://www.reddit.com/r/catpictures/random.json' | jq . | grep '\"url\":' | grep -E -v '(preview.redd.it|redditstatic.com)' | head -1 | echo 's|^.*\"\\(https\\?://\[^\"]*\\)\".*$|\\1|;'"
 	set fd [open "|${command}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
