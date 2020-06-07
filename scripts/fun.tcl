@@ -351,12 +351,26 @@ bind pub - !cat cat_pub
 proc cat_pub { nick host hand chan text } {
 	set param [sanitize_string [string trim ${text}]]
 	putlog "cat pub: $nick $host $hand $chan $param"
-	#set command "curl -s -k -L -A foo 'https://www.reddit.com/r/catpictures/random.json' | jq . | grep '\"url\":' | grep -E -v '(preview.redd.it|redditstatic.com)' | head -1 | sed -e s\\|^.*\"\\\\(https\\\\?://\[^\"]*\\\\)\".*$\\|\\\\1\\|"
-	set command "echo -n here's your fucking cat: ; curl -s -k -L -A foo https://www.reddit.com/r/catpictures/random.json | jq . | grep \\\"url\\\": | grep -E -v \\(preview.redd.it\\|redditstatic.com\\) | head -1 | sed -e s\\|^.*\"\\\\\\(https\\\\?://\[^\"]*\\\\\\)\".*$\\|\\\\1\\|"
+	set index [expr {int(rand()*20)}]
+	set msg(0) "cat"
+	set msg(1) "kitty"
+	set msg(2) "how cute"
+	set msg(3) "neko"
+	set msg(4) "el gato"
+	set msg(5) "katze"
+	set msg(6) "fur baby"
+	set msg(7) "catto"
+	set msg(8) "purr"
+	set msg(9) "meow"
+	set msg(10) "cats are nice"
+	set msg(11) "dogs are better"
+	set msg(12) "you're obsessed"
+	set msg(13) "seriously, wtf"
+	set command "curl -s -k -L -A foo https://www.reddit.com/r/catpictures/random.json | jq . | grep \\\"url\\\": | grep -E -v \\(preview.redd.it\\|redditstatic.com\\) | head -1 | sed -e s\\|^.*\"\\\\\\(https\\\\?://\[^\"]*\\\\\\)\".*$\\|\\\\1\\|"
 	set fd [open "|${command}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
+		putchan $chan "$msg($index): $line"
 	}
 	close $fd
 }
