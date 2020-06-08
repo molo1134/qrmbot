@@ -293,7 +293,7 @@ sub getFlightTrack
     if (m|"shortName":"([^"]*)"|) {
       $airline = $1;
     }
-    if (m|<title.*#(\d+)\s+.*</title>|) {
+    if (m|name="twitter:description" content="Track.*?#(\d+)\s+.*?"\s*/>|) {
       $fnum = $1;
     }
     # var trackpollGlobals = {"TOKEN":"dd1320656957446e91ec1b5b1b04d2ce5a7d0a670f899c2e--da74a34ace4ede66ab25308cec9e6b9338c28a99","INTERVAL":65,"SINGLE_FLIGHT":true,"USERTOKEN":"323564526"};
