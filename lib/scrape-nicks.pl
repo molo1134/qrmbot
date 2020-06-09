@@ -98,7 +98,7 @@ our @blacklist = (
   "B3333N", "BR14NVG", "CV26TH", "H14C", "L4MB", "MH00H", "MN1H", "N00B",
   "N1A", "NC45L", "QE37QULU", "SR65K", "T0NITO", "T109J", "T1TWAN", "UP10AD",
   "V3NGE", "G1LV", "XS400CAFE", "O3GEN", "T60R", "DJ027X", "4TR5V", "J3DUDE",
-  "LB7GUY", "RC5K", "W33T", "J42J", "D4RKS", "5H15H", "CB77EF",
+  "LB7GUY", "RC5K", "W33T", "J42J", "D4RKS", "5H15H", "CB77EF", "1MC6FR",
   # opt-out
   "N4ADK");
 
