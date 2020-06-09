@@ -8,8 +8,11 @@
 use strict;
 use utf8;
 use feature 'unicode_strings';
-use List::Util 'any';
 binmode(STDOUT, ":utf8");
+
+use List::Util 'any';
+use JSON qw( decode_json );
+use Data::Dumper;
 
 use Cwd 'realpath';
 use File::Basename;
@@ -129,104 +132,43 @@ foreach my $baseurl (@baseurls) {
 
   for ( my $count = 0; $count < $limit; $count++) {
 
-    my ($u, $f, $c, $ts);
     last if defined $after and $after eq "null";
     $url = "$baseurl?after=$after" if defined $after;
-    print STDERR "$count: $url\n";
+    print "$count: $url\n";
 
     open (HTTP, '-|', "curl -s -k -L -A \"$useragent\" \"$url\"");
     binmode(HTTP, ":utf8");
-    while(<HTTP>) {
-    #  print STDERR "$_\n";
-      $_ =~ s/{/{\n/g;
-      $_ =~ s/["\]],\s+"/"\n"/g;
-      $_ =~ s/(\d|true|false|null), /$1\n/g;
-      @_ = split "\n";
-      foreach my $e (@_) {
-#	print "$e\n";
-#	if (/"crosspost_parent_list":/) {
-#	  if (defined $u and defined $c) {
-#	    print "$c :: $u :: $ts\n";
-#	    updateResult($c, $ts, $u);
-#	  }
-#	  $u = $c = $ts = undef;
-#	}
-	if ($e =~ /"(\w+)": (-?[\d.]+|null|true|false|".+"$)/) {
-	  my ($k, $v) = ($1, $2);
-	  $v =~ s/^"(.*)"$/$1/;
-	  $v =~ s/\\u([0-9a-f]{4})/chr(hex($1))/egi;
-	  #print "$k => $v\n";
 
-	  if ($k eq "after") {
-	    if (defined $after and $after eq $v) {
-	      #print "duplicate AFTER - infinite loop\n"
-	      $after = "null";
-	    } else {
-	      $after = $v;
-	    }
-	  } elsif ($k eq "author") {
-	    #print "author: $v\n";
-	    $u = $v;
-	    if ($u =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
-	      # username is callsign
-	      $c = uc $u;
-	      $c =~ s/[Øø∅]/0/g;
-	    }
-	  } elsif ($k eq "author_flair_text") {
-	    #print "author_flair_text: $v\n";
-	    $f = $v;
-	    next if $f eq "null";
-	    my ($tmp, undef) = grep {$_ ne ''} split(/[\s\W]/, $f);
-	    next if not defined $tmp;
-	    #print "$tmp\n";
-	    if ($tmp =~ /^[A-R]{2}[0-9]{2}([a-x]{2})?$/i) { # grid
-	      next;
-	    }
-	    if ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
-	      $c = uc $tmp;
-	      $c =~ s/[Øø∅]/0/g;
-	    }
-	  } elsif ($k eq "created_utc" or $k eq "created") {
-	    $ts = $v;
-	    $ts =~ s/\.0*$//g;
-	  } elsif ($k eq "body" or $k eq "selftext") {
-	    if ($v =~ /(\\n|73.*?|DE|-)(\s|\\n)*([A-Z0-9Øø∅]+)(\.|\s|\\n)*$/i) {
-	      my $tmp = $3;
-	      if ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
-		$c = uc $tmp;
-		$c =~ s/[Øø∅]/0/g;
-		printf STDERR "%s :: %s => %s\n", $c, $k, substr($v,-25);
-	      }
-	    }
-	  } elsif ($k eq "kind" or $k eq "banned_by") {
-	    # moving on to new entry
-	    #print "NEXT: $k\n";
-	    if (defined $c and defined $u) {
-	      if (not any { /^$c$/i } @blacklist and $u ne "[deleted]") {
-		updateResult($c, $ts, $u);
-		#$ts = time() if not defined $ts;
-		#$results{$c} = "$ts,$u";
-	      }
-	    }
-	    $u = undef;
-	    $c = undef;
-	    $ts = undef;
-	  }
-	}
-      }
-      if (defined($u) and defined($c)) {
-	if (not any { /^$c$/i } @blacklist and $u ne "[deleted]") {
-	  updateResult($c, $ts, $u);
-	  #$ts = time() if not defined $ts;
-	  #$results{$c} = "$ts,$u";
-	}
-      }
-      $u = undef;
-      $c = undef;
-      $ts = undef;
-
-    }
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    my $json = <HTTP>;
+    my $j = decode_json($json);
     close(HTTP);
+
+    #print Dumper $j->{'data'}->{'children'}->[0];
+    if (ref($j) eq "HASH") {
+      foreach my $i (@{ $j->{'data'}->{'children'} }) {
+	handleNode($i);
+      }
+
+      if (defined $j->{'data'}->{'after'}) {
+	if (defined $after and $after eq $j->{'data'}->{'after'}) {
+	  #print "duplicate AFTER - infinite loop\n"
+	  $after = "null";
+	} else {
+	  $after = $j->{'data'}->{'after'};
+	}
+      } else {
+	$after = "null";
+      }
+
+    } elsif (ref($j) eq "ARRAY") {
+      foreach my $i (@{$j}) {
+	foreach my $k (@{ $i->{'data'}->{'children'} }) {
+	  handleNode($k);
+	  $after = "null";
+	}
+      }
+    }
 
     updatenicks();
 
@@ -253,7 +195,7 @@ sub updatenicks {
       my ($call, $ircnick, undef) = split (/,/, $nicks{$k});
       $nicks{$k} = "$call,$ircnick,/u/$uid";
     } else {
-      print STDERR "NEW: ===> $k $uid\n";
+      print "NEW: ===> $k $uid\n";
       $nicks{$k} = "$k,,/u/$uid";
     }
   }
@@ -277,15 +219,67 @@ sub updateResult {
   return if $u =~ /\[deleted\]/;
   return if $u eq "pongo000";
   $ts = time if not defined $ts;
-  #print "found: $c /u/$u \@$ts\n";
+  print "found: $c /u/$u \@$ts\n";
   if (defined($results{$c})) {
     my ($oldts,$oldval) = split(/,/, $results{$c});
     if ($ts > $oldts) {
       $results{$c} = "$ts,$u";
 #    } else {
-      #print STDERR "discarding older\n";
+      #print "discarding older\n";
     }
   } else {
     $results{$c} = "$ts,$u";
   }
+}
+
+sub handleNode {
+  my $node = shift;
+  my ($u, $f, $c, $ts);
+  #print $node->{'data'};
+  $u = $node->{'data'}->{'author'};
+  return if not defined $u;
+  if ($u =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
+    # username is callsign
+    $c = uc $u;
+    $c =~ s/[Øø∅]/0/g;
+  }
+  $f = $node->{'data'}->{'author_flair_text'};
+  if (defined $f and $f ne "null") {
+    my ($tmp, undef) = grep {$_ ne ''} split(/[\s\W]/, $f);
+    if (defined $tmp) {
+      #print "$tmp\n";
+      if ($tmp =~ /^[A-R]{2}[0-9]{2}([a-x]{2})?$/i) { # grid
+	# noop
+      } elsif ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
+	$c = uc $tmp;
+	$c =~ s/[Øø∅]/0/g;
+      }
+    }
+  }
+  $ts = $node->{'data'}->{'created_utc'} || $node->{'data'}->{'created'};
+  $ts =~ s/\.0*$//g if defined $ts;
+
+  my $t = $node->{'data'}->{'body'};
+  $t = $node->{'data'}->{'selftext'} if not defined $t;
+  #print "TEXT: $t\n";
+  if (defined $t and $t =~ /(\n|73.*?|DE|-)(\s|\n|\w)*?([A-Z0-9Øø∅]+)(\.|\s|\n)*$/i) {
+    #print "\nIN TEMP\n";
+    my $tmp = $3;
+    if ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
+      $c = uc $tmp;
+      $c =~ s/[Øø∅]/0/g;
+      $t =~ s/\n/\\n/g;
+      printf "%s => %s\n", $c, substr($t,-25);
+    }
+  }
+
+  if (defined $c and defined $u) {
+    if (not any { /^$c$/i } @blacklist and $u ne "[deleted]") {
+      updateResult($c, $ts, $u);
+    }
+  }
+
+  $c = "" if not defined $c;
+  #print "$u :: $c :: $ts\n";
+  $c = $u = $ts = undef;
 }
