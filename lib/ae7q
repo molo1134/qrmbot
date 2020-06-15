@@ -205,14 +205,15 @@ sub doAe7qCall {
     if ($inPredTable) {
       if (m|</tr>| and defined $filenum) {
 	#print "$receipt $process $appl $class $state $filenum $seq $pred\n";
-	printf "%-6s ($state) $seq $pred\n", $appl;
+	#printf "%-6s ($state) $seq $pred\n", $appl;
+	printf "$receipt -> $process %-6s ($state) App $filenum #%-5s $pred\n", $appl, $seq;
 	$filenum = $seq = $pred = undef;
       }
       if (m|<td class="DatabaseField" style='background-color:White; Text-Align: right'><a href='/query/list/AppByReceipt.php\?DATE=([0-9-]+)' title='Show vanity applications received on [0-9-]+'>\w+ [0-9-]+</a></td><td class="DatabaseField" style='background-color:White; Text-Align: right'><a href='/query/list/ProcessDate.php\?DATE=([0-9-]+)' title='Show application &amp; license processing for [0-9-]+'>\w+ [0-9-]+</a></td>|) {
 	($receipt, $process) = ($1, $2);
       }
       if (m|<td class="DatabaseField" style='background-color:White; Text-Align: right'><a href='/query/list/AppByReceipt.php\?DATE=([0-9-]+)' title='Show vanity applications received on [0-9-]+'>\w+ [0-9-]+</a>.*Offlined by FCC|) {
-	($receipt, $process) = ($1, "offlined");
+	($receipt, $process) = ($1, "????-??-??");
       }
       if (m/<kbd\s+style='font-weight:(Normal|Bold)'>([A-Z0-9]+)<\/kbd><\/a><\/td>/) {
 	$appl = $2;
