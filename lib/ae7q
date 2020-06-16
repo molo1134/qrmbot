@@ -209,7 +209,7 @@ sub doAe7qCall {
 	printf "$receipt -> $process %-6s ($state) App $filenum #%-5s $pred\n", $appl, $seq;
 	$filenum = $seq = $pred = undef;
       }
-      if (m|<td class="DatabaseField" style='background-color:White; Text-Align: right'><a href='/query/list/AppByReceipt.php\?DATE=([0-9-]+)' title='Show vanity applications received on [0-9-]+'>\w+ [0-9-]+</a></td><td class="DatabaseField" style='background-color:White; Text-Align: right'><a href='/query/list/ProcessDate.php\?DATE=([0-9-]+)' title='Show application &amp; license processing for [0-9-]+'>\w+ [0-9-]+</a></td>|) {
+      if (m|<td class="DatabaseField" style='background-color:White; Text-Align: right'><a href='/query/list/AppByReceipt.php\?DATE=([0-9-]+)' title='Show vanity applications received on [0-9-]+'>\w+ [0-9-]+</a></td><td class="DatabaseField" style='background-color:.*?; Text-Align: right'><a href='/query/list/ProcessDate.php\?DATE=([0-9-]+)' title='Show application &amp; license processing for [0-9-]+'>\w+ [0-9-]+</a></td>|) {
 	($receipt, $process) = ($1, $2);
       }
       if (m|<td class="DatabaseField" style='background-color:White; Text-Align: right'><a href='/query/list/AppByReceipt.php\?DATE=([0-9-]+)' title='Show vanity applications received on [0-9-]+'>\w+ [0-9-]+</a>.*Offlined by FCC|) {
