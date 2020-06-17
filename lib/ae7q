@@ -57,6 +57,7 @@ while ($i <= $#ARGV) {
 
 sub doAe7qRegion {
   my $region = shift;
+  my $saved = $_;
   $region = 10 if $region == 0;
   my $url = "http://www.ae7q.com/query/list/GenLicAvail.php?REGION=$region";
 
@@ -107,10 +108,12 @@ sub doAe7qRegion {
   print "; ", yellow(scalar @upcoming), " upcoming";
   print ": ", yellow(join(", ", @upcoming)) if scalar @upcoming > 0;
   print "\n";
+  $_ = $saved;
 }
 
 sub doAe7qCall {
   my $call = uc shift;
+  my $saved = $_;
   my $url = "http://www.ae7q.com/query/data/CallHistory.php?CALL=$call";
 
   my ($frn, $name, $class, $status, $state, $grant, $eff, $cxl, $expire);
@@ -252,6 +255,7 @@ sub doAe7qCall {
   }
 
   print bold($call), ": $callStatus\n" if defined $callStatus and not $found;
+  $_ = $saved;
 }
 
 sub getAvailDate {
@@ -289,6 +293,7 @@ sub uniq {
 
 sub printFrnApps {
   my $frn = shift;
+  my $saved = $_;
   my $url = "http://ae7q.com/query/data/FrnHistory.php?FRN=$frn";
   my $inpred = 0;
   my ($appdate, $procdate, $appid, $appidnum, $appcolor, $type, $seqnum, $vanity, $pred);
@@ -325,11 +330,13 @@ sub printFrnApps {
       print "$appdate -> $procdate: App $appid ($type) #$seqnum $vanity $pred$odds\n";
     }
   }
+  $_ = $saved;
 }
 
 sub getOdds {
   my $appid = shift;
   my $vcall = shift;
+  my $saved = $_; # ugh $_ is a global
 
   my $url = "http://104.154.130.35/predict/app-$appid.csv";
   #my $url = "file://$ENV{HOME}/src/vanity-predict/html/app-$appid.csv";
@@ -337,9 +344,11 @@ sub getOdds {
   while(<CSV>) {
     chomp;
     my ($app, $target, $odds) = split /,/;
+    $_ = $saved;
     return $odds if $appid == $app and $target eq $vcall;
   }
   close(CSV);
+  $_ = $saved;
   return undef;
 }
 
