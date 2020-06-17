@@ -206,7 +206,8 @@ sub doAe7qCall {
       if (m|</tr>| and defined $filenum) {
 	#print "$receipt $process $appl $class $state $filenum $seq $pred\n";
 	#printf "%-6s ($state) $seq $pred\n", $appl;
-	printf "$receipt -> $process %-6s ($state) App $filenum #%-5s $pred\n", $appl, $seq;
+	my $odds = formatOdds(getOdds($filenum, $call));
+	printf "$receipt -> $process %-6s ($state) App $filenum #%-5s $pred$odds\n", $appl, $seq;
 	$filenum = $seq = $pred = undef;
       }
       if (m|<td class="DatabaseField" style='background-color:White; Text-Align: right'><a href='/query/list/AppByReceipt.php\?DATE=([0-9-]+)' title='Show vanity applications received on [0-9-]+'>\w+ [0-9-]+</a></td><td class="DatabaseField" style='background-color:.*?; Text-Align: right'><a href='/query/list/ProcessDate.php\?DATE=([0-9-]+)' title='Show application &amp; license processing for [0-9-]+'>\w+ [0-9-]+</a></td>|) {
@@ -290,7 +291,7 @@ sub printFrnApps {
   my $frn = shift;
   my $url = "http://ae7q.com/query/data/FrnHistory.php?FRN=$frn";
   my $inpred = 0;
-  my ($appdate, $procdate, $appid, $appcolor, $type, $seqnum, $vanity, $pred);
+  my ($appdate, $procdate, $appid, $appidnum, $appcolor, $type, $seqnum, $vanity, $pred);
   open(HTTP, '-|', "curl --max-time $ae7qTimeout -L -k -s '$url'");
   while(<HTTP>) {
     $inpred = 1 if /Retrieving predictions for pending applications from/;
@@ -299,7 +300,7 @@ sub printFrnApps {
     $procdate = $1 if m|/ProcessDate\.php\?DATE=([0-9-]+)'| and $inpred == 1;
     # <td class="DatabaseField" style='background-color:#99CCFF; '><a href='/query/data/AppDetail.php?UFN=0009052785'
     if (m|background-color:#([0-9A-F]+).*/AppDetail\.php\?UFN=([0-9]+)'| and $inpred == 1) {
-      $appid = $2;
+      $appidnum = $appid = $2;
       my $appcolor = $1;
       $appid = lightblue($appid) if $appcolor eq "99CCFF";
       $appid = green($appid) if $appcolor eq "99FF66";
@@ -320,7 +321,40 @@ sub printFrnApps {
 
       $procdate = "????-??-??" if not defined $procdate or $pred =~ /^Offlined/;
 
-      print "$appdate -> $procdate: App $appid ($type) #$seqnum $vanity $pred\n";
+      my $odds = formatOdds(getOdds($appidnum, $vanity));
+      print "$appdate -> $procdate: App $appid ($type) #$seqnum $vanity $pred$odds\n";
     }
   }
+}
+
+sub getOdds {
+  my $appid = shift;
+  my $vcall = shift;
+
+  my $url = "http://104.154.130.35/predict/app-$appid.csv";
+  #my $url = "file://$ENV{HOME}/src/vanity-predict/html/app-$appid.csv";
+  open(CSV, '-|', "curl --max-time 5 -L -k -s '$url'");
+  while(<CSV>) {
+    chomp;
+    my ($app, $target, $odds) = split /,/;
+    return $odds if $appid == $app and $target eq $vcall;
+  }
+  close(CSV);
+  return undef;
+}
+
+sub formatOdds {
+  my $odds = shift;
+  if (not defined $odds) {
+    $odds = "";
+  } else {
+    if ($odds == 100.0) {
+      $odds = green(" 100%");
+    } elsif ($odds == 0.0) {
+      $odds = red(" 0%");
+    } else {
+      $odds = yellow(" $odds%");
+    }
+  }
+  return $odds;
 }
