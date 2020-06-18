@@ -9,6 +9,7 @@ use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
+
 use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
@@ -61,39 +62,65 @@ sub doAe7qRegion {
   $region = 10 if $region == 0;
   my $url = "http://www.ae7q.com/query/list/GenLicAvail.php?REGION=$region";
 
-  my $numavail = 0;
-  my $numpending = 0;
   my @avail;
   my @pending;
   my @upcoming;
+  my @unavail;
   my $lastcall;
   my $inCallTable = 0;
   open(HTTP, '-|', "curl --max-time $ae7qTimeout -L -k -s '$url'");
   while(<HTTP>) {
-    if (m|<tr><th class='Database' colspan='[23]'> Totals </th><td class='DatabaseField' align='right'> (\d+) </td><td class='DatabaseField' align='right'> (\d+) <|) {
-      $numavail = $1;
-      $numpending = $2;
-      #print "$numavail, $numpending\n";
-    }
     $inCallTable = 1 if (m|>\s*[12]x[12] callsigns\s*<|);
     if (not defined $lastcall and $inCallTable and m|<a href='/query/data/CallHistory\.php\?CALL=([A-Z0-9]+)'|) {
       $lastcall = $1;
       #print "lastcall: $lastcall\n";
     }
-    if (defined $lastcall and m|</td><td class='DatabaseField' align='center'>\d+</td><td class="Database" style='background-color:#([0-9A-F]+);.*center'>([0-9-]+)|) {
+    if (defined $lastcall and m|</td><td class='DatabaseField' align='center'>\d+</td><td class="Database" style='background-color:#([0-9A-F]+);.*?center'>([0-9-]+).*?center'>([0-9-]*)|) {
       my $color = $1;
       my $date = $2;
+      my $avdate = $3;
+      #print "$lastcall: color: $color date: $date $avdate\n" if $avdate eq "";
       if ($color eq "99CCFF") { # blue
 	push @pending, $lastcall;
 	#print "pending: $lastcall\n";
-      }
-      if ($color eq "99FF66") { # green
+      } elsif ($color eq "99FF66") { # green
 	push @avail, $lastcall;
 	#print "avail $lastcall\n";
-      }
-      if ($color eq "FFFF66" or $color eq "FF99CC") { # yellow, red
-	my $datestamp = Time::Piece->strptime($date, "%Y-%m-%d")->epoch;
-	push (@upcoming, $lastcall) if $datestamp < (time() + (7 * 24*60*60));
+      } elsif ($avdate ne "") {
+	if ($color eq "FFFF66" or $color eq "FF99CC") { # yellow, red
+	  my $datestamp = Time::Piece->strptime($avdate, "%Y-%m-%d")->epoch;
+	  if ($datestamp < time()) {
+	    push (@avail, $lastcall);
+	  } elsif ($datestamp < (time() + (7 * 24*60*60))) {
+	    push (@upcoming, $lastcall);
+	  }
+	}
+      } else {
+	my ($y, $m, $d) = split /-/, $date;
+
+	# increment 2 years
+	$y += 2;
+	
+	# increment 1 day
+	$d += 1;
+	if ($d > getDaysInMonth($m, $y)) {
+	  $m++;
+	  $d = 1;
+	}
+	if ($m > 12) {
+	  $m = 1;
+	  $y++;
+	}
+
+	$avdate = sprintf "%04u-%02u-%02u", $y, $m, $d;
+	my $today = strftime ("%Y-%m-%d", localtime(time()));
+	#print "$lastcall $avdate $today\n";
+	
+	if ($today eq $avdate) {
+	  push @avail, $lastcall;
+	} else {
+	  push @unavail, $lastcall;
+	}
       }
       $lastcall = undef;
     }
@@ -101,12 +128,14 @@ sub doAe7qRegion {
   }
   close(HTTP);
 
-  print "Region $region: ", green($numavail), " available";
-  print ": ", green(join(", ", @avail)) if $numavail > 0;
-  print "; ", lightblue($numpending), " pending";
-  print ": ", lightblue(join(", ", @pending)) if $numpending > 0;
+  print "Region $region: ", green(scalar @avail), " available";
+  print ": ", green(join(", ", @avail)) if scalar @avail > 0;
+  print "; ", lightblue(scalar @pending), " pending";
+  print ": ", lightblue(join(", ", @pending)) if scalar @pending > 0;
   print "; ", yellow(scalar @upcoming), " upcoming";
   print ": ", yellow(join(", ", @upcoming)) if scalar @upcoming > 0;
+  print "; ", red(scalar @unavail), " unavailable: ",
+	red(join(", ", @unavail)) if scalar @unavail > 0;
   print "\n";
   $_ = $saved;
 }
@@ -366,4 +395,63 @@ sub formatOdds {
     }
   }
   return $odds;
+}
+
+sub getDaysInMonth {
+  my $m = shift;
+  my $y = shift;
+  if ($m == 9, $m == 4, $m == 6, $m == 11) {
+    return 30;
+  }
+  if ($m != 2) {
+    return 31;
+  }
+  if ($y % 4 != 0) {
+    return 28;
+  }
+  if ($y % 100 != 0) {
+    return 29;
+  }
+  if ($y % 400 == 0) {
+    return 29;
+  } else {
+    return 28;
+  }
+}
+
+sub assert {
+  my ($condition, $msg) = @_;
+  return if $condition;
+  if (!$msg) {
+    my ($pkg, $file, $line) = caller(0);
+    open my $fh, "<", $file;
+    my @lines = <$fh>;
+    close $fh;
+    $msg = "$file:$line: " . $lines[$line - 1];
+  }
+  die "Assertion failed: $msg";
+}
+
+sub testDaysInMonth {
+  # 1988, 1992, and 1996 are leap years.
+  assert(getDaysInMonth(2, 1988) == 29);
+  assert(getDaysInMonth(2, 1992) == 29);
+  assert(getDaysInMonth(2, 1996) == 29);
+  assert(getDaysInMonth(2, 2004) == 29);
+  # the following years are not leap years:
+  # 1700, 1800, 1900, 2100, 2200, 2300, 2500, 2600
+  assert(getDaysInMonth(2, 1700) == 28);
+  assert(getDaysInMonth(2, 1800) == 28);
+  assert(getDaysInMonth(2, 1900) == 28);
+  assert(getDaysInMonth(2, 2100) == 28);
+  assert(getDaysInMonth(2, 2200) == 28);
+  assert(getDaysInMonth(2, 2300) == 28);
+  assert(getDaysInMonth(2, 2500) == 28);
+  assert(getDaysInMonth(2, 2600) == 28);
+  # The following years are leap years: 1600, 2000, 2400
+  assert(getDaysInMonth(2, 1600) == 29);
+  assert(getDaysInMonth(2, 2000) == 29);
+  assert(getDaysInMonth(2, 2400) == 29);
+  # all others
+  assert(getDaysInMonth(2, 2001) == 28);
 }
