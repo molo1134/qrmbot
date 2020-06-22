@@ -23,7 +23,7 @@ my $url = "http://beta.kc2g.com/api/essn.json";
 my ($esfi, $essn);
 open (HTTP, '-|', "curl -s -k -L $url");
 while (<HTTP>) {
-  if (/^\{"24h":\[\{"sfi":([0-9.]+),"ssn":([0-9.]+)/) {
+  if (/^\{"24h":\[\{"sfi":(-?[0-9.]+),"ssn":(-?[0-9.]+)/) {
     ($esfi, $essn) = ($1, $2);
     $esfi = round($esfi);
     $essn = round($essn);
