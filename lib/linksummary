@@ -108,6 +108,7 @@ sub printYouTubeMetaData {
   my $url = "https://youtube.com/watch?v=$id";
   my $shortcut = "http://youtu.be/$id";
   my $vidimg = "https://i.ytimg.com/vi/$id/hqdefault.jpg";
+  #my $vidimg = "https://i.ytimg.com/vi/$id/maxresdefault.jpg";
   my $done = 0;
   my ($title, $len, $desc, $count, $pubdate, $genre, $nsfw, $unlisted, $paid, $author, $likes, $dislikes, $live);
   open(HTTP, '-|', "curl -4 --max-time $timeout -L -k -s '$url'");
@@ -123,19 +124,34 @@ sub printYouTubeMetaData {
       print "\n";
       exit 0;
     }
-    if (/<meta itemprop="(\w+)" content="([^"]*)">/) {
-      my ($k, $v) = ($1, $2);
+    if (/<meta\s+(itemprop|property|name)="([^"]+)"\s+content="([^"]*)">/) {
+      my ($k, $v) = ($2, $3);
       $v = decodeEntities($v);
       #print "$k = $v\n";
+      $title = $v if $k eq "twitter:title";
+      $title = $v if $k eq "title";
       $title = $v if $k eq "name";
       #$len   = $v if $k eq "duration";
       $desc  = $v if $k eq "description";
+      $desc  = $v if $k eq "twitter:description";
       $count = $v if $k eq "interactionCount";
       $pubdate = $v if $k eq "datePublished";
       $genre = $v if $k eq "genre";
       $nsfw = $v eq "False" ? 1 : 0 if $k eq "isFamilyFriendly";
       $unlisted = $v eq "True" ? 1 : 0 if $k eq "unlisted";
       $paid = $v eq "True" ? 1 : 0 if $k eq "paid";
+    }
+    if (not defined $nsfw and /"isUnlisted\\":(true|.*?),/) {
+      $unlisted = ($1 eq "true" ? 1 : 0);
+    }
+    if (not defined $nsfw and /"isFamilySafe\\":(true|.*?),/) {
+      $nsfw = ($1 eq "true" ? 0 : 1);
+    }
+    if (not defined $count and /"viewCount\\":\\"([^"]+)\\"/) {
+      $count = $1;
+    }
+    if (not defined $pubdate and /"publishDate\\":\\"([^"]+)\\"/) {
+      $pubdate = $1;
     }
     if (/"author\\":\\"([^"]+)\\"/) {
       $author = $1;
