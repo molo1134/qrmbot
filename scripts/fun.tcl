@@ -335,6 +335,7 @@ proc card_pub { nick host hand chan text } {
 	rando_pub $nick $host $hand $chan "--card"
 }
 bind pub - !draw draw_pub
+bind pub - !deal draw_pub
 proc draw_pub { nick host hand chan text } {
 	global randobin
 	set param [sanitize_string [string trim ${text}]]
