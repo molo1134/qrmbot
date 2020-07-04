@@ -1,0 +1,125 @@
+#!/usr/bin/perl
+
+use strict;
+use utf8;
+use Encode qw(decode);
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+
+use Time::Piece ();
+use JSON qw( decode_json );
+use POSIX qw(strftime);
+
+@ARGV = map { decode "utf-8", $_ } @ARGV;
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+my $geo = undef;
+my $query = undef;
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if (!defined($geo) and $ARGV[$i] =~ /^--geo$/i) {
+    $i++;
+    $geo = $ARGV[$i];
+    $i++;
+    next;
+  }
+  if (defined($query)) {
+    $query = $query ." ". $ARGV[$i];
+  } else {
+    $query = $ARGV[$i];
+  }
+  $i++;
+}
+
+if (not defined $query and not defined $geo) {
+  if ($username eq 'eggdrop') {
+    print "usage: !blitz <grid>|<lat>,<lon>|<qth>\n";
+  } else {
+    print "usage: $0 <grid>|<lat>,<lon>|<qth>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $result = argToCoords($query) if defined $query;
+
+if (defined $query and not defined $result) {
+  print "error: unable to find \"$query\"\n";
+  exit $exitnonzeroonerror;
+}
+
+my ($mylat, $mylon) = split(',', $geo) if defined $geo;
+($mylat, $mylon) = split(',', $result) if defined $result;
+
+my $url = "http://bo-service.tryb.de/";
+my $ua = "User-Agent: bo-android-270";
+my $ct = "Content-Type: text/json";
+my $req = '{"id":0,"method":"get_strikes_grid","params": [30,5000,0,3,0]}';
+
+local $/;   # read entire file -- FIXME: potentially memory hungry
+open (JSON, '-|', "curl -s -k -L -H \"${ua}\" -H \"${ct}\" --data '${req}' $url");
+my $json = <JSON>;
+close(JSON);
+my $j = decode_json($json);
+
+our $xd = $j->{'xd'}; # longitude delta
+our $yd = $j->{'yd'}; # latitude delta
+our $x0 = $j->{'x0'}; # longitude start
+our $y1 = $j->{'y1'}; # latitude start
+our $xc = $j->{'xc'}; # num longitude bins
+our $yc = $j->{'yc'}; # num latitude bins
+our $t = $j->{'t'};   # reference timestamp
+our $dt = $j->{'dt'}; # time window?
+
+my $now = time();
+my $ts = Time::Piece->strptime($t, "%Y%m%dT%H:%M:%S")->epoch;
+my $mindist = 20000.0;
+my $closest = undef;
+
+foreach my $r (@{$j->{'r'}}) {
+  my @r = @{$r};
+  my ($longIndex, $latIndex, $count, $timedelta) = @r;
+  my $lat = getLatFromIndex($latIndex);
+  my $lon = getLongFromIndex($longIndex);
+  #my $grid = coordToGrid($lat, $lon);
+  my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
+  next if ($ts + $timedelta) < ($now - 15*60);
+  if ($dist < $mindist) {
+    $closest = "$lat,$lon,$timedelta";
+    $mindist = $dist;
+  }
+  #printf("%s => $lat,$lon ($grid) #$count -- %.1f km, %.0f°\n", join(", ", @r), $dist, $bearing);
+}
+
+my ($lat, $lon, $timedelta) = split(/,/,$closest);
+#my $grid = coordToGrid($lat, $lon);
+my $mygrid = coordToGrid($mylat, $mylon);
+my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
+#printf("%s => $lat,$lon ($grid) #$count -- %.1f km, %.0f°\n", join(", ", @r), $dist, $bearing);
+printf("Nearest lightning strike to $mygrid in last 15 minutes: %.1f km, %.0f° at %s\n", $dist, $bearing, strftime("%H:%Mz", gmtime($ts + $timedelta)));
+
+sub getLongFromIndex {
+  my $index = shift;
+  our $xd;
+  our $x0;
+  return $x0 + ($xd * ($index + 0.5));
+}
+sub getLatFromIndex {
+  my $index = shift;
+  our $yd;
+  our $y1;
+  return $y1 - ($yd * ($index + 0.5));
+}
+

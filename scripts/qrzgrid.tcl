@@ -120,6 +120,13 @@ bind pub - !muf2 muf2_pub
 bind msg - !iono iono_msg
 bind pub - !iono iono_pub
 
+bind msg - !blitz blitz_msg
+bind pub - !blitz blitz_pub
+bind msg - !lightning blitz_msg
+bind pub - !lightning blitz_pub
+bind msg - !zap blitz_msg
+bind pub - !zap blitz_pub
+
 bind msg - !eme eme_msg
 bind pub - !eme eme_pub
 bind msg - !moon moon_msg
@@ -174,6 +181,7 @@ set astrobin "/home/eggdrop/bin/astro"
 set satbin "/home/eggdrop/bin/sat"
 set qcodebin "/home/eggdrop/bin/qcode"
 set dxpedbin "/home/eggdrop/bin/dxpeditions"
+set blitzbin "/home/eggdrop/bin/blitz"
 
 set spotfile spotlist
 
@@ -1532,6 +1540,45 @@ proc iono_msg {nick uhand handle input} {
 		set fd [open "|${ionobin} ${iono}" r]
 	} else {
 		set fd [open "|${ionobin} ${iono} --geo $geo" r]
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
+}
+
+proc blitz_pub { nick host hand chan text } {
+	global blitzbin
+	set blitz [sanitize_string [string trim ${text}]]
+	set geo [qrz_getgeo $hand]
+
+	putlog "blitz pub: $nick $host $hand $chan $blitz $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${blitzbin} ${blitz}" r]
+	} else {
+		set fd [open "|${blitzbin} ${blitz} --geo $geo" r]
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+
+proc blitz_msg {nick uhand handle input} {
+	global blitzbin
+	set blitz [sanitize_string [string trim ${input}]]
+	set geo [qrz_getgeo $handle]
+
+	putlog "blitz msg: $nick $uhand $handle $blitz $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${blitzbin} ${blitz}" r]
+	} else {
+		set fd [open "|${blitzbin} ${blitz} --geo $geo" r]
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
