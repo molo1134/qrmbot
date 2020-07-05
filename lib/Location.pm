@@ -146,11 +146,17 @@ sub geolocate {
 
   RESTART:
 
+  #print "$url\n";
+  my $count = -1;
   open (HTTP, '-|', "curl --stderr - -N -k -s -L '$url'");
   binmode(HTTP, ":utf8");
-  while (<HTTP>) {
-    #print;
-    chomp;
+  local $/; # read entire output -- potentially memory hungry
+  my $xml = <HTTP>;
+  close(HTTP);
+
+  foreach $_ (split /\n/,$xml) {
+    $count++;
+    #print "$count $_\n";
 
     if (/OVER_QUERY_LIMIT/) {
       #print "warning: over query limit\n" unless defined($raw) and $raw == 1;
@@ -174,13 +180,12 @@ sub geolocate {
     }
 
     if ($getnextaddr == 1 and /<formatted_address>([^<]+)</) {
-      #print "$type => $1\n";
       $results{$type} = $1;
+      #print "$type => $1\n";
       $getnextaddr = 0;
       next;
     }
   }
-  close HTTP;
 
   if (defined($results{"neighborhood"})) {
     $addr = $results{"neighborhood"};
