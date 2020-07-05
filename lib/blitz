@@ -106,9 +106,20 @@ foreach my $r (@{$j->{'r'}}) {
 my ($lat, $lon, $timedelta) = split(/,/,$closest);
 #my $grid = coordToGrid($lat, $lon);
 my $mygrid = coordToGrid($mylat, $mylon);
+my $myqth = geolocate($mylat, $mylon);
 my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
+$dist = sprintf("%.1f", $dist);
+$bearing = sprintf("%.0f°", $bearing);
+my $pos;
+if ($dist < 20.0) {
+  $pos = yellow("⚡⚡") . red("$dist km, $bearing");
+} elsif ($dist < 50.0) {
+  $pos = yellow("⚡$dist km, $bearing");
+} else {
+  $pos = green("$dist km, $bearing");
+}
 #printf("%s => $lat,$lon ($grid) #$count -- %.1f km, %.0f°\n", join(", ", @r), $dist, $bearing);
-printf("Nearest lightning strike to $mygrid in last 15 minutes: %.1f km, %.0f° at %s\n", $dist, $bearing, strftime("%H:%Mz", gmtime($ts + $timedelta)));
+printf("Nearest lightning strike to $myqth ($mygrid) in last 15 minutes: $pos at %s\n", strftime("%H:%Mz", gmtime($ts + $timedelta)));
 
 sub getLongFromIndex {
   my $index = shift;
