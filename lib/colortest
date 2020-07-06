@@ -33,6 +33,7 @@ print blink("blink"), $sep;
 print monospace("monospace"), $sep;
 print redOnWhite("red on white"), $sep;
 print blackOnWhite("black on white"), $sep;
+print italic(red("red italic")), $sep;
 
 if ($username eq "eggdrop") {
   print "\nextended mirc color (shades of blue): ";
