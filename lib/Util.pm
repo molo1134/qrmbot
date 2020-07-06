@@ -118,6 +118,11 @@ sub decodeEntities {
   $s =~ s/&nbsp;/ /g;
   $s =~ s/&amp;/\&/g;
 
+  $s =~ s/&lsaquo;/‹/g;
+  $s =~ s/&rsaquo;/›/g;
+  $s =~ s/&laquo;/«/g;
+  $s =~ s/&raquo;/»/g;
+
   return $s;
 }
 
