@@ -389,7 +389,7 @@ sub updateCTY {
   if (defined $zipurl) {
     #print "$zipurl\n";
     my (undef, $tmpfile) = tempfile();
-    system "curl -s -k -L -o $tmpfile '$zipurl'";
+    system "curl --max-time 20 -s -k -L -o $tmpfile '$zipurl'";
     system "unzip -p $tmpfile cty.dat > $ctydat";
     unlink $tmpfile
   } else {

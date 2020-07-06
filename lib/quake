@@ -23,7 +23,7 @@ if ($ARGV[0] =~ /about/i){
 
 my $url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_hour.geojson";
 
-open(HTTP, '-|', "curl -s -L --insecure '$url' | jq -c '.features[0,1,2] | [.properties.time,.properties.title]'");
+open(HTTP, '-|', "curl --max-time 10 -s -L --insecure '$url' | jq -c '.features[0,1,2] | [.properties.time,.properties.title]'");
 
 binmode(HTTP, ":utf8");
 while ( my $line = <HTTP>) {

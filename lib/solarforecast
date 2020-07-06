@@ -32,7 +32,7 @@ my $dtparser = DateTime::Format::Strptime->new(
   time_zone => 'UTC',
   on_error => 'undef');
 
-open (HTTP, '-|', "curl -L -k -s $url");
+open (HTTP, '-|', "curl --max-time 10 -L -k -s $url");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   chomp;

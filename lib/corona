@@ -59,7 +59,7 @@ if ($#interest >= 0) {
   my ($cty, $cty_total, $cty_newcases, $cty_deaths, $cty_newdeaths, $cty_recovered, $cty_active, $cty_serious);
   my $in_country = 0;
   my $in_table = 0;
-  open(HTTP, '-|', "curl -s -k '$url'");
+  open(HTTP, '-|', "curl --max-time 10 -s -k '$url'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
 #   print;
@@ -151,7 +151,7 @@ if ($#interest >= 0) {
 if ($#states >= 0) {
   my $url = "https://covidtracking.com/api/states";
   my $found = 0;
-  open(HTTP, '-|', "curl -s -k '$url' | sed -e 's/},{/},\\n{/g'");
+  open(HTTP, '-|', "curl --max-time 10 -s -k '$url' | sed -e 's/},{/},\\n{/g'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
     if (/"state":"([A-Z]{2})",.*?"positive":(\d+),.*?"negative":(\d+|null),.*?"pending":(\d+|null),.*?"hospitalizedCurrently":(\d+|null),.*?"recovered":(\d+|null).*?"death":(\d+|null),/) {
@@ -173,7 +173,7 @@ if ($#states >= 0) {
 my $date;
 my ($incases, $indeaths, $inrecov) = (0, 0, 0);
 my ($c, $d, $r) = (0,0,0);
-system("curl -s -k '$url' > /tmp/c19-temp.html");
+system("curl --max-time 10 -s -k '$url' > /tmp/c19-temp.html");
 open(HTTP, '-|', "elinks --dump /tmp/c19-temp.html");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {

@@ -139,7 +139,7 @@ foreach my $baseurl (@baseurls) {
     $url = "$baseurl?after=$after" if defined $after;
     print "$count: $url\n";
 
-    open (HTTP, '-|', "curl -s -k -L -A \"$useragent\" \"$url\"");
+    open (HTTP, '-|', "curl --max-time 10 -s -k -L -A \"$useragent\" \"$url\"");
     binmode(HTTP, ":utf8");
 
     local $/;   # read entire file -- FIXME: potentially memory hungry

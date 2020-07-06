@@ -19,7 +19,7 @@ $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
 sub updatezip {
   my (undef, $tmpfile) = tempfile();
-  system "curl -s -k -L -o $tmpfile '$url'";
+  system "curl --max-time 10 -s -k -L -o $tmpfile '$url'";
   system "unzip -p $tmpfile clublog_users.json | gzip -c > $userfile";
   unlink $tmpfile;
 }

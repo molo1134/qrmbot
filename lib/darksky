@@ -120,8 +120,8 @@ my %rec;
 my $units;
 my $forecast;
 
-#print ("curl -s -L --insecure '$url' | jq -r '.daily.summary,[.currently,.alerts],.flags.units'\n");
-open(HTTP, '-|', "curl -s -L --insecure '$url' | jq -r '.daily.summary,[.currently,.alerts],.flags.units'");
+#print ("curl --max-time 10 -s -L --insecure '$url' | jq -r '.daily.summary,[.currently,.alerts],.flags.units'\n");
+open(HTTP, '-|', "curl --max-time 10 -s -L --insecure '$url' | jq -r '.daily.summary,[.currently,.alerts],.flags.units'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
     chomp;

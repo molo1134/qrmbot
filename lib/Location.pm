@@ -98,7 +98,7 @@ sub qthToCoords {
 
   return undef if not defined $apikey;
 
-  open (HTTP, '-|', "curl --stderr - -N -k -s -L '$url'");
+  open (HTTP, '-|', "curl --stderr - -N -k -s -L --max-time 5 '$url'");
   binmode(HTTP, ":utf8");
   GET: while (<HTTP>) {
     #print;
@@ -148,7 +148,7 @@ sub geolocate {
 
   #print "$url\n";
   my $count = -1;
-  open (HTTP, '-|', "curl --stderr - -N -k -s -L '$url'");
+  open (HTTP, '-|', "curl --stderr - -N -k -s -L --max-time 5 '$url'");
   binmode(HTTP, ":utf8");
   local $/; # read entire output -- potentially memory hungry
   my $xml = <HTTP>;
@@ -298,7 +298,7 @@ sub coordToTZ {
 
   my ($dstoffset, $rawoffset, $zoneid, $zonename);
 
-  open (HTTP, '-|', "curl --stderr - -N -k -s -L '$url'");
+  open (HTTP, '-|', "curl --stderr - -N -k -s -L --max-time 5 '$url'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
 
@@ -337,7 +337,7 @@ sub coordToElev {
   my $url = "https://maps.googleapis.com/maps/api/elevation/json?locations=$lat,$lon&key=$apikey";
 
   my ($elev, $res);
-  open (HTTP, '-|', "curl --stderr - -N -k -s -L '$url'");
+  open (HTTP, '-|', "curl --stderr - -N -k -s -L --max-time 5 '$url'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
     # {

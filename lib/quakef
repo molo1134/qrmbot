@@ -30,7 +30,7 @@ my $url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geo
 
 print "Largest 2.5+ earthquakes of the last 24 hours:\n";
 
-open(HTTP, '-|', "curl -s -L --insecure '$url' | jq -c '.features[] | [.properties.time,.properties.title]' | sort -rn -k2 | head -5");
+open(HTTP, '-|', "curl --max-time 10 -s -L --insecure '$url' | jq -c '.features[] | [.properties.time,.properties.title]' | sort -rn -k2 | head -5");
 
 binmode(HTTP, ":utf8");
 while ( my $line = <HTTP>) {

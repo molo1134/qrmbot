@@ -125,7 +125,7 @@ my ($inDist, $inDur, $inLine, $inAgency, $inDep, $inArr) = (0,0,0,0,0,0);
 my ($distance, $time, $startPlace, $endPlace, $summary, $status, $agency, $line, $departs, $arrives) = (undef, undef, undef, undef, undef, undef, undef, undef, undef, undef);
 my @lines;
 
-open (HTTP, '-|', "curl -k -s -L '$url'");
+open (HTTP, '-|', "curl --max-time 10 -k -s -L '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   #print;

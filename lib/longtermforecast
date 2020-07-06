@@ -21,7 +21,7 @@ my $maxsn = -1.0;
 my $minsn = 10000.0;
 my $count = 0;
 
-#open (HTTP, '-|', "curl -L -k -s $url");
+#open (HTTP, '-|', "curl --max-time 10 -L -k -s $url");
 #binmode(HTTP, ":utf8");
 #while (<HTTP>) {
 while (0) {
@@ -67,7 +67,7 @@ $count = 0;
 $firstmonth = undef;
 my $firstyear = undef;
 
-open (HTTP, '-|', "curl -L -k -s -f $url $url2");
+open (HTTP, '-|', "curl --max-time 10 -L -k -s -f $url $url2");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   if (/^\s*20/) {

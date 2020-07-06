@@ -86,7 +86,7 @@ my $url = "http://api.wunderground.com/api/$apikey/geolookup/q/$encodedloc.json"
 my %geo;
 my $in_location = 0;
 
-open(HTTP, '-|', "curl -s -L --compressed --insecure '$url'");
+open(HTTP, '-|', "curl --max-time 10 -s -L --compressed --insecure '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
 	#print;
@@ -122,7 +122,7 @@ my $lon = nearest(.1, $geo{'lon'}) if defined $geo{'lon'};
 my @alerts;
 
 $url = "http://api.wunderground.com/api/$apikey/alerts/q/$encodedloc.json";
-open(HTTP, '-|', "curl -s -L --compressed --insecure '$url'");
+open(HTTP, '-|', "curl --max-time 10 -s -L --compressed --insecure '$url'");
 binmode(HTTP, ":utf8");
 my $inalerts = 0;
 my $description = undef;
@@ -197,7 +197,7 @@ my $error = 0;
 my %rec;
 
 #print "curl -s -L --insecure --compressed '$url'";
-open(HTTP, '-|', "curl -s -L --insecure --compressed '$url'");
+open(HTTP, '-|', "curl --max-time 10 -s -L --insecure --compressed '$url'");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   chomp;

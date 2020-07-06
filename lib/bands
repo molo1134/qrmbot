@@ -21,7 +21,7 @@ my @phenom;
 
 my $url = "http://beta.kc2g.com/api/essn.json";
 my ($esfi, $essn);
-open (HTTP, '-|', "curl -s -k -L $url");
+open (HTTP, '-|', "curl --max-time 10 -s -k -L $url");
 while (<HTTP>) {
   if (/^\{"24h":\[\{"sfi":(-?[0-9.]+),"ssn":(-?[0-9.]+)/) {
     ($esfi, $essn) = ($1, $2);
@@ -33,7 +33,7 @@ while (<HTTP>) {
 close(HTTP);
 
 $url = "http://www.hamqsl.com/solarxml.php";
-open (HTTP, '-|', "curl -s -k -L $url");
+open (HTTP, '-|', "curl --max-time 10 -s -k -L $url");
 while (<HTTP>) {
   chomp;
   if (/Warning/) {

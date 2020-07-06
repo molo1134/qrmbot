@@ -1078,8 +1078,8 @@ sub updateDMRfiles {
 
   $needRptrs = 1 if defined $size and $size < 10000;
 
-  system "curl -s -k -L -o $userFile '$usersUrl'" if $needUsers == 1;
-  system "curl -s -k -L -o $rptrFile '$rptrsUrl'" if $needRptrs == 1;
+  system "curl --max-time 10 -s -k -L -o $userFile '$usersUrl'" if $needUsers == 1;
+  system "curl --max-time 10 -s -k -L -o $rptrFile '$rptrsUrl'" if $needRptrs == 1;
 
   # FIXME: errors ignored.
 }
