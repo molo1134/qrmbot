@@ -142,7 +142,11 @@ if ($dist < 1.0) {
   $pos = green("$dist km, $bearing");
 }
 #printf("%s => $lat,$lon ($grid) #$count -- %.1f km, %.0f°\n", join(", ", @r), $dist, $bearing);
-printf("Nearest lightning strike to $myqth ($mygrid) in last 15 minutes: $pos at %s\n", strftime("%H:%Mz", gmtime($ts + $timedelta)));
+my $location;
+$location = "$myqth ($mygrid)" if defined $myqth;
+$location = "$mygrid" if not defined $myqth;
+
+printf("Nearest lightning strike to $location in last 15 minutes: $pos at %s\n", strftime("%H:%Mz", gmtime($ts + $timedelta)));
 
 sub getLongFromIndex {
   my $index = shift;
