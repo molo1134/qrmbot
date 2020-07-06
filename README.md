@@ -27,6 +27,7 @@ As tested on Debian:
 * `libdate-manip-perl`
 * `libdatetime-format-strptime-perl`
 * `libdatetime-perl`
+* `libjson-perl`
 * `libmath-round-perl`
 * `libswitch-perl`
 * `libtext-csv-perl`
