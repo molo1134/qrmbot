@@ -44,7 +44,7 @@ while ($i <= $#ARGV) {
   $ARGV[$i] =~ s/'//g; # sanitize
   our $deamped = 0;
 
-  if ($ARGV[$i] =~ m|^https?://[^/]*?/amp/|i) {
+  if ($ARGV[$i] =~ m|^https?://[^/]*?/amp/|i or $ARGV[$i] =~ m|\.ampproject\.org/|i) {
     my $deamped = deamp($ARGV[$i]);
     if (defined ($deamped)) {
       print "⚡", yellow("DeAmped"), ": ";
@@ -1103,7 +1103,10 @@ sub deamp {
   my $deamped;
   open (HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   while (<HTTP>) {
-    if (m|<link\s+rel="?canonical"?\s+href="?(.*?)"?\s*/>|i) {
+    if (m|<link\s+rel="?canonical"?\s+href="?(.*?)"?\s*/?>|i) {
+      $deamped = $1;
+    }
+    if (m|<link\s+href="?(.*?)"?\s+rel="?canonical"?\s*/?>|i) {
       $deamped = $1;
     }
   }
