@@ -185,9 +185,7 @@ if ($call =~ /^(grid:)? ?([A-R]{2}[0-9]{2}([a-x]{2})?$)/i) {
 #@vals = map(ord, @vals);
 #print "type: $type: $call @vals\n";
 
-if ($type eq "callsign") {
-  $call =~ s/[Øø]/0/g;
-}
+$call =~ s/[Øø]/0/g if $type eq "callsign";
 
 our $url;
 
@@ -243,16 +241,13 @@ open (COOKIES, "<", $cookiefile);
 while (<COOKIES>) {
   if (/^\.qrz\.com.*FALSE\t([0-9]+)/) {
     my $cookietime = $1;
-    if ($cookietime <= time()) {
-      $needlogin = 1;
-    }
+    $needlogin = 1 if $cookietime <= time();
   }
 }
 close COOKIES;
-if ($needlogin) {
+
+doLogin() if $needlogin;
   #print "cookies expired -- doing login.\n";
-  doLogin();
-}
 
 our ($retcall, $country, $name, $sk, $class, $mail, $grid, $lat, $lon, $geosrc,
   $born, @prevcalls, $email, $codes, $website, $iota, $lotw, $eqsl,
@@ -267,9 +262,7 @@ my ($redditid, $ircnick) = getUserInfo($retcall);
 our ($vanity, $individual, $club, $military, $races, $primarypref, $clubpref,
   $formerprimary, $closerelative, $formerclub, $clubwithconsent, $codetext);
 
-if (defined($codes)) {
-  parsecodes();
-}
+parsecodes() if defined($codes);
 
 if (!defined($country) and
     !defined($mail) and
@@ -281,16 +274,9 @@ if (!defined($country) and
 }
 
 
-if (!defined($country)) {
-  $country = "unknown country";
-}
-if (!defined($mail)) {
-  $mail="no address on file";
-}
-
-if (!defined($name)) {
-  $name="no name on file";
-}
+$country = "unknown country" if not defined($country);
+$mail="no address on file" if not defined($mail);
+$name="no name on file" if not defined($name);
 
 if (defined($dod)) {
   print "Subject: Deceased amateur license cancellation request - $retcall\n";
@@ -411,24 +397,12 @@ if (defined($sk) && $sk ne 0) {
 if (defined($incomplete) && $incomplete ne 0) {
   print " ", bold("\[INCOMPLETE\]");
 }
-if (defined($email)) {
-  print " -- $email";
-}
-if (defined($born)) {
-  print " -- born $born";
-}
-if (defined($class)) {
-  print " -- $class class";
-}
-if (defined($iota)) {
-  print " -- IOTA: $iota";
-}
-if (defined($codes) && $compact ne 1) {
-  print " -- codes: $codes $codetext";
-}
-if (defined($vanity) and $vanity eq 1 and $compact eq 1) {
-  print " -- (vanity)";
-}
+print " -- $email" if defined($email);
+print " -- born $born" if defined($born);
+print " -- $class class" if defined($class);
+print " -- IOTA: $iota" if defined($iota);
+print " -- codes: $codes $codetext" if defined($codes) and $compact ne 1;
+print " -- (vanity)" if defined($vanity) and $vanity eq 1 and $compact eq 1;
 if (@prevcalls) {
   my @uniqprevcalls = uniq(@prevcalls);
   print " -- prev " . join(", ", @uniqprevcalls);
@@ -438,41 +412,23 @@ if (@othercalls) {
   # TODO: remove calls from @uniqprevcalls from this list
   print " -- aliases: " . join(", ", @uniqothercalls);
 }
-if (defined($dmrIds) and length($dmrIds) > 0) {
-  print " -- DMR IDs: $dmrIds";
-}
-if (defined($trustee)) {
-  print " -- trustee: $trustee";
-}
-if (defined($website)) {
-  print " -- $website";
-}
+print " -- DMR IDs: $dmrIds" if defined($dmrIds) and length($dmrIds) > 0;
+print " -- trustee: $trustee" if defined($trustee);
+print " -- $website" if defined($website);
+
 if (defined($qsl) or defined($lotw) or defined($eqsl) or defined ($mailqsl)) {
   my $qslflags = "";
   my $qsltext = "";
   $qsltext = $qsl unless !defined($qsl);
-  if (defined($lotw) and $lotw =~ /Yes/i) {
-    $qslflags .= "L";
-  }
-  if (defined($eqsl) and $eqsl =~ /Yes/i) {
-    $qslflags .= "E";
-  }
-  if (defined($mailqsl) and $mailqsl =~ /Yes/i) {
-    $qslflags .= "M";
-  }
-  if (length($qsltext) gt 0) {
-    $qsltext .= " ";
-  }
-  if (length($qslflags) gt 0) {
-    $qsltext .= "[$qslflags]";
-  }
-  if (length($qsltext) gt 0) {
-    print " -- QSL: $qsltext";
-  }
+  $qslflags .= "L" if defined($lotw) and $lotw =~ /Yes/i;
+  $qslflags .= "E" if defined($eqsl) and $eqsl =~ /Yes/i;
+  $qslflags .= "M" if defined($mailqsl) and $mailqsl =~ /Yes/i;
+  $qsltext .= " " if length($qsltext) gt 0;
+  $qsltext .= "[$qslflags]" if length($qslflags) gt 0;
+  print " -- QSL: $qsltext" if length($qsltext) gt 0;
 }
-if (defined($ircnick) and length($ircnick) gt 0) {
-  print " -- IRC: $ircnick";
-}
+print " -- IRC: $ircnick" if defined($ircnick) and length($ircnick) gt 0;
+
 if (defined($redditid) and length($redditid) gt 0) {
   if ($redditid =~ /^\/u\//) {
     print " -- $redditid";
@@ -492,43 +448,31 @@ $geosrc = "?" unless defined($geosrc);
 if (defined($lat) and not defined($grid)) {
   $grid = coordToGrid($lat, $lon);
 
-  if ($geosrc eq "dxcc") {
-    # limited accuracy
-    $grid = substr($grid, 0, 2);
-  }
+  # limited accuracy
+  $grid = substr($grid, 0, 2) if $geosrc eq "dxcc";
 }
 if (defined($grid) and "$grid" ne "bogus") {
-  if ($compact eq 1) {
-    print " -- ";
-  }
+  print " -- " if $compact eq 1;
   print "$grid";
 
   if (not defined($lat)) {
     gridToCoord($grid);
     print " [approx]:";
   }
-  if ($geosrc eq "dxcc") {
-    print " [approx]:";
-  }
+  print " [approx]:" if $geosrc eq "dxcc";
 }
 if (defined($lat)) {
   print " $lat, $lon" unless $compact eq 1;
-
-  if (defined($geosrc)) {
-    print " [src: $geosrc]";
-  }
+  print " [src: $geosrc]" if defined($geosrc);
 
   if (defined($mylat)) {
-
     my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
     my $localgrid = coordToGrid($mylat, $mylon);
 
     printf(" -- %.1f km, %.0f° from %s", $dist, $bearing, $localgrid);
   }
 }
-if (defined($grid) or defined($lat) or $compact eq 1) {
-  print "\n";
-}
+print "\n" if defined($grid) or defined($lat) or $compact eq 1;
 
 exit 0;
 
