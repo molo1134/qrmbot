@@ -310,6 +310,8 @@ if ($csv == 1) {
   $qsl = "" if not defined $qsl;
   $qsl =~ s/,//g;
   print "$call,$retcall,$name,$mail,$born,$expiration,$sk,$qsl\n";
+  #$mail =~ s/^.*\b([A-Z][A-Z])\b.*$/$1/;
+  #print "$call,$mail\n";
   exit 0;
 }
 
@@ -719,7 +721,7 @@ sub getAndParseData {
 
       $sk = 1;
     }
-    if (defined($retcall) and length($retcall) > 0 and $calldata and !defined($name) and /^<p class="m0">([^<]+)<span[^>]*>[^<]*<\/span><br *\/>(.*)$/) {
+    if (defined($retcall) and length($retcall) > 0 and $calldata and !defined($name) and /^<p class="m0".*?<span style="color: black; font-weight: bold">([^<]+)<\/span.*?<br *\/>(.*)$/) {
       $name = $1;
       $addr1 = $addr2 = $mailcountry = $mail = $2;
       $mail =~ s/<br *\/>/; /g;
