@@ -1,19 +1,19 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
 use strict;
 use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
+use JSON qw( decode_json );
 use POSIX qw(strftime);
+
 use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 
-my $url = "https://services.swpc.noaa.gov/text/predicted-sunspot-radio-flux.txt";
-
-my ($datestamp, $lastmonth, $firstmonth);
+my ($datestamp, $lastmonth, $firstmonth, $firstyear);
 my (%sfi, %sn);
 my $maxsfi = -1.0;
 my $minsfi = 10000000.0;
@@ -21,51 +21,61 @@ my $maxsn = -1.0;
 my $minsn = 10000.0;
 my $count = 0;
 
-#open (HTTP, '-|', "curl --max-time 10 -L -k -s $url");
-#binmode(HTTP, ":utf8");
-#while (<HTTP>) {
-while (0) {
-  $datestamp = $1 if /^:Created:\s*(.*)$/;
-  if (/^20/) {
-    my ($y, $m, $spots, undef, undef, $flux, undef, undef) = split(/\s+/);
-    $count++;
-    if ($spots ne -1) {
-      $sn{"$y-$m"} = $spots;
-      $maxsn = $spots if $spots > $maxsn;
-      $minsn = $spots if $spots < $minsn;
-    }
-    if ($flux ne -1) {
-      $sfi{"$y-$m"} = $flux;
-      $maxsfi = $flux if $flux > $maxsfi;
-      $minsfi = $flux if $flux < $minsfi;
-    }
-    $firstmonth = "$y-$m" if not defined $firstmonth;
-    $lastmonth = "$y-$m";
+my $url = "https://services.swpc.noaa.gov/json/solar-cycle/predicted-solar-cycle.json";
+
+open (JSON, '-|', "curl --max-time 10 -L -k -s $url");
+binmode(JSON, ":utf8");
+my $json = do { local $/; <JSON> };  # read entire file
+close(JSON);
+my $j = decode_json($json) or die "parse error: $json\n";
+
+foreach my $rec (@{$j}) {
+  #print $rec->{'time-tag'}, "\n";
+  #print $rec->{'predicted_ssn'}, "\n";
+  #print $rec->{'predicted_f10.7'}, "\n";
+  my ($y, $m) = split '-', $rec->{'time-tag'};
+  $firstyear = $y if not defined $firstyear;
+  next if $y > $firstyear + 3; # truncate the forecast to 3 years
+  my $spots = $rec->{'predicted_ssn'};
+  my $flux = $rec->{'predicted_f10.7'};
+  $count++;
+  if ($spots ne "-1") {
+    $sn{"$y-$m"} = $spots;
+    $maxsn = $spots if $spots > $maxsn;
+    $minsn = $spots if $spots < $minsn;
   }
+  if ($flux ne "-1") {
+    $sfi{"$y-$m"} = $flux;
+    $maxsfi = $flux if $flux > $maxsfi;
+    $minsfi = $flux if $flux < $minsfi;
+  }
+  $firstmonth = "$y-$m" if not defined $firstmonth;
+  $lastmonth = "$y-$m";
 }
-close HTTP;
 
 #print "NOAA Monthly forecast as of: $datestamp; $firstmonth to $lastmonth\n";
-##print "Max SFI: $maxsfi; Min SFI: $minsfi\n";
-##print "Max SN $maxsn; Min SN $minsn\n";
+#print "NOAA Monthly forecast: $firstmonth to $lastmonth\n";
+#print "Max SFI: $maxsfi; Min SFI: $minsfi\n";
+#print "Max SN $maxsn; Min SN $minsn\n";
 
-#printf "     %s\n", yearMarkers(sort keys %sfi);
-#printf "SFI: %s : $minsfi-$maxsfi\n", join("", sfiToColorBlocks($minsfi, $maxsfi, \%sfi));
-#printf "SN:  %s : $minsn-$maxsn\n", join("", snToColorBlocks($minsn, $maxsn, \%sn));
+printf "NOAA:%s\n", yearMarkers(sort keys %sfi);
+printf "SFI: %s : $minsfi-$maxsfi\n", join("", sfiToColorBlocks($minsfi, $maxsfi, \%sfi));
+printf "SN:  %s : $minsn-$maxsn\n", join("", snToColorBlocks($minsn, $maxsn, \%sn));
 
 
 my $currmonth = lc strftime("%b%Y", gmtime time);
 my $prevmonth = lc strftime("%b%Y", gmtime time - 30*24*60*60);
 $url = "https://www.nasa.gov/sites/default/files/atoms/files/${currmonth}f10_prd.txt";
 my $url2 = "https://www.nasa.gov/sites/default/files/atoms/files/${prevmonth}f10_prd.txt";
-my (%sfi, %ap);
+%sfi = ();
+my %ap;
 $maxsfi = -1.0;
 $minsfi = 10000000.0;
 my $maxap = -1.0;
 my $minap = 10000.0;
 $count = 0;
 $firstmonth = undef;
-my $firstyear = undef;
+$firstyear = undef;
 
 open (HTTP, '-|', "curl --max-time 10 -L -k -s -f $url $url2");
 binmode(HTTP, ":utf8");
@@ -92,9 +102,9 @@ while (<HTTP>) {
 }
 close HTTP;
 
-print "NASA Monthly forecast as of: $currmonth; $firstmonth to $lastmonth\n";
+#print "NASA Monthly forecast as of: $currmonth; $firstmonth to $lastmonth\n";
 
-printf "     %s\n", yearMarkers(sort keys %sfi);
+printf "NASA:%s\n", yearMarkers(sort keys %sfi);
 printf "SFI: %s : $minsfi-$maxsfi\n", join("", sfiToColorBlocks($minsfi, $maxsfi, \%sfi));
 printf "AP:  %s : $minap-$maxap\n", join("", apToColorBlocks($minap, $maxap, \%ap));
 
