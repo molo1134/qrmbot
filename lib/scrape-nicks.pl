@@ -269,7 +269,9 @@ sub handleNode {
   if (defined $t and $t =~ /(\n|73.*?|DE|-)(\s|\n|\w)*?([A-Z0-9Øø∅]+)(\.|\s|\n)*$/i) {
     #print "\nIN TEMP\n";
     my $tmp = $3;
-    if ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
+    if ($tmp =~ /^[A-R]{2}[0-9]{2}([a-x]{2})?$/i) { # grid
+	# noop
+    elsif ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
       $c = uc $tmp;
       $c =~ s/[Øø∅]/0/g;
       $t =~ s/\n/\\n/g;
