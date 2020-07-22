@@ -129,20 +129,21 @@ my $myqth = geolocate($mylat, $mylon);
 my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
 my $dist_mi = sprintf("%.1f", $dist * 0.62137119);
 $dist = sprintf("%.1f", $dist);
-$bearing = sprintf("%.0f°", $bearing);
+#$bearing = sprintf("%.0f°", $bearing);
+$bearing = azToNEWS($bearing);
 my $pos;
 if ($dist < 1.0) {
-  $pos = yellow("⚡⚡⚡⚡") . italic(bold($funny[int(rand($#funny))])) . italic(red(" $dist km ($dist_mi mi), $bearing"));
+  $pos = yellow("⚡⚡⚡⚡") . italic(bold($funny[int(rand($#funny))])) . italic(red(" $dist km ($dist_mi mi) $bearing"));
 } elsif ($dist < 5.0) {
-  $pos = yellow("⚡⚡⚡") . italic(red("$dist km ($dist_mi mi), $bearing"));
+  $pos = yellow("⚡⚡⚡") . italic(red("$dist km ($dist_mi mi) $bearing"));
 } elsif ($dist < 20.0) {
-  $pos = yellow("⚡⚡") . red("$dist km ($dist_mi mi), $bearing");
+  $pos = yellow("⚡⚡") . red("$dist km ($dist_mi mi) $bearing");
 } elsif ($dist < 50.0) {
-  $pos = yellow("⚡$dist km ($dist_mi mi), $bearing");
+  $pos = yellow("⚡$dist km ($dist_mi mi) $bearing");
 } else {
-  $pos = green("$dist km ($dist_mi mi), $bearing");
+  $pos = green("$dist km ($dist_mi mi) $bearing");
 }
-#printf("%s => $lat,$lon ($grid) #$count -- %.1f km, %.0f°\n", join(", ", @r), $dist, $bearing);
+#printf("%s => $lat,$lon ($grid) #$count -- %.1f km, %.0f°\n", join(", ", @r), $dist $bearing);
 my $location;
 $location = "$myqth ($mygrid)" if defined $myqth;
 $location = "$mygrid" if not defined $myqth;
