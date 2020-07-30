@@ -180,7 +180,7 @@
 {Your modulation trapezoid looks like a pentagram.}
 {Cold solder joint. Heat in microwave oven.}
 {High SWR: Clean out coax with shop vac.}
-{Water in coax, submerge radio to match impedance. }
+{Water in coax, submerge radio to match impedance.}
 {QRM detected. Increase power.}
 {No decode. Reverse waterfall direction.}
 {vape causing serial port conflict}
@@ -189,7 +189,7 @@
 {Signal swallowed by South Atlantic Anomaly}
 {MUF Eglin is below the Mendoza line.}
 {White Claws, no laws. QRO.}
-{Cool down antenna for lower noise figure. }
+{Cool down antenna for lower noise figure.}
 {Clip a ferrite on the choke.}
 {Add signal tape.}
 {Grid too precise.}
@@ -271,3 +271,22 @@
 {k1jt has qso's if you have coin.}
 {Real men don't shave their sidebands.}
 {SWR affected by cat in nearfield.}
+{Low power filter is enabled.}
+{Insufficient input power. Switch to Gain detergent.}
+{Cat sitting on Air Intake Fan.}
+{Deer tangled in beverage line.}
+{self activation boner time}
+{Insufficient motivation to put up reasonable antenna.}
+{Ionosphere now owned by Microsoft. Please patch HF to stay connected. Contact VE3MAL for license}
+{task failed successfully}
+{Segmentation Fault}
+{I'm not good with phases.}
+{Load "*",8,1}
+{Exploring Hertzian Waves and the Luminiferous Aether}
+{BFO insufficiently mixed.}
+{Third-order interference from the Philharmonic Orchestra}
+{Į̶̘̣͎̟̺̹̩̳͚͓̮̘̥̫̑͆͑̚ ̴̭͖͚̯̩͖͛̎̋̈̂̾W̷̛̛̛̙͉̼͍͕̘̦̰̦̳̦̜̝͚̆̅̾͒̑̄̊̋̉̚͝Ì̸̘̰̣̗͎͙̜͈̘͎̥̫̘̟̉̋͆̐̕L̸̛̝̥̺̥̑̈́̐̒̈́̊̈͗͐̾̃́̌ͅĹ̵̤̂̅̄̀́̃̍͆̀̚}
+{Widespread devoicing of obstruents.}
+{A few more minutes of the bees, sorry for the technical difficulty.}
+{Antenna erected for more than four hours, call your doctor.}
+{cat slapping key}
