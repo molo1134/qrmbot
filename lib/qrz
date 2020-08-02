@@ -253,7 +253,7 @@ our ($retcall, $country, $name, $sk, $class, $mail, $grid, $lat, $lon, $geosrc,
   $born, @prevcalls, $email, $codes, $website, $iota, $lotw, $eqsl,
   $mailqsl, $qsl, $expiration, @othercalls, $trustee, $incomplete, $addr1,
   $addr2, $state, $zip, $mailcountry, $county, $ituzone, $cqzone, $qrzserial,
-  $qrzadmin, $effective, $dxcc, $subscriber, $twofa);
+  $qrzadmin, $effective, $dxcc, $subscriber, $twofa, $nickname);
 
 getAndParseData();
 
@@ -381,6 +381,7 @@ $subscriber = 0 if not defined $subscriber;
 $twofa = 0 if not defined $twofa;
 
 print bold($retcall), ": $country: $name";
+print " (\"$nickname\")" if defined $nickname and length($nickname) > 0;
 print green("✔") if $twofa == 1;
 print darkRed(" (★)") if $subscriber == 1;
 print cyan(" (★)") if $subscriber == 2;
@@ -665,9 +666,12 @@ sub getAndParseData {
 
       $sk = 1;
     }
-    if (defined($retcall) and length($retcall) > 0 and $calldata and !defined($name) and /^<p class="m0".*?<span style="color: black; font-weight: bold">([^<]+)<\/span.*?<br *\/>(.*)$/) {
-      $name = $1;
-      $addr1 = $addr2 = $mailcountry = $mail = $2;
+    if (defined($retcall) and length($retcall) > 0 and
+	  $calldata and !defined($name) and
+	  /^<p class="m0".*?<span style="color: black; font-weight: bold">(<span style='font-weight: normal'>)?([^<]+)(<span style='font-weight:bold'>)?( "([^"]*)" )?(<\/span>)?([^<]*)<\/span.*?<br *\/>(.*)$/) {
+      $name = "$2$7";
+      $addr1 = $addr2 = $mailcountry = $mail = $8;
+      $nickname = $5;
       $mail =~ s/<br *\/>/; /g;
       $mail =~ s/<\/p>//g;
       $addr1 =~ s/^([^<]*)<br *\/>.*$/$1/;
