@@ -367,7 +367,7 @@ sub getOdds {
   my $vcall = shift;
   my $saved = $_; # ugh $_ is a global
 
-  my $url = "http://104.154.130.35/predict/app-$appid.csv";
+  my $url = "http://104.154.130.35:8018/predict/app-$appid.csv";
   #my $url = "file://$ENV{HOME}/src/vanity-predict/html/app-$appid.csv";
   open(CSV, '-|', "curl --max-time 5 -L -k -s '$url'");
   while(<CSV>) {
