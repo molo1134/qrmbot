@@ -377,7 +377,6 @@ sub updateCTY {
     while (<UPD>) {
       chomp;
       if ($done == 0 and /(https?:\/\/www\.country-files\.com\/bigcty\/download\/.*\.zip)/) {
-	#print "$1\n";
 	$zipurl = $1;
 	$done = 1;
       }
@@ -389,11 +388,17 @@ sub updateCTY {
   if (defined $zipurl) {
     #print "$zipurl\n";
     my (undef, $tmpfile) = tempfile();
-    system "curl --max-time 20 -s -k -L -o $tmpfile '$zipurl'";
-    system "unzip -p $tmpfile cty.dat > $ctydat";
+    #print "$tmpfile\n";
+    system "curl --max-time 20 -s -f -k -L -o $tmpfile '$zipurl'";
+    my (undef, undef, undef, undef, undef, undef, undef, $size, undef, undef, undef, undef, undef) = stat $tmpfile;
+    if ($size == 0) {
+      print "warning: unable to retrieve $zipurl\n"
+    } else {
+      system "unzip -p $tmpfile cty.dat > $ctydat";
+    }
     unlink $tmpfile
   } else {
-    die "unable to retrieve cty.dat";
+    print "warning: unable to retrieve cty.dat zip";
   }
 }
 
