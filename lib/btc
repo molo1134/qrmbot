@@ -46,7 +46,7 @@ $fiat = "USD" unless defined($fiat);
 
 # example: https://api.coinmarketcap.com/v1/ticker/bitcoin/?convert=USD
 #my $url = "https://api.coinmarketcap.com/v1/ticker/$id/?convert=$fiat";
-#my $url = "https://app-oa25k.lamp.app/phpproxy/coinmarketcap-proxy.php?id=$id&fiat=$fiat";
+#my $url = "https://104.154.130.35:8018/phpproxy/coinmarketcap-proxy.php?id=$id&fiat=$fiat";
 my $url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?CMC_PRO_API_KEY=$coinmarketcapkey&symbol=$crypto&convert=$fiat";
 my %results;
 
