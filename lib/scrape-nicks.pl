@@ -258,6 +258,8 @@ sub handleNode {
   }
   $f = $node->{'data'}->{'author_flair_text'};
   if (defined $f and $f ne "null") {
+    #print "$f\n";
+    $f =~ s/:\w+://g;  # for flair inline images
     my ($tmp, undef) = grep {$_ ne ''} split(/[\s\W]/, $f);
     if (defined $tmp) {
       #print "$tmp\n";
@@ -280,7 +282,7 @@ sub handleNode {
     my $tmp = $3;
     if ($tmp =~ /^[A-R]{2}[0-9]{2}([a-x]{2})?$/i) { # grid
 	# noop
-    elsif ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
+    } elsif ($tmp =~ /^\d?[a-z]{1,2}[0-9Øø∅]{1,4}[a-z]{1,4}$/i) {
       $c = uc $tmp;
       $c =~ s/[Øø∅]/0/g;
       $t =~ s/\n/\\n/g;
