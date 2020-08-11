@@ -36,6 +36,7 @@ foreach my $subreddit (@subreddits) {
 #  push @baseurls, "https://www.reddit.com/r/${subreddit}/controversial/.json"; # doesn't work
 }
 #push @baseurls, ".json";
+#push @baseurls, "https://www.reddit.com/r/lidnet/comments/i0ztng/kn3b_getting_ready_for_the_friday_hangover_net/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/asxn9e/what_was_your_first_ham_mistake/.json";
 #push @baseurls, "https://www.reddit.com/r/TropicalWeather/comments/6zcr3y/this_is_a_message_from_st_john_us_virgin_islands/.json?limit=500";
 #push @baseurls, "https://www.reddit.com/r/trees/comments/iwr3u/i_think_one_of_your_users_got_high_and_wandered/.json";
@@ -58,6 +59,7 @@ foreach my $subreddit (@subreddits) {
 
 our %nicks;
 our %results;
+our @newnicks;
 our @blacklist = (
   # these look like callsigns, but are not.
   "0X03F", "4N6KID", "6L6GC", "7K60FXD", "9N388GV", "A11EN", "A1AMAN", "A31XX",
@@ -180,12 +182,18 @@ foreach my $baseurl (@baseurls) {
   }
 }
 
+print "-------------------------\n";
+foreach my $n (@newnicks) {
+      print "NEW: ===> $n => /u/", (split /,/, $results{$n})[1], "\n";
+}
+
 sub updatenicks {
   our %results;
   our %nicks;
   our $nickfile;
   our @headers;
   our @blacklist;
+  our @newnicks;
 
   foreach my $k (keys %results) {
     next if $k eq "";
@@ -201,6 +209,7 @@ sub updatenicks {
     } else {
       print "NEW: ===> $k $uid\n";
       $nicks{$k} = "$k,,/u/$uid";
+      push @newnicks, $k;
     }
   }
 
