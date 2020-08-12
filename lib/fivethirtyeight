@@ -35,8 +35,8 @@ foreach my $pred (@{$j}) {
       $name = lightblue($name) if $name eq "Biden";
 
       print "FiveThirtyEight 2020 Election prediction as of $date:\n" if $didtop++ == 0;
-      printf("${name}'s odds %0.1f%% with %0.1f%% of popular vote and %0.0f electoral votes\n", $winprob, $voteshare, $ev) if $winprob < 50.0;
-      printf("${name}'s odds %s%% with %0.1f%% of popular vote and %0.0f electoral votes\n", bold(sprintf("%0.1f", $winprob)), $voteshare, $ev) if $winprob >= 50.0;
+      printf("${name}'s odds %0.1f%% with mean %0.1f%% of popular vote and %0.0f electoral votes\n", $winprob, $voteshare, $ev) if $winprob < 50.0;
+      printf("${name}'s odds %s%% with mean %0.1f%% of popular vote and %0.0f electoral votes\n", bold(sprintf("%0.1f", $winprob)), $voteshare, $ev) if $winprob >= 50.0;
     }
   }
 }
