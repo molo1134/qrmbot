@@ -12,10 +12,12 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Util;
 
-my $url = "https://treasurydirect.gov/NP/debt/rss";
+my $url = "https://www.treasurydirect.gov/NP_WS/debt/feeds/recent";
+#my $url = "https://treasurydirect.gov/NP/debt/rss";
 my ($date, $public, $intra, $total);
 
-open (HTTP, '-|', "curl --max-time 10 -L -k -s '$url'");
+
+open (HTTP, '-|', "curl -H 'Accept: application/rss+xml' --max-time 10 -L -k -s '$url'");
 while (<HTTP>) {
   chomp;
   if (not $date and m|<title>Debt to the Penny for ([0-9/]+)</title>|i) {
