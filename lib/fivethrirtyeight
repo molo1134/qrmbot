@@ -1,0 +1,42 @@
+#!/usr/bin/perl
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Util;
+use Colors;
+
+use JSON qw( decode_json );
+
+my $url = "https://projects.fivethirtyeight.com/2020-election-forecast/us_timeseries.json";
+
+local $/;   # read entire file -- FIXME: potentially memory hungry
+open (JSON, '-|', "curl --max-time 10 -s -k -L $url");
+my $json = <JSON>;
+close(JSON);
+my $j = decode_json($json) or die "parse error: $json\n";
+
+my $didtop = 0;
+foreach my $pred (@{$j}) {
+  if ($pred->{type} eq "polls-plus") {
+    foreach my $cand (@{$pred->{candidates}}) {
+      my $name = $cand->{candidate};
+      my $date = @{$cand->{dates}}[0]->{date};
+      my $winprob = @{$cand->{dates}}[0]->{winprob};
+      my $ev = @{$cand->{dates}}[0]->{evs}->{mean};
+      my $voteshare = @{$cand->{dates}}[0]->{voteshare}->{mean};
+
+      $name = red($name) if $name eq "Trump";
+      $name = lightblue($name) if $name eq "Biden";
+
+      print "FiveThirtyEight 2020 Election prediction as of $date:\n" if $didtop++ == 0;
+      printf("${name}'s odds %0.1f%% with %0.1f%% of popular vote and %0.0f electoral votes\n", $winprob, $voteshare, $ev) if $winprob < 50.0;
+      printf("${name}'s odds %s%% with %0.1f%% of popular vote and %0.0f electoral votes\n", bold(sprintf("%0.1f", $winprob)), $voteshare, $ev) if $winprob >= 50.0;
+    }
+  }
+}

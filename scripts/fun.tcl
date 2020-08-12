@@ -11,12 +11,17 @@ bind pub - !brexit brexit
 bind pub - !christmas christmas
 bind pub - !translate translate
 bind pub - !primaries primaries
+bind pub - !fivethirtyeight fivethirtyeight_pub
+bind pub - !538 fivethirtyeight_pub
+bind msg - !fivethirtyeight fivethirtyeight_msg
+bind msg - !538 fivethirtyeight_msg
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
 set christmasbin "/home/eggdrop/bin/christmas"
 set translatebin "/home/eggdrop/bin/translate"
 set primariesbin "/home/eggdrop/bin/primaries"
+set fivethirtyeightbin "/home/eggdrop/bin/fivethirtyeight"
 
 # load utility methods
 source scripts/util.tcl
@@ -264,6 +269,27 @@ proc primaries { nick host hand chan text } {
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc fivethirtyeight_pub { nick host hand chan text } {
+	global fivethirtyeightbin
+	putlog "fivethirtyeight pub: $nick $host $hand $chan"
+	set fd [open "|${fivethirtyeightbin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc fivethirtyeight_msg {nick uhand handle input} {
+	global fivethirtyeightbin
+	putlog "fivethirtyeight msg: $nick $uhand $handle"
+	set fd [open "|${fivethirtyeightbin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
 	}
 	close $fd
 }
