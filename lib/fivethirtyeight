@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
 use strict;
 use utf8;
@@ -13,7 +13,140 @@ use Colors;
 
 use JSON qw( decode_json );
 
-my $url = "https://projects.fivethirtyeight.com/2020-election-forecast/us_timeseries.json";
+my $state = "US";
+
+if ($#ARGV >= 0) {
+  $state = uc $ARGV[0];
+}
+
+my %stateToName;
+$stateToName{US} = "National";
+$stateToName{AK} = "Alaska";
+$stateToName{AL} = "Alabama";
+$stateToName{AR} = "Arkansas";
+$stateToName{AZ} = "Arizona";
+$stateToName{CA} = "California";
+$stateToName{CO} = "Colorado";
+$stateToName{CT} = "Connecticut";
+$stateToName{DC} = "District of Columbia";
+$stateToName{DE} = "Delaware";
+$stateToName{FL} = "Florida";
+$stateToName{GA} = "Georgia";
+$stateToName{HI} = "Hawaii";
+$stateToName{IA} = "Iowa";
+$stateToName{ID} = "Idaho";
+$stateToName{IL} = "Illinois";
+$stateToName{IN} = "Indiana";
+$stateToName{KS} = "Kansas";
+$stateToName{KY} = "Kentucky";
+$stateToName{LA} = "Louisiana";
+$stateToName{MA} = "Massachusetts";
+$stateToName{MD} = "Maryland";
+$stateToName{ME1} = "Maine 1st Dist.";
+$stateToName{ME2} = "Maine 2nd Dist.";
+$stateToName{ME} = "Maine";
+$stateToName{MI} = "Michigan";
+$stateToName{MN} = "Minnesota";
+$stateToName{MO} = "Missouri";
+$stateToName{MS} = "Mississippi";
+$stateToName{MT} = "Montana";
+$stateToName{NC} = "North Carolina";
+$stateToName{ND} = "North Dakota";
+$stateToName{NE1} = "Nebraska 1st Dist.";
+$stateToName{NE2} = "Nebraska 2nd Dist.";
+$stateToName{NE3} = "Nebraska 3rd Dist.";
+$stateToName{NE} = "Nebraska";
+$stateToName{NH} = "New Hampshire";
+$stateToName{NJ} = "New Jersey";
+$stateToName{NM} = "New Mexico";
+$stateToName{NV} = "Nevada";
+$stateToName{NY} = "New York";
+$stateToName{OH} = "Ohio";
+$stateToName{OK} = "Oklahoma";
+$stateToName{OR} = "Oregon";
+$stateToName{PA} = "Pennsylvania";
+$stateToName{RI} = "Rhode Island";
+$stateToName{SC} = "South Carolina";
+$stateToName{SD} = "South Dakota";
+$stateToName{TN} = "Tennessee";
+$stateToName{TX} = "Texas";
+$stateToName{UT} = "Utah";
+$stateToName{VA} = "Virginia";
+$stateToName{VT} = "Vermont";
+$stateToName{WA} = "Washington";
+$stateToName{WI} = "Wisconsin";
+$stateToName{WV} = "West Virginia";
+$stateToName{WY} = "Wyoming";
+
+my %stateToUrlFrag;
+$stateToUrlFrag{US} = "us";
+$stateToUrlFrag{AK} = "alaska";
+$stateToUrlFrag{AL} = "alabama";
+$stateToUrlFrag{AR} = "arkansas";
+$stateToUrlFrag{AZ} = "arizona";
+$stateToUrlFrag{CA} = "california";
+$stateToUrlFrag{CO} = "colorado";
+$stateToUrlFrag{CT} = "connecticut";
+$stateToUrlFrag{DC} = "district-of-columbia";
+$stateToUrlFrag{DE} = "delaware";
+$stateToUrlFrag{FL} = "florida";
+$stateToUrlFrag{GA} = "georgia";
+$stateToUrlFrag{HI} = "hawaii";
+$stateToUrlFrag{IA} = "iowa";
+$stateToUrlFrag{ID} = "idaho";
+$stateToUrlFrag{IL} = "illinois";
+$stateToUrlFrag{IN} = "indiana";
+$stateToUrlFrag{KS} = "kansas";
+$stateToUrlFrag{KY} = "kentucky";
+$stateToUrlFrag{LA} = "louisiana";
+$stateToUrlFrag{MA} = "massachusetts";
+$stateToUrlFrag{MD} = "maryland";
+$stateToUrlFrag{ME1} = "maine-1";
+$stateToUrlFrag{ME2} = "maine-2";
+$stateToUrlFrag{ME} = "maine";
+$stateToUrlFrag{MI} = "michigan";
+$stateToUrlFrag{MN} = "minnesota";
+$stateToUrlFrag{MO} = "missouri";
+$stateToUrlFrag{MS} = "mississippi";
+$stateToUrlFrag{MT} = "montana";
+$stateToUrlFrag{NC} = "north-carolina";
+$stateToUrlFrag{ND} = "north-dakota";
+$stateToUrlFrag{NE1} = "nebraska-1";
+$stateToUrlFrag{NE2} = "nebraska-2";
+$stateToUrlFrag{NE3} = "nebraska-3";
+$stateToUrlFrag{NE} = "nebraska";
+$stateToUrlFrag{NH} = "new-hampshire";
+$stateToUrlFrag{NJ} = "new-jersey";
+$stateToUrlFrag{NM} = "new-mexico";
+$stateToUrlFrag{NV} = "nevada";
+$stateToUrlFrag{NY} = "new-york";
+$stateToUrlFrag{OH} = "ohio";
+$stateToUrlFrag{OK} = "oklahoma";
+$stateToUrlFrag{OR} = "oregon";
+$stateToUrlFrag{PA} = "pennsylvania";
+$stateToUrlFrag{RI} = "rhode-island";
+$stateToUrlFrag{SC} = "south-carolina";
+$stateToUrlFrag{SD} = "south-dakota";
+$stateToUrlFrag{TN} = "tennessee";
+$stateToUrlFrag{TX} = "texas";
+$stateToUrlFrag{UT} = "utah";
+$stateToUrlFrag{VA} = "virginia";
+$stateToUrlFrag{VT} = "vermont";
+$stateToUrlFrag{WA} = "washington";
+$stateToUrlFrag{WI} = "wisconsin";
+$stateToUrlFrag{WV} = "west-virginia";
+$stateToUrlFrag{WY} = "wyoming";
+
+# disable "experimental" warning on smart match operator use
+no if $] >= 5.018, warnings => "experimental::smartmatch";
+
+my @keys = keys %stateToUrlFrag;
+if (not ($state ~~ @keys)) {
+  print "not found: $state\n";
+  exit 0;
+}
+
+my $url = "https://projects.fivethirtyeight.com/2020-election-forecast/$stateToUrlFrag{$state}_timeseries.json";
 
 local $/;   # read entire file -- FIXME: potentially memory hungry
 open (JSON, '-|', "curl --max-time 10 -s -k -L $url");
@@ -31,12 +164,15 @@ foreach my $pred (@{$j}) {
       my $ev = @{$cand->{dates}}[0]->{evs}->{mean};
       my $voteshare = @{$cand->{dates}}[0]->{voteshare}->{mean};
 
+      my $evtext = " and " . bold(sprintf("%0.0f", $ev)) . " electoral votes" if defined $ev;
+      $evtext = "" if not defined $ev;
+
       $name = red($name) if $name eq "Trump";
       $name = lightblue($name) if $name eq "Biden";
 
-      print "FiveThirtyEight 2020 Election prediction as of $date:\n" if $didtop++ == 0;
-      printf("${name}'s odds %0.1f%% with mean %0.1f%% of popular vote and %0.0f electoral votes\n", $winprob, $voteshare, $ev) if $winprob < 50.0;
-      printf("${name}'s odds %s%% with mean %0.1f%% of popular vote and %0.0f electoral votes\n", bold(sprintf("%0.1f", $winprob)), $voteshare, $ev) if $winprob >= 50.0;
+      print "FiveThirtyEight 2020 ", bold(italic($stateToName{$state})), " election prediction as of $date:\n" if $didtop++ == 0;
+      printf("${name}'s odds %0.1f%% with mean %0.1f%% of popular vote%s\n", $winprob, $voteshare, $evtext) if $winprob < 50.0;
+      printf("${name}'s odds %s with mean %s of popular vote%s\n", bold(sprintf("%0.1f%%", $winprob)), bold(sprintf("%0.1f%%", $voteshare)), $evtext) if $winprob >= 50.0;
     }
   }
 }

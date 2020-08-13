@@ -275,8 +275,9 @@ proc primaries { nick host hand chan text } {
 
 proc fivethirtyeight_pub { nick host hand chan text } {
 	global fivethirtyeightbin
-	putlog "fivethirtyeight pub: $nick $host $hand $chan"
-	set fd [open "|${fivethirtyeightbin}" r]
+	set param [sanitize_string [string trim ${text}]]
+	putlog "fivethirtyeight pub: $nick $host $hand $chan $param"
+	set fd [open "|${fivethirtyeightbin} ${param}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
@@ -285,8 +286,9 @@ proc fivethirtyeight_pub { nick host hand chan text } {
 }
 proc fivethirtyeight_msg {nick uhand handle input} {
 	global fivethirtyeightbin
-	putlog "fivethirtyeight msg: $nick $uhand $handle"
-	set fd [open "|${fivethirtyeightbin}" r]
+	set param [sanitize_string [string trim ${input}]]
+	putlog "fivethirtyeight msg: $nick $uhand $handle $param"
+	set fd [open "|${fivethirtyeightbin} ${param}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
