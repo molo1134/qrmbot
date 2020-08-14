@@ -107,7 +107,8 @@ our @blacklist = (
   "5C4359D", "5RS24Q", "SC0TTP", "BD536HP", "BG25LAM", "C4FM", "D710G",
   "DA5ID", "EN54KI", "F4TE", "FN2X", "FT60R", "J9WILL", "L18CP", "R43SHAH",
   "R5A", "U3DW", "V25D", "Z0A", "EM2T", "RT3S", "BL4KKAT", "DY74N", "FT3DR",
-  "FT4X", "S14KHN", "S6TAN", "UV5RS", "XM3LLOW",
+  "FT4X", "S14KHN", "S6TAN", "UV5RS", "XM3LLOW", "B1AYY", "CC878CO", "FT70DR",
+  "JS8CALL", "M00PSZ", "M2TV", "N10CT", "RY0CHAN",
   # opt-out
   "N4ADK");
 
