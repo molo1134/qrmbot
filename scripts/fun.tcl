@@ -362,6 +362,11 @@ bind pub - !card card_pub
 proc card_pub { nick host hand chan text } {
 	rando_pub $nick $host $hand $chan "--card"
 }
+bind pub - !roulette roulette_pub
+bind pub - !wheel roulette_pub
+proc roulette_pub { nick host hand chan text } {
+	rando_pub $nick $host $hand $chan "--roulette"
+}
 bind pub - !draw draw_pub
 bind pub - !deal draw_pub
 proc draw_pub { nick host hand chan text } {
