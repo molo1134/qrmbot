@@ -586,6 +586,7 @@ sub getAndParseData {
 	  } else {
 	    my $matchcall = $call;
 	    $matchcall =~ s/\*/.*/g;
+	    $matchcall =~ s/\?/./g;
 	    $resultdetail =~ s/($matchcall)/bold($1)/ige;
 	  }
 
