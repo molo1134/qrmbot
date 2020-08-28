@@ -100,7 +100,7 @@ sub doAe7qRegion {
 
 	# increment 2 years
 	$y += 2;
-	
+
 	# increment 1 day
 	$d += 1;
 	if ($d > getDaysInMonth($m, $y)) {
@@ -115,7 +115,7 @@ sub doAe7qRegion {
 	$avdate = sprintf "%04u-%02u-%02u", $y, $m, $d;
 	my $today = strftime ("%Y-%m-%d", localtime(time()));
 	#print "$lastcall $avdate $today\n";
-	
+
 	if ($today eq $avdate) {
 	  push @avail, $lastcall;
 	} else {
@@ -367,17 +367,23 @@ sub getOdds {
   my $vcall = shift;
   my $saved = $_; # ugh $_ is a global
 
-  my $url = "http://104.154.130.35:8018/predict/app-$appid.csv";
-  #my $url = "file://$ENV{HOME}/src/vanity-predict/html/app-$appid.csv";
-  open(CSV, '-|', "curl --max-time 5 -L -k -s '$url'");
-  while(<CSV>) {
-    chomp;
-    my ($app, $target, $odds) = split /,/;
-    $_ = $saved;
+  # cache to prevent extra requests for the same appid over and over
+  our %oddscache;
+  if (not defined $oddscache{$appid}) {
+    my $url = "http://104.154.130.35:8018/predict/app-$appid.csv";
+    local $/; # read entire file
+    #my $url = "file://$ENV{HOME}/src/vanity-predict/html/app-$appid.csv";
+    open(CSV, '-|', "curl --max-time 5 -L -k -s '$url'");
+    my $csv = <CSV>;
+    close(CSV);
+    $oddscache{$appid} = $csv;
+  }
+
+  foreach my $line (split /\n/, $oddscache{$appid}) {
+    my ($app, $target, $odds) = split /,/, $line;
     return $odds if $appid == $app and $target eq $vcall;
   }
-  close(CSV);
-  $_ = $saved;
+
   return undef;
 }
 
