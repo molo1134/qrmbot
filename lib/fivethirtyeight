@@ -156,7 +156,7 @@ my $j = decode_json($json) or die "parse error: $json\n";
 
 my $didtop = 0;
 foreach my $pred (@{$j}) {
-  if ($pred->{type} eq "polls-plus") {
+  if ($pred->{type} eq "classic") {
     foreach my $cand (@{$pred->{candidates}}) {
       my $name = $cand->{candidate};
       my $date = @{$cand->{dates}}[0]->{date};
