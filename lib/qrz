@@ -58,6 +58,8 @@ our $skipCA = 1;
 
 our $login_callsign = undef;
 our $login_password = undef;
+our $usexml = 0;
+our $autoxml = 0;
 my $loginfile = undef;
 my $cookiefile = undef;
 if (exists $ENV{'HOME'}) {
@@ -530,12 +532,132 @@ sub doLogin {
 }
 
 
+sub scrapeXML {
+  our $xmltries;
+  our ($retcall, $country, $name, $sk, $class, $mail, $grid, $lat, $lon, $geosrc,
+    $born, @prevcalls, $email, $codes, $website, $iota, $lotw, $eqsl,
+    $mailqsl, $qsl, $expiration, @othercalls, $trustee, $incomplete, $addr1,
+    $addr2, $state, $zip, $mailcountry, $county, $ituzone, $cqzone, $qrzserial,
+    $qrzadmin, $effective, $dxcc, $subscriber, $twofa, $nickname);
+
+  $xmltries = 0 if not defined $xmltries;
+  if ($xmltries > 3) {
+    print "Exceeded XML retries: $xmltries\n";
+    exit $exitnonzeroonerror;
+  }
+
+  my $key = undef;
+
+  if ($autoxml > 0) {
+    my $auth = decode_base64("aHR0cHM6Ly9ma3Vyei5uZXQvc3R1ZmYvZnVja2luZ3Rva2Vucy50eHQ=");
+    local $/; # read entire file
+    open (AUTH, '-|', "$httptool_base ${httptool_timeout}15 '$auth'");
+    my @k = split /\n/, <AUTH>;
+    close(AUTH);
+    $key = $k[int(rand(scalar @k))];
+  }
+
+  if (not defined $key) {
+    my $authurl = "https://xmldata.qrz.com/xml/current/?username=$login_callsign;password=$login_password";
+    open (AUTH, '-|', "$httptool_base ${httptool_timeout}15 '$authurl'");
+    binmode(AUTH, ":utf8");
+    while (<AUTH>) {
+      if (m|<Key>([0-9a-f]+)</Key>|) {
+	$key = $1;
+      }
+    }
+    close(AUTH);
+  }
+
+  #print "$key\n";
+  my $xmlurl = "http://xmldata.qrz.com/xml/current/?s=$key;callsign=$call";
+  my $fname;
+  my $aliases;
+  #print "$xmlurl\n";
+
+  open (XML, '-|', "$httptool_base ${httptool_timeout}15 '$xmlurl'");
+  binmode(XML, ":utf8");
+  while (<XML>) {
+    if (/Invalid session key/ and $autoxml == 0) {
+      close(XML);
+      print "XML: Invalid session key\n";
+      exit $exitnonzeroonerror;
+    }
+    if (/A subscription is required to access the complete record./ and $autoxml == 0) {
+      close(XML);
+      print "XML: No subscription\n";
+      exit $exitnonzeroonerror;
+    }
+    if ((/A subscription is required to access the complete record./ or /Invalid session key/) and $autoxml > 0) {
+      close(XML);
+      $xmltries++;
+      scrapeXML(); # try again
+      return;
+    }
+    $retcall = $1 if (m|<call>(.*)</call>|);
+    $country = $1 if (m|<country>(.*)</country>|);
+    $fname = $1 if (m|<fname>(.*)</fname>|);
+    $name = $1 if (m|<name>(.*)</name>|);
+    $email = $1 if (m|<email>(.*)</email>|);
+    $codes = $1 if (m|<codes>(.*)</codes>|);
+    $class = $1 if (m|<class>(.*)</class>|);
+    $lotw = $1 if (m|<lotw>(.*)</lotw>|);
+    $eqsl = $1 if (m|<eqsl>(.*)</eqsl>|);
+    $mailqsl = $1 if (m|<mqsl>(.*)</mqsl>|);
+    $qsl = $1 if (m|<qslmgr>(.*)</qslmgr>|);
+    $expiration = $1 if (m|<expdate>(.*)</expdate>|);
+    $effective = $1 if (m|<efdate>(.*)</efdate>|);
+    $aliases = $1 if (m|<aliases>(.*)</aliases>|);
+    $trustee = $1 if (m|<trustee>(.*?),.*</trustee>|);
+    $addr1 = $1 if (m|<addr1>(.*)</addr1>|);
+    $addr2 = $1 if (m|<addr2>(.*)</addr2>|);
+    $state = $1 if (m|<state>(.*)</state>|);
+    $zip = $1 if (m|<zip>(.*)</zip>|);
+    $mailcountry = $1 if (m|<country>(.*)</country>|);
+    $county = $1 if (m|<county>(.*)</county>|);
+    $country = $1 if (m|<land>(.*)</land>|);
+    $dxcc = $1 if (m|<dxcc>(.*)</dxcc>|);
+    $ituzone = $1 if (m|<ituzone>(.*)</ituzone>|);
+    $cqzone = $1 if (m|<cqzone>(.*)</cqzone>|);
+    $lat = $1 if (m|<lat>(.*)</lat>|);
+    $lon = $1 if (m|<lon>(.*)</lon>|);
+    $grid = $1 if (m|<grid>(.*)</grid>|);
+    $geosrc = $1 if (m|<geoloc>(.*)</geoloc>|);
+    $born = $1 if (m|<born>(.*)</born>|);
+    $qrzadmin = $1 if (m|<user>(.*)</user>|);
+    $iota = $1 if (m|<iota>(.*)</iota>|);
+    $qrzserial = $1 if (m|<serial>(.*)</serial>|);
+    # NOT AVAILABLE: $sk; $website; $incomplete, $subscriber, $twofa, $nickname
+  }
+  close(XML);
+
+  #transforms
+  $country = "USA" if $country eq "United States";
+  $mailcountry = "USA" if $mailcountry eq "United States";
+  $mail = "";
+  $mail .= "$addr1; " if defined $addr1;
+  $mail .= "$addr2" if defined $addr2;
+  $mail .= " $state" if defined $state;
+  $mail .= " $zip" if defined $zip;
+  $mail .= "; $mailcountry" if defined $mailcountry;
+  @othercalls = split /,/, $aliases if defined $aliases;
+  $name = "$fname $name" if defined $fname;
+  $lotw = "Yes" if defined $lotw and $lotw == 1;
+  $eqsl = "Yes" if defined $eqsl and $eqsl == 1;
+  $mailqsl = "Yes" if defined $mailqsl and $mailqsl == 1;
+  $codes = undef if $country ne "USA";
+}
 
 
 sub getAndParseData {
 
   my $calldata = 0;
   my $detail = 0;
+
+  if ($usexml > 0) {
+    scrapeXML();
+    return;
+  }
 
   #print "$url\n";
   open (HTTP, '-|', "$httptool_base ${httptool_timeout}15 " .
@@ -621,8 +743,15 @@ sub getAndParseData {
     }
 
     if (/Service limit exceeded/) {
-      print "Service limit exceeded. Too many lookups. See $url\n";
-      exit $exitnonzeroonerror;
+      if ($autoxml > 0) {
+	print "Warning: Service limit exceeded. Too many lookups.\n";
+	close(HTTP);
+	scrapeXML();
+	return;
+      } else {
+	print "Service limit exceeded. Too many lookups. See $url\n";
+	exit $exitnonzeroonerror;
+      }
     }
 
     if (/biodata.*Base64\.decode\("([^"]*)"/) {
