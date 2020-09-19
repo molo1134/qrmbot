@@ -14,9 +14,15 @@ use Colors;
 use JSON qw( decode_json );
 
 my $state = "US";
-
-if ($#ARGV >= 0) {
-  $state = uc $ARGV[0];
+my $senate = 0;
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /--senate/) {
+    $senate = 1;
+  } else {
+    $state = uc $ARGV[$i];
+  }
+  $i++;
 }
 
 my %stateToName;
@@ -137,43 +143,107 @@ $stateToUrlFrag{WI} = "wisconsin";
 $stateToUrlFrag{WV} = "west-virginia";
 $stateToUrlFrag{WY} = "wyoming";
 
-# disable "experimental" warning on smart match operator use
-no if $] >= 5.018, warnings => "experimental::smartmatch";
+if ($senate == 0) {
+  # disable "experimental" warning on smart match operator use
+  no if $] >= 5.018, warnings => "experimental::smartmatch";
 
-my @keys = keys %stateToUrlFrag;
-if (not ($state ~~ @keys)) {
-  print "not found: $state\n";
-  exit 0;
+  my @keys = keys %stateToUrlFrag;
+  if (not ($state ~~ @keys)) {
+    print "not found: $state\n";
+    exit 0;
+  }
+
+  my $url = "https://projects.fivethirtyeight.com/2020-election-forecast/$stateToUrlFrag{$state}_timeseries.json";
+
+  #print "$url\n";
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  open (JSON, '-|', "curl --max-time 10 -s -k -L $url");
+  my $json = <JSON>;
+  close(JSON);
+  my $j = decode_json($json) or die "parse error: $json\n";
+
+  my $didtop = 0;
+  foreach my $pred (@{$j}) {
+    if ($pred->{type} eq "polls-plus" or $pred->{type} eq "classic") {
+      foreach my $cand (@{$pred->{candidates}}) {
+	my $name = $cand->{candidate};
+	my $date = @{$cand->{dates}}[0]->{date};
+	my $winprob = @{$cand->{dates}}[0]->{winprob};
+	my $ev = @{$cand->{dates}}[0]->{evs}->{mean};
+	my $voteshare = @{$cand->{dates}}[0]->{voteshare}->{mean};
+
+	my $evtext = " and " . bold(sprintf("%0.0f", $ev)) . " electoral votes" if defined $ev;
+	$evtext = "" if not defined $ev;
+
+	$name = red($name) if $name eq "Trump";
+	$name = lightblue($name) if $name eq "Biden";
+
+	print "FiveThirtyEight 2020 ", bold(italic($stateToName{$state})), " election prediction as of $date:\n" if $didtop++ == 0;
+	printf("  ${name}'s odds %0.1f%% with mean %0.1f%% of popular vote%s\n", $winprob, $voteshare, $evtext) if $winprob < 50.0;
+	printf("  ${name}'s odds %s with mean %s of popular vote%s\n", bold(sprintf("%0.1f%%", $winprob)), bold(sprintf("%0.1f%%", $voteshare)), $evtext) if $winprob >= 50.0;
+      }
+    }
+  }
 }
 
-my $url = "https://projects.fivethirtyeight.com/2020-election-forecast/$stateToUrlFrag{$state}_timeseries.json";
+if ($senate == 1) {
+  if ($state eq "US") {
+    my $url = "https://projects.fivethirtyeight.com/2020-election-forecast/senate_us_latest.json";
 
-#print "$url\n";
-local $/;   # read entire file -- FIXME: potentially memory hungry
-open (JSON, '-|', "curl --max-time 10 -s -k -L $url");
-my $json = <JSON>;
-close(JSON);
-my $j = decode_json($json) or die "parse error: $json\n";
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    open (JSON, '-|', "curl --max-time 10 -s -k -L $url");
+    my $json = <JSON>;
+    close(JSON);
+    my $j = decode_json($json) or die "parse error: $json\n";
+    my $didtop = 0;
 
-my $didtop = 0;
-foreach my $pred (@{$j}) {
-  if ($pred->{type} eq "polls-plus" or $pred->{type} eq "classic") {
-    foreach my $cand (@{$pred->{candidates}}) {
-      my $name = $cand->{candidate};
-      my $date = @{$cand->{dates}}[0]->{date};
-      my $winprob = @{$cand->{dates}}[0]->{winprob};
-      my $ev = @{$cand->{dates}}[0]->{evs}->{mean};
-      my $voteshare = @{$cand->{dates}}[0]->{voteshare}->{mean};
-
-      my $evtext = " and " . bold(sprintf("%0.0f", $ev)) . " electoral votes" if defined $ev;
-      $evtext = "" if not defined $ev;
-
-      $name = red($name) if $name eq "Trump";
-      $name = lightblue($name) if $name eq "Biden";
-
-      print "FiveThirtyEight 2020 ", bold(italic($stateToName{$state})), " election prediction as of $date:\n" if $didtop++ == 0;
-      printf("${name}'s odds %0.1f%% with mean %0.1f%% of popular vote%s\n", $winprob, $voteshare, $evtext) if $winprob < 50.0;
-      printf("${name}'s odds %s with mean %s of popular vote%s\n", bold(sprintf("%0.1f%%", $winprob)), bold(sprintf("%0.1f%%", $voteshare)), $evtext) if $winprob >= 50.0;
+    foreach my $pred (@{$j}) {
+      next if $pred->{type} ne "deluxe";
+      foreach my $cand (@{$pred->{candidates}}) {
+	my $name = $cand->{candidate};
+	my $date = $cand->{date};
+	my $winprob = $cand->{winprob};
+	my $seats = $cand->{seats}->{mean};
+	$name = red($name) if $name eq "Republicans";
+	$name = lightblue($name) if $name eq "Democrats";
+	print "FiveThirtyEight 2020 ", bold(italic("Senate")), " election prediction as of $date:\n" if $didtop++ == 0;
+	printf("  ${name} control odds %0.1f%% with mean %0.1f seats\n", $winprob, $seats) if $winprob < 50.0;
+	printf("  ${name} control odds %s with mean %s seats\n", bold(sprintf("%0.1f%%", $winprob)), bold(sprintf("%0.1f", $seats))) if $winprob >= 50.0;
+      }
     }
+  } else {
+    my $url = "https://projects.fivethirtyeight.com/2020-election-forecast/senate_race_summary.json";
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    open (JSON, '-|', "curl --max-time 10 -s -k -L $url");
+    my $json = <JSON>;
+    close(JSON);
+    my $j = decode_json($json) or die "parse error: $json\n";
+    my $found = 0;
+
+    foreach my $pred (@{$j}) {
+      next if $pred->{type} ne "deluxe";
+      foreach my $race (@{$pred->{races}}) {
+	my $didtop = 0;
+	next if $state ne "ALL" and not $race->{race} =~ /^$state/;
+	foreach my $cand (@{$race->{candidates}}) {
+	  my $name = $cand->{candidate};
+	  my $incumb = $cand->{incumbent};
+	  my $party = $cand->{party};
+	  my $winprob = $cand->{winprob};
+	  my $votesh = $cand->{voteshare}->{mean};
+	  $name = "$name($party)" if defined $cand->{party};
+	  $name = red($name) if defined $party and $party eq "R";
+	  $name = lightblue($name) if defined $party and $party eq "D";
+	  $name = green($name) if defined $party and $party eq "G";
+	  $name = yellow($name) if defined $party and $party eq "L";
+	  $name = "$name ℹ" if $incumb;
+	  print "FiveThirtyEight 2020 ", bold(italic("Senate $race->{race}")), " election prediction:\n" if $didtop++ == 0;
+	  printf("  ${name} odds %0.1f%% with mean %0.1f%% vote share\n", $winprob, $votesh) if $winprob < 50.0;
+	  printf("  ${name} odds %s with mean %s vote share\n", bold(sprintf("%0.1f%%", $winprob)), bold(sprintf("%0.1f%%", $votesh))) if $winprob >= 50.0;
+	  $found = 1;
+	}
+      }
+    }
+    print "not found\n" if $found == 0;
   }
 }

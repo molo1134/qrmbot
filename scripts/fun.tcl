@@ -15,6 +15,8 @@ bind pub - !fivethirtyeight fivethirtyeight_pub
 bind pub - !538 fivethirtyeight_pub
 bind msg - !fivethirtyeight fivethirtyeight_msg
 bind msg - !538 fivethirtyeight_msg
+bind pub - !senate senate_pub
+bind msg - !senate senate_msg
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
@@ -295,6 +297,29 @@ proc fivethirtyeight_msg {nick uhand handle input} {
 	}
 	close $fd
 }
+proc senate_pub { nick host hand chan text } {
+	global fivethirtyeightbin
+	set param [sanitize_string [string trim ${text}]]
+	putlog "senate pub: $nick $host $hand $chan $param"
+	set fd [open "|${fivethirtyeightbin} --senate ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc senate_msg {nick uhand handle input} {
+	global fivethirtyeightbin
+	set param [sanitize_string [string trim ${input}]]
+	putlog "senate msg: $nick $uhand $handle $param"
+	set fd [open "|${fivethirtyeightbin} --senate ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
+}
+
 
 bind pub - !ammo ammo_pub
 bind msg - !ammo ammo_msg
