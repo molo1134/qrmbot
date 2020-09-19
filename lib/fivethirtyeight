@@ -226,11 +226,12 @@ if ($senate == 1) {
 	my $didtop = 0;
 	next if $state ne "ALL" and not $race->{race} =~ /^$state/;
 	foreach my $cand (@{$race->{candidates}}) {
+	  my $votesh = $cand->{voteshare}->{mean};
+	  next if $votesh == 0;
 	  my $name = $cand->{candidate};
 	  my $incumb = $cand->{incumbent};
 	  my $party = $cand->{party};
 	  my $winprob = $cand->{winprob};
-	  my $votesh = $cand->{voteshare}->{mean};
 	  $name = "$name($party)" if defined $cand->{party};
 	  $name = red($name) if defined $party and $party eq "R";
 	  $name = lightblue($name) if defined $party and $party eq "D";
