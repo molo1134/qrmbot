@@ -66,7 +66,7 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 
 my $mode="";
 my $grid="FN";
-my $time=180; # 30 minutes * 6
+my $minutes = 15;
 
 my $i = 0;
 while ($i <= $#ARGV) {
@@ -85,6 +85,7 @@ while ($i <= $#ARGV) {
   next;
 }
 
+my $time= $minutes * 6;  # not sure why pskreporter does it this way
 my $url="https://pskreporter.info/cgi-bin/psk-freq.pl?mode=$mode&grid=$grid&time=$time";
 
 my %scores;
@@ -130,7 +131,7 @@ my $max = (sort {$b <=> $a} (values %scores))[0];
 
 $mode = "all" if $mode eq "";
 
-print uc $mode, " from grid ", uc $grid, ": ";
+print uc $mode, " from grid ", uc $grid, " (last $minutes min): ";
 
 $i = 0;
 foreach my $key (sort {($a =~ s/c?m//r) <=> ($b =~ s/c?m//r)} (keys %scores)) {
