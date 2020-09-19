@@ -44,7 +44,7 @@ while ($i <= $#ARGV) {
   $ARGV[$i] =~ s/'//g; # sanitize
   our $deamped = 0;
 
-  if ($ARGV[$i] =~ m|^https?://[^/]*?/amp/|i or $ARGV[$i] =~ m|\.ampproject\.org/|i) {
+  if ($ARGV[$i] =~ m|^https?://[^/]*?/amp/|i or $ARGV[$i] =~ m|\.ampproject\.org/|i or $ARGV[$i] =~ m|://amp\.|i) {
     my $deamped = deamp($ARGV[$i]);
     if (defined ($deamped)) {
       print "⚡", yellow("DeAmped"), ": ";
