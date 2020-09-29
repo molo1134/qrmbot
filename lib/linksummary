@@ -1109,6 +1109,9 @@ sub deamp {
     if (m|<link\s+href="?(.*?)"?\s+rel="?canonical"?\s*/?>|i) {
       $deamped = $1;
     }
+    if (m|"canonicalUrl":"(.*?)"|i) {
+      $deamped = $1;
+    }
   }
   close(HTTP);
   return $deamped;
