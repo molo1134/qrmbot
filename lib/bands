@@ -14,25 +14,28 @@ use lib dirname(realpath(__FILE__));
 use Colors;
 
 use Math::Round;
+use JSON qw( decode_json );
 
 my ($updated, $aindex, $kindex, $solarflux, $sunspots);
 my @bands;
 my @phenom;
 
-my $url = "http://beta.kc2g.com/api/essn.json";
 my ($esfi, $essn);
-open (HTTP, '-|', "curl --max-time 10 -s -k -L $url");
-while (<HTTP>) {
-  if (/^\{"24h":\[\{"sfi":(-?[0-9.]+),"ssn":(-?[0-9.]+)/) {
-    ($esfi, $essn) = ($1, $2);
-    $esfi = round($esfi);
-    $essn = round($essn);
-    #print ("ESFI: $esfi; ESSN: $essn\n");
-  }
-}
-close(HTTP);
+{
+  my $url = "http://beta.kc2g.com/api/essn.json";
+  open (HTTP, '-|', "curl --max-time 10 -s -k -L $url");
 
-$url = "http://www.hamqsl.com/solarxml.php";
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $json = <HTTP>;
+  my $j = decode_json($json);
+  close(HTTP);
+
+  my $num = scalar @{$j->{'24h'}};
+  $esfi = nearest(0.1, $j->{'24h'}->[$num-1]->{'sfi'});
+  $essn = nearest(0.1, $j->{'24h'}->[$num-1]->{'ssn'});
+}
+
+my $url = "http://www.hamqsl.com/solarxml.php";
 open (HTTP, '-|', "curl --max-time 10 -s -k -L $url");
 while (<HTTP>) {
   chomp;
@@ -65,7 +68,6 @@ while (<HTTP>) {
 close(HTTP);
 
 if ($kindex > 4) {
-  # s/Poor/Shit/ for @bands
   s/Poor/Shit/ for @bands;
 }
 
