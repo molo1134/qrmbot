@@ -298,7 +298,7 @@ sub shortenUrl {
   our $bitly_apikey=undef;
   my $bitlykeyfile = $ENV{'HOME'} . "/.bitlyapikey";
   if (-e ($bitlykeyfile)) {
-    require($bitlykeyfile);
+    do $bitlykeyfile;
   }
   return undef if not defined($bitly_apikey);
 

@@ -18,7 +18,7 @@ use URI::Escape;
 sub getGeocodingAPIKey {
   my $apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
   if (-e ($apikeyfile)) {
-    require($apikeyfile);
+    do $apikeyfile;
   } else {
     print "error: unable to read file $apikeyfile\n";
   }
