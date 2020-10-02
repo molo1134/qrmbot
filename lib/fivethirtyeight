@@ -14,6 +14,7 @@ use Colors;
 use JSON qw( decode_json );
 use Math::Round;
 use List::Util qw[min max];
+use POSIX qw(strftime);
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 # disable "experimental" warning on smart match operator use
@@ -316,7 +317,15 @@ if ($house == 1) {
       $i = 0;
       foreach my $poll (@{$j}) {
 	next if $username eq "eggdrop" and ++$i < scalar @{$j}; # only show latest
-	print "Poll for $state-$poll->{district} by $poll->{pollster} rated $poll->{grade}, surveying $poll->{sampleSize}$poll->{population} $poll->{startDate} to $poll->{endDate}:\n";
+	my $grade = $poll->{grade};
+	$grade = undef if $grade eq "";
+	my $pollUrl = shortenUrl($poll->{url});
+	$pollUrl = $poll->{url} if not defined $pollUrl;
+	my $warning = "";
+	$warning = yellow(" [outdated]") if $poll->{cycle} ne strftime("%Y", gmtime(time()));
+	print "Poll for ", italic(bold("$poll->{state} $poll->{seat_name}")), " by \"$poll->{pollster}\"";
+	print " rated $grade" if defined $grade;
+	print ", surveying $poll->{sampleSize}$poll->{population} $poll->{startDate} to $poll->{endDate} (details: $pollUrl )$warning:\n";
 	foreach my $a (@{$poll->{answers}}) {
 	  my $party = substr $a->{party}, 0, 1;
 	  my $name = "$a->{choice}($party)";
