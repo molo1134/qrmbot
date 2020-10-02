@@ -12,6 +12,8 @@ use Util;
 use Colors;
 
 use JSON qw( decode_json );
+use Math::Round;
+use List::Util qw[min max];
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 # disable "experimental" warning on smart match operator use
@@ -258,7 +260,29 @@ if ($senate == 1) {
 
 if ($house == 1) {
   if ($state eq "US") {
-    # TODO: generic ballot
+    # generic ballot
+    my $url = "https://projects.fivethirtyeight.com/congress-generic-ballot-polls/generic-2020.json";
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    open (JSON, '-|', "curl --max-time 10 --fail -s -k -L $url");
+    my $json = <JSON>;
+    close(JSON);
+    my $j = decode_json($json) or die "parse error: $json\n";
+    my $last = @{$j}[scalar @{$j} - 1];
+
+    my $dem_dev = min($last->{revised}->{dem_hi} - $last->{revised}->{dem_estimate},
+		      $last->{revised}->{dem_estimate} -$last->{revised}->{dem_lo});
+    my $rep_dev = min($last->{revised}->{rep_hi} - $last->{revised}->{rep_estimate},
+		      $last->{revised}->{rep_estimate} -$last->{revised}->{rep_lo});
+
+    my $dem = nearest(0.1, $last->{revised}->{dem_estimate});
+    my $rep = nearest(0.1, $last->{revised}->{rep_estimate});
+    $dem_dev = nearest(0.1, $dem_dev);
+    $rep_dev = nearest(0.1, $rep_dev);
+
+    print "538 ", bold("Generic Ballot"), " polling estimate:  ",
+	lightblue("Democrats"), ": $dem% ±$dem_dev;  ",
+	red("Republicans"), ": $rep% ±$rep_dev\n";
+
   } else {
     if ($state =~ /^([A-Z]{2})-?(\d*)$/) {
       $state = $1;
@@ -289,7 +313,7 @@ if ($house == 1) {
       }
       my $j = decode_json($json) or die "parse error: $json\n";
 
-      my $i = 0;
+      $i = 0;
       foreach my $poll (@{$j}) {
 	next if $username eq "eggdrop" and ++$i < scalar @{$j}; # only show latest
 	print "Poll for $state-$poll->{district} by $poll->{pollster} rated $poll->{grade}, surveying $poll->{sampleSize}$poll->{population} $poll->{startDate} to $poll->{endDate}:\n";
