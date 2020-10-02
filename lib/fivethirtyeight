@@ -13,12 +13,19 @@ use Colors;
 
 use JSON qw( decode_json );
 
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+# disable "experimental" warning on smart match operator use
+no if $] >= 5.018, warnings => "experimental::smartmatch";
+
 my $state = "US";
 my $senate = 0;
+my $house = 0;
 my $i = 0;
 while ($i <= $#ARGV) {
   if ($ARGV[$i] =~ /--senate/) {
     $senate = 1;
+  } elsif ($ARGV[$i] =~ /--house/) {
+    $house = 1;
   } else {
     $state = uc $ARGV[$i];
   }
@@ -143,9 +150,9 @@ $stateToUrlFrag{WI} = "wisconsin";
 $stateToUrlFrag{WV} = "west-virginia";
 $stateToUrlFrag{WY} = "wyoming";
 
-if ($senate == 0) {
-  # disable "experimental" warning on smart match operator use
-  no if $] >= 5.018, warnings => "experimental::smartmatch";
+my @atLargeStates = ("WY", "DE", "MT", "AK", "ND", "SD", "VT", "AS", "GU", "MI", "PR", "VI");
+
+if ($senate == 0 and $house == 0) {
 
   my @keys = keys %stateToUrlFrag;
   if (not ($state ~~ @keys)) {
@@ -246,5 +253,61 @@ if ($senate == 1) {
       }
     }
     print "not found\n" if $found == 0;
+  }
+}
+
+if ($house == 1) {
+  if ($state eq "US") {
+    # TODO: generic ballot
+  } else {
+    if ($state =~ /^([A-Z]{2})-?(\d*)$/) {
+      $state = $1;
+      my $dist = $2;
+      $dist = undef if defined $dist and $dist eq "";
+
+      my @keys = keys %stateToUrlFrag;
+      if (not ($state ~~ @keys)) {
+	print "not found: $state\n";
+	exit 0;
+      }
+
+      if (not defined $dist and not $state ~~ @atLargeStates) {
+	print "error: must provide district\n";
+	exit 0;
+      }
+
+      my $url = "https://projects.fivethirtyeight.com/polls/house/$stateToUrlFrag{$state}/polls.json";
+      $url = "https://projects.fivethirtyeight.com/polls/house/$stateToUrlFrag{$state}/$dist/polls.json" if defined $dist;
+
+      local $/;   # read entire file -- FIXME: potentially memory hungry
+      open (JSON, '-|', "curl --max-time 10 --fail -s -k -L $url");
+      my $json = <JSON>;
+      close(JSON);
+      if (not defined($json) or $json eq "") {
+	print "not found\n";
+	exit 0;
+      }
+      my $j = decode_json($json) or die "parse error: $json\n";
+
+      my $i = 0;
+      foreach my $poll (@{$j}) {
+	next if $username eq "eggdrop" and ++$i < scalar @{$j}; # only show latest
+	print "Poll for $state-$poll->{district} by $poll->{pollster} rated $poll->{grade}, surveying $poll->{sampleSize}$poll->{population} $poll->{startDate} to $poll->{endDate}:\n";
+	foreach my $a (@{$poll->{answers}}) {
+	  my $party = substr $a->{party}, 0, 1;
+	  my $name = "$a->{choice}($party)";
+	  $name = red($name) if defined $party and $party eq "R";
+	  $name = lightblue($name) if defined $party and $party eq "D";
+	  $name = green($name) if defined $party and $party eq "G";
+	  $name = yellow($name) if defined $party and $party eq "L";
+	  printf "  %s: %s\n", $name, bold("$a->{pct}\%") if $a->{pct} >= 50.0;
+	  print "  $name: $a->{pct}\%\n" if $a->{pct} < 50.0;
+	}
+      }
+
+    } else {
+      print "error: misformated race\n";
+      exit 0;
+    }
   }
 }

@@ -17,6 +17,8 @@ bind msg - !fivethirtyeight fivethirtyeight_msg
 bind msg - !538 fivethirtyeight_msg
 bind pub - !senate senate_pub
 bind msg - !senate senate_msg
+bind pub - !house house_pub
+bind msg - !house house_msg
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
@@ -313,6 +315,28 @@ proc senate_msg {nick uhand handle input} {
 	set param [sanitize_string [string trim ${input}]]
 	putlog "senate msg: $nick $uhand $handle $param"
 	set fd [open "|${fivethirtyeightbin} --senate ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
+}
+proc house_pub { nick host hand chan text } {
+	global fivethirtyeightbin
+	set param [sanitize_string [string trim ${text}]]
+	putlog "house pub: $nick $host $hand $chan $param"
+	set fd [open "|${fivethirtyeightbin} --house ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc house_msg {nick uhand handle input} {
+	global fivethirtyeightbin
+	set param [sanitize_string [string trim ${input}]]
+	putlog "house msg: $nick $uhand $handle $param"
+	set fd [open "|${fivethirtyeightbin} --house ${param}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
