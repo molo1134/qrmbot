@@ -12,6 +12,9 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Util;
 
+use JSON qw( decode_json );
+use Math::Round;
+
 my $url = "https://www.treasurydirect.gov/NP_WS/debt/feeds/recent";
 #my $url = "https://treasurydirect.gov/NP/debt/rss";
 my ($date, $public, $intra, $total);
@@ -46,7 +49,26 @@ while (<HTTP>) {
 }
 close HTTP;
 
+my $url = "https://www.census.gov/popclock/data/population.php/us";
+local $/;   # read entire file -- FIXME: potentially memory hungry
+open (JSON, '-|', "curl --max-time 10 -s -k -L $url");
+my $json = <JSON>;
+close(JSON);
+my $j = decode_json($json) or die "parse error: $json\n";
+
+my $pop = $j->{us}->{population};
+
+my $numtotal = $total;
+$numtotal =~ s/,//g;
+
+my $percap = nearest(0.01, $numtotal / $pop);
+my $avg_household_size = 2.52; # TODO would like to get a data source
+my $avg_hh_debt = nearest(0.01, $percap * $avg_household_size);
+
 #print "$date $total $public $intra\n";
-print "As of $date, the total US debt is USD\$ $total\n"
+print "As of $date, the total US debt is USD\$ $total"
   if defined $date and defined $total;
+printf "; per-capita debt is \$%s; debt per average household is \$%s", commify($percap), commify($avg_hh_debt)
+  if defined $percap;
+print "\n";
 
