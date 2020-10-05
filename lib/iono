@@ -90,13 +90,13 @@ while (<JSON>) {
     }
     ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs) = (undef, undef, undef, undef, undef, undef, undef, undef, undef);
   }
-  if (/"(\w+)": (".*"|null|\d+)/) {
+  if (/"(\w+)": (".*"|null|[0-9.-]+)/) {
     my ($k, $v) = ($1, $2);
     $v =~ s/^"(.*)"$/$1/;
     #print "$k ==> $v\n";
     $v = undef if $v eq "null" or $v eq "" or $v == -1;
 
-    $fof2 = round($v * 1000.0)/1000.0 if $k eq "fof2" and defined $v;
+    $fof2 = nearest(0.001, $v) if $k eq "fof2" and defined $v;
     $mufd = $v if $k eq "mufd";
     $md = $v if $k eq "md";
     $code = $v if $k eq "code";
