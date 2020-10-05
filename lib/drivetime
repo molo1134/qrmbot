@@ -226,9 +226,8 @@ if ($status ne "OK") {
   exit $exitnonzeroonerror;
 }
 
-my $dist_km = round($distance/100.0)/10.0;
-my $dist_mi = round($distance/160.9344)/10.0;
-
+my $dist_km = nearest(0.1, $distance/1000.0);
+my $dist_mi = nearest(0.1, $distance/1609.344);
 
 use integer;
 my $d = $time / 86400;

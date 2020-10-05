@@ -89,7 +89,7 @@ print bold($grid), ": $lat, $lon";
 if (defined($placename)) {
   print ": $placename";
 }
-my $elev_ft = round($elev * 3.2808399 * 10) / 10;
-my $elev_m = round($elev * 10) / 10;
+my $elev_ft = nearest(0.1, $elev * 3.2808399;
+my $elev_m = nearest(0.1, $elev);
 print ": ", bold("$elev_m m")," ($elev_ft ft)\n";
 

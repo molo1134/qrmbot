@@ -3,7 +3,7 @@
 # 2-clause BSD license.
 # Copyright (c) 2020 molo1134. All rights reserved.
 
-# prevent i/o and looping, but don't mess up variable names
+# prevent blocking on input and looping, but don't mess up variable names
 proc sanitize_bc {text} {
   regsub -all "read" $text "rd" text
   regsub -all "while" $text "wh" text

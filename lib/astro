@@ -138,7 +138,7 @@ my $loss2m = emePathLoss($moon_range, 144.1);
 my $minloss2m = emePathLoss($minrange, 144.1); # loss at minimum perigee
 #my $maxloss2m = emePathLoss($maxrange - $earthradius, 144.1); # loss at maximum apogee
 my $percentRange = round(($moon_range - $minrange) / ($maxrange - $minrange) * 100);
-my $lossdiff = round(($loss2m - $minloss2m)*10)/10;
+my $lossdiff = nearest(0.1, $loss2m - $minloss2m);
 
 my ($phase, $illum) = $moon->phase($now);
 $phase = rad2deg($phase);
@@ -247,7 +247,7 @@ sub emePathLoss {
   my $d = shift;
   my $f = shift;
   my $loss = ((20 * log10($f)) + (40 * log10($d)) - 14.49);
-  return round($loss * 10) / 10;
+  return nearest(0.1, $loss);
 }
 
 # From wsjt astro.f90 -- translated from Fortran
@@ -328,7 +328,7 @@ sub degredation {
   # dgrd=-10.0*log10(tsys/tsysmin) + dbMoon
   my $dgrd = 10.0 * log10($tsys/$tsysmin); # XXX dbMoon?
 
-  return round($dgrd * 10)/10;
+  return nearest(0.1, $dgrd);
 }
 
 sub degredationQuality {
@@ -453,8 +453,8 @@ sub getAzElRng {
   my $sta = shift;
   my $obj = shift;
   my ($az, $el, $rng) = $sta->azel($obj);
-  $az = round(rad2deg($az) * 10) / 10;
-  $el = round(rad2deg($el) * 10) / 10;
+  $az = nearest(0.1, rad2deg($az));
+  $el = nearest(0.1, rad2deg($el));
   $rng = round($rng);
   return ($az, $el, $rng);
 }
