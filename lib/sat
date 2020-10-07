@@ -560,6 +560,26 @@ sub mode {
   $modes{57} = "DSTAR";
   $modes{58} = "DUV";
   $modes{59} = "CERTO";
+  $modes{61} = "OFDM";
+  $modes{63} = "GMSK";
+  $modes{64} = "WSJT";
+  $modes{68} = "GFSK Rktr";
+  $modes{69} = "QPSK";
+  $modes{71} = "DQPSK";
+  $modes{72} = "FSK";
+  $modes{74} = "PSK";
+  $modes{75} = "GFSK";
+  $modes{76} = "OQPSK";
+  $modes{77} = "MFSK";
+  $modes{78} = "AFSK S-Net";
+  $modes{79} = "AFSK SALSA";
+  $modes{81} = "MSK";
+  $modes{82} = "FFSK";
+  $modes{84} = "FSK AX.100 Mode 5";
+  $modes{85} = "FSK AX.100 Mode 6";
+  $modes{86} = "MSK AX.100 Mode 5";
+  $modes{87} = "MSK AX.100 Mode 6";
+  $modes{88} = "FSK AX.25 G3RUH";
   return $modes{$val} if defined $modes{$val};
   print "unknown mode: $val\n";
 }
