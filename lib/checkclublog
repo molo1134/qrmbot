@@ -5,6 +5,7 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 
+use JSON qw( decode_json );
 use File::Temp qw(tempfile);
 use strict;
 
@@ -57,38 +58,18 @@ if ( ! -e $userfile ) {
 
 updatezip() if ($needzip == 1);
 
-
 my %rec;
 
+local $/;   # read entire file -- FIXME: potentially memory hungry
 open (GZIP, '-|', "gzip -dc $userfile") or die "Can't open for reading: $!";
 binmode(GZIP, ":utf8");
-while (<GZIP>) {
-  #    "CALL": {
-  #        "firstqso": "2008-10-17 12:30:00",
-  #        "last-lotw": "2018-09-09 23:42:40",
-  #        "lastqso": "2018-09-09 21:14:30",
-  #        "lastupload": "2018-09-10 02:23:02",
-  #        "locator": "FN21WA",
-  #        "oqrs": false
-  #    },
-
-  if (/"$call":\s*{([^}]*)}/) {
-    # "firstqso":"2008-10-17 12:30:00","lastqso":"2018-09-09 21:14:30","lastupload":"2018-09-10 02:23:02","locator":"FN21WA","oqrs":false,"last-lotw":"2018-09-09 23:42:40"
-    my $line = $1;
-    #print "$line\n";
-    foreach my $e (split(/,/,$line)) {
-      #print "$e\n";
-      if ($e =~ /"(\w+)":("[^"]*"|true|false|-?\d+)/) {
-	my ($k, $v) = ($1, $2);
-	$v =~ s/^"//;
-	$v =~ s/"$//;
-	#print "$k $v\n";
-	$rec{$k} = $v;
-      }
-    }
-  }
-}
+my $json = <GZIP>;
 close(GZIP);
+my $j = decode_json($json) or die "parse error: $json\n";
+if (defined ($j->{$call})) {
+  %rec = %{$j->{$call}};
+}
+
 
 #print scalar(keys(%rec)), "\n";
 #print join (" ", keys(%rec)), "\n";
@@ -113,6 +94,7 @@ my ($upload, undef) = split(" ", $rec{lastupload});
 
 print bold($call), ": clublog from $start to $end; last upload $upload";
 print "; " . bold("OQRS") if $rec{oqrs} eq "true";
+print "; grid $rec{locator}" if defined $rec{locator};
 print "\n";
 
 exit 0;
