@@ -14,6 +14,7 @@ use Math::Trig;
 #use Data::Dumper;
 use POSIX qw(strftime);
 use List::Util qw[min max];
+use JSON qw( decode_json );
 binmode(STDOUT, ":utf8");
 
 use File::Basename;
@@ -24,7 +25,7 @@ use Location;
 use Util;
 
 my $tleurl="http://www.amsat.org/amsat/ftp/keps/current/nasabare.txt";
-my $satnogsurl = "https://db.satnogs.org/api/transmitters/?format=json";
+my $satnogsurlbase = "https://db.satnogs.org/api/transmitters/";
 
 # potential changes:
 # 1) parameter for number of passes / length of time?
@@ -179,7 +180,7 @@ if (length($query2) != 0) {
 }
 
 my @data;
-open(TLE, '-|', "curl --max-time 5 -s -k -L $tleurl");
+open(TLE, '-|', "curl --max-time 5 -s -k -L '$tleurl'");
 while (<TLE>) {
   push (@data, $_);
 }
@@ -433,74 +434,63 @@ if (not defined $id) {
 }
 
 $first = 1;
-# IPv4 because satnogs IPv6 gets cut off
-open(TX, '-|', "curl -4 -s --max-time 10 -L -k $satnogsurl");
-while (<TX>) {
-  #print;
-  s/}.\{/},\n{/g;
-  @_ = split "\n";
-  foreach my $e (@_) {
-    #print STDERR "$e\n" if $e =~ /$id/;
-    my @kv = split ",", $e;
-    my %link;
-    foreach my $pair (@kv) {
-      if ($pair =~ /"(\w+)":(true|false|null|\d+|"[^"]+")/) {
-	my ($k, $v) = ($1, $2);
-	$v =~ s/^"(.*)"$/$1/;
-	#print "$k => $v\n";
-	$link{$k} = $v;
-      }
-    }
-    #local $Data::Dumper::Terse = 1;
-    #print "missing id: ", Dumper(\%link), "\n" if not defined $link{norad_cat_id};
-    #print "link: ", Dumper(\%link), "\n" if $id == ($link{norad_cat_id} || -1);
-    #print "sat: $link{norad_cat_id}\n" if defined $link{norad_cat_id};
-    if (defined($link{norad_cat_id}) and
-	  $link{norad_cat_id} == $id and
-	  $link{alive} eq "true" and
-	  not $link{description} =~ m/(PE0SAT|drift|current)/i) {
 
-      if ($first == 1) {
-	printf("%s (#%d): ", bold($name), $id);
-	print "\n" if $username ne "eggdrop";
-	$first = 0;
-      } else {
-	print " ‖ " if $username eq "eggdrop";
-      }
+my $satnogsurl = "$satnogsurlbase?format=json&satellite__norad_cat_id=$id";
 
-      print "  " if $username ne "eggdrop";
-      if ($link{downlink_low} ne "null" and
-		$link{downlink_high} eq "null" and
-		$link{uplink_low} eq "null" and
-		$link{uplink_high} eq "null") {
-	print "transmitting: ";
-      }
-      if ($link{downlink_low} ne "null" and
-		$link{downlink_high} eq "null" and
-		$link{uplink_low} ne "null" and
-		$link{uplink_high} eq "null") {
-	print "repeating: ";
-      }
-      if ($link{downlink_low} ne "null" and
-		$link{downlink_high} ne "null" and
-		$link{uplink_low} ne "null" and
-		$link{uplink_high} ne "null") {
-	print "linear: ";
-      }
-      print "\"$link{description}\" ";
-      print hzToMhz($link{uplink_low}) if $link{uplink_low} ne "null";
-      print "-", hzToMhz($link{uplink_high}) if $link{uplink_high} ne "null";
-      print "/" if $link{uplink_low} ne "null";
-      print bold(hzToMhz($link{downlink_low})) if $link{downlink_low} ne "null";
-      print "-", bold(hzToMhz($link{downlink_high})) if $link{downlink_high} ne "null" and $link{downlink_high} != $link{downlink_low};
-      print " [inverting]" if $link{invert} eq "true" and $link{mode_id} != 1;
-      print " mode ", mode($link{mode_id});
-      print " $link{baud} baud" if $link{baud} ne "null" and $link{baud} != 0;
+local $/;   # read entire file -- FIXME: potentially memory hungry
+open(TX, '-|', "curl -s --max-time 10 -L -k '$satnogsurl'");
+my $json = <TX>;
+close(TX);
+my $j = decode_json($json) or die "parse error: $json\n";
+
+foreach my $l (@{$j}) {
+  my %link = %{$l};
+
+  if (defined($link{norad_cat_id}) and
+	$link{norad_cat_id} == $id and
+	$link{alive} and
+	not $link{description} =~ m/(PE0SAT|drift|current)/i) {
+
+    if ($first == 1) {
+      printf("%s (#%d): ", bold($name), $id);
       print "\n" if $username ne "eggdrop";
+      $first = 0;
+    } else {
+      print " ‖ " if $username eq "eggdrop";
     }
+
+    print "  " if $username ne "eggdrop";
+    if (defined $link{downlink_low} and
+	      not defined $link{downlink_high} and
+	      not defined $link{uplink_low} and
+	      not defined $link{uplink_high}) {
+      print "transmitting: ";
+    }
+    if (defined $link{downlink_low} and
+	      not defined $link{downlink_high} and
+	      defined $link{uplink_low} and
+	      not defined $link{uplink_high}) {
+      print "repeating: ";
+    }
+    if (defined $link{downlink_low} and
+	      defined $link{downlink_high} and
+	      defined $link{uplink_low} and
+	      defined $link{uplink_high}) {
+      print "linear: ";
+    }
+    print "\"$link{description}\" ";
+    print hzToMhz($link{uplink_low}) if defined $link{uplink_low};
+    print "-", hzToMhz($link{uplink_high}) if defined $link{uplink_high};
+    print "/" if defined $link{uplink_low};
+    print bold(hzToMhz($link{downlink_low})) if defined $link{downlink_low};
+    print "-", bold(hzToMhz($link{downlink_high}))
+      if defined $link{downlink_high} and $link{downlink_high} != $link{downlink_low};
+    print " [inverting]" if $link{invert} and $link{mode_id} != 1;
+    print " mode ", defined $link{mode} ? $link{mode} : mode($link{mode_id});
+    print " $link{baud} baud" if defined $link{baud} and $link{baud} != 0;
+    print "\n" if $username ne "eggdrop";
   }
 }
-close(TX);
 print "\n" if $username eq "eggdrop";
 
 sub hzToMhz {
@@ -508,6 +498,7 @@ sub hzToMhz {
   return $hz / 1000000;
 }
 
+# from https://db.satnogs.org/api/modes/?format=json
 sub mode {
   my $val = shift;
   my %modes;
