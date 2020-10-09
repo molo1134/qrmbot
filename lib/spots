@@ -163,77 +163,63 @@ sub doPSKreporter
 # output:
 #{"receiverCallsign":"JA8HZL","receiverLocator":"QN02TP","senderCallsign":"JA2HOL","senderLocator":"PM95ie20rh","frequency":10139114,"flowStartSeconds":1461063164,"mode":"JT65","isSender":1,"isReceiver":0,"senderDXCC":"Japan","senderDXCCCode":"JA","senderDXCCLocator":"PM96","senderLotwUpload":"2016-04-10","senderEqslAuthGuar":"A","sNR":-4},
 
-  # using IPv4 because I got greedy and got banned using ipv6.
-#  print "curl -4 -k -L --max-time 4 --retry 1 -s '$url'\n";
+  local $/;   # read entire file -- FIXME: potentially memory hungry
   open (HTTP, '-|', "curl -L -4 -k --max-time 4 --retry 1 -s '$url'");
-  while (<HTTP>) {
-    chomp;
-    if (/The storm clouds are gathering/) {
-      print "warning: pskreporter error\n";
-      last;
-    }
-    if (/Your IP has made too many requests for the same data too often/) {
-      print "warning: pskreporter throttled\n";
-      last;
-    }
-    #if (/<lastSequenceNumber\s+value="(\d+)"/) {
-      #print "lastseqnum: $1\n";
-    #}
+  my $json = <HTTP>;
+  close(HTTP);
 
-    if (/"receiverCallsign"/) {
-      my @data = split /,/;
-      my %rec;
-      foreach my $attrs (@data) {
-	if ($attrs =~ /"(\w+)":("[^"]*"|-?\d+)/) {
-	  my $tag = $1;
-	  my $val = $2;
-	  $val =~ s/"(.*)"/$1/;
-	  $rec{$tag} = $val;
-	  #print "$tag = $val\n";
-	}
-      }
-
-      if (%rec) {
-	$rec{frequency} = 0 unless defined $rec{frequency};
-	$rec{mode} = "?" unless defined $rec{mode};
-	$rec{flowStartSeconds} = 0 unless defined $rec{flowStartSeconds};
-
-	my $msg = "";
-	$msg .= "$rec{mode} " if defined $rec{mode};
-	$msg .= "$rec{sNR} dB " if defined $rec{sNR};
-	$rec{receiverLocator} = substr($rec{receiverLocator},0,6) # \
-	  if defined $rec{receiverLocator} and length($rec{receiverLocator}) > 6;
-	if (defined($rec{receiverLocator}) && defined($rec{senderLocator})) {
-	  $msg .= "($rec{receiverLocator} " .
-		  sprintf("%.0f km)",
-		    gridDist($rec{senderLocator}, $rec{receiverLocator}));
-
-	} elsif (defined $rec{receiverLocator}) {
-	  $msg .= "from $rec{receiverLocator}";
-	}
-
-	push (@spots, {ts => $rec{flowStartSeconds},
-		        src => "p",
-			de => $rec{receiverCallsign},
-			dx => $rec{senderCallsign},
-			f => floor($rec{frequency}/1000),
-			msg => $msg});
-#	printf "%-7s %-7s %5d %-28s %s\n",
-#		$rec{receiverCallsign},
-#		$rec{senderCallsign},
-#		floor($rec{frequency}/1000),
-#		$rec{mode} . " " . $rec{sNR},
-#		strftime("%H%Mz %d %b", gmtime($rec{flowStartSeconds}));
-
-  #      print "$rec{receiverCallsign}\t$rec{senderCallsign}\t" .
-  #	    floor($rec{frequency}/1000)."\t$rec{mode} $rec{sNR}\t" .
-  #	    strftime("%H:%Mz %b %d", gmtime($rec{flowStartSeconds})) . "\n";
-	$lastspot = $rec{flowStartSeconds} unless
-	      ($rec{flowStartSeconds} < $lastspot);
-      }
-    }
+  if ($json =~ /The storm clouds are gathering/) {
+    print "warning: pskreporter error\n";
+    return;
   }
-  close HTTP;
+  if ($json =~ /Your IP has made too many requests for the same data too often/) {
+    print "warning: pskreporter throttled\n";
+    return;
+  }
+  $json =~ s/^doNothing\(//;
+  $json =~ s/\);$//;
+
+  my $j = decode_json($json) or die "parse error: $json\n";
+
+  foreach my $rec (@{$j->{receptionReport}}) {
+
+    $rec->{frequency} = 0 unless defined $rec->{frequency};
+    $rec->{mode} = "?" unless defined $rec->{mode};
+    $rec->{flowStartSeconds} = 0 unless defined $rec->{flowStartSeconds};
+
+    my $msg = "";
+    $msg .= "$rec->{mode} " if defined $rec->{mode};
+    $msg .= "$rec->{sNR} dB " if defined $rec->{sNR};
+    $rec->{receiverLocator} = substr($rec->{receiverLocator},0,6) # \
+      if defined $rec->{receiverLocator} and length($rec->{receiverLocator}) > 6;
+    if (defined($rec->{receiverLocator}) && defined($rec->{senderLocator})) {
+      $msg .= "($rec->{receiverLocator} " .
+	      sprintf("%.0f km)",
+		gridDist($rec->{senderLocator}, $rec->{receiverLocator}));
+
+    } elsif (defined $rec->{receiverLocator}) {
+      $msg .= "from $rec->{receiverLocator}";
+    }
+
+    push (@spots, {ts => $rec->{flowStartSeconds},
+		    src => "p",
+		    de => $rec->{receiverCallsign},
+		    dx => $rec->{senderCallsign},
+		    f => floor($rec->{frequency}/1000),
+		    msg => $msg});
+#	printf "%-7s %-7s %5d %-28s %s\n",
+#		$rec->{receiverCallsign},
+#		$rec->{senderCallsign},
+#		floor($rec->{frequency}/1000),
+#		$rec->{mode} . " " . $rec->{sNR},
+#		strftime("%H%Mz %d %b", gmtime($rec->{flowStartSeconds}));
+
+  #      print "$rec->{receiverCallsign}\t$rec->{senderCallsign}\t" .
+  #	    floor($rec->{frequency}/1000)."\t$rec->{mode} $rec->{sNR}\t" .
+  #	    strftime("%H:%Mz %b %d", gmtime($rec->{flowStartSeconds})) . "\n";
+    $lastspot = $rec->{flowStartSeconds} unless
+	  ($rec->{flowStartSeconds} < $lastspot);
+  }
 }
 
 
