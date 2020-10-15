@@ -14,6 +14,8 @@ use lib dirname(realpath(__FILE__));
 use Util;
 use Colors;
 
+use List::Util qw(sum);
+
 # disable "experimental" warning on smart match operator use
 no if $] >= 5.018, warnings => "experimental::smartmatch";
 
@@ -36,6 +38,119 @@ my @statesandterritories = ("AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE",
   "WV", "WI", "WY", "DC", "GU", "AS", "MP", "PR", "VI", "UM", "FM", "MH", "PW",
   "AA", "AE", "AP");
 
+my %stateToName;
+$stateToName{US} = "National";
+$stateToName{AK} = "Alaska";
+$stateToName{AL} = "Alabama";
+$stateToName{AR} = "Arkansas";
+$stateToName{AZ} = "Arizona";
+$stateToName{CA} = "California";
+$stateToName{CO} = "Colorado";
+$stateToName{CT} = "Connecticut";
+$stateToName{DC} = "District of Columbia";
+$stateToName{DE} = "Delaware";
+$stateToName{FL} = "Florida";
+$stateToName{GA} = "Georgia";
+$stateToName{HI} = "Hawaii";
+$stateToName{IA} = "Iowa";
+$stateToName{ID} = "Idaho";
+$stateToName{IL} = "Illinois";
+$stateToName{IN} = "Indiana";
+$stateToName{KS} = "Kansas";
+$stateToName{KY} = "Kentucky";
+$stateToName{LA} = "Louisiana";
+$stateToName{MA} = "Massachusetts";
+$stateToName{MD} = "Maryland";
+$stateToName{ME} = "Maine";
+$stateToName{MI} = "Michigan";
+$stateToName{MN} = "Minnesota";
+$stateToName{MO} = "Missouri";
+$stateToName{MS} = "Mississippi";
+$stateToName{MT} = "Montana";
+$stateToName{NC} = "North Carolina";
+$stateToName{ND} = "North Dakota";
+$stateToName{NE} = "Nebraska";
+$stateToName{NH} = "New Hampshire";
+$stateToName{NJ} = "New Jersey";
+$stateToName{NM} = "New Mexico";
+$stateToName{NV} = "Nevada";
+$stateToName{NY} = "New York";
+$stateToName{OH} = "Ohio";
+$stateToName{OK} = "Oklahoma";
+$stateToName{OR} = "Oregon";
+$stateToName{PA} = "Pennsylvania";
+$stateToName{RI} = "Rhode Island";
+$stateToName{SC} = "South Carolina";
+$stateToName{SD} = "South Dakota";
+$stateToName{TN} = "Tennessee";
+$stateToName{TX} = "Texas";
+$stateToName{UT} = "Utah";
+$stateToName{VA} = "Virginia";
+$stateToName{VT} = "Vermont";
+$stateToName{WA} = "Washington";
+$stateToName{WI} = "Wisconsin";
+$stateToName{WV} = "West Virginia";
+$stateToName{WY} = "Wyoming";
+
+# 2019 census population estimate
+my %statePop;
+$statePop{AK} = 731545;
+$statePop{AL} = 4903185;
+$statePop{AR} = 3017825;
+$statePop{AS} = 55641;
+$statePop{AZ} = 7278717;
+$statePop{CA} = 39512223;
+$statePop{CO} = 5758736;
+$statePop{CT} = 3565287;
+$statePop{DC} = 705749;
+$statePop{DE} = 973764;
+$statePop{FL} = 21477737;
+$statePop{GA} = 10617423;
+$statePop{GU} = 165718;
+$statePop{HI} = 1415872;
+$statePop{IA} = 3155070;
+$statePop{ID} = 1787065;
+$statePop{IL} = 12671821;
+$statePop{IN} = 6732219;
+$statePop{KS} = 2913314;
+$statePop{KY} = 4467673;
+$statePop{LA} = 4648794;
+$statePop{MA} = 6949503;
+$statePop{MD} = 6045680;
+$statePop{ME} = 1344212;
+$statePop{MI} = 9986857;
+$statePop{MN} = 5639632;
+$statePop{MO} = 6137428;
+$statePop{MP} = 55194;
+$statePop{MS} = 2976149;
+$statePop{MT} = 1068778;
+$statePop{NC} = 10488084;
+$statePop{ND} = 762062;
+$statePop{NE} = 1934408;
+$statePop{NH} = 1359711;
+$statePop{NJ} = 8882190;
+$statePop{NM} = 2096829;
+$statePop{NV} = 3080156;
+$statePop{NY} = 19453561;
+$statePop{OH} = 11689100;
+$statePop{OK} = 3956971;
+$statePop{OR} = 4217737;
+$statePop{PA} = 12801989;
+$statePop{PR} = 3193694;
+$statePop{RI} = 1059361;
+$statePop{SC} = 5148714;
+$statePop{SD} = 884659;
+$statePop{TN} = 6833174;
+$statePop{TX} = 28995881;
+$statePop{UT} = 3205958;
+$statePop{VA} = 8535519;
+$statePop{VI} = 104914;
+$statePop{VT} = 623989;
+$statePop{WA} = 7614893;
+$statePop{WI} = 5822434;
+$statePop{WV} = 1792147;
+$statePop{WY} = 578759;
+
 my $i = 0;
 while ($i <= $#ARGV) {
   if ($ARGV[$i] =~ /^[A-Z][A-Z]$/i and uc $ARGV[$i] ~~ @statesandterritories) {
@@ -49,7 +164,7 @@ while ($i <= $#ARGV) {
 # not updating reliably
 #my $url = "https://raw.githubusercontent.com/alext234/coronavirus-stats/master/data/who-global-cases.csv";
 my $url = "https://www.worldometers.info/coronavirus/";
-my $params = 
+my $params =
 	"-eval 'set connection.receive_timeout = 10' " .
 	"-eval 'set connection.retries = 1' " .
 	"--dump";
@@ -149,24 +264,76 @@ if ($#interest >= 0) {
 }
 
 if ($#states >= 0) {
-  my $url = "https://covidtracking.com/api/states";
-  my $found = 0;
-  open(HTTP, '-|', "curl --max-time 10 -s -k '$url' | sed -e 's/},{/},\\n{/g'");
-  binmode(HTTP, ":utf8");
-  while (<HTTP>) {
-    if (/"state":"([A-Z]{2})",.*?"positive":(\d+),.*?"negative":(\d+|null),.*?"pending":(\d+|null),.*?"hospitalizedCurrently":(\d+|null),.*?"recovered":(\d+|null).*?"death":(\d+|null),/) {
-      if ( uc $1 ~~ @states ) {
-	print "State ", bold($1)," Covid19 tests: positive: ", yellow(commify($2)), ", negative: ", green(commify($3));
-	print ", pending: ", commify($4) if $4 ne "null" and $4 > 0;
-	print ", hospitalized now: ", cyan(commify($5)) if $5 ne "null" and $5 > 0;
-	print ", recovered: ", lightblue(commify($6)) if $6 ne "null" and $6 > 0;
-	print ", deaths: ", red(commify($7)), "\n";
-	$found = 1;
-      }
+
+  my @names;
+  foreach my $s (@states) {
+    push @names, $stateToName{$s};
+  }
+
+  my %caseTotals;
+  my %deathTotals;
+
+  my $prevCases = undef;
+  my $prevDeaths = undef;
+
+  my $url = "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv";
+  open(CSV, '-|', "curl --max-time 10 -s -k '$url'");
+  binmode(CSV, ":utf8");
+  while (<CSV>) {
+    chomp;
+    my ($date, $state, $fips, $cases, $deaths) = split /,/;
+    if ($state ~~ @names) {
+      $caseTotals{"${state}_${date}"} = $cases;
+      $deathTotals{"${state}_${date}"} = $deaths;
     }
   }
-  close(HTTP);
-  print "not found\n" if $found == 0;
+  close(CSV);
+
+  foreach my $s (@states) {
+    my $n = $stateToName{$s};
+    my @cases = undef;
+    my @deaths = undef;
+    foreach my $k (sort keys %caseTotals) {
+      if (rindex($k, $n, 0) == 0) {
+	#print "$n: $caseTotals{$k}\n";
+	push @cases, $caseTotals{$k};
+	push @deaths, $deathTotals{$k};
+      }
+    }
+    my @last31cases = @cases[$#cases-31 .. $#cases];
+    my @last30caseDeltas;
+    my @last30caseDeltasPerCap;
+    for (my $i = 1; $i <= $#last31cases; $i++) {
+      $last30caseDeltas[$i-1] = $last31cases[$i] - $last31cases[$i - 1];
+      $last30caseDeltasPerCap[$i-1] = $last30caseDeltas[$i-1] / ($statePop{$s} / 100000.0);
+    }
+
+    #print "last 31: ", join(", ", @last31cases), "\n";
+    #print "deltas: ", join(", ", @last30caseDeltas), "\n";
+    #print "last 31 count: $#last31cases\n";
+    #print "last 30 deltas count: $#last30caseDeltas\n";
+    my @result = seriesToSparkLine(\@last30caseDeltas);
+    my $min = $result[0];
+    my $max = $result[1];
+    my @spark = @result[2 .. $#result];
+
+    #print "length: $#result\n";
+    print "$s last 30d: ", join("", @spark), ": $min-$max new cases daily";
+
+    @result = seriesToSparkLine(\@last30caseDeltasPerCap);
+    $min = $result[0];
+    $max = $result[1];
+    @spark = @result[2 .. $#result]; #ignored, basically duplicates the case delta
+
+    #print "percap: ", join(", ", @last30caseDeltasPerCap), "\n";
+    #printf "percap: %s: %0.1f-%0.1f per 100k daily\n", join("", @spark), $min, $max;
+    printf(" (%0.1f-%0.1f cases per 100k daily)", $min, $max);
+
+    #print " -- ", join(" " , @last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]), " -- ";
+    my $caseavg = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]) / 7.0;
+    my $percapavg = sum(@last30caseDeltasPerCap[$#last30caseDeltasPerCap-6 .. $#last30caseDeltas]) / 7.0;
+    printf("; avg %0.1f last 7 days (%0.1f per 100k)\n", $caseavg, $percapavg);
+  }
   exit 0;
 }
 
@@ -204,3 +371,59 @@ print "As of $date, there are ", yellow(commify($c)), " confirmed cases and ",
   red(commify($d)), " deaths, with ", lightblue(commify($r)),
   " recovered. Death rate ", red("$pct%"), " of resolved cases.\n";
 exit 0;
+
+
+sub seriesToSparkLine {
+  my $arrayref = shift;
+  my @series = @$arrayref;
+  my $min = 999999999999;
+  my $max = -999999999999;
+  my @result;
+
+  foreach my $e (@series) {
+    $min = $e if $e < $min and $e > 0;
+    $max = $e if $e > $max and $e > 0;
+  }
+
+  push @result, ($min, $max);
+
+  foreach my $v (@series) {
+    my $chr = valToBlock($v, $min, $max);
+    push @result, $chr;
+  }
+
+  return @result;
+}
+
+# relative to min/max
+sub valToBlock {
+  my $v = shift;
+  my $min = shift;
+  my $max = shift;
+  my $step = ($max - $min)/8;
+  my $chr = " ";
+
+  if ($v < $min) {
+    $chr = " ";
+  } elsif ($v <= ($min + ($step * 1))) {
+    $chr = "▁";
+  } elsif ($v <= ($min + ($step * 2))) {
+    $chr = "▂";
+  } elsif ($v <= ($min + ($step * 3))) {
+    $chr = "▃";
+  } elsif ($v <= ($min + ($step * 4))) {
+    $chr = "▄";
+  } elsif ($v <= ($min + ($step * 5))) {
+    $chr = "▅";
+  } elsif ($v <= ($min + ($step * 6))) {
+    $chr = "▆";
+  } elsif ($v <= ($min + ($step * 7))) {
+    $chr = "▇";
+  } elsif ($v <= ($min + ($step * 8))) {
+    $chr = "▇";
+  } else {
+    $chr = "↑";
+  }
+  return $chr;
+}
+
