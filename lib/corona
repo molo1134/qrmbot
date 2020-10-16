@@ -330,9 +330,14 @@ if ($#states >= 0) {
     printf(" (%0.1f-%0.1f cases per 100k daily)", $min, $max);
 
     #print " -- ", join(" " , @last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]), " -- ";
-    my $caseavg = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]) / 7.0;
-    my $percapavg = sum(@last30caseDeltasPerCap[$#last30caseDeltasPerCap-6 .. $#last30caseDeltas]) / 7.0;
-    printf("; avg %0.1f last 7 days (%0.1f per 100k)\n", $caseavg, $percapavg);
+
+    #my $caseavg = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]) / 7.0;
+    #my $percapavg = sum(@last30caseDeltasPerCap[$#last30caseDeltasPerCap-6 .. $#last30caseDeltas]) / 7.0;
+    #printf("; avg %0.1f last 7 days (%0.1f per 100k)\n", $caseavg, $percapavg);
+
+    my $sevenDayTotal = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]);
+    my $sevenDayPerCap = $sevenDayTotal / ($statePop{$s} / 100000.0);
+    printf("; %d total for last 7d (%0.1f per 100k over 7d)\n", $sevenDayTotal, $sevenDayPerCap);
   }
   exit 0;
 }
