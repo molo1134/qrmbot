@@ -300,6 +300,33 @@ if ($#states >= 0) {
 	push @deaths, $deathTotals{$k};
       }
     }
+
+    my $sum = 0;
+    my @weeklyCasesPerCap;
+    for (my $n = $#cases; $n > 0; $n--) {
+      my $delta = 0;
+      $delta = $cases[$n] - $cases[$n-1];
+      $sum += $delta;
+      #print "$sum\n";
+      if ($n < $#cases and ($#cases - $n) % 7 == 6) {
+	my $rate = $sum / ($statePop{$s} / 100000.0);
+	#print "$sum -> $rate\n";
+	unshift(@weeklyCasesPerCap, $rate);   # insert at front
+	$sum = 0;
+      }
+    }
+    if ($sum > 0) {  # any leftover
+      unshift(@weeklyCasesPerCap, $sum / ($statePop{$s} / 100000.0));
+      $sum = 0;
+    }
+
+    my @result = seriesToSparkLine(\@weeklyCasesPerCap, 1, 0);
+    my $min = $result[0];
+    my $max = $result[1];
+    my @spark = @result[2 .. $#result];
+    printf "%s weekly chart: %s: max %s weekly cases per 100k pop\n", $s, join("", @spark), colorByRate(sprintf("%0.1f", $max), $max);
+
+
     my @last31cases = @cases[$#cases-31 .. $#cases];
     my @last30caseDeltas;
     my @last30caseDeltasPerCap;
@@ -312,22 +339,22 @@ if ($#states >= 0) {
     #print "deltas: ", join(", ", @last30caseDeltas), "\n";
     #print "last 31 count: $#last31cases\n";
     #print "last 30 deltas count: $#last30caseDeltas\n";
-    my @result = seriesToSparkLine(\@last30caseDeltas);
-    my $min = $result[0];
-    my $max = $result[1];
-    my @spark = @result[2 .. $#result];
+    @result = seriesToSparkLine(\@last30caseDeltas, 0, 0);  # ignored
+    my $dailyCaseMin = $result[0];
+    my $dailyCaseMax = $result[1];
+    #@spark = @result[2 .. $#result];
 
     #print "length: $#result\n";
-    print "$s last 30d: ", join("", @spark), ": $min-$max new cases daily";
+    #print "$s last 30d: ", join("", @spark), ": $min-$max new cases daily";
 
-    @result = seriesToSparkLine(\@last30caseDeltasPerCap);
+    @result = seriesToSparkLine(\@last30caseDeltasPerCap, 1, 1);
     $min = $result[0];
     $max = $result[1];
-    @spark = @result[2 .. $#result]; #ignored, basically duplicates the case delta
+    @spark = @result[2 .. $#result];
 
     #print "percap: ", join(", ", @last30caseDeltasPerCap), "\n";
-    #printf "percap: %s: %0.1f-%0.1f per 100k daily\n", join("", @spark), $min, $max;
-    printf(" (%0.1f-%0.1f cases per 100k daily)", $min, $max);
+    printf "%s last 30d: %s: %d-%d daily new cases", $s, join("", @spark), $dailyCaseMin, $dailyCaseMax;
+    #printf(" (%0.1f-%0.1f cases per 100k daily)", $min, $max);
 
     #print " -- ", join(" " , @last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]), " -- ";
 
@@ -337,7 +364,7 @@ if ($#states >= 0) {
 
     my $sevenDayTotal = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]);
     my $sevenDayPerCap = $sevenDayTotal / ($statePop{$s} / 100000.0);
-    printf("; %d total for last 7d (%0.1f per 100k over 7d)\n", $sevenDayTotal, $sevenDayPerCap);
+    printf("; %d total for last 7d (%s per 100k over 7d)\n", $sevenDayTotal, colorByRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
   }
   exit 0;
 }
@@ -380,6 +407,8 @@ exit 0;
 
 sub seriesToSparkLine {
   my $arrayref = shift;
+  my $color = shift;
+  my $daily = shift;
   my @series = @$arrayref;
   my $min = 999999999999;
   my $max = -999999999999;
@@ -394,6 +423,8 @@ sub seriesToSparkLine {
 
   foreach my $v (@series) {
     my $chr = valToBlock($v, $min, $max);
+    $v = $v * 7.0 if $daily != 0;
+    $chr = colorByRate($chr, $v) if $color != 0;
     push @result, $chr;
   }
 
@@ -432,3 +463,16 @@ sub valToBlock {
   return $chr;
 }
 
+sub colorByRate {
+  my $str = shift;
+  my $rate = shift;
+
+  if ($rate < 35.0) {
+    return green($str);
+  } elsif ($rate < 50.0) {
+    return yellow($str);
+  } elsif ($rate >= 50.0) {
+    return red($str);
+  }
+  return $str;
+}
