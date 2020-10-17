@@ -17,6 +17,7 @@ use Colors;
 
 use List::Util qw(sum);
 use JSON qw( decode_json );
+use Time::HiRes qw( time );
 
 # disable "experimental" warning on smart match operator use
 no if $] >= 5.018, warnings => "experimental::smartmatch";
@@ -613,12 +614,23 @@ while ($i <= $#ARGV) {
 
 # countries
 if ($#interest >= 0) {
+
+  my $start = time;
+
   my $url = "https://pomber.github.io/covid19/timeseries.json";
   local $/;   # read entire file -- FIXME: potentially memory hungry
   open (JSON, '-|', "curl --max-time 10 -s -k -L '$url'");
   my $json = <JSON>;
   close(JSON);
+
+  my $newtime = time;
+  print "transfer " , $newtime - $start, "\n";
+  $start = $newtime;
+
   my $j = decode_json($json) or die "parse error: $json\n";
+
+  my $newtime = time;
+  print "decode: " , $newtime - $start, "\n";
 
   foreach my $i (@interest) {
     my @cases = undef;
