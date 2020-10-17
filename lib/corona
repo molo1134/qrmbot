@@ -15,6 +15,7 @@ use Util;
 use Colors;
 
 use List::Util qw(sum);
+use JSON qw( decode_json );
 
 # disable "experimental" warning on smart match operator use
 no if $] >= 5.018, warnings => "experimental::smartmatch";
@@ -151,12 +152,460 @@ $statePop{WI} = 5822434;
 $statePop{WV} = 1792147;
 $statePop{WY} = 578759;
 
+my %countryPop;
+my %countryName;
+# source: http://api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL?format=json&per_page=500&date=2019
+$countryPop{EUU} = 447512041;
+$countryName{EUU} = "European Union";
+$countryPop{WLD} = 7673533972;
+$countryName{WLD} = "World";
+$countryPop{AFG} = 38041754;
+$countryName{AFG} = "Afghanistan";
+$countryPop{ALB} = 2854191;
+$countryName{ALB} = "Albania";
+$countryPop{DZA} = 43053054;
+$countryName{DZA} = "Algeria";
+$countryPop{ASM} = 55312;
+$countryName{ASM} = "American Samoa";
+$countryPop{AND} = 77142;
+$countryName{AND} = "Andorra";
+$countryPop{AGO} = 31825295;
+$countryName{AGO} = "Angola";
+$countryPop{ATG} = 97118;
+$countryName{ATG} = "Antigua and Barbuda";
+$countryPop{ARG} = 44938712;
+$countryName{ARG} = "Argentina";
+$countryPop{ARM} = 2957731;
+$countryName{ARM} = "Armenia";
+$countryPop{ABW} = 106314;
+$countryName{ABW} = "Aruba";
+$countryPop{AUS} = 25364307;
+$countryName{AUS} = "Australia";
+$countryPop{AUT} = 8877067;
+$countryName{AUT} = "Austria";
+$countryPop{AZE} = 10023318;
+$countryName{AZE} = "Azerbaijan";
+$countryPop{BHS} = 389482;
+$countryName{BHS} = "Bahamas";
+$countryPop{BHR} = 1641172;
+$countryName{BHR} = "Bahrain";
+$countryPop{BGD} = 163046161;
+$countryName{BGD} = "Bangladesh";
+$countryPop{BRB} = 287025;
+$countryName{BRB} = "Barbados";
+$countryPop{BLR} = 9466856;
+$countryName{BLR} = "Belarus";
+$countryPop{BEL} = 11484055;
+$countryName{BEL} = "Belgium";
+$countryPop{BLZ} = 390353;
+$countryName{BLZ} = "Belize";
+$countryPop{BEN} = 11801151;
+$countryName{BEN} = "Benin";
+$countryPop{BMU} = 63918;
+$countryName{BMU} = "Bermuda";
+$countryPop{BTN} = 763092;
+$countryName{BTN} = "Bhutan";
+$countryPop{BOL} = 11513100;
+$countryName{BOL} = "Bolivia";
+$countryPop{BIH} = 3301000;
+$countryName{BIH} = "Bosnia and Herzegovina";
+$countryPop{BWA} = 2303697;
+$countryName{BWA} = "Botswana";
+$countryPop{BRA} = 211049527;
+$countryName{BRA} = "Brazil";
+$countryPop{VGB} = 30030;
+$countryName{VGB} = "British Virgin Islands";
+$countryPop{BRN} = 433285;
+$countryName{BRN} = "Brunei";
+$countryPop{BGR} = 6975761;
+$countryName{BGR} = "Bulgaria";
+$countryPop{BFA} = 20321378;
+$countryName{BFA} = "Burkina Faso";
+$countryPop{BDI} = 11530580;
+$countryName{BDI} = "Burundi";
+$countryPop{CPV} = 549935;
+$countryName{CPV} = "Cabo Verde";
+$countryPop{KHM} = 16486542;
+$countryName{KHM} = "Cambodia";
+$countryPop{CMR} = 25876380;
+$countryName{CMR} = "Cameroon";
+$countryPop{CAN} = 37589262;
+$countryName{CAN} = "Canada";
+$countryPop{CYM} = 64948;
+$countryName{CYM} = "Cayman Islands";
+$countryPop{CAF} = 4745185;
+$countryName{CAF} = "Central African Republic";
+$countryPop{TCD} = 15946876;
+$countryName{TCD} = "Chad";
+$countryPop{CHI} = 172259;
+$countryName{CHI} = "Channel Islands";
+$countryPop{CHL} = 18952038;
+$countryName{CHL} = "Chile";
+$countryPop{CHN} = 1397715000;
+$countryName{CHN} = "China";
+$countryPop{COL} = 50339443;
+$countryName{COL} = "Colombia";
+$countryPop{COM} = 850886;
+$countryName{COM} = "Comoros";
+$countryPop{COD} = 86790567;
+$countryName{COD} = "Congo (Kinshasa)";
+$countryPop{COG} = 5380508;
+$countryName{COG} = "Congo (Brazzaville)";
+$countryPop{CRI} = 5047561;
+$countryName{CRI} = "Costa Rica";
+$countryPop{CIV} = 25716544;
+$countryName{CIV} = "Cote d'Ivoire";
+$countryPop{HRV} = 4067500;
+$countryName{HRV} = "Croatia";
+$countryPop{CUB} = 11333483;
+$countryName{CUB} = "Cuba";
+$countryPop{CUW} = 157538;
+$countryName{CUW} = "Curacao";
+$countryPop{CYP} = 1198575;
+$countryName{CYP} = "Cyprus";
+$countryPop{CZE} = 10669709;
+$countryName{CZE} = "Czechia";
+$countryPop{DNK} = 5818553;
+$countryName{DNK} = "Denmark";
+$countryPop{DJI} = 973560;
+$countryName{DJI} = "Djibouti";
+$countryPop{DMA} = 71808;
+$countryName{DMA} = "Dominica";
+$countryPop{DOM} = 10738958;
+$countryName{DOM} = "Dominican Republic";
+$countryPop{ECU} = 17373662;
+$countryName{ECU} = "Ecuador";
+$countryPop{EGY} = 100388073;
+$countryName{EGY} = "Egypt";
+$countryPop{SLV} = 6453553;
+$countryName{SLV} = "El Salvador";
+$countryPop{GNQ} = 1355986;
+$countryName{GNQ} = "Equatorial Guinea";
+#$countryName{ERI} = "Eritrea";
+$countryPop{EST} = 1326590;
+$countryName{EST} = "Estonia";
+$countryPop{SWZ} = 1148130;
+$countryName{SWZ} = "Eswatini";
+$countryPop{ETH} = 112078730;
+$countryName{ETH} = "Ethiopia";
+$countryPop{FRO} = 48678;
+$countryName{FRO} = "Faroe Islands";
+$countryPop{FJI} = 889953;
+$countryName{FJI} = "Fiji";
+$countryPop{FIN} = 5520314;
+$countryName{FIN} = "Finland";
+$countryPop{FRA} = 67059887;
+$countryName{FRA} = "France";
+$countryPop{PYF} = 279287;
+$countryName{PYF} = "French Polynesia";
+$countryPop{GAB} = 2172579;
+$countryName{GAB} = "Gabon";
+$countryPop{GMB} = 2347706;
+$countryName{GMB} = "Gambia";
+$countryPop{GEO} = 3720382;
+$countryName{GEO} = "Georgia";
+$countryPop{DEU} = 83132799;
+$countryName{DEU} = "Germany";
+$countryPop{GHA} = 30417856;
+$countryName{GHA} = "Ghana";
+$countryPop{GIB} = 33701;
+$countryName{GIB} = "Gibraltar";
+$countryPop{GRC} = 10716322;
+$countryName{GRC} = "Greece";
+$countryPop{GRL} = 56225;
+$countryName{GRL} = "Greenland";
+$countryPop{GRD} = 112003;
+$countryName{GRD} = "Grenada";
+$countryPop{GUM} = 167294;
+$countryName{GUM} = "Guam";
+$countryPop{GTM} = 16604026;
+$countryName{GTM} = "Guatemala";
+$countryPop{GIN} = 12771246;
+$countryName{GIN} = "Guinea";
+$countryPop{GNB} = 1920922;
+$countryName{GNB} = "Guinea-Bissau";
+$countryPop{GUY} = 782766;
+$countryName{GUY} = "Guyana";
+$countryPop{HTI} = 11263077;
+$countryName{HTI} = "Haiti";
+$countryPop{HND} = 9746117;
+$countryName{HND} = "Honduras";
+$countryPop{HKG} = 7507400;
+$countryName{HKG} = "Hong Kong";
+$countryPop{HUN} = 9769949;
+$countryName{HUN} = "Hungary";
+$countryPop{ISL} = 361313;
+$countryName{ISL} = "Iceland";
+$countryPop{IND} = 1366417754;
+$countryName{IND} = "India";
+$countryPop{IDN} = 270625568;
+$countryName{IDN} = "Indonesia";
+$countryPop{IRN} = 82913906;
+$countryName{IRN} = "Iran";
+$countryPop{IRQ} = 39309783;
+$countryName{IRQ} = "Iraq";
+$countryPop{IRL} = 4941444;
+$countryName{IRL} = "Ireland";
+$countryPop{IMN} = 84584;
+$countryName{IMN} = "Isle of Man";
+$countryPop{ISR} = 9053300;
+$countryName{ISR} = "Israel";
+$countryPop{ITA} = 60297396;
+$countryName{ITA} = "Italy";
+$countryPop{JAM} = 2948279;
+$countryName{JAM} = "Jamaica";
+$countryPop{JPN} = 126264931;
+$countryName{JPN} = "Japan";
+$countryPop{JOR} = 10101694;
+$countryName{JOR} = "Jordan";
+$countryPop{KAZ} = 18513930;
+$countryName{KAZ} = "Kazakhstan";
+$countryPop{KEN} = 52573973;
+$countryName{KEN} = "Kenya";
+$countryPop{KIR} = 117606;
+$countryName{KIR} = "Kiribati";
+#$countryPop{PRK} = 25666161;
+#$countryName{PRK} = "Korea, Dem. People’s Rep.";
+$countryPop{KOR} = 51709098;
+$countryName{KOR} = "Korea, South";
+$countryPop{XKX} = 1794248;
+$countryName{XKX} = "Kosovo";
+$countryPop{KWT} = 4207083;
+$countryName{KWT} = "Kuwait";
+$countryPop{KGZ} = 6456900;
+$countryName{KGZ} = "Kyrgyzstan";
+$countryPop{LAO} = 7169455;
+$countryName{LAO} = "Laos";
+$countryPop{LVA} = 1912789;
+$countryName{LVA} = "Latvia";
+$countryPop{LBN} = 6855713;
+$countryName{LBN} = "Lebanon";
+$countryPop{LSO} = 2125268;
+$countryName{LSO} = "Lesotho";
+$countryPop{LBR} = 4937374;
+$countryName{LBR} = "Liberia";
+$countryPop{LBY} = 6777452;
+$countryName{LBY} = "Libya";
+$countryPop{LIE} = 38019;
+$countryName{LIE} = "Liechtenstein";
+$countryPop{LTU} = 2786844;
+$countryName{LTU} = "Lithuania";
+$countryPop{LUX} = 619896;
+$countryName{LUX} = "Luxembourg";
+$countryPop{MAC} = 640445;
+$countryName{MAC} = "Macao";
+$countryPop{MDG} = 26969307;
+$countryName{MDG} = "Madagascar";
+$countryPop{MWI} = 18628747;
+$countryName{MWI} = "Malawi";
+$countryPop{MYS} = 31949777;
+$countryName{MYS} = "Malaysia";
+$countryPop{MDV} = 530953;
+$countryName{MDV} = "Maldives";
+$countryPop{MLI} = 19658031;
+$countryName{MLI} = "Mali";
+$countryPop{MLT} = 502653;
+$countryName{MLT} = "Malta";
+$countryPop{MHL} = 58791;
+$countryName{MHL} = "Marshall Islands";
+$countryPop{MRT} = 4525696;
+$countryName{MRT} = "Mauritania";
+$countryPop{MUS} = 1265711;
+$countryName{MUS} = "Mauritius";
+$countryPop{MEX} = 127575529;
+$countryName{MEX} = "Mexico";
+$countryPop{FSM} = 113815;
+$countryName{FSM} = "Micronesia";
+$countryPop{MDA} = 2657637;
+$countryName{MDA} = "Moldova";
+$countryPop{MCO} = 38964;
+$countryName{MCO} = "Monaco";
+$countryPop{MNG} = 3225167;
+$countryName{MNG} = "Mongolia";
+$countryPop{MNE} = 622137;
+$countryName{MNE} = "Montenegro";
+$countryPop{MAR} = 36471769;
+$countryName{MAR} = "Morocco";
+$countryPop{MOZ} = 30366036;
+$countryName{MOZ} = "Mozambique";
+$countryPop{MMR} = 54045420;
+#$countryName{MMR} = "Myanmar";
+$countryName{MMR} = "Burma";
+$countryPop{NAM} = 2494530;
+$countryName{NAM} = "Namibia";
+$countryPop{NRU} = 12581;
+$countryName{NRU} = "Nauru";
+$countryPop{NPL} = 28608710;
+$countryName{NPL} = "Nepal";
+$countryPop{NLD} = 17332850;
+$countryName{NLD} = "Netherlands";
+$countryPop{NCL} = 287800;
+$countryName{NCL} = "New Caledonia";
+$countryPop{NZL} = 4917000;
+$countryName{NZL} = "New Zealand";
+$countryPop{NIC} = 6545502;
+$countryName{NIC} = "Nicaragua";
+$countryPop{NER} = 23310715;
+$countryName{NER} = "Niger";
+$countryPop{NGA} = 200963599;
+$countryName{NGA} = "Nigeria";
+$countryPop{MKD} = 2083459;
+$countryName{MKD} = "North Macedonia";
+$countryPop{MNP} = 57216;
+$countryName{MNP} = "Northern Mariana Islands";
+$countryPop{NOR} = 5347896;
+$countryName{NOR} = "Norway";
+$countryPop{OMN} = 4974986;
+$countryName{OMN} = "Oman";
+$countryPop{PAK} = 216565318;
+$countryName{PAK} = "Pakistan";
+$countryPop{PLW} = 18008;
+$countryName{PLW} = "Palau";
+$countryPop{PAN} = 4246439;
+$countryName{PAN} = "Panama";
+$countryPop{PNG} = 8776109;
+$countryName{PNG} = "Papua New Guinea";
+$countryPop{PRY} = 7044636;
+$countryName{PRY} = "Paraguay";
+$countryPop{PER} = 32510453;
+$countryName{PER} = "Peru";
+$countryPop{PHL} = 108116615;
+$countryName{PHL} = "Philippines";
+$countryPop{POL} = 37970874;
+$countryName{POL} = "Poland";
+$countryPop{PRT} = 10269417;
+$countryName{PRT} = "Portugal";
+$countryPop{PRI} = 3193694;
+$countryName{PRI} = "Puerto Rico";
+$countryPop{QAT} = 2832067;
+$countryName{QAT} = "Qatar";
+$countryPop{ROU} = 19356544;
+$countryName{ROU} = "Romania";
+$countryPop{RUS} = 144373535;
+$countryName{RUS} = "Russia";
+$countryPop{RWA} = 12626950;
+$countryName{RWA} = "Rwanda";
+$countryPop{WSM} = 197097;
+$countryName{WSM} = "Samoa";
+$countryPop{SMR} = 33860;
+$countryName{SMR} = "San Marino";
+$countryPop{STP} = 215056;
+$countryName{STP} = "Sao Tome and Principe";
+$countryPop{SAU} = 34268528;
+$countryName{SAU} = "Saudi Arabia";
+$countryPop{SEN} = 16296364;
+$countryName{SEN} = "Senegal";
+$countryPop{SRB} = 6944975;
+$countryName{SRB} = "Serbia";
+$countryPop{SYC} = 97625;
+$countryName{SYC} = "Seychelles";
+$countryPop{SLE} = 7813215;
+$countryName{SLE} = "Sierra Leone";
+$countryPop{SGP} = 5703569;
+$countryName{SGP} = "Singapore";
+$countryPop{SXM} = 40733;
+$countryName{SXM} = "Sint Maarten (Dutch part)";
+$countryPop{SVK} = 5454073;
+$countryName{SVK} = "Slovakia";
+$countryPop{SVN} = 2087946;
+$countryName{SVN} = "Slovenia";
+$countryPop{SLB} = 669823;
+$countryName{SLB} = "Solomon Islands";
+$countryPop{SOM} = 15442905;
+$countryName{SOM} = "Somalia";
+$countryPop{ZAF} = 58558270;
+$countryName{ZAF} = "South Africa";
+$countryPop{SSD} = 11062113;
+$countryName{SSD} = "South Sudan";
+$countryPop{ESP} = 47076781;
+$countryName{ESP} = "Spain";
+$countryPop{LKA} = 21803000;
+$countryName{LKA} = "Sri Lanka";
+$countryPop{KNA} = 52823;
+$countryName{KNA} = "Saint Kitts and Nevis";
+$countryPop{LCA} = 182790;
+$countryName{LCA} = "Saint Lucia";
+$countryPop{MAF} = 38002;
+$countryName{MAF} = "St. Martin (French part)";
+$countryPop{VCT} = 110589;
+$countryName{VCT} = "Saint Vincent and the Grenadines";
+$countryPop{SDN} = 42813238;
+$countryName{SDN} = "Sudan";
+$countryPop{SUR} = 581372;
+$countryName{SUR} = "Suriname";
+$countryPop{SWE} = 10285453;
+$countryName{SWE} = "Sweden";
+$countryPop{CHE} = 8574832;
+$countryName{CHE} = "Switzerland";
+$countryPop{SYR} = 17070135;
+$countryName{SYR} = "Syria";
+$countryPop{TWN} = 23603121;   # added from wikipedia  https://en.wikipedia.org/wiki/Demographics_of_Taiwan#Population
+$countryName{TWN} = "Taiwan*"; # added
+$countryPop{TJK} = 9321018;
+$countryName{TJK} = "Tajikistan";
+$countryPop{TZA} = 58005463;
+$countryName{TZA} = "Tanzania";
+$countryPop{THA} = 69625582;
+$countryName{THA} = "Thailand";
+$countryPop{TLS} = 1293119;
+$countryName{TLS} = "Timor-Leste";
+$countryPop{TGO} = 8082366;
+$countryName{TGO} = "Togo";
+$countryPop{TON} = 104494;
+$countryName{TON} = "Tonga";
+$countryPop{TTO} = 1394973;
+$countryName{TTO} = "Trinidad and Tobago";
+$countryPop{TUN} = 11694719;
+$countryName{TUN} = "Tunisia";
+$countryPop{TUR} = 83429615;
+$countryName{TUR} = "Turkey";
+$countryPop{TKM} = 5942089;
+$countryName{TKM} = "Turkmenistan";
+$countryPop{TCA} = 38191;
+$countryName{TCA} = "Turks and Caicos Islands";
+$countryPop{TUV} = 11646;
+$countryName{TUV} = "Tuvalu";
+$countryPop{UGA} = 44269594;
+$countryName{UGA} = "Uganda";
+$countryPop{UKR} = 44385155;
+$countryName{UKR} = "Ukraine";
+$countryPop{ARE} = 9770529;
+$countryName{ARE} = "United Arab Emirates";
+$countryPop{GBR} = 66834405;
+$countryName{GBR} = "United Kingdom";
+$countryPop{USA} = 328239523;
+#$countryName{USA} = "United States";
+$countryName{USA} = "US";
+$countryPop{URY} = 3461734;
+$countryName{URY} = "Uruguay";
+$countryPop{UZB} = 33580650;
+$countryName{UZB} = "Uzbekistan";
+$countryPop{VUT} = 299882;
+$countryName{VUT} = "Vanuatu";
+$countryPop{VEN} = 28515829;
+$countryName{VEN} = "Venezuela";
+$countryPop{VNM} = 96462106;
+$countryName{VNM} = "Vietnam";
+$countryPop{VIR} = 106631;
+$countryName{VIR} = "Virgin Islands (U.S.)";
+$countryPop{PSE} = 4685306;
+$countryName{PSE} = "West Bank and Gaza";
+$countryPop{ESH} = 567402; # added, wikipedia:  https://en.wikipedia.org/wiki/Western_Sahara
+$countryName{ESH} = "Western Sahara"; # added
+$countryPop{YEM} = 29161922;
+$countryName{YEM} = "Yemen";
+$countryPop{ZMB} = 17861030;
+$countryName{ZMB} = "Zambia";
+$countryPop{ZWE} = 14645468;
+$countryName{ZWE} = "Zimbabwe";
+
 my $i = 0;
 while ($i <= $#ARGV) {
   if ($ARGV[$i] =~ /^[A-Z][A-Z]$/i and uc $ARGV[$i] ~~ @statesandterritories) {
     push @states, uc $ARGV[$i];
   } else {
-    push @interest, lc $ARGV[$i];
+    #push @interest, lc $ARGV[$i];
+    push @interest, $ARGV[$i];
   }
   $i++;
 }
@@ -170,6 +619,110 @@ my $params =
 	"--dump";
 
 if ($#interest >= 0) {
+
+  my $url = "https://pomber.github.io/covid19/timeseries.json";
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  open (JSON, '-|', "curl --max-time 10 -s -k -L '$url'");
+  my $json = <JSON>;
+  close(JSON);
+  my $j = decode_json($json) or die "parse error: $json\n";
+
+  foreach my $i (@interest) {
+    my @cases = undef;
+    my @deaths = undef;
+    my $match = undef;
+    my $searchname = $i;
+    my $isocode = undef;
+
+    if (length $i == 3 and defined $countryName{uc $i}) {
+      $searchname = $countryName{uc $i};
+      $isocode = uc $i;
+    }
+
+    if (defined($j->{$searchname})) {
+      $match = $searchname;
+    } else {
+      foreach my $hr (keys %{$j}) {
+	if (lc $searchname eq lc $hr or (length $searchname > 3 and $hr =~ m/$searchname/i )) {
+	  $match = $hr;
+	  last;
+	}
+      }
+    }
+
+    if (not defined $match) {
+      print "not found: $i\n";
+      next;
+    }
+    if (not defined $isocode) {
+      foreach my $k (keys %countryName) {
+	if ($countryName{$k} eq $match) {
+	  $isocode = $k;
+	}
+      }
+    }
+    print "$isocode\n";
+    print "$match\n";
+
+    foreach my $d (@{$j->{$match}}) {
+      #print "$d->{date} $d->{confirmed}\n";
+      push @cases, $d->{confirmed};
+      push @deaths, $d->{deaths};
+    }
+
+    my $sum = 0;
+    my @weeklyCasesPerCap;
+    for (my $n = $#cases; $n > 0; $n--) {
+      my $delta = 0;
+      $delta = $cases[$n] - $cases[$n-1];
+      $sum += $delta;
+      #print "$sum\n";
+      if ($n < $#cases and ($#cases - $n) % 7 == 6) {
+	my $rate = $sum / ($countryPop{$isocode} / 100000.0);
+	#print "$sum -> $rate\n";
+	unshift(@weeklyCasesPerCap, $rate);   # insert at front
+	$sum = 0;
+      }
+    }
+    if ($sum > 0) {  # any leftover
+      unshift(@weeklyCasesPerCap, $sum / ($countryPop{$isocode} / 100000.0));
+      $sum = 0;
+    }
+
+    my @result = seriesToSparkLine(\@weeklyCasesPerCap, 1, 0);
+    my $min = $result[0];
+    my $max = $result[1];
+    my @spark = @result[2 .. $#result];
+    printf "%s weekly chart: %s: max %s weekly cases per 100k pop\n", $isocode, join("", @spark), colorByRate(sprintf("%0.1f", $max), $max);
+
+    my @last31cases = @cases[$#cases-31 .. $#cases];
+    my @last30caseDeltas;
+    my @last30caseDeltasPerCap;
+    for (my $i = 1; $i <= $#last31cases; $i++) {
+      $last30caseDeltas[$i-1] = $last31cases[$i] - $last31cases[$i - 1];
+      $last30caseDeltasPerCap[$i-1] = $last30caseDeltas[$i-1] / ($countryPop{$isocode} / 100000.0);
+    }
+
+    @result = seriesToSparkLine(\@last30caseDeltas, 0, 0);  # ignored
+    my $dailyCaseMin = $result[0];
+    my $dailyCaseMax = $result[1];
+
+    @result = seriesToSparkLine(\@last30caseDeltasPerCap, 1, 1);
+    $min = $result[0];
+    $max = $result[1];
+    @spark = @result[2 .. $#result];
+
+    printf "%s last 30d: %s: %d-%d daily new cases", $isocode, join("", @spark), $dailyCaseMin, $dailyCaseMax;
+
+    my $sevenDayTotal = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]);
+    my $sevenDayPerCap = $sevenDayTotal / ($countryPop{$isocode} / 100000.0);
+    printf("; %d total for last 7d (%s per 100k over 7d)\n", $sevenDayTotal, colorByRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
+  }
+
+  exit 0;
+
+  ################################
+
   my $found = 0;
   my ($cty, $cty_total, $cty_newcases, $cty_deaths, $cty_newdeaths, $cty_recovered, $cty_active, $cty_serious);
   my $in_country = 0;
@@ -294,7 +847,7 @@ if ($#states >= 0) {
     my @cases = undef;
     my @deaths = undef;
     foreach my $k (sort keys %caseTotals) {
-      if (rindex($k, $n, 0) == 0) {
+      if (rindex($k, $n, 0) == 0) { # if $k startswith $n
 	#print "$n: $caseTotals{$k}\n";
 	push @cases, $caseTotals{$k};
 	push @deaths, $deathTotals{$k};
