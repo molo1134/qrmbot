@@ -15,8 +15,8 @@ use lib dirname(realpath(__FILE__));
 use Util;
 use Colors;
 
-use List::Util qw(sum);
-use JSON qw( decode_json );
+use List::Util qw(sum min max);
+use Clone qw(clone);
 
 # disable "experimental" warning on smart match operator use
 no if $] >= 5.018, warnings => "experimental::smartmatch";
@@ -368,7 +368,7 @@ $countryName{KIR} = "Kiribati";
 #$countryPop{PRK} = 25666161;
 #$countryName{PRK} = "Korea, Dem. People’s Rep.";
 $countryPop{KOR} = 51709098;
-$countryName{KOR} = "Korea, South";
+$countryName{KOR} = "Korea";
 $countryPop{XKX} = 1794248;
 $countryName{XKX} = "Kosovo";
 $countryPop{KWT} = 4207083;
@@ -613,12 +613,53 @@ while ($i <= $#ARGV) {
 
 # countries
 if ($#interest >= 0) {
-  my $url = "https://pomber.github.io/covid19/timeseries.json";
+
+  my $url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv";
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  open (JSON, '-|', "curl --max-time 10 -s -k -L '$url'");
-  my $json = <JSON>;
-  close(JSON);
-  my $j = decode_json($json) or die "parse error: $json\n";
+  open (CSV, '-|', "curl --max-time 10 -s -k -L '$url'");
+  my $csv = <CSV>;
+  close(CSV);
+
+  my %countrySeries;
+  my @countryDataList;
+
+  my %needsTotal;
+  $needsTotal{Australia} = "AUS";
+  $needsTotal{Canada} = "CAN";
+  $needsTotal{China} = "CHN";
+
+  $csv =~ s/Korea, South/Korea/;
+  $csv =~ s/Bonaire, Sint/Bonaire Sint/;
+
+  foreach my $line (split /\n/, $csv) {
+    next if $line =~ /^Province/; # header
+    my @fields = split /,/, $line;
+
+    next if $fields[0] ne "" and not defined $needsTotal{$fields[1]}; # ignore states/provinces for now TODO
+
+    if ($fields[0] eq "") {
+      foreach my $iso (keys %countryName) {
+	if ($countryName{$iso} eq $fields[1]) {
+	  my @cases = @fields[4 .. $#fields];
+	  $countrySeries{$iso} = clone(\@cases);
+	  push @countryDataList, $fields[1];
+	}
+      }
+    } else {
+      my $iso = $needsTotal{$fields[1]};
+      my @provinceCases = @fields[4 .. $#fields];
+      if (not defined $countrySeries{$iso}) {
+	$countrySeries{$iso} = clone(\@provinceCases);
+	push @countryDataList, $fields[1];
+      } else {
+	my @prevData = @{clone($countrySeries{$iso})};
+	for (my $n = 0; $n <= $#provinceCases ; $n++) {
+	  $prevData[$n] = $prevData[$n] + $provinceCases[$n];
+	}
+	$countrySeries{$iso} = clone(\@prevData);
+      }
+    }
+  }
 
   foreach my $i (@interest) {
     my @cases = undef;
@@ -632,12 +673,12 @@ if ($#interest >= 0) {
       $isocode = uc $i;
     }
 
-    if (defined($j->{$searchname})) {
+    if ($searchname ~~ @countryDataList) {
       $match = $searchname;
     } else {
-      foreach my $hr (keys %{$j}) {
-	if (lc $searchname eq lc $hr or (length $searchname > 3 and $hr =~ m/$searchname/i )) {
-	  $match = $hr;
+      foreach my $ctry (@countryDataList) {
+	if (lc $searchname eq lc $ctry or (length $searchname > 3 and $ctry =~ m/$searchname/i )) {
+	  $match = $ctry;
 	  last;
 	}
       }
@@ -657,11 +698,7 @@ if ($#interest >= 0) {
     #print "$isocode\n";
     #print "$match\n";
 
-    foreach my $d (@{$j->{$match}}) {
-      #print "$d->{date} $d->{confirmed}\n";
-      push @cases, $d->{confirmed};
-      push @deaths, $d->{deaths};
-    }
+    @cases = @{$countrySeries{$isocode}};
 
     my $sum = 0;
     my @weeklyCasesPerCap;
@@ -696,9 +733,9 @@ if ($#interest >= 0) {
       $last30caseDeltasPerCap[$i-1] = $last30caseDeltas[$i-1] / ($countryPop{$isocode} / 100000.0);
     }
 
-    @result = seriesToSparkLine(\@last30caseDeltas, 0, 0);  # ignored
-    my $dailyCaseMin = $result[0];
-    my $dailyCaseMax = $result[1];
+    #@result = seriesToSparkLine(\@last30caseDeltas, 0, 0);  # ignored
+    my $dailyCaseMin = min(@last30caseDeltas);
+    my $dailyCaseMax = max(@last30caseDeltas);
 
     @result = seriesToSparkLine(\@last30caseDeltasPerCap, 1, 1);
     $min = $result[0];
@@ -789,9 +826,9 @@ if ($#states >= 0) {
     #print "deltas: ", join(", ", @last30caseDeltas), "\n";
     #print "last 31 count: $#last31cases\n";
     #print "last 30 deltas count: $#last30caseDeltas\n";
-    @result = seriesToSparkLine(\@last30caseDeltas, 0, 0);  # ignored
-    my $dailyCaseMin = $result[0];
-    my $dailyCaseMax = $result[1];
+    #@result = seriesToSparkLine(\@last30caseDeltas, 0, 0);  # ignored
+    my $dailyCaseMin = min(@last30caseDeltas);
+    my $dailyCaseMax = max(@last30caseDeltas);
     #@spark = @result[2 .. $#result];
 
     #print "length: $#result\n";
