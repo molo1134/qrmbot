@@ -668,6 +668,8 @@ if ($#interest >= 0) {
     my $searchname = $i;
     my $isocode = undef;
 
+    $i = "GBR" if $i eq "UK";
+
     if (length $i == 3 and defined $countryName{uc $i}) {
       $searchname = $countryName{uc $i};
       $isocode = uc $i;
