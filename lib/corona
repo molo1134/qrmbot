@@ -790,6 +790,11 @@ if ($#states >= 0) {
       }
     }
 
+    if ($#cases == 0) {
+      print "$s not found\n";
+      next;
+    }
+
     my $sum = 0;
     my @weeklyCasesPerCap;
     for (my $n = $#cases; $n > 0; $n--) {
