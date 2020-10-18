@@ -749,6 +749,8 @@ if ($args =~ m/(County|City|Parish|Cty|Area|Boro)/i) {
   while ($i <= $#ARGV) {
     if ($ARGV[$i] =~ /^[A-Z][A-Z]$/i and uc $ARGV[$i] ~~ @statesandterritories) {
       push @states, uc $ARGV[$i];
+    } elsif ($ARGV[$i] =~ /^NYC$/i) {
+      push @countyList, "New York City;New York";
     } else {
       #push @interest, lc $ARGV[$i];
       push @interest, $ARGV[$i];
@@ -996,18 +998,20 @@ if ($#states >= 0) {
   }
 }
 
+# US counties
 if ($#countyList >= 0) {
 
   my %ctypop;
   my $ctyfile = dirname(realpath(__FILE__)) . "/2019-popestimate-us-counties.csv";
   if (not -e $ctyfile) {
     print "error: unable to find $ctyfile\n";
+    exit 0;
   }
   open(CTYPOP, "<", $ctyfile);
   while (<CTYPOP>) {
     next if /^STNAME/;
     my ($st, $cty, $census, $est) = split /,/;
-    $cty =~ s/\s*(County|City|Parish|Borough|Census Area|City and Borough|Municipality)\s*$//i;
+    $cty =~ s/\s*(County|City|Parish|Borough|Census Area|City and Borough|Municipality)\s*$//i unless $cty eq "New York City";
     $ctypop{lc "${st}_$cty"} = $est;
   }
   close(CTYPOP);
@@ -1020,6 +1024,7 @@ if ($#countyList >= 0) {
     my ($date,$county,$state,$fips,$cases,$deaths) = split /,/;
     for my $c (@countyList) {
       my ($cty, $st) = split(";", $c);
+      $cty = "New York City" if lc $cty eq "new york";
       if ((lc $cty eq lc $county) and (lc $st eq lc $state)) {
 	$caseTotals{"${st}_${cty}_${date}"} = $cases;
       }
@@ -1029,6 +1034,7 @@ if ($#countyList >= 0) {
 
   for my $c (@countyList) {
     my ($cty, $st) = split(";", $c);
+    $cty = "New York City" if lc $cty eq "new york";
     my @cases = undef;
     my @deaths = undef;
 
