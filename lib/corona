@@ -22,8 +22,7 @@ use Clone qw(clone);
 no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 if ($ARGV[0] =~ /about/i){
-  print "Current global coronavirus cases as reported by WHO and others. ";
-  print "Source: https://www.worldometers.info/coronavirus/coronavirus-cases\n";
+  print "Covid19 case counts.  Data sources: https://github.com/CSSEGISandData/COVID-19 https://github.com/nytimes/covid-19-data/ https://www.worldometers.info/coronavirus/\n";
   exit 0;
 }
 
@@ -600,6 +599,78 @@ $countryName{ZMB} = "Zambia";
 $countryPop{ZWE} = 14645468;
 $countryName{ZWE} = "Zimbabwe";
 
+my %needsTotal;
+$needsTotal{Australia} = "AUS";
+$needsTotal{Canada} = "CAN";
+$needsTotal{China} = "CHN";
+
+my %provinceCodes;
+$provinceCodes{"Australian Capital Territory"} = "AUS-ACT";
+$provinceCodes{"New South Wales"} = "AUS-NSW";
+$provinceCodes{"Northern Territory"} = "AUS-NT";
+$provinceCodes{"Queensland"} = "AUS-QLD";
+$provinceCodes{"South Australia"} = "AUS-SA";
+$provinceCodes{"Tasmania"} = "AUS-TAS";
+$provinceCodes{"Victoria"} = "AUS-VIC";
+$provinceCodes{"Western Australia"} = "AUS-WA";
+
+$countryName{"AUS-ACT"} = "Australian Capital Territory";
+$countryPop{"AUS-ACT"} = 428100;
+$countryName{"AUS-NSW"} = "New South Wales";
+$countryPop{"AUS-NSW"} = 8118000;
+$countryName{"AUS-NT"} = "Northern Territory";
+$countryPop{"AUS-NT"} = 245600;
+$countryName{"AUS-QLD"} = "Queensland";
+$countryPop{"AUS-QLD"} = 5115500;
+$countryName{"AUS-SA"} = "South Australia";
+$countryPop{"AUS-SA"} = 1756500;
+$countryName{"AUS-TAS"} = "Tasmania";
+$countryPop{"AUS-TAS"} = 535500;
+$countryName{"AUS-VIC"} = "Victoria";
+$countryPop{"AUS-VIC"} = 6629900;
+$countryName{"AUS-WA"} = "Western Australia";
+$countryPop{"AUS-WA"} = 2630600;
+
+$provinceCodes{"Alberta"} = "CAN-AB";
+$provinceCodes{"British Columbia"} = "CAN-BC";
+$provinceCodes{"Manitoba"} = "CAN-MB";
+$provinceCodes{"New Brunswick"} = "CAN-NB";
+$provinceCodes{"Newfoundland and Labrador"} = "CAN-NL";
+$provinceCodes{"Northwest Territories"} = "CAN-NW";
+$provinceCodes{"Nova Scotia"} = "CAN-NS";
+$provinceCodes{"Ontario"} = "CAN-ON";
+$provinceCodes{"Prince Edward Island"} = "CAN-PE";
+$provinceCodes{"Quebec"} = "CAN-QC";
+$provinceCodes{"Saskatchewan"} = "CAN-SK";
+$provinceCodes{"Yukon"} = "CAN-YK";
+
+$countryName{"CAN-AB"} = "Alberta";
+$countryPop{"CAN-AB"} = 4413146;
+$countryName{"CAN-BC"} = "British Columbia";
+$countryPop{"CAN-BC"} = 5110917;
+$countryName{"CAN-MB"} = "Manitoba";
+$countryPop{"CAN-MB"} = 1377517;
+$countryName{"CAN-NB"} = "New Brunswick";
+$countryPop{"CAN-NB"} = 779993;
+$countryName{"CAN-NL"} = "Newfoundland and Labrador";
+$countryPop{"CAN-NL"} = 521365;
+$countryName{"CAN-NW"} = "Northwest Territories";
+$countryPop{"CAN-NW"} = 44904;
+$countryName{"CAN-NS"} = "Nova Scotia";
+$countryPop{"CAN-NS"} = 977457;
+$countryName{"CAN-ON"} = "Ontario";
+$countryPop{"CAN-ON"} = 14711827;
+$countryName{"CAN-PE"} = "Prince Edward Island";
+$countryPop{"CAN-PE"} = 158158;
+$countryName{"CAN-QC"} = "Quebec";
+$countryPop{"CAN-QC"} = 8537674;
+$countryName{"CAN-SK"} = "Saskatchewan";
+$countryPop{"CAN-SK"} = 1181666;
+$countryName{"CAN-YK"} = "Yukon";
+$countryPop{"CAN-YK"} = 41078;
+
+# TODO: China
+
 my $i = 0;
 while ($i <= $#ARGV) {
   if ($ARGV[$i] =~ /^[A-Z][A-Z]$/i and uc $ARGV[$i] ~~ @statesandterritories) {
@@ -623,11 +694,6 @@ if ($#interest >= 0) {
   my %countrySeries;
   my @countryDataList;
 
-  my %needsTotal;
-  $needsTotal{Australia} = "AUS";
-  $needsTotal{Canada} = "CAN";
-  $needsTotal{China} = "CHN";
-
   $csv =~ s/Korea, South/Korea/;
   $csv =~ s/Bonaire, Sint/Bonaire Sint/;
 
@@ -646,17 +712,27 @@ if ($#interest >= 0) {
 	}
       }
     } else {
-      my $iso = $needsTotal{$fields[1]};
-      my @provinceCases = @fields[4 .. $#fields];
-      if (not defined $countrySeries{$iso}) {
-	$countrySeries{$iso} = clone(\@provinceCases);
-	push @countryDataList, $fields[1];
-      } else {
-	my @prevData = @{clone($countrySeries{$iso})};
-	for (my $n = 0; $n <= $#provinceCases ; $n++) {
-	  $prevData[$n] = $prevData[$n] + $provinceCases[$n];
+
+      my $province = $fields[0];
+
+      push @countryDataList, $fields[0];
+
+      if (defined $needsTotal{$fields[1]}) {
+	my @provinceCases = @fields[4 .. $#fields];
+	my $provincecode = $provinceCodes{$fields[0]};
+	$countrySeries{$provincecode} = clone(\@provinceCases);
+
+	my $iso = $needsTotal{$fields[1]};
+	if (not defined $countrySeries{$iso}) {
+	  $countrySeries{$iso} = clone(\@provinceCases);
+	  push @countryDataList, $fields[1];
+	} else {
+	  my @prevData = @{clone($countrySeries{$iso})};
+	  for (my $n = 0; $n <= $#provinceCases ; $n++) {
+	    $prevData[$n] = $prevData[$n] + $provinceCases[$n];
+	  }
+	  $countrySeries{$iso} = clone(\@prevData);
 	}
-	$countrySeries{$iso} = clone(\@prevData);
       }
     }
   }
@@ -670,7 +746,7 @@ if ($#interest >= 0) {
 
     $i = "GBR" if $i eq "UK";
 
-    if (length $i == 3 and defined $countryName{uc $i}) {
+    if (defined $countryName{uc $i}) {
       $searchname = $countryName{uc $i};
       $isocode = uc $i;
     }
