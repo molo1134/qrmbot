@@ -752,7 +752,6 @@ if ($args =~ m/(County|City|Parish|Cty|Area|Boro)/i) {
     } elsif ($ARGV[$i] =~ /^NYC$/i) {
       push @countyList, "New York City;New York";
     } else {
-      #push @interest, lc $ARGV[$i];
       push @interest, $ARGV[$i];
     }
     $i++;
@@ -813,6 +812,36 @@ if ($#interest >= 0) {
       }
     }
   }
+
+  # add german state data
+  my $url = "https://raw.githubusercontent.com/jgehrcke/covid-19-germany-gae/master/cases-rki-by-state.csv";
+  my %posmap;
+  my %statemap;
+  local $/ = "\n";   # read by line
+  open (CSV, '-|', "curl --max-time 10 -s -k -L '$url'");
+  while (<CSV>) {
+    my @row = split /,/;
+    if (/^time_iso/) { # header row
+      for (my $n = 0; $n <= $#row; $n++) {
+	#print "$n: $row[$n]\n";
+	$posmap{$n} = $row[$n];
+	$statemap{$row[$n]} = $n;
+      }
+    } else {
+      for (my $n = 1; $n <= $#row; $n++) {
+	if (not defined $countrySeries{$posmap{$n}}) {
+	  my @cases = ( $row[$n] );
+	  $countrySeries{$posmap{$n}} = clone(\@cases);
+	  push @countryDataList, $countryName{$posmap{$n}};
+	} else {
+	  my @prevData = @{clone($countrySeries{$posmap{$n}})};
+	  push @prevData, $row[$n];
+	  $countrySeries{$posmap{$n}} = clone(\@prevData);
+	}
+      }
+    }
+  }
+  close(CSV);
 
   foreach my $i (@interest) {
     my @cases = undef;
