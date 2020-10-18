@@ -732,15 +732,29 @@ $countryPop{"DE-BE"} = 3644826;
 
 # TODO: China
 
-my $i = 0;
-while ($i <= $#ARGV) {
-  if ($ARGV[$i] =~ /^[A-Z][A-Z]$/i and uc $ARGV[$i] ~~ @statesandterritories) {
-    push @states, uc $ARGV[$i];
-  } else {
-    #push @interest, lc $ARGV[$i];
-    push @interest, $ARGV[$i];
+my @countyList;
+my $args = join(" ", @ARGV);
+if ($args =~ m/(County|City|Parish|Cty|Area|Boro)/i) {
+  foreach my $arg (split(":", $args)) {
+    if ($arg =~ m/^\s*([a-z -]*?)\s+(County|City|Parish|Cty|Area|Boro),\s*([a-z ]*?)\s*$/i) {
+      my $state = uc $3;
+      if ($state ~~ @statesandterritories) {
+	$state = $stateToName{$state};
+      }
+      push @countyList, "$1;$state";
+    }
   }
-  $i++;
+} else {
+  my $i = 0;
+  while ($i <= $#ARGV) {
+    if ($ARGV[$i] =~ /^[A-Z][A-Z]$/i and uc $ARGV[$i] ~~ @statesandterritories) {
+      push @states, uc $ARGV[$i];
+    } else {
+      #push @interest, lc $ARGV[$i];
+      push @interest, $ARGV[$i];
+    }
+    $i++;
+  }
 }
 
 # countries
@@ -966,32 +980,15 @@ if ($#states >= 0) {
       $last30caseDeltasPerCap[$i-1] = $last30caseDeltas[$i-1] / ($statePop{$s} / 100000.0);
     }
 
-    #print "last 31: ", join(", ", @last31cases), "\n";
-    #print "deltas: ", join(", ", @last30caseDeltas), "\n";
-    #print "last 31 count: $#last31cases\n";
-    #print "last 30 deltas count: $#last30caseDeltas\n";
-    #@result = seriesToSparkLine(\@last30caseDeltas, 0, 0);  # ignored
     my $dailyCaseMin = min(@last30caseDeltas);
     my $dailyCaseMax = max(@last30caseDeltas);
-    #@spark = @result[2 .. $#result];
-
-    #print "length: $#result\n";
-    #print "$s last 30d: ", join("", @spark), ": $min-$max new cases daily";
 
     @result = seriesToSparkLine(\@last30caseDeltasPerCap, 1, 1);
     $min = $result[0];
     $max = $result[1];
     @spark = @result[2 .. $#result];
 
-    #print "percap: ", join(", ", @last30caseDeltasPerCap), "\n";
     printf "%s last 30d: %s: %d-%d daily new cases", $s, join("", @spark), $dailyCaseMin, $dailyCaseMax;
-    #printf(" (%0.1f-%0.1f cases per 100k daily)", $min, $max);
-
-    #print " -- ", join(" " , @last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]), " -- ";
-
-    #my $caseavg = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]) / 7.0;
-    #my $percapavg = sum(@last30caseDeltasPerCap[$#last30caseDeltasPerCap-6 .. $#last30caseDeltas]) / 7.0;
-    #printf("; avg %0.1f last 7 days (%0.1f per 100k)\n", $caseavg, $percapavg);
 
     my $sevenDayTotal = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]);
     my $sevenDayPerCap = $sevenDayTotal / ($statePop{$s} / 100000.0);
@@ -999,8 +996,113 @@ if ($#states >= 0) {
   }
 }
 
+if ($#countyList >= 0) {
+
+  my %ctypop;
+  my $ctyfile = dirname(realpath(__FILE__)) . "/2019-popestimate-us-counties.csv";
+  if (not -e $ctyfile) {
+    print "error: unable to find $ctyfile\n";
+  }
+  open(CTYPOP, "<", $ctyfile);
+  while (<CTYPOP>) {
+    next if /^STNAME/;
+    my ($st, $cty, $census, $est) = split /,/;
+    $cty =~ s/\s*(County|City|Parish|Borough|Census Area|City and Borough|Municipality)\s*$//i;
+    $ctypop{lc "${st}_$cty"} = $est;
+  }
+  close(CTYPOP);
+
+  my $url = "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv";
+  my %caseTotals;
+
+  open(HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
+  while (<HTTP>) {
+    my ($date,$county,$state,$fips,$cases,$deaths) = split /,/;
+    for my $c (@countyList) {
+      my ($cty, $st) = split(";", $c);
+      if ((lc $cty eq lc $county) and (lc $st eq lc $state)) {
+	$caseTotals{"${st}_${cty}_${date}"} = $cases;
+      }
+    }
+  }
+  close(HTTP);
+
+  for my $c (@countyList) {
+    my ($cty, $st) = split(";", $c);
+    my @cases = undef;
+    my @deaths = undef;
+
+    my $n = lc "${st}_${cty}_";
+    foreach my $k (sort keys %caseTotals) {
+      if (rindex(lc $k, $n, 0) == 0) { # if $k startswith $n
+	#print "$n: $caseTotals{$k}\n";
+	push @cases, $caseTotals{$k};
+      }
+    }
+
+    if ($#cases == 0) {
+      print "$cty, $st: not found\n";
+      next;
+    }
+
+
+    #print "st: $st\n";
+    #print "cty: $cty\n";
+
+    my $pop = $ctypop{lc "${st}_$cty"};
+    #print "pop: $pop\n";
+
+    my $sum = 0;
+    my @weeklyCasesPerCap;
+    for (my $n = $#cases; $n > 0; $n--) {
+      my $delta = 0;
+      $delta = $cases[$n] - $cases[$n-1];
+      $sum += $delta;
+      #print "$sum\n";
+      if ($n < $#cases and ($#cases - $n) % 7 == 6) {
+	my $rate = $sum / ($pop / 100000.0);
+	#print "$sum -> $rate\n";
+	unshift(@weeklyCasesPerCap, $rate);   # insert at front
+	$sum = 0;
+      }
+    }
+    if ($sum > 0) {  # any leftover
+      unshift(@weeklyCasesPerCap, $sum / ($pop / 100000.0)); # FIXME
+      $sum = 0;
+    }
+
+    my @result = seriesToSparkLine(\@weeklyCasesPerCap, 1, 0);
+    my $min = $result[0];
+    my $max = $result[1];
+    my @spark = @result[2 .. $#result];
+    printf "%s, %s weekly chart: %s: max %s weekly cases per 100k pop\n", $cty, $st, join("", @spark), colorByRate(sprintf("%0.1f", $max), $max);
+
+    my @last31cases = @cases[$#cases-31 .. $#cases];
+    my @last30caseDeltas;
+    my @last30caseDeltasPerCap;
+    for (my $i = 1; $i <= $#last31cases; $i++) {
+      $last30caseDeltas[$i-1] = $last31cases[$i] - $last31cases[$i - 1];
+      $last30caseDeltasPerCap[$i-1] = $last30caseDeltas[$i-1] / ($pop / 100000.0);
+    }
+
+    my $dailyCaseMin = min(@last30caseDeltas);
+    my $dailyCaseMax = max(@last30caseDeltas);
+
+    @result = seriesToSparkLine(\@last30caseDeltasPerCap, 1, 1);
+    $min = $result[0];
+    $max = $result[1];
+    @spark = @result[2 .. $#result];
+
+    printf "%s, %s last 30d: %s: %d-%d daily new cases", $cty, $st, join("", @spark), $dailyCaseMin, $dailyCaseMax;
+
+    my $sevenDayTotal = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]);
+    my $sevenDayPerCap = $sevenDayTotal / ($pop / 100000.0);
+    printf("; %d total for last 7d (%s per 100k over 7d)\n", $sevenDayTotal, colorByRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
+  }
+}
+
 # world totals
-if ($#interest == -1 and $#states == -1) {
+if ($#interest == -1 and $#states == -1 and $#countyList == -1) {
   my $url = "https://www.worldometers.info/coronavirus/";
   my $date;
   my ($incases, $indeaths, $inrecov) = (0, 0, 0);
