@@ -669,6 +669,67 @@ $countryPop{"CAN-SK"} = 1181666;
 $countryName{"CAN-YK"} = "Yukon";
 $countryPop{"CAN-YK"} = 41078;
 
+# english and german
+$provinceCodes{"Baden-Württemberg"} = "DE-BW";
+$provinceCodes{"Baden-Wurttemberg"} = "DE-BW";
+$provinceCodes{"Baden-Wuerttemberg"} = "DE-BW";
+$provinceCodes{"Bavaria"} = "DE-BY";
+$provinceCodes{"Bayern"} = "DE-BY";
+$provinceCodes{"Berlin"} = "DE-BE";
+$provinceCodes{"Brandenburg"} = "DE-BB";
+$provinceCodes{"Bremen"} = "DE-HB";
+$provinceCodes{"Hamburg"} = "DE-HH";
+$provinceCodes{"Hesse"} = "DE-HE";
+$provinceCodes{"Hessen"} = "DE-HE";
+$provinceCodes{"Lower Saxony"} = "DE-NI";
+$provinceCodes{"Niedersachsen"} = "DE-NI";
+$provinceCodes{"Mecklenburg-Vorpommern"} = "DE-MV";
+$provinceCodes{"North Rhine-Westphalia"} = "DE-NW";
+$provinceCodes{"Nordrhein-Westfalen"} = "DE-NW";
+$provinceCodes{"Rhineland-Palatinate"} = "DE-RP";
+$provinceCodes{"Rheinland-Pfalz"} = "DE-RP";
+$provinceCodes{"Saarland"} = "DE-SL";
+$provinceCodes{"Saxony-Anhalt"} = "DE-ST";
+$provinceCodes{"Sachsen-Anhalt"} = "DE-ST";
+$provinceCodes{"Saxony"} = "DE-SN";
+$provinceCodes{"Sachsen"} = "DE-SN";
+$provinceCodes{"Schleswig-Holstein"} = "DE-SH";
+$provinceCodes{"Thuringia"} = "DE-TH";
+$provinceCodes{"Thuringen"} = "DE-TH";
+
+$countryName{"DE-SH"} = "Schleswig-Holstein";
+$countryPop{"DE-SH"} = 2896712;
+$countryName{"DE-HH"} = "Hamburg";
+$countryPop{"DE-HH"} = 1841179;
+$countryName{"DE-NI"} = "Lower Saxony";
+$countryPop{"DE-NI"} = 7982448;
+$countryName{"DE-HB"} = "Bremen";
+$countryPop{"DE-HB"} = 682986;
+$countryName{"DE-NW"} = "North Rhine-Westphalia";
+$countryPop{"DE-NW"} = 17932651;
+$countryName{"DE-HE"} = "Hessen";
+$countryPop{"DE-HE"} = 6265809;
+$countryName{"DE-RP"} = "Rhineland-Palatinate";
+$countryPop{"DE-RP"} = 4084844;
+$countryName{"DE-BW"} = "Baden-Württemberg";
+$countryPop{"DE-BW"} = 11069533;
+$countryName{"DE-BY"} = "Bavaria";
+$countryPop{"DE-BY"} = 13076721;
+$countryName{"DE-SL"} = "Saarland";
+$countryPop{"DE-SL"} = 990509;
+$countryName{"DE-BB"} = "Brandenburg";
+$countryPop{"DE-BB"} = 2511917;
+$countryName{"DE-MV"} = "Mecklenburg-Vorpommern";
+$countryPop{"DE-MV"} = 1609675;
+$countryName{"DE-SN"} = "Saxony";
+$countryPop{"DE-SN"} = 4077937;
+$countryName{"DE-ST"} = "Saxony-Anhalt";
+$countryPop{"DE-ST"} = 2208321;
+$countryName{"DE-TH"} = "Thuringia";
+$countryPop{"DE-TH"} = 2143145;
+$countryName{"DE-BE"} = "Berlin";
+$countryPop{"DE-BE"} = 3644826;
+
 # TODO: China
 
 my $i = 0;
