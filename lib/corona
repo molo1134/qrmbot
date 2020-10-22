@@ -770,7 +770,7 @@ if ($#interest >= 0) {
   my %countrySeries;
   my @countryDataList;
 
-  $csv =~ s/Korea, South/Korea/;
+  $csv =~ s/"Korea, South"/Korea/;
   $csv =~ s/Bonaire, Sint/Bonaire Sint/;
 
   foreach my $line (split /\n/, $csv) {
@@ -814,6 +814,7 @@ if ($#interest >= 0) {
   }
 
   # add german state data
+  # TODO: be smarter about when to get this data
   my $url = "https://raw.githubusercontent.com/jgehrcke/covid-19-germany-gae/master/cases-rki-by-state.csv";
   my %posmap;
   my %statemap;
