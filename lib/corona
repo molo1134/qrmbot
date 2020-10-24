@@ -1052,9 +1052,11 @@ if ($#countyList >= 0) {
   open(HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
   while (<HTTP>) {
     my ($date,$county,$state,$fips,$cases,$deaths) = split /,/;
+    $county =~ s/\s*(County|City|Parish|Borough|Census Area|City and Borough|Municipality)\s*$//i unless $county eq "New York City";
     for my $c (@countyList) {
       my ($cty, $st) = split(";", $c);
       $cty = "New York City" if lc $cty eq "new york";
+      #print "$state $county :: ${st}_${cty}_${date} = $cases\n" if $county =~ m/denali/i;
       if ((lc $cty eq lc $county) and (lc $st eq lc $state)) {
 	$caseTotals{"${st}_${cty}_${date}"} = $cases;
       }
