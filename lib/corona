@@ -1239,11 +1239,17 @@ sub colorByRate {
   my $str = shift;
   my $rate = shift;
 
-  if ($rate < 35.0) {
+  if ($rate < 5.0) {
     return green($str);
-  } elsif ($rate < 50.0) {
+  } elsif ($rate < 25.0) {
+    return lightgreen($str);
+  } elsif ($rate < 38.0) {
     return yellow($str);
-  } elsif ($rate >= 50.0) {
+  } elsif ($rate < 50.0) {
+    return darkYellow($str);
+  } elsif ($rate < 100.0) {
+    return darkRed($str);
+  } elsif ($rate >= 100.0) {
     return red($str);
   }
   return $str;
