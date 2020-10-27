@@ -47,24 +47,24 @@ if ($username eq "eggdrop") {
   print "\x0364\x02\x02█\x0F";
   print "\n";
 
-  print "\nextended mirc color (shades of blue): ";
-  print "\x0324\x02\x02OO\x0F";
-  print "\x0336\x02\x02OO\x0F";
-  print "\x0348\x02\x02OO\x0F";
-  print "\x0372\x02\x02OO\x0F";
-  print "\x0384\x02\x02OO\x0F";
-  print "\n";
+  #print "\nextended mirc color (shades of blue): ";
+  #print "\x0324\x02\x02OO\x0F";
+  #print "\x0336\x02\x02OO\x0F";
+  #print "\x0348\x02\x02OO\x0F";
+  #print "\x0372\x02\x02OO\x0F";
+  #print "\x0384\x02\x02OO\x0F";
+  #print "\n";
 
-  print "hex 24-bit color (shades of red): ";
-  print "\x04FF0000OO\x0F";
-  print "\x04EE0000OO\x0F";
-  print "\x04DD0000OO\x0F";
-  print "\x04CC0000OO\x0F";
-  print "\x04BB0000OO\x0F";
-  print "\x04AA0000OO\x0F";
-  print "\x04990000OO\x0F";
-  print "\x04880000OO\x0F";
-  print "\n";
+  #print "hex 24-bit color (shades of red): ";
+  #print "\x04FF0000OO\x0F";
+  #print "\x04EE0000OO\x0F";
+  #print "\x04DD0000OO\x0F";
+  #print "\x04CC0000OO\x0F";
+  #print "\x04BB0000OO\x0F";
+  #print "\x04AA0000OO\x0F";
+  #print "\x04990000OO\x0F";
+  #print "\x04880000OO\x0F";
+  #print "\n";
 }
 
 #print "Strike: ", strikethrough("terminal/irc strikethrough"), " || ",
