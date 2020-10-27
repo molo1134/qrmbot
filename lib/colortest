@@ -36,23 +36,23 @@ print blackOnWhite("black on white"), $sep;
 print italic(red("red italic")), $sep;
 
 if ($username eq "eggdrop") {
+  print "\nextended mirc color (sparkline chart): ";
+  print "\x0344\x02\x02▁\x0F";
+  print "\x0355\x02\x02▂\x0F";
+  print "\x0354\x02\x02▃\x0F";
+  print "\x0353\x02\x02▄\x0F";
+  print "\x0341\x02\x02▅\x0F";
+  print "\x0340\x02\x02▆\x0F";
+  print "\x0352\x02\x02▇\x0F";
+  print "\x0364\x02\x02█\x0F";
+  print "\n";
+
   print "\nextended mirc color (shades of blue): ";
   print "\x0324\x02\x02OO\x0F";
   print "\x0336\x02\x02OO\x0F";
   print "\x0348\x02\x02OO\x0F";
   print "\x0372\x02\x02OO\x0F";
   print "\x0384\x02\x02OO\x0F";
-  print "\n";
-
-  print "\nextended mirc color (sparkline chart): ";
-  print "\x0344\x02\x02▁\x0F";
-  print "\x0355\x02\x02▂\x0F";
-  print "\x0354\x02\x02▃\x0F";
-  print "\x0341\x02\x02▄\x0F";
-  print "\x0353\x02\x02▅\x0F";
-  print "\x0340\x02\x02▆\x0F";
-  print "\x0352\x02\x02▇\x0F";
-  print "\x0352\x02\x02█\x0F";
   print "\n";
 
   print "hex 24-bit color (shades of red): ";
