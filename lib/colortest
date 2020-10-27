@@ -44,6 +44,17 @@ if ($username eq "eggdrop") {
   print "\x0384\x02\x02OO\x0F";
   print "\n";
 
+  print "\nextended mirc color (sparkline chart): ";
+  print "\x0344\x02\x02▁\x0F";
+  print "\x0355\x02\x02▂\x0F";
+  print "\x0354\x02\x02▃\x0F";
+  print "\x0341\x02\x02▄\x0F";
+  print "\x0353\x02\x02▅\x0F";
+  print "\x0340\x02\x02▆\x0F";
+  print "\x0352\x02\x02▇\x0F";
+  print "\x0352\x02\x02█\x0F";
+  print "\n";
+
   print "hex 24-bit color (shades of red): ";
   print "\x04FF0000OO\x0F";
   print "\x04EE0000OO\x0F";
