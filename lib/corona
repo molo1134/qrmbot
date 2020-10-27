@@ -1228,7 +1228,7 @@ sub valToBlock {
   } elsif ($v <= ($min + ($step * 7))) {
     $chr = "▇";
   } elsif ($v <= ($min + ($step * 8))) {
-    $chr = "▇";
+    $chr = "█";
   } else {
     $chr = "↑";
   }
