@@ -19,6 +19,7 @@ print red("red"), $sep;
 print yellow("yellow"), $sep;
 print darkYellow("darkYellow"), $sep;
 print green("green"), $sep;
+print lightgreen("lightgreen"), $sep;
 print lightblue("lightblue"), $sep;
 print cyan("cyan"), $sep;
 print lightcyan("lightcyan"), $sep;

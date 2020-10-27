@@ -7,7 +7,7 @@
 package Colors;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(darkRed red redOnWhite blackOnWhite yellow green lightblue darkYellow lightGrey grey cyan lightcyan bold underline inverse italic strikethrough blink monospace);
+@EXPORT = qw(darkRed red redOnWhite blackOnWhite yellow green lightgreen lightblue darkYellow lightGrey grey cyan lightcyan bold underline inverse italic strikethrough blink monospace);
 
 BEGIN {
   our $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
@@ -78,6 +78,17 @@ sub green {
     return "\x033\x02\x02$s\x0F"
   } elsif ($highlight eq "vt220") {
     return "\e[32m$s\e[0m"
+  } else {
+    return $s;
+  }
+}
+sub lightgreen {
+  my $s = shift;
+  return undef if not defined($s);
+  if ($highlight eq "irc") {
+    return "\x039\x02\x02$s\x0F"
+  } elsif ($highlight eq "vt220") {
+    return "\e[1;32m$s\e[0m"
   } else {
     return $s;
   }
