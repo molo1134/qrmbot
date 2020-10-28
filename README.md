@@ -24,6 +24,7 @@ As tested on Debian:
 * `perl-base`
 * `perl-modules`
 * `libastro-satpass-perl` (`Astro::Coord::ECI` -- see instructions below)
+* `libclone-perl`
 * `libdate-manip-perl`
 * `libdatetime-format-strptime-perl`
 * `libdatetime-perl`
