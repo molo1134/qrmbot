@@ -1212,7 +1212,7 @@ sub valToBlock {
   my $chr = " ";
 
   if ($v < $min) {
-    $chr = " ";
+    $chr = "\xA0"; # NBSP
   } elsif ($v <= ($min + ($step * 1))) {
     $chr = "▁";
   } elsif ($v <= ($min + ($step * 2))) {
