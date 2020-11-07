@@ -147,7 +147,7 @@ sub getFullWeekendInMonth {
   my $sat_ts = UnixDate($sat, "%s");
   my $sun_ts = UnixDate($sun, "%s");
 
-  if ($sun_ts < $today_ts) {
+  if ($sat_ts < $today_ts and $sun_ts < $today_ts) {
     $year = $nextyear;
 
     $satquery = "$iter Saturday in $month $year";
