@@ -20,7 +20,7 @@ my $d2 = DateTime->new(
     year       => $potusyear,
     month      => 01,
     day        => 20,
-    hour       => 12,
+    hour       => 17,  # UTC
     minute     => 00,
     second     => 00,
 );
