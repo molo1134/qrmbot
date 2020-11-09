@@ -205,6 +205,20 @@ proc christmas { nick host hand chan text } {
 	close $fd
 }
 
+bind pub - !potus potus
+bind pub - !trumpectomy potus
+set potusbin "/home/eggdrop/bin/potus"
+proc potus { nick host hand chan text } {
+	global potusbin
+	putlog "potus: $nick $host $hand $chan"
+	set fd [open "|${potusbin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
 proc chars2hexlist {string} {
 	binary scan $string c* ints
 	set list {}
