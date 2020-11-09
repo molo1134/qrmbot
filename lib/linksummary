@@ -308,6 +308,7 @@ sub doTwitter {
       #$text =~ s/\s*<a href="(https?:\/\/t.co\/\w+)".*>.*?<\/a>\s*/$1/;
       $text =~ s/<a href="\/\w+"class="twitter-atreply.*?>(.*?)<\/a>/$1/g;
       $text =~ s/<a href="\/hashtag.*?class="twitter-hashtag.*?>(.*?)<\/a>/$1/g;
+      $text =~ s/<a href="\/search.*?class="twitter-cashtag.*?>(\$.*?)<\/a>/$1/g;
       if ($text =~ /data-expanded-url="(https?:\/\/twitter\.com\/\w+\/status\/\d+)"/) {
 	$rt = $1;
       }
