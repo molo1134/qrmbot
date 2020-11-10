@@ -72,11 +72,11 @@ while ($i <= $#ARGV) {
     doQthCom($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?qrz\.com/(db\|lookup)/[A-Z0-9]+|i) {
     doQrzDb($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|^https?://(www\.\|smile\.)?amazon\.(com\|co\.jp\|ca\|co\.uk)/(.*/)?dp/\w+/?|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.\|smile\.)?amazon\.(com\|co\.jp\|ca\|co\.uk\|de)/(.*/)?dp/\w+/?|i) {
     doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://a.co/\w+/?|i) {
     doAmazon($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|^https?://(www\.\|smile\.)?amazon\.(com\|co\.jp\|ca\|co\.uk)/gp/product/\w+/?|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.\|smile\.)?amazon\.(com\|co\.jp\|ca\|co\.uk\|de)/gp/product/\w+/?|i) {
     doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?xkcd.com/(\d+)/?$|) {
     doXkcd($2);
@@ -737,9 +737,10 @@ sub doQth {
 sub doAmazon {
   my $url = shift;
   my $shortUrl = shortenUrl($url);
-  my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0";
+  my $useragent = 'Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0';
   #my $useragent = "foo";
   my ($price, $curr, $stars, $prime, $vendor, $fulfilled, $title);
+  my $lastbuyboxlabel = undef;
   open(HTTP, '-|', "curl -A \"$useragent\" --compressed --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
@@ -760,9 +761,23 @@ sub doAmazon {
       return;
     }
 
-    if (/<title>(Amazon.com\s*:|Amazon\s*\|)?\s*([^<]*?)(-?\s*Amazon.com|-?\s*Amazon Canada)?<\/title>/) {
+    if (not defined $title and /<title>(Amazon.com\s*:|Amazon\s*\|)?\s*([^<]*?)(-?\s*Amazon.com|-?\s*Amazon Canada)?<\/title>/) {
       $title = decodeEntities($2);
-      $title =~ s/Amazon.co.uk:\s*//;
+      $title =~ s/: Amazon.co.uk:.*$//;
+      $title =~ s/: Amazon.ca:.*$//;
+      $title =~ s/:\s*Amazon.de:.*$//;
+      $title =~ s/- Amazon.com.*$//;
+    }
+    if (/<meta name="title" content="(.*?)"/) {
+      $title = decodeEntities($1);
+      $title =~ s/: Amazon.co.uk:.*$//;
+      $title =~ s/: Amazon.ca:.*$//;
+      $title =~ s/:\s*Amazon.de:.*$//;
+      $title =~ s/- Amazon.com.*$//;
+    }
+    if (/<span id="priceblock_ourprice"[^>]+>([0-9.,]+)\s*€</) {
+      $price = $1;
+      $curr = "€";
     }
     if (/<span id="priceblock_(ourprice|pospromoprice)"[^>]+>([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
       $curr = $2;
@@ -792,10 +807,14 @@ sub doAmazon {
     if (/"([0-9.]+) out of 5 stars"/ and not defined $stars) {
       $stars = $1;
     }
+    if (/"([0-9,]+) von 5 Sternen"/ and not defined $stars) {
+      $stars = $1;
+    }
     if (/"5つ星のうち ([0-9.]+)"/ and not defined $stars) {
       $stars = $1;
     }
     $prime = 1 if /a-icon-prime.*aria-label="Free Shipping for Prime Members"/;
+    $prime = 1 if /shipped by Amazon or get <b>Fast, Free Shipping<\/b> with/;
     if (/(Sold by |この商品は、)<[^>]+>([^<]+)</) {
       $vendor = $2;
     }
@@ -807,6 +826,14 @@ sub doAmazon {
     $fulfilled = 1 if /Fulfilled by Amazon/;
     #($vendor, $fulfilled) = ("Amazon", 1) if /(Ships|Dispatched) from and sold by Amazon/;
     ($vendor, $fulfilled) = ("Amazon", 1) if /data-feature-name="shipsFromSoldByInsideBuyBox"/;
+
+    $lastbuyboxlabel = "ships" if /buybox-label">Ships from</;
+    $lastbuyboxlabel = "sold" if /buybox-label">Sold by</;
+
+    if ($lastbuyboxlabel eq "sold" and m/<span class="tabular-buybox-text">(.*?)<\/span>/) {
+      $vendor = $1;
+    }
+    $fulfilled = 1 if $lastbuyboxlabel eq "ships" and /tabular-buybox-text">Amazon.com</;
   }
   close(HTTP);
 
