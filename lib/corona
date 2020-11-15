@@ -93,6 +93,10 @@ $stateToName{WI} = "Wisconsin";
 $stateToName{WV} = "West Virginia";
 $stateToName{WY} = "Wyoming";
 
+$stateToName{PR} = "Puerto Rico";
+$stateToName{GU} = "Guam";
+$stateToName{VI} = "Virgin Islands";
+
 # 2019 census population estimate
 my %statePop;
 $statePop{AK} = 731545;
@@ -732,6 +736,7 @@ $countryPop{"DE-BE"} = 3644826;
 
 # TODO: China
 
+# counties
 my @countyList;
 my $args = join(" ", @ARGV);
 if ($args =~ m/(County|City|Parish|Cty|Area|Boro)/i) {
