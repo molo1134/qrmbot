@@ -96,6 +96,7 @@ $stateToName{WY} = "Wyoming";
 $stateToName{PR} = "Puerto Rico";
 $stateToName{GU} = "Guam";
 $stateToName{VI} = "Virgin Islands";
+$stateToName{MP} = "Northern Mariana Islands";
 
 # 2019 census population estimate
 my %statePop;
