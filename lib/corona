@@ -8,6 +8,8 @@ use strict;
 use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
+use Encode qw(decode);
+use I18N::Langinfo qw(langinfo CODESET);
 
 use File::Basename;
 use Cwd 'realpath';
@@ -26,8 +28,14 @@ if ($ARGV[0] =~ /about/i){
   exit 0;
 }
 
+my $args = join(" ", @ARGV);
+
+# decode command line from locale-specified codeset
+my $codeset = langinfo(CODESET);
+$args = decode($codeset, $args);
+
 # eggdrop doesn't split args on spaces
-@ARGV=split(' ', join(' ',@ARGV));
+@ARGV = split(' ', $args);
 
 my @interest;
 my @states;
@@ -737,10 +745,10 @@ $countryPop{"DEU-BE"} = 3644826;
 
 # TODO: China
 
-# counties
 my @countyList;
-my $args = join(" ", @ARGV);
+
 if ($args =~ m/(County|City|Parish|Cty|Area|Boro)/i) {
+  # counties
   foreach my $arg (split(":", $args)) {
     if ($arg =~ m/^\s*([a-z -]*?)\s+(County|City|Parish|Cty|Area|Boro),\s*([a-z ]*?)\s*$/i) {
       my $state = uc $3;
@@ -764,7 +772,7 @@ if ($args =~ m/(County|City|Parish|Cty|Area|Boro)/i) {
   }
 }
 
-# countries
+# countries, foreign states
 if ($#interest >= 0) {
 
   my $url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv";
@@ -871,6 +879,13 @@ if ($#interest >= 0) {
       foreach my $ctry (@countryDataList) {
 	if (lc $searchname eq lc $ctry or (length $searchname > 3 and $ctry =~ m/$searchname/i )) {
 	  $match = $ctry;
+	  last;
+	}
+      }
+      foreach my $prov (keys %provinceCodes) {
+	if (lc $searchname eq lc $prov or (length $searchname > 3 and $prov =~ m/$searchname/i)) {
+	  $match = $prov;
+	  $isocode = $provinceCodes{$prov};
 	  last;
 	}
       }
