@@ -573,6 +573,36 @@ proc msg_solarforecast {nick uhand handle input} {
 	close $fd
 }
 
+
+bind pub - !usaf usafforecast
+bind msg - !usaf msg_usafforecast
+bind pub - !45d usafforecast
+bind msg - !45d msg_usafforecast
+bind pub - !45day usafforecast
+bind msg - !45day msg_usafforecast
+set usafforecastbin "/home/eggdrop/bin/usaf_forecast"
+proc usafforecast { nick host hand chan text } {
+	global usafforecastbin
+	putlog "usafforecast pub: $nick $host $hand $chan $text"
+	set fd [open "|${usafforecastbin} " r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc msg_usafforecast {nick uhand handle input} {
+	global usafforecastbin
+	putlog "usafforecast msg: $nick $uhand $handle $input"
+	set fd [open "|${usafforecastbin} " r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
+}
+
+
 proc longtermforecast { nick host hand chan text } {
 	global longtermforecastbin
 	putlog "longterm pub: $nick $host $hand $chan $text"

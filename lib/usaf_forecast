@@ -1,0 +1,235 @@
+#!/usr/bin/perl -w
+# Lookup 45-day solar forecast, output as graph.  2-clause BSD license.
+
+# Copyright 2020 /u/molo1134. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+use POSIX qw(strftime);
+use List::Util qw[min max];
+use DateTime::Format::Strptime;
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+my $url="https://services.swpc.noaa.gov/text/45-day-ap-forecast.txt";
+
+my $datestamp;
+my $inAp = 0;
+my $inSfi= 0;
+
+my $dtparser = DateTime::Format::Strptime->new(
+  #see strftime
+  pattern => '%d%b%y',
+  time_zone => 'UTC',
+  on_error => 'undef');
+
+my @sfi;
+my @ap;
+my $lastday;
+
+open (HTTP, '-|', "curl --max-time 10 -L -k -s $url");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+  if (/^:Issued: (.*)$/) {
+    $datestamp = $1;
+  }
+
+  next if /^#/;
+  next if /^\s*$/;
+  next if /^FORECASTER/;
+
+  if (/^45-DAY AP FORECAST/) {
+    $inAp = 1;
+    $inSfi = 0;
+  }
+  if (/^45-DAY F10.7 CM FLUX FORECAST/) {
+    $inAp = 0;
+    $inSfi = 1;
+  }
+
+  if (/^[0-9]{2}[a-z]{3}[0-9]{2}/i) {
+    my @line = split /\s+/;
+    for (my $i = 0; $i <= $#line; $i += 2) {
+      my $dt = $dtparser->parse_datetime($line[$i]);
+      my $ts = $dt->epoch() if defined $dt;
+      my $now = time();
+      next if ($ts < ($now - 24*60*60));
+
+      $lastday = strftime("%Y %b %d", gmtime($ts));
+
+      push @sfi, $line[$i+1] if $inSfi == 1;
+      push @ap,  $line[$i+1] if $inAp == 1;
+    }
+  }
+}
+close HTTP;
+
+$dtparser = DateTime::Format::Strptime->new(
+  #see strftime
+  pattern => '%Y %m %d',
+  time_zone => 'UTC',
+  on_error => 'undef');
+
+if (not defined($datestamp)) {
+  print "Forecast not found\n";
+  exit 0;
+}
+
+print "USAF 45-day forecast as of: $datestamp; today to $lastday:\n";
+printf "Ap : %s\n", join("", aIndexToColorBlocks(@ap));
+printf "SFI: %s\n", join("", sfiToColorBlocks(@sfi));
+
+#indicateEvent($lastday, "RTTY Roundup", getFullWeekendInMonth(1, "Jan"), 2);		# 1st full weekend in January, but never Jan 1 FIXME
+#indicateEvent($lastday, "NA CW QSOP", getFullWeekendInMonth(2, "Jan"), 2);			# 2nd full weekend in January
+#indicateEvent($lastday, "NA SSB QSOP", getFullWeekendInMonth(3, "Jan"), 2);			# 3rd full weekend in January
+#indicateEvent($lastday, "CQ 160m CW", getFullWeekendInMonth(5, "Jan"), 2);			# last full weekend Jan
+#indicateEvent($lastday, "CQ WPX RTTY", getFullWeekendInMonth(2, "Feb"), 2);			# 2nd full weekend Feb
+#indicateEvent($lastday, "School Club Roundup", getIterDayInMonth(2, "Monday", "Feb"), 5);	# 2nd full school week in Feb
+#indicateEvent($lastday, "ARRL Intl DX CW", getFullWeekendInMonth(3, "Feb"), 2);			# 3rd full weekend in Feb
+#indicateEvent($lastday, "CQ 160m SSB", getFullWeekendInMonth(5, "Feb"), 2);			# last full weekend Feb
+#indicateEvent($lastday, "NA RTTY QSOP", getIterDayInMonth(5, "Saturday", "Feb"), 2);		# last Saturday in Feburary
+#indicateEvent($lastday, "ARRL Intl DX Phone", getFullWeekendInMonth(1, "Mar"), 2);		# 1st full weekend in March
+#indicateEvent($lastday, "CQ WPX SSB", getFullWeekendInMonth(5, "Mar"), 2);			# last full weekend March
+#indicateEvent($lastday, "ARRL Rookie Roundup, SSB", getIterDayInMonth(3, "Sunday", "Apr"), 1);	# 3rd Sunday in Apr
+#indicateEvent($lastday, "CQ WPX CW", getFullWeekendInMonth(5, "May"), 2);			# last full weekend May
+#indicateEvent($lastday, "All Asian DX CW", getFullWeekendInMonth(3, "Jun"), 2);			# 3rd Saturday in June
+#indicateEvent($lastday, "ARRL Field Day", getFullWeekendInMonth(4, "Jun"), 2);			# 4th full weekend in June
+#indicateEvent($lastday, "RAC Canada Day", getYearForDate("Jul", 1), 1);				# July 1, 1 day
+#indicateEvent($lastday, "13 colonies", getYearForDate("Jul", 1), 7);				# July 1, 7 days
+#indicateEvent($lastday, "IARU HF World Championship", getFullWeekendInMonth(2, "Jul"), 2);	# 2nd full weekend of july
+#indicateEvent($lastday, "NA RTTY QSOP", getFullWeekendInMonth(3, "Jul"), 2);			# 3rd full weekend in July
+#indicateEvent($lastday, "RSGB IOTA", getFullWeekendInMonth(5, "Jul"), 2);			# last full weekend in July
+#indicateEvent($lastday, "NA CW QSOP", getFullWeekendInMonth(1, "Aug"), 2);			# 1st full weekend in August
+#indicateEvent($lastday, "WAE DX CW", getFullWeekendInMonth(2, "Aug"), 2);			# 2nd full weekend in August
+#indicateEvent($lastday, "NA SSB QSOP", getFullWeekendInMonth(3, "Aug"), 2);			# 3rd full weekend in August
+#indicateEvent($lastday, "ARRL Rookie Roundup, RTTY", getIterDayInMonth(3, "Sunday", "Aug"), 1);	# 3rd Sunday in August
+#indicateEvent($lastday, "WW Digi DX", getYearForDate("Aug", 31), 2);				# August 31, 2 days -- every year?? https://ww-digi.com FIXME
+#indicateEvent($lastday, "All Asian DX Phone", getFullWeekendInMonth(1, "Sep"), 2);		# 1st Saturday in Sept
+#indicateEvent($lastday, "WAE DX SSB", getFullWeekendInMonth(2, "Sep"), 2);			# 2nd full weekend in September
+#indicateEvent($lastday, "CQ WW RTTY DX", getFullWeekendInMonth(5, "Sep"), 2);			# last full weekend of september
+#indicateEvent($lastday, "School Club Roundup", getIterDayInMonth(3, "Monday", "Oct"), 5);	# 3rd full school week in October
+#indicateEvent($lastday, "CQ WW DX SSB", getFullWeekendInMonth(5, "Oct"), 2);			# last full weekend Oct
+#indicateEvent($lastday, "ARRL Sweepstakes, CW", getFullWeekendInMonth(1, "Nov"), 3);		# 1st full weekend in Nov
+#indicateEvent($lastday, "WAE DX RTTY", getFullWeekendInMonth(2, "Nov"), 2);			# 2nd full weekend in November
+#indicateEvent($lastday, "ARRL Sweepstakes, Phone", getFullWeekendInMonth(3, "Nov"), 3);		# 3rd full weekend in Nov
+#indicateEvent($lastday, "CQ WW DX CW", getFullWeekendInMonth(5, "Nov"), 2);			# last full weekend Nov
+#indicateEvent($lastday, "ARRL 160m", getFullWeekendInMonth(1, "Dec"), 2);			# 1st full weekend in Dec; actually starts Friday FIXME
+#indicateEvent($lastday, "ARRL 10m", getFullWeekendInMonth(2, "Dec"), 2);			# 2nd full weekend in Dec
+#indicateEvent($lastday, "ARRL Rookie Roundup, CW", getIterDayInMonth(3, "Sunday", "Dec"), 1);	# 3rd Sunday in Dec
+
+
+
+
+#   colors from: http://www.swpc.noaa.gov/products/station-k-and-indices
+# Aindex  < 20: green
+# Aindex 20-29: yellow
+# Aindex 30-49: red
+# Aindex 50-99: dark red
+# Aindex > 100: light blue
+sub aIndexToColorBlocks {
+  map {
+    $_ = int($_ / 10) + 1;
+    $_ = 9 if $_ > 9;
+    tr/0123456789/ ▁▂▃▄▅▆▇█↑/;
+    $_ = green($_)	if /[▁▂]/;
+    $_ = yellow($_)	if /[▃]/;
+    $_ = red($_)	if /[▄▅]/;
+    $_ = darkRed($_)	if /[▆▇█]/;
+    $_ = lightblue($_)	if /[↑]/;
+  } @_;
+  return @_;
+}
+
+# SFI   < 80: dark red
+# SFI  81-94: red
+# SFI 95-119: yellow
+# SFI  > 120: green
+sub sfiToColorBlocks {
+  map {
+    if ($_ < 81) {
+      $_ = darkRed("▁");
+    } elsif ($_ < 88) {
+      $_ = red("▂");
+    } elsif ($_ < 95) {
+      $_ = red("▃");
+    } elsif ($_ < 103) {
+      $_ = yellow("▄");
+    } elsif ($_ < 111) {
+      $_ = yellow("▅");
+    } elsif ($_ < 120) {
+      $_ = yellow("▆");
+    } elsif ($_ < 130) {
+      $_ = green("▇");
+    } elsif ($_ < 140) {
+      $_ = green("█");
+    } else {
+      $_ = green("↑");
+    }
+  } @_;
+  return @_;
+}
+
+sub indicateEvent {
+  my $lastDay = shift;
+  my $name = shift;
+  my $eventDate = shift;
+  my $duration = shift;
+
+  my $now = time();
+
+  my ($y, $m, $d) = split(/ /, $lastDay);
+  #print "graph end: '$y ", monthNameToNum($m), " $d'\n";
+  #print "event date: '$eventDate'\n";
+  my $graphEnd = $dtparser->parse_datetime("$y " . monthNameToNum($m) . " $d");
+
+  my $eventStart = $dtparser->parse_datetime($eventDate);
+  my $eventEnd = $eventStart->epoch() + ($duration * 60*60*24);
+
+  my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime($now);
+  $year += 1900; $mon += 1;
+  #print "now: $year $mon $mday\n";
+  #print "start: $eventStart\n";
+  #print "end  : $eventEnd\n";
+
+  my $todayStart = $dtparser->parse_datetime("$year $mon $mday");
+
+  #print "todayStart: ". $todayStart->epoch() . "\n";
+  #print "eventEnd  : $eventEnd\n";
+  #print '$todayStart->epoch() < $eventEnd ? ' .
+  #    ($todayStart->epoch() < $eventEnd) . "\n";
+  #print "eventStart: ". $eventStart->epoch(). "\n";
+  #print "graphEnd  : " . $graphEnd->epoch()."\n";
+  #print '$eventStart->epoch() < $graphEnd->epoch() ? ' .
+  #    ($eventStart->epoch() < $graphEnd->epoch()) . "\n";
+
+  if ($todayStart->epoch() < $eventEnd and
+      $eventStart->epoch() < $graphEnd->epoch()) {
+
+    #print "have event\n";
+    #print "$now, $lastDay, $eventStart, $graphEnd\n";
+
+    my $result = "";
+
+    my $cursor = $todayStart->epoch();
+    while ($cursor < $eventStart->epoch()) {
+      $result .= " ";
+      $cursor += 24*60*60;
+    }
+    my $i = 0;
+    my $secsLeft = $eventEnd - max($eventStart->epoch(), $todayStart->epoch());
+    my $daysLeft = $secsLeft / (24*60*60);
+    while ($i < $daysLeft) {
+      $result .= "^";
+      $i++;
+    }
+    $result .= " " . $name;
+    printf "     %s\n", $result;
+  }
+
+}
