@@ -949,11 +949,11 @@ if ($#interest >= 0) {
     $max = $result[1];
     @spark = @result[2 .. $#result];
 
-    printf "%s last 30d: %s: %d-%d daily new cases", $isocode, join("", @spark), $dailyCaseMin, $dailyCaseMax;
+    printf "%s last 30d: %s: %s-%s daily new cases", $isocode, join("", @spark), commify($dailyCaseMin), commify($dailyCaseMax);
 
     my $sevenDayTotal = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]);
     my $sevenDayPerCap = $sevenDayTotal / ($countryPop{$isocode} / 100000.0);
-    printf("; %d total for last 7d (%s per 100k over 7d)\n", $sevenDayTotal, colorByRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
+    printf("; %s total for last 7d (%s per 100k over 7d)\n", commify($sevenDayTotal), colorByRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
   }
 }
 
@@ -1042,11 +1042,11 @@ if ($#states >= 0) {
     $max = $result[1];
     @spark = @result[2 .. $#result];
 
-    printf "%s last 30d: %s: %d-%d daily new cases", $s, join("", @spark), $dailyCaseMin, $dailyCaseMax;
+    printf "%s last 30d: %s: %s-%s daily new cases", $s, join("", @spark), commify($dailyCaseMin), commify($dailyCaseMax);
 
     my $sevenDayTotal = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]);
     my $sevenDayPerCap = $sevenDayTotal / ($statePop{$s} / 100000.0);
-    printf("; %d total for last 7d (%s per 100k over 7d)\n", $sevenDayTotal, colorByRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
+    printf("; %s total for last 7d (%s per 100k over 7d)\n", commify($sevenDayTotal), colorByRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
   }
 }
 
@@ -1153,11 +1153,11 @@ if ($#countyList >= 0) {
     $max = $result[1];
     @spark = @result[2 .. $#result];
 
-    printf "%s, %s last 30d: %s: %d-%d daily new cases", $cty, $st, join("", @spark), $dailyCaseMin, $dailyCaseMax;
+    printf "%s, %s last 30d: %s: %s-%s daily new cases", $cty, $st, join("", @spark), commify($dailyCaseMin), commify($dailyCaseMax);
 
     my $sevenDayTotal = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]);
     my $sevenDayPerCap = $sevenDayTotal / ($pop / 100000.0);
-    printf("; %d total for last 7d (%s per 100k over 7d)\n", $sevenDayTotal, colorByRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
+    printf("; %s total for last 7d (%s per 100k over 7d)\n", commify($sevenDayTotal), colorByRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
   }
 }
 
