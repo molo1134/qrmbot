@@ -1101,9 +1101,9 @@ if ($#states >= 0) {
     my $min = $result[0];
     my $max = $result[1];
     my @spark = @result[2 .. $#result];
-    printf "%s weekly percent positive %s: max %s weekly; last %s weekly\n", $s, join("", @spark),
-      colorByPctPos(sprintf("%0.1f%%", $max), $max),
-      colorByPctPos(sprintf("%0.1f%%", $weeklyPctPositives[$#weeklyPctPositives]), $weeklyPctPositives[$#weeklyPctPositives]);
+#    printf "%s weekly percent positive %s: max %s weekly; last %s weekly\n", $s, join("", @spark),
+#      colorByPctPos(sprintf("%0.1f%%", $max), $max),
+#      colorByPctPos(sprintf("%0.1f%%", $weeklyPctPositives[$#weeklyPctPositives]), $weeklyPctPositives[$#weeklyPctPositives]);
 
   }
 }
