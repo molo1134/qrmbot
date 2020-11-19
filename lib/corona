@@ -17,6 +17,7 @@ use lib dirname(realpath(__FILE__));
 use Util;
 use Colors;
 
+use Math::Round;
 use List::Util qw(sum min max);
 use Clone qw(clone);
 
@@ -1047,6 +1048,63 @@ if ($#states >= 0) {
     my $sevenDayTotal = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]);
     my $sevenDayPerCap = $sevenDayTotal / ($statePop{$s} / 100000.0);
     printf("; %s total for last 7d (%s per 100k over 7d)\n", commify($sevenDayTotal), colorByRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
+
+    # compute weekly percent positives
+    my $url = "https://api.covidtracking.com/v1/states/" . lc $s. "/daily.csv";
+    my $positiveDeltaPosition = -1;
+    my $testDeltaPosition = -1;
+    my @dailyPctPositives;
+    my %dailyNewPositives;
+    my %dailyNewTests;
+    open(CSV, '-|', "curl --max-time 10 -s -k '$url'");
+    binmode(CSV, ":utf8");
+    while (<CSV>) {
+      chomp;
+      my @row = split /,/;
+      if (/^date/) {
+	for (my $i = 0; $i <= $#row; $i++) {
+	  $positiveDeltaPosition = $i if $row[$i] eq "positiveIncrease";
+	  $testDeltaPosition = $i if $row[$i] eq "totalTestResultsIncrease";
+	}
+      }
+      if (/^[0-9]/) {
+	my $date = $row[0];
+	my $posDelta = $row[$positiveDeltaPosition];
+	my $testDelta = $row[$testDeltaPosition];
+	my $pctPositive = 0;
+	$pctPositive = ($posDelta / ($testDelta * 1.0)) * 100.0 if $testDelta > 0;
+	#$pctPositive = nearest(0.1, $pctPositive);
+	#print "$date $pctPositive% :: $posDelta / $testDelta\n";
+	$dailyNewPositives{$date} = $posDelta;
+	$dailyNewTests{$date} = $testDelta;
+	unshift(@dailyPctPositives, $pctPositive);
+      }
+    }
+    close(CSV);
+
+    my $sumTests = 0;
+    my $sumPositives = 0;
+    my $i = 0;
+    my @weeklyPctPositives;
+    foreach my $d (sort {$b <=> $a} keys %dailyNewPositives) {  # descending
+      $sumTests += $dailyNewTests{$d};
+      $sumPositives += $dailyNewPositives{$d};
+      if (++$i == 7) {
+	my $weeklyPos = 0;
+	$weeklyPos = ($sumPositives / $sumTests) * 100;
+	#printf("$d: weekly positives: %0.1f%%\n", $weeklyPos);
+	unshift(@weeklyPctPositives, $weeklyPos);
+	$i = 0;
+      }
+    }
+    my @result = seriesToSparkLine(\@weeklyPctPositives, 2, 0);
+    my $min = $result[0];
+    my $max = $result[1];
+    my @spark = @result[2 .. $#result];
+    printf "%s weekly percent positive %s: max %s weekly; last %s weekly\n", $s, join("", @spark),
+      colorByPctPos(sprintf("%0.1f%%", $max), $max),
+      colorByPctPos(sprintf("%0.1f%%", $weeklyPctPositives[$#weeklyPctPositives]), $weeklyPctPositives[$#weeklyPctPositives]);
+
   }
 }
 
@@ -1218,7 +1276,8 @@ sub seriesToSparkLine {
   foreach my $v (@series) {
     my $chr = valToBlock($v, $min, $max);
     $v = $v * 7.0 if $daily != 0;
-    $chr = colorByRate($chr, $v) if $color != 0;
+    $chr = colorByRate($chr, $v) if $color == 1;
+    $chr = colorByPctPos($chr, $v) if $color == 2;
     push @result, $chr;
   }
 
@@ -1272,6 +1331,26 @@ sub colorByRate {
   } elsif ($rate < 100.0) {
     return darkRed($str);
   } elsif ($rate >= 100.0) {
+    return red($str);
+  }
+  return $str;
+}
+
+sub colorByPctPos {
+  my $str = shift;
+  my $rate = shift;
+
+  if ($rate < 0.5) {
+    return green($str);
+  } elsif ($rate < 1.0) {
+    return lightgreen($str);
+  } elsif ($rate < 3.0) {
+    return yellow($str);
+  } elsif ($rate < 5.0) {
+    return darkYellow($str);
+  } elsif ($rate < 10.0) {
+    return darkRed($str);
+  } else {
     return red($str);
   }
   return $str;
