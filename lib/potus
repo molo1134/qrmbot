@@ -28,7 +28,7 @@ my $d2 = DateTime->new(
 my $dur = $d2->epoch() - $d1->epoch();
 
 if ($dur < 0) {
-	print "Happy POTUS\n";
+	print "\"The peaceful transfer of power is what will separate our country from every other country in the world.\" -- George Washington  https://i.imgur.com/4k9kQan.jpg\n";
 	exit 0;
 }
 
