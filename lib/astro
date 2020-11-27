@@ -40,6 +40,7 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 my $doEme = 0;
 my $doMoon = 0;
 my $doSun = 0;
+my $doQuarter = 0;
 my $doGraves = 0;
 
 my $now = time();
@@ -64,6 +65,8 @@ while ($i <= $#ARGV) {
     $doMoon = 1;
   } elsif ($ARGV[$i] =~ /^--sun$/) {
     $doSun = 1;
+  } elsif ($ARGV[$i] =~ /^--(quarter|solstice|equinox)$/) {
+    $doQuarter = 1;
   } elsif ($ARGV[$i] =~ /^--graves$/) {
     $doGraves = 1;
   } elsif ($ARGV[$i] =~ /^--eme$/) {
@@ -204,6 +207,31 @@ if ($doSun == 1) {
   my $m = floor(((($time - $now) / 3600) - $h) * 60);
   print " Sun will @{[$rise ? 'rise' : 'set']} at ",
 	strftime("%Y-%m-%d %H:%Mz", gmtime($time)), " (in ${h}h${m}m)\n";
+
+  if ($doQuarter == 1) {
+    my %qtrDesc = (
+      0 => "March equinox",
+      1 => "June solstice",
+      2 => "September equinox",
+      3 => "December solstice" );
+
+    my ($time, $qtr, $desc) = $sun->next_quarter();
+    $desc = $qtrDesc{$qtr};
+
+    my $dur = int($time) - $now;
+    my $m = floor($dur / (30 * 24 * 60 * 60));
+    my $d = floor($dur % (30 * 24 * 60 * 60) / (24 * 60 * 60));
+    my $h = floor($dur % (24 * 60 * 60) / (60 * 60));
+    my $min = ($dur / 60) % 60;
+    my $sec = $dur % 60;
+
+    print "Time until $desc: ";
+    print "$m month, " if $m == 1;
+    print "$m months, " if $m > 1;
+    print "$d day, " if $d == 1;
+    print "$d days, " if $d > 1;
+    print "$h hours, $min min, $sec sec\n";
+  }
 }
 
 # GRAVES radar -- see https://en.wikipedia.org/wiki/Graves_(system)
