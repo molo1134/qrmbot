@@ -588,6 +588,11 @@ sub scrapeXML {
       print "XML: No subscription\n";
       exit $exitnonzeroonerror;
     }
+    if (/<Error>Not found/) {
+      close(XML);
+      print uc($call), " not found\n";
+      exit $exitnonzeroonerror;
+    }
     if ((/A subscription is required to access the complete record./ or /Invalid session key/) and $autoxml > 0) {
       close(XML);
       $xmltries++;
