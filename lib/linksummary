@@ -830,7 +830,7 @@ sub doAmazon {
     $lastbuyboxlabel = "ships" if /buybox-label">Ships from</;
     $lastbuyboxlabel = "sold" if /buybox-label">Sold by</;
 
-    if ($lastbuyboxlabel eq "sold" and m/<span class="tabular-buybox-text">(.*?)<\/span>/) {
+    if ($lastbuyboxlabel eq "sold" and m/<span class="tabular-buybox-text"><a .*?>(.*?)<\/a><\/span>/) {
       $vendor = $1;
     }
     $fulfilled = 1 if $lastbuyboxlabel eq "ships" and /tabular-buybox-text">Amazon.com</;
