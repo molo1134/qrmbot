@@ -884,10 +884,19 @@ if ($#interest >= 0) {
 	}
       }
       foreach my $prov (keys %provinceCodes) {
-	if (lc $searchname eq lc $prov or (length $searchname > 3 and $prov =~ m/$searchname/i)) {
+	if (lc $searchname eq lc $prov) {
 	  $match = $prov;
 	  $isocode = $provinceCodes{$prov};
 	  last;
+	}
+      }
+      if (not defined $match) {
+	foreach my $prov (keys %provinceCodes) {
+	  if (length $searchname > 3 and $prov =~ m/$searchname/i) {
+	    $match = $prov;
+	    $isocode = $provinceCodes{$prov};
+	    last;
+	  }
 	}
       }
     }
