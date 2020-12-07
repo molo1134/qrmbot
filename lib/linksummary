@@ -124,36 +124,42 @@ sub printYouTubeMetaData {
       print "\n";
       exit 0;
     }
-    if (/<meta\s+(itemprop|property|name)="([^"]+)"\s+content="([^"]*)">/) {
-      my ($k, $v) = ($2, $3);
-      $v = decodeEntities($v);
-      #print "$k = $v\n";
-      $title = $v if $k eq "twitter:title";
-      $title = $v if $k eq "title";
-      $title = $v if $k eq "name";
-      #$len   = $v if $k eq "duration";
-      $desc  = $v if $k eq "description";
-      $desc  = $v if $k eq "twitter:description";
-      $count = $v if $k eq "interactionCount";
-      $pubdate = $v if $k eq "datePublished";
-      $genre = $v if $k eq "genre";
-      $nsfw = $v eq "False" ? 1 : 0 if $k eq "isFamilyFriendly";
-      $unlisted = $v eq "True" ? 1 : 0 if $k eq "unlisted";
-      $paid = $v eq "True" ? 1 : 0 if $k eq "paid";
+    if (/<meta.*?></) {
+      s/></>\n</g;
+      my @lines = split /\n/;
+      foreach my $l (@lines) {
+	if ($l =~ /<meta\s+(itemprop|property|name)="([^"]+)"\s+content="([^"]*)">/) {
+	  my ($k, $v) = ($2, $3);
+	  $v = decodeEntities($v);
+	  #print "$k = $v\n";
+	  $title = $v if $k eq "twitter:title";
+	  $title = $v if $k eq "title";
+	  $title = $v if $k eq "name";
+	  #$len   = $v if $k eq "duration";
+	  $desc  = $v if $k eq "description";
+	  $desc  = $v if $k eq "twitter:description";
+	  $count = $v if $k eq "interactionCount";
+	  $pubdate = $v if $k eq "datePublished";
+	  $genre = $v if $k eq "genre";
+	  $nsfw = $v eq "False" ? 1 : 0 if $k eq "isFamilyFriendly";
+	  $unlisted = $v eq "True" ? 1 : 0 if $k eq "unlisted";
+	  $paid = $v eq "True" ? 1 : 0 if $k eq "paid";
+	}
+      }
     }
-    if (not defined $nsfw and /"isUnlisted\\":(true|.*?),/) {
+    if (not defined $nsfw and /"isUnlisted\\?":(true|.*?),/) {
       $unlisted = ($1 eq "true" ? 1 : 0);
     }
-    if (not defined $nsfw and /"isFamilySafe\\":(true|.*?),/) {
+    if (not defined $nsfw and /"isFamilySafe\\?":(true|.*?),/) {
       $nsfw = ($1 eq "true" ? 0 : 1);
     }
-    if (not defined $count and /"viewCount\\":\\"([^"]+)\\"/) {
+    if (not defined $count and /"viewCount\\?":\\?"([^"]+)\\?"/) {
       $count = $1;
     }
-    if (not defined $pubdate and /"publishDate\\":\\"([^"]+)\\"/) {
+    if (not defined $pubdate and /"publishDate\\?":\\?"([^"]+)\\?"/) {
       $pubdate = $1;
     }
-    if (/"author\\":\\"([^"]+)\\"/) {
+    if (/"author\\?":\\?"([^"]+)\\?"/) {
       $author = $1;
     }
     if (/dur=(\d+)/) {
@@ -175,7 +181,7 @@ sub printYouTubeMetaData {
       $dislikes = $1;
       $dislikes =~ s/,//g;
     }
-    if (/"isLiveNow\\":true/) {
+    if (/"isLiveNow\\?":true/) {
       $live = 1;
     }
   }
