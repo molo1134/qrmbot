@@ -235,24 +235,32 @@ sub doDXWatch
   my @seencalls;
 
   my $url;
+  my $referer;
   if ($freqmode == 0) {
     if ($rb == 0) {
       $url = 'https://www.dxwatch.com/dxsd1/s.php?s=0&r=50&cdx=' . $callsign;
+      $referer = "https://dxwatch.com/dxsd1/dxsd1.php?f=0&c=$callsign&t=dx";
     } else {
       $url = 'http://www.reversebeacon.net/dxsd1/sk.php?s=0&r=15&cdx=' . $callsign;
+      $referer = "http://reversebeacon.net/dxsd1/dxsd1.php?f=0&c=$callsign&t=dx";
     }
   } else {
     # frequency mode
     if ($rb == 0) {
-      $url = 'https://www.dxwatch.com/dxsd1/s.php?s=0&r=50&d=1';
+      $url = "https://dxwatch.com/dxsd1/s.php?s=0&r=100&d=1&fid=0";
+      $referer = "https://dxwatch.com/";
     } else {
-      $url = 'http://www.reversebeacon.net/dxsd1/sk.php?s=0&r=100&d=1';
+      $url = "http://reversebeacon.net/dxsd1/sk.php?s=0&r=100&d=1&fid=0";
+      $referer = "http://reversebeacon.net/main.php";
     }
   }
 
   my $modes_ref = {
     1 => "cw",
     2 => "phone",
+    3 => "cw bcn",
+    4 => "cw bcn",
+    5 => "cw ncdxf bcn",
     10 => "psk31",
     11 => "rtty",
     12 => "bpsk",
@@ -290,9 +298,10 @@ sub doDXWatch
   #open (HTTP, '-|', "cat dxwatch-$callsign.json");
   #open (HTTP, '-|', "cat rb-N7XM.json");
   #print "$url\n";
-  #print "curl -k -L --max-time 4 --retry 1 -s '$url'";
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  open (HTTP, '-|', "curl -L -k --max-time 4 --retry 1 -s '$url'");
+  my $curl = "curl -L -k --max-time 4 --retry 1 -s '$url'";
+  $curl .= " -H 'Referer: $referer'" if defined $referer;
+  open (HTTP, '-|', $curl);
   my $json = <HTTP>;
   close(HTTP);
 
@@ -306,20 +315,34 @@ sub doDXWatch
   my $j = decode_json($json) or die "parse error: $json\n";
   foreach my $s (keys %{$j->{s}}) {
     #print join(",", @{$j->{s}->{$s}}), "\n";
-    my ($de, $freq, $dx, $snr, $wpm, $datetime, $age, $x, $y, $cmt, $mode);
-    if ($rb eq 1) {
-      ($de, $freq, $dx, $snr, $wpm, $datetime, $age, $x, $y, $mode) = @{$j->{s}->{$s}};
-      $cmt = "$snr dB, $wpm wpm";
-      #print "$mode\n";
-      $cmt = $modes{$mode} . " " . $cmt unless !defined $mode;
+    my ($de, $freq, $dx, $snr, $wpm, $datetime, $age, $cmt, $mode);
+    if ($freqmode == 0) {
+      if ($rb == 1) {
+	($de, $freq, $dx, $snr, $wpm, $datetime, $age, undef, undef, $mode) = @{$j->{s}->{$s}};
+	$cmt = "$snr dB, $wpm wpm";
+	#print "$mode\n";
+	$cmt = "$modes{$mode} $cmt" if defined $mode;
+      } else {
+	($de, $freq, $dx, $cmt, $datetime, $age) = @{$j->{s}->{$s}};
+	$cmt = decodeEntities($cmt);
+      }
     } else {
-      ($de, $freq, $dx, $cmt, $datetime, $age, $x, $y) = @{$j->{s}->{$s}};
-      $cmt = decodeEntities($cmt);
+      $cmt = "";
+      if ($rb == 0) {
+	# AA4U,7047.5,KB1EFS,FT4 +02dB from FN42 514Hz,0230z 23 Dec,2726,12,1
+	($de, $freq, $dx, $cmt, $datetime) = @{$j->{s}->{$s}};
+      }
+      if ($rb == 1) {
+	# W3UA,7011.9,E79Q,5,34,0319z 23 Dec,38,12,1,1,0
+	($de, $freq, $dx, $snr, $wpm, $datetime, undef, undef, $mode) = @{$j->{s}->{$s}};
+	$cmt = "$snr dB, $wpm wpm";
+	$cmt = "$modes{$mode} $cmt" if defined $mode;
+      }
     }
 
     my ($ts, $dt);
 
-    if (defined $age && $age > 0) {
+    if (defined $age && isNumeric($age) && $age > 0) {
       $ts = time() - $age;
     } else {
       $datetime =~ /.*\s(\d+)\s+(\w+)$/;
