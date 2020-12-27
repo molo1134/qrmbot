@@ -25,7 +25,22 @@ use Clone qw(clone);
 no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 if ($ARGV[0] =~ /about/i){
-  print "Covid19 case counts.  Data sources: https://github.com/CSSEGISandData/COVID-19 https://github.com/nytimes/covid-19-data/ https://github.com/jgehrcke/covid-19-germany-gae https://www.worldometers.info/coronavirus/\n";
+  print "Covid19 case counts.  Data sources: https://github.com/CSSEGISandData/COVID-19 https://github.com/nytimes/covid-19-data/ https://github.com/jgehrcke/covid-19-germany-gae https://www.worldometers.info/coronavirus/";
+
+  my @casespercap = ( 1.0, 5.0, 25.0, 38.0, 50.0, 100.0 );
+  my @result = seriesToSparkLine(\@casespercap, 1, 0);
+  my $min = $result[0];
+  my $max = $result[1];
+  my @spark = @result[2 .. $#result];
+  printf " -- sparkline colored by per-capita case counts: %s - %s,%s,%s,%s,%s,%s cases per 100k population over 7 days\n", join("", @spark),
+    colorByRate("<5", 1),
+    colorByRate("5", 5),
+    colorByRate("25", 25),
+    colorByRate("38", 38),
+    colorByRate("50", 50),
+    colorByRate(">100", 100);
+
+
   exit 0;
 }
 
