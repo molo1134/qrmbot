@@ -369,7 +369,7 @@ sub doTwitter {
   print "RT: $tco " if defined $rt and defined $tco;
   print "$tco " if defined $tco and not defined $media and not defined $rt;
   print "— \@$username ($fullname)$verifiedText, $date";
-  print " (↩ ", toHumanReadableNum($reply_count), "; 🔁 ", toHumanReadableNum($retweet_count), "; ♡ ", toHumanReadableNum($favorite_count), ")";
+  print " (↩ ", toHumanReadableNum($reply_count), "; ↺ ", toHumanReadableNum($retweet_count), "; ♡ ", toHumanReadableNum($favorite_count), ")";
   print "\n";
 
   if (defined $rt) {
