@@ -430,7 +430,7 @@ sub getTwitterAuthTokens {
     "-H 'content-type: application/x-www-form-urlencoded' " .
     "-H 'Origin: https://twitter.com' ";
 # -H 'DNT: 1' -H 'Connection: keep-alive' -H 'Cookie: personalization_id="v1_tLuaNk4Y0edXrt3RPUjgDw=="; guest_id=v1%3A161030109738539015; gt=1348326644570845184; ct0=96cd6e43ac2918c19fcc242b4b71a5bd'
-  open (HTTP, '-|', "curl --max-time $timeout -L -k -s --compressed $headers --data-raw '' '$token_url'");
+  open (HTTP, '-|', "curl --max-time $timeout -L -k -s --compressed $headers --data '' '$token_url'");
 
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
