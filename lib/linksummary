@@ -21,6 +21,7 @@ use Time::Piece ();
 use List::Util qw[min max];
 use POSIX qw(strftime);
 use JSON qw( decode_json );
+use Math::Round;
 
 our $imgur_key=undef;
 my $imgurfile = $ENV{'HOME'} . "/.imgurkey";
@@ -308,6 +309,9 @@ sub doTwitter {
   my $tweet = $j->{globalObjects}->{tweets}->{$id};
   my $text = decodeEntities($tweet->{full_text});
   my $userid = $tweet->{user_id_str};
+  my $retweet_count = $tweet->{retweet_count} + $tweet->{quote_count};
+  my $favorite_count = $tweet->{favorite_count};
+  my $reply_count = $tweet->{reply_count};
 
   my $datestr = $tweet->{created_at};
   my $date = undef;
@@ -322,12 +326,6 @@ sub doTwitter {
   if ($tweet->{is_quote_status}) {
     $rt = $tweet->{quoted_status_permalink}->{expanded};
   }
-
-  # TODO:
-  # "retweet_count": 1,
-  # "favorite_count": 9,
-  # "reply_count": 2,
-  # "quote_count": 0,
 
   my $media = undef;
   my $tco = undef;
@@ -370,7 +368,9 @@ sub doTwitter {
   print "$media " if defined $media;
   print "RT: $tco " if defined $rt and defined $tco;
   print "$tco " if defined $tco and not defined $media and not defined $rt;
-  print "— \@$username ($fullname)$verifiedText, $date\n";
+  print "— \@$username ($fullname)$verifiedText, $date";
+  print " (↩ ", toHumanReadableNum($reply_count), "; 🔁 ", toHumanReadableNum($retweet_count), "; ♡ ", toHumanReadableNum($favorite_count), ")";
+  print "\n";
 
   if (defined $rt) {
     #print "$0 $rt\n";
@@ -378,6 +378,15 @@ sub doTwitter {
     #exit 0;
   }
 
+}
+
+sub toHumanReadableNum {
+  my $val = shift;
+  return $val if not isNumeric($val);
+  return $val if $val < 1000;
+  return nearest(0.1, ($val/1000)) . "k" if $val < 1000000;
+  return nearest(0.1, ($val/1000000)) . "M" if $val < 1000000000;
+  return nearest(0.1, ($val/1000000000)) . "B";
 }
 
 sub getTwitterAuthToken {
