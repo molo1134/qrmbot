@@ -66,7 +66,7 @@ my $avg_household_size = 2.52; # TODO would like to get a data source
 my $avg_hh_debt = nearest(0.01, $percap * $avg_household_size);
 
 #print "$date $total $public $intra\n";
-print "As of $date, the total US debt is USD\$ $total"
+print "As of $date, the total federal public US debt is USD\$ $total"
   if defined $date and defined $total;
 printf "; per-capita debt is \$%s; debt per average household is \$%s", commify($percap), commify($avg_hh_debt)
   if defined $percap;
