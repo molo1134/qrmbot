@@ -1,0 +1,142 @@
+#!/usr/bin/perl -w
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use Encode qw(decode);
+use I18N::Langinfo qw(langinfo CODESET);
+use JSON qw( decode_json );
+use Math::Round;
+use URI::Escape;
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+my $full = 0;
+$full = 1 if $username ne 'eggdrop';
+
+my $i = 0;
+my $loc;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /--full/) {
+    $full = 1;
+    $i++;
+    next;
+  }
+  if ($ARGV[$i] =~ /--short/) {
+    $full = 0;
+    $i++;
+    next;
+  }
+  if (defined($loc)) {
+    $loc = $loc . " " . $ARGV[$i];
+  } else {
+    $loc = $ARGV[$i];
+  }
+  $i++;
+}
+
+# decode command line from locale-specified codeset
+my $codeset = langinfo(CODESET);
+$loc = decode($codeset, $loc);
+
+if (defined($loc)) {
+  $loc =~ s/^\s*//;
+  $loc =~ s/\s*$//;
+}
+
+if (!defined($loc) or length($loc) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !wx <location>\n";
+  } else {
+    print "usage: $0 <location>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $geo = argToCoords($loc);
+$loc = $geo if defined $geo;
+my $encodedloc = uri_escape($loc);
+
+my $url = "https://wttr.in/$encodedloc?format=j1";
+open (HTTP, '-|', "curl --max-time 10 -s -k -L $url");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+my $json = <HTTP>;
+close(HTTP);
+my $j = decode_json($json);
+
+# place name
+my $area = $j->{nearest_area}[0];
+my $name = $area->{areaName}[0]->{value};
+if (defined $area->{region}[0] and defined $area->{region}[0]->{value}) {
+  $name .= ", " . $area->{region}[0]->{value};
+}
+if (defined $area->{country}[0] and defined $area->{country}[0]->{value}) {
+  $name .= ", " . $area->{country}[0]->{value};
+}
+$name =~ s/United States of America/USA/;
+
+# geo coords
+my $lat = nearest(.01, $area->{latitude});
+my $lon = nearest(.01, $area->{longitude});
+
+# OUTPUT
+my $curr = $j->{current_condition}[0];
+
+print "Weather for ", bold($name);
+
+#full
+print " ($lat,$lon) " if $full == 1;
+
+print " obs. ", $curr->{observation_time}, " UTC\n" if ($full == 1);
+
+#short
+print " conditions: ", bold($curr->{weatherDesc}[0]->{value}),
+  "  Temp: ", bold("$curr->{temp_C}°C/$curr->{temp_F}°F"), "  Humidity: $curr->{humidity}%";
+print " " if ($full == 0);
+
+# feelslike for full, or if sufficiently different for short
+if ($full == 1 or (abs($curr->{temp_C} - $curr->{FeelsLikeC}) >= 4)) {
+  print "\n" if $full == 1;
+  print " Feels like: $curr->{FeelsLikeC}°C/$curr->{FeelsLikeF}°F ";
+}
+
+#full
+if ($full == 1) {
+  my $vis_mi = round($curr->{visibility} * 0.62137119);
+  print " Visibility: $curr->{visibility}km/${vis_mi}mi\n";
+}
+
+#short
+my $wind;
+if ($curr->{windspeedMiles} == 0) {
+  $wind = "calm";
+} else {
+  $wind = "at $curr->{windspeedKmph}kmph/$curr->{windspeedMiles}mph";
+}
+print " Wind: $curr->{winddir16Point} $wind ";
+
+#full
+my $pressure_inHg = nearest(.1, $curr->{pressure} * 0.029529983);
+#print " Pressure: $curr->{pressure}mb/${pressure_inHg}inHg ($pressure_trend)" if $full == 1;
+print " Pressure: $curr->{pressure}mb/${pressure_inHg}inHg" if $full == 1;
+
+if ($full == 1 and $curr->{precipMM} > 0.0) {
+  my $precip_in = nearest(0.01, $curr->{precipMM} * 0.039370079);
+  print "\n Precipitation: $curr->{precipMM}mm/${precip_in}in";
+}
+
+#end
+print "\n";
+
