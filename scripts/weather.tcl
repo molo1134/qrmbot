@@ -9,6 +9,9 @@ bind msg - !wx msg_wx
 bind pub - !wxfull wxfull
 bind msg - !wxfull msg_wxfull
 
+bind pub - !darksky darksky
+bind msg - !darksky msg_darksky
+
 bind pub - !wxf wxf
 bind msg - !wxf msg_wxf
 
@@ -28,12 +31,13 @@ bind pub - !quakef quakef_pub
 bind msg - !quakef quakef_msg
 
 
-set wxbin "/home/eggdrop/bin/darksky"
+set wxbin "/home/eggdrop/bin/wttr"
 set wxfbin "/home/eggdrop/bin/wxf"
 set metarbin "/home/eggdrop/bin/metar"
 set tafbin "/home/eggdrop/bin/taf"
 set quakebin "/home/eggdrop/bin/quake"
 set quakefbin "/home/eggdrop/bin/quakef"
+set darkskybin "/home/eggdrop/bin/darksky"
 
 # load utility methods
 source scripts/util.tcl
@@ -327,6 +331,54 @@ proc quakef_msg {nick uhand handle input} {
 	global quakefbin
 	putlog "quakef msg: $nick $uhand $handle"
 	set fd [open "|${quakefbin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
+}
+
+proc darksky { nick host hand chan text } {
+	global darkskybin
+	set loc [sanitize_string [string trim ${text}]]
+	# from util.tcl:
+	set geo [qrz_getgeo $hand]
+
+	putlog "darksky pub: $nick $host $hand $chan $loc $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${darkskybin} ${loc} " r]
+	} else {
+		if [string equal "" ${loc}] then {
+			set fd [open "|${darkskybin} ${geo} " r]
+		} else {
+			set fd [open "|${darkskybin} ${loc} " r]
+		}
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc msg_darksky {nick uhand handle input} {
+	global darkskybin
+	set loc [sanitize_string [string trim ${input}]]
+	# from util.tcl:
+	set geo [qrz_getgeo $handle]
+
+	putlog "darksky msg: $nick $uhand $handle $loc $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${darkskybin} ${loc} " r]
+	} else {
+		if [string equal "" ${loc}] then {
+			set fd [open "|${darkskybin} ${geo} " r]
+		} else {
+			set fd [open "|${darkskybin} ${loc} " r]
+		}
+	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
