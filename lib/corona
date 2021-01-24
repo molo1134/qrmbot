@@ -991,6 +991,8 @@ if ($#states >= 0) {
 
   my %caseTotals;
   my %deathTotals;
+  my %peopleVax;
+  my %peopleFullVax;
 
   my $prevCases = undef;
   my $prevDeaths = undef;
@@ -1011,15 +1013,47 @@ if ($#states >= 0) {
   }
   close(CSV);
 
+  # vaccinations per state
+  $url = "https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/vaccinations/us_state_vaccinations.csv";
+  open(CSV, '-|', "curl --max-time 10 -s -k '$url'");
+  binmode(CSV, ":utf8");
+  my %lastVax;
+  my %lastFullVax;
+  while (<CSV>) {
+    chomp;
+    my ($date, $place, $total_dist, $total_vax, undef, undef,$ppl_vax, undef, $ppl_full_vax) = split /,/;
+    $place =~ s/New York State/New York/;
+
+    #normalize
+    $ppl_vax = 0 if not defined $ppl_vax;
+    $ppl_full_vax = 0 if not defined $ppl_full_vax;
+    $ppl_vax = $lastVax{$place} if $ppl_vax == 0 and defined $lastVax{$place};
+    $ppl_full_vax = $lastFullVax{$place} if $ppl_full_vax == 0 and defined $lastFullVax{$place};
+
+    $lastVax{$place} = $ppl_vax if $ppl_vax > 0;
+    $lastFullVax{$place} = $ppl_full_vax if $ppl_full_vax > 0;
+
+    if ($place ~~ @names) {
+      $peopleVax{"${place}_${date}"} = $ppl_vax;
+      $peopleFullVax{"${place}_${date}"} = $ppl_full_vax;
+      #print "$place $date $ppl_vax $ppl_full_vax\n";
+    }
+  }
+  close(CSV);
+
   foreach my $s (@states) {
     my $n = $stateToName{$s};
     my @cases = undef;
     my @deaths = undef;
+    my @vax = undef;
+    my @fullVax = undef;
     foreach my $k (sort keys %caseTotals) {
       if (rindex($k, $n, 0) == 0) { # if $k startswith $n
 	#print "$n: $caseTotals{$k}\n";
 	push @cases, $caseTotals{$k};
 	push @deaths, $deathTotals{$k};
+	push @vax, $peopleVax{$k};
+	push @fullVax, $peopleFullVax{$k};
       }
     }
 
@@ -1128,11 +1162,67 @@ if ($#states >= 0) {
     my $min = $result[0];
     my $max = $result[1];
     my @spark = @result[2 .. $#result];
+#    # dubious data? FIXME
 #    printf "%s weekly percent positive %s: max %s weekly; last %s weekly\n", $s, join("", @spark),
 #      colorByPctPos(sprintf("%0.1f%%", $max), $max),
 #      colorByPctPos(sprintf("%0.1f%%", $weeklyPctPositives[$#weeklyPctPositives]), $weeklyPctPositives[$#weeklyPctPositives]);
 
+
+    # daily initial vaccinations
+    my @last31vax = @vax[$#vax-31 .. $#vax];
+    my @last30vaxDeltas;
+    #my @last30vaxDeltasPerCap;
+    for (my $i = 1; $i <= $#last31vax; $i++) {
+      $last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
+      #$last30vaxDeltasPerCap[$i-1] = $last30vaxDeltas[$i-1] / ($statePop{$s} / 100000.0);
+      #print "$i: $last30vaxDeltas[$i-1]\n";
+    }
+
+    my $dailyVaxMin = min(@last30vaxDeltas);
+    my $dailyVaxMax = max(@last30vaxDeltas);
+
+    my $sum = 0;
+    for (my $i = 6; $i >= 0; $i--) {
+      $sum += $last30vaxDeltas[$#last30vaxDeltas-$i];
+    }
+    my $avg = round($sum / 7.0);
+    #print "$sum - avg: $avg new vax/day\n";
+
+    @result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
+    $min = $result[0];
+    $max = $result[1];
+    @spark = @result[2 .. $#result];
+    printf "%s ppl newly vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d)\n", $s, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg);
+
+    # daily full vaccinations
+    @last31vax = @fullVax[$#vax-31 .. $#vax];
+    @last30vaxDeltas;
+    #my @last30vaxDeltasPerCap;
+    for (my $i = 1; $i <= $#last31vax; $i++) {
+      $last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
+      #$last30vaxDeltasPerCap[$i-1] = $last30vaxDeltas[$i-1] / ($statePop{$s} / 100000.0);
+      #print "$i: $last30vaxDeltas[$i-1]\n";
+    }
+
+    $dailyVaxMin = min(@last30vaxDeltas);
+    $dailyVaxMax = max(@last30vaxDeltas);
+
+    $sum = 0;
+    for (my $i = 6; $i >= 0; $i--) {
+      $sum += $last30vaxDeltas[$#last30vaxDeltas-$i];
+    }
+    $avg = round($sum / 7.0);
+    #print "$sum - avg: $avg new vax/day\n";
+
+    @result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
+    $min = $result[0];
+    $max = $result[1];
+    @spark = @result[2 .. $#result];
+    printf "%s ppl fully vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d)\n", $s, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg);
+
+
   }
+
 }
 
 # US counties
