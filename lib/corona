@@ -994,6 +994,7 @@ if ($#states >= 0) {
 
   my $prevCases = undef;
   my $prevDeaths = undef;
+  my $last = 0; #debug
 
   my $url = "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv";
   open(CSV, '-|', "curl --max-time 10 -s -k '$url'");
@@ -1004,6 +1005,8 @@ if ($#states >= 0) {
     if ($state ~~ @names) {
       $caseTotals{"${state}_${date}"} = $cases;
       $deathTotals{"${state}_${date}"} = $deaths;
+      #print "${state}_${date} = ", $cases - $last, "\n";
+      $last = $cases;
     }
   }
   close(CSV);
@@ -1152,6 +1155,7 @@ if ($#countyList >= 0) {
 
   my $url = "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv";
   my %caseTotals;
+  my $last = 0; #debug
 
   open(HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
   while (<HTTP>) {
@@ -1160,7 +1164,9 @@ if ($#countyList >= 0) {
     for my $c (@countyList) {
       my ($cty, $st) = split(";", $c);
       $cty = "New York City" if lc $cty eq "new york";
-      #print "$state $county :: ${st}_${cty}_${date} = $cases\n" if $county =~ m/denali/i;
+      #print "$state $county :: ${st}_${cty}_${date} = $cases\n" if $county =~ m/bergen/i;
+      #print "$state $county :: ${st}_${cty}_${date} = ", $cases - $last, "\n" if $county =~ m/bergen/i;
+      #$last = $cases if $county =~ m/bergen/i;
       if ((lc $cty eq lc $county) and (lc $st eq lc $state)) {
 	$caseTotals{"${st}_${cty}_${date}"} = $cases;
       }
