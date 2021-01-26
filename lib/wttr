@@ -70,10 +70,15 @@ $loc = $geo if defined $geo;
 my $encodedloc = uri_escape($loc);
 
 my $url = "https://wttr.in/$encodedloc?format=j1";
+#print "$url\n";
 open (HTTP, '-|', "curl --max-time 10 -s -k -L $url");
 local $/;   # read entire file -- FIXME: potentially memory hungry
 my $json = <HTTP>;
 close(HTTP);
+if (not $json =~ /^\s*{/) {
+  print "error while retrieving data: $json\n";
+  exit $exitnonzeroonerror;
+}
 my $j = decode_json($json);
 
 # place name
@@ -86,6 +91,7 @@ if (defined $area->{country}[0] and defined $area->{country}[0]->{value}) {
   $name .= ", " . $area->{country}[0]->{value};
 }
 $name =~ s/United States of America/USA/;
+$name =~ s/United Kingdom/UK/;
 
 # geo coords
 my $lat = nearest(.01, $area->{latitude});
@@ -99,7 +105,15 @@ print "Weather for ", bold($name);
 #full
 print " ($lat,$lon) " if $full == 1;
 
-print " obs. ", $curr->{observation_time}, " UTC\n" if ($full == 1);
+# remove AM/PM on observation time
+my $obstime = $curr->{observation_time};
+$obstime =~ s/\s*AM\s*//;
+if ($obstime =~ m/PM/) {
+  my ($h, $m) = split /[: ]/, $obstime;
+  $h += 12;
+  $obstime = "$h:$m";
+}
+print "obs. ${obstime}z\n" if ($full == 1);
 
 #short
 print " conditions: ", bold($curr->{weatherDesc}[0]->{value}),
@@ -139,4 +153,10 @@ if ($full == 1 and $curr->{precipMM} > 0.0) {
 
 #end
 print "\n";
+
+# debug
+my ($dist, $bearing) = distBearing(split(/,/, $geo), $area->{latitude}, $area->{longitude});
+$dist = nearest(0.1, $dist);
+$bearing = round($bearing);
+print "queried: $geo; returned: $area->{latitude},$area->{longitude}; ", bold("geographic error: $dist km $bearing°"), "\n";
 
