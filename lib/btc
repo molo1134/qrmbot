@@ -7,6 +7,7 @@ use strict;
 use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
+use Math::Round;
 
 use File::Basename;
 use Cwd 'realpath';
@@ -82,13 +83,13 @@ $trendsymbol = red("↓") if $trend ne "null" and $trend < 0.0;
 $trendsymbol = "·" if !defined $trendsymbol;
 if ($trend ne "null") {
   if ($trend < 0) {
-    $trend = red($trend);
+    $trend = red(nearest(0.1, $trend));
   } elsif ($trend > 0) {
-    $trend = green("+$trend");
+    $trend = green("+" . nearest(0.1, $trend));
   }
 }
 
-print bold("$crypto$fiat"). " $trendsymbol" . $results{"price"} . " $trend% qty $qty $crypto/24h ($volume $fiat/24h) MktCap $mktcap $fiat\n";
+print bold("$crypto$fiat"). " $trendsymbol" . $results{"price"} . " $trend% qty " . commify($qty) . " $crypto/24h ($volume $fiat/24h) MktCap $mktcap $fiat\n";
 
 exit 0;
 
