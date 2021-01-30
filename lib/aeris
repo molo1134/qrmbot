@@ -1,0 +1,187 @@
+#!/usr/bin/perl -w
+
+# aeris weather
+#
+# requires an API key from aerisweather.com  Place into the file $HOME/.aerisweather as follows:
+#
+# $client_id = "0123456789abcdef";
+# $client_secret = "0123456789abcdef";
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use Encode qw(decode);
+use I18N::Langinfo qw(langinfo CODESET);
+use JSON qw( decode_json );
+use Math::Round;
+use URI::Escape;
+use POSIX qw(strftime);
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+our $client_id = undef;
+our $client_secret = undef;
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+my $apikeyfile = $ENV{'HOME'} . "/.aerisweather";
+if (-e ($apikeyfile)) {
+  require($apikeyfile);
+} else {
+  die "error: unable to read file $apikeyfile"
+}
+die "error: no API key set" unless defined($client_id) and defined($client_secret);
+
+my $full = 0;
+$full = 1 if $username ne 'eggdrop';
+
+my $i = 0;
+my $loc;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /--full/) {
+    $full = 1;
+    $i++;
+    next;
+  }
+  if ($ARGV[$i] =~ /--short/) {
+    $full = 0;
+    $i++;
+    next;
+  }
+  if (defined($loc)) {
+    $loc = $loc . " " . $ARGV[$i];
+  } else {
+    $loc = $ARGV[$i];
+  }
+  $i++;
+}
+
+# decode command line from locale-specified codeset
+my $codeset = langinfo(CODESET);
+$loc = decode($codeset, $loc);
+
+if (defined($loc)) {
+  $loc =~ s/^\s*//;
+  $loc =~ s/\s*$//;
+}
+
+if (!defined($loc) or length($loc) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !wx <location>\n";
+  } else {
+    print "usage: $0 <location>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $geo = argToCoords($loc);
+$loc = $geo if defined $geo;
+my $encodedloc = uri_escape($loc);
+
+my $url = "https://api.aerisapi.com/observations/$encodedloc?filter=allstations&client_id=$client_id&client_secret=$client_secret";
+print "$url\n";
+open (HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+my $json = <HTTP>;
+close(HTTP);
+if (not $json =~ /^\s*{/) {
+  print "error1 while retrieving data: $json\n";
+  exit $exitnonzeroonerror;
+}
+my $j = decode_json($json);
+
+if (not $j->{success} or defined $j->{error}) {
+  print "error2 while retrieving data: $j->{error}\n";
+  exit $exitnonzeroonerror;
+}
+
+my $resp = $j->{response};
+
+# place name
+my $name = $resp->{place}->{name};
+if (defined $resp->{place}->{city} and $name ne $resp->{place}->{city}) {
+  $name .= ", " . $resp->{place}->{city}
+}
+if (defined $resp->{place}->{state} and $name ne $resp->{place}->{state} and $resp->{place}->{state} ne "") {
+  $name .= ", " . uc $resp->{place}->{state}
+}
+if (defined $resp->{place}->{country} and $name ne $resp->{place}->{country}) {
+  $name .= ", " . uc $resp->{place}->{country}
+}
+
+# geo coords
+my $lat = nearest(.01, $resp->{loc}->{lat});
+my $lon = nearest(.01, $resp->{loc}->{long});
+my $elev_ft = $resp->{profile}->{elevFT};
+my $elev_m = nearest(0.1, $resp->{profile}->{elevM});
+
+my $ob = $resp->{ob};
+
+# OUTPUT
+print "Weather for ", bold($name);
+
+#full
+if ($full == 1) {
+  print " ($lat,$lon) ";
+  print " Elev: ${elev_m}m/${elev_ft}ft\n" if defined($elev_ft);
+  print " obs. at $resp->{id} ($resp->{dataSource}";
+  print "; $ob->{trustFactor}% trust" if $ob->{trustFactor} < 100;
+
+  $ENV{TZ} = $resp->{profile}->{tz};
+  #print "), $ob->{dateTimeISO}\n";
+  print "), ", strftime("%H:%M %Z", localtime($ob->{timestamp})), "\n";
+}
+
+#short
+print " conditions: ", bold($ob->{weather}), "  Temp: ", bold("$ob->{tempC}°C/$ob->{tempF}°F");
+print "  Humidity: $ob->{humidity}%" if defined $ob->{humidity};
+print " " if ($full == 0);
+
+# feelslike for full, or if sufficiently different for short
+if ($full == 1 or (abs($ob->{tempC} - $ob->{feelslikeC}) >= 4)) {
+  print "\n" if $full == 1;
+  print " Feels like: $ob->{feelslikeC}°C/$ob->{feelslikeF}°F ";
+}
+
+#full
+if ($full == 1 and defined $ob->{visibilityKM}) {
+  print " Visibility: ", round($ob->{visibilityKM}), "km/", round($ob->{visibilityMI}), "mi";
+  print " cloud ceiling: $ob->{ceilingFT}ft/$ob->{ceilingM}m" if defined $ob->{ceilingFT};
+  print "\n";
+}
+
+#short
+if (not defined($ob->{windSpeedMPH})) {
+  print " Wind: no data ";
+} else {
+  my $wind;
+  if ($ob->{windSpeedMPH} == 0) {
+    $wind = "calm";
+  } else {
+    $wind = "at $ob->{windSpeedKPH}kmph/$ob->{windSpeedMPH}mph";
+  }
+  print " Wind: $ob->{windDir} $wind ";
+  print "(gust $ob->{windGustKPH}kph/$ob->{windGustMPH}mph) " if defined $ob->{windGustKPH} and $ob->{windGustKPH} > 0.0;
+}
+
+#full
+#print " Pressure: $ob->{pressureMB}mb/$ob->{pressureIN}inHg ($pressure_trend)" if $full == 1;
+print " Pressure: $ob->{pressureMB}mb/$ob->{pressureIN}inHg" if $full == 1;
+
+if ($full == 1 and defined $ob->{precipMM} and $ob->{precipMM} > 0.0) {
+  print "\n Precipitation: $ob->{precipMM}mm/$ob->{precipIN}in";
+}
+
+#end
+print "\n";
+

@@ -12,6 +12,9 @@ bind msg - !wxfull msg_wxfull
 bind pub - !darksky darksky
 bind msg - !darksky msg_darksky
 
+bind pub - !wttr wttr
+bind msg - !wttr msg_wttr
+
 bind pub - !wxf wxf
 bind msg - !wxf msg_wxf
 
@@ -31,13 +34,14 @@ bind pub - !quakef quakef_pub
 bind msg - !quakef quakef_msg
 
 
-set wxbin "/home/eggdrop/bin/wttr"
+set wxbin "/home/eggdrop/bin/aeris"
 set wxfbin "/home/eggdrop/bin/wxf"
 set metarbin "/home/eggdrop/bin/metar"
 set tafbin "/home/eggdrop/bin/taf"
 set quakebin "/home/eggdrop/bin/quake"
 set quakefbin "/home/eggdrop/bin/quakef"
 set darkskybin "/home/eggdrop/bin/darksky"
+set wttrbin "/home/eggdrop/bin/wttr"
 
 # load utility methods
 source scripts/util.tcl
@@ -377,6 +381,102 @@ proc msg_darksky {nick uhand handle input} {
 			set fd [open "|${darkskybin} ${geo} " r]
 		} else {
 			set fd [open "|${darkskybin} ${loc} " r]
+		}
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
+}
+
+proc aeris { nick host hand chan text } {
+	global aerisbin
+	set loc [sanitize_string [string trim ${text}]]
+	# from util.tcl:
+	set geo [qrz_getgeo $hand]
+
+	putlog "aeris pub: $nick $host $hand $chan $loc $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${aerisbin} ${loc} " r]
+	} else {
+		if [string equal "" ${loc}] then {
+			set fd [open "|${aerisbin} ${geo} " r]
+		} else {
+			set fd [open "|${aerisbin} ${loc} " r]
+		}
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc msg_aeris {nick uhand handle input} {
+	global aerisbin
+	set loc [sanitize_string [string trim ${input}]]
+	# from util.tcl:
+	set geo [qrz_getgeo $handle]
+
+	putlog "aeris msg: $nick $uhand $handle $loc $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${aerisbin} ${loc} " r]
+	} else {
+		if [string equal "" ${loc}] then {
+			set fd [open "|${aerisbin} ${geo} " r]
+		} else {
+			set fd [open "|${aerisbin} ${loc} " r]
+		}
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
+}
+
+proc wttr { nick host hand chan text } {
+	global wttrbin
+	set loc [sanitize_string [string trim ${text}]]
+	# from util.tcl:
+	set geo [qrz_getgeo $hand]
+
+	putlog "wttr pub: $nick $host $hand $chan $loc $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${wttrbin} ${loc} " r]
+	} else {
+		if [string equal "" ${loc}] then {
+			set fd [open "|${wttrbin} ${geo} " r]
+		} else {
+			set fd [open "|${wttrbin} ${loc} " r]
+		}
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc msg_wttr {nick uhand handle input} {
+	global wttrbin
+	set loc [sanitize_string [string trim ${input}]]
+	# from util.tcl:
+	set geo [qrz_getgeo $handle]
+
+	putlog "wttr msg: $nick $uhand $handle $loc $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${wttrbin} ${loc} " r]
+	} else {
+		if [string equal "" ${loc}] then {
+			set fd [open "|${wttrbin} ${geo} " r]
+		} else {
+			set fd [open "|${wttrbin} ${loc} " r]
 		}
 	}
 	fconfigure $fd -encoding utf-8
