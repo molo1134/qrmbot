@@ -89,7 +89,7 @@ $loc = $geo if defined $geo;
 my $encodedloc = uri_escape($loc);
 
 my $url = "https://api.aerisapi.com/observations/$encodedloc?filter=allstations&client_id=$client_id&client_secret=$client_secret";
-print "$url\n";
+#print "$url\n";
 open (HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
 local $/;   # read entire file -- FIXME: potentially memory hungry
 my $json = <HTTP>;
