@@ -88,12 +88,13 @@ my $geo = argToCoords($loc);
 $loc = $geo if defined $geo;
 my $encodedloc = uri_escape($loc);
 
-my $url = "https://api.aerisapi.com/observations/$encodedloc?filter=allstations&client_id=$client_id&client_secret=$client_secret";
-#print "$url\n";
+#my $url = "https://api.aerisapi.com/observations/$encodedloc?filter=allstations&client_id=$client_id&client_secret=$client_secret";
+my $url = "https://api.aerisapi.com/observations/closest?p=$encodedloc&filter=allstations&client_id=$client_id&client_secret=$client_secret&limit=1";
 open (HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
 local $/;   # read entire file -- FIXME: potentially memory hungry
 my $json = <HTTP>;
 close(HTTP);
+#print "$json\n";
 if (not $json =~ /^\s*{/) {
   print "error1 while retrieving data: $json\n";
   exit $exitnonzeroonerror;
@@ -105,7 +106,7 @@ if (not $j->{success} or defined $j->{error}) {
   exit $exitnonzeroonerror;
 }
 
-my $resp = $j->{response};
+my $resp = $j->{response}[0];
 
 # place name
 my $name = $resp->{place}->{name};
@@ -184,4 +185,39 @@ if ($full == 1 and defined $ob->{precipMM} and $ob->{precipMM} > 0.0) {
 
 #end
 print "\n";
+
+#---------- alerts
+
+$url = "https://api.aerisapi.com/alerts/$encodedloc?client_id=$client_id&client_secret=$client_secret";
+open (HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+$json = <HTTP>;
+close(HTTP);
+#print "$json\n";
+
+if (not $json =~ /^\s*{/) {
+  print "error1 while retrieving data: $json\n";
+  exit $exitnonzeroonerror;
+}
+$j = decode_json($json);
+
+if (not $j->{success} or defined $j->{error}) {
+  print "error2 while retrieving data: $j->{error}\n";
+  exit $exitnonzeroonerror;
+}
+
+foreach my $alert (@{$j->{response}}) {
+  my $body = $alert->{details}->{body};
+  $body =~ s/\n/ /g;
+  $body =~ s/\* WH(AT|ERE|EN)//g;
+  $body =~ s/\* IMPACTS//g;
+  $body =~ s/\.\.\.\s*\.\.\./.../;
+  $body =~ s/  / /g;
+  $body = substr($body, 0, 200) if $full == 0;
+  $body .= "..." if $full == 0;
+  my $name = $alert->{details}->{name};
+  $name = red($name) if $alert->{details}->{emergency};
+  $name = yellow($name) if not $alert->{details}->{emergency};
+  printf " %s: %s\n", $name, $body;
+}
 
