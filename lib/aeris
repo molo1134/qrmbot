@@ -211,10 +211,12 @@ foreach my $alert (@{$j->{response}}) {
   $body =~ s/\n/ /g;
   $body =~ s/\* WH(AT|ERE|EN)//g;
   $body =~ s/\* IMPACTS//g;
-  $body =~ s/\.\.\.\s*\.\.\./.../;
+  $body =~ s/\.\.\.\s*\.\.\./.../g;
   $body =~ s/  / /g;
+  $body =~ s/\.\.\./…/g;
   $body = substr($body, 0, 200) if $full == 0;
-  $body .= "..." if $full == 0;
+  $body .= "…" if $full == 0;
+  
   my $name = $alert->{details}->{name};
   $name = red($name) if $alert->{details}->{emergency};
   $name = yellow($name) if not $alert->{details}->{emergency};
