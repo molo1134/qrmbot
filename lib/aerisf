@@ -114,9 +114,9 @@ print "Forecast for ", bold(geolocate($lat, $lon)), " ($lat, $lon):\n";
 foreach my $period (@{$j->{response}[0]->{periods}}) {
   my $dow = strftime("%A", localtime($period->{timestamp}));
   if ($period->{isDay}) {
-    printf " %s: %s; high: %d°C/%d°F", $dow, $period->{weather}, $period->{maxTempC}, $period->{maxTempF};
+    printf " %s: %s; high: %d°C/%d°F", bold($dow), $period->{weather}, $period->{maxTempC}, $period->{maxTempF};
   } else {
-    printf " %s night: %s; low: %d°C/%d°F", $dow, $period->{weather}, $period->{minTempC}, $period->{minTempF};
+    printf " %s: %s; low: %d°C/%d°F", bold($dow . " night"), $period->{weather}, $period->{minTempC}, $period->{minTempF};
   }
   if ($period->{snowCM} > 0.0) {
     printf "; snow: %dcm/%din", round($period->{snowCM}), round($period->{snowIN});
