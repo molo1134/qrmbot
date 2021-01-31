@@ -189,6 +189,7 @@ print "\n";
 #---------- alerts
 
 $url = "https://api.aerisapi.com/alerts/$encodedloc?client_id=$client_id&client_secret=$client_secret";
+#print "$url\n";
 open (HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
 local $/;   # read entire file -- FIXME: potentially memory hungry
 $json = <HTTP>;
@@ -201,25 +202,27 @@ if (not $json =~ /^\s*{/) {
 }
 $j = decode_json($json);
 
-if (not $j->{success} or defined $j->{error}) {
+if (not $j->{success} or (defined $j->{error} and $j->{error}->{code} ne "warn_no_data")) {
   print "error2 while retrieving data: $j->{error}\n";
   exit $exitnonzeroonerror;
 }
 
-foreach my $alert (@{$j->{response}}) {
-  my $body = $alert->{details}->{body};
-  $body =~ s/\n/ /g;
-  $body =~ s/\* WH(AT|ERE|EN)//g;
-  $body =~ s/\* IMPACTS//g;
-  $body =~ s/\.\.\.\s*\.\.\./.../g;
-  $body =~ s/  / /g;
-  $body =~ s/\.\.\./…/g;
-  $body = substr($body, 0, 200) if $full == 0;
-  $body .= "…" if $full == 0;
-  
-  my $name = $alert->{details}->{name};
-  $name = red($name) if $alert->{details}->{emergency};
-  $name = yellow($name) if not $alert->{details}->{emergency};
-  printf " %s: %s\n", $name, $body;
+if (defined $j->{response}) {
+  foreach my $alert (@{$j->{response}}) {
+    my $body = $alert->{details}->{body};
+    $body =~ s/\n/ /g;
+    $body =~ s/\* WH(AT|ERE|EN)//g;
+    $body =~ s/\* IMPACTS//g;
+    $body =~ s/\.\.\.\s*\.\.\./.../g;
+    $body =~ s/  / /g;
+    $body =~ s/\.\.\./…/g;
+    $body = substr($body, 0, 200) if $full == 0;
+    $body .= "…" if $full == 0;
+    
+    my $name = $alert->{details}->{name};
+    $name = red($name) if $alert->{details}->{emergency};
+    $name = yellow($name) if not $alert->{details}->{emergency};
+    printf " %s: %s\n", $name, $body;
+  }
 }
 
