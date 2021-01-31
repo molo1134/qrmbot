@@ -183,7 +183,7 @@ if (not defined($ob->{windSpeedMPH})) {
 
 #full
 #print " Pressure: $ob->{pressureMB}mb/$ob->{pressureIN}inHg ($pressure_trend)" if $full == 1;
-print " Pressure: $ob->{pressureMB}mb/$ob->{pressureIN}inHg" if $full == 1;
+print " Pressure: $ob->{pressureMB}mb/$ob->{pressureIN}inHg" if $full == 1 and defined $ob->{pressureMB};
 
 if ($full == 1 and defined $ob->{precipMM} and $ob->{precipMM} > 0.0) {
   print "\n Precipitation: $ob->{precipMM}mm/$ob->{precipIN}in";
