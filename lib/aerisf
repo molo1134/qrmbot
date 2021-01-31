@@ -1,0 +1,168 @@
+#!/usr/bin/perl -w
+
+# aeris weather forecast
+#
+# requires an API key from aerisweather.com  Place into the file $HOME/.aerisweather as follows:
+#
+# $client_id = "0123456789abcdef";
+# $client_secret = "0123456789abcdef";
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use Encode qw(decode);
+use I18N::Langinfo qw(langinfo CODESET);
+use JSON qw( decode_json );
+use Math::Round;
+use URI::Escape;
+use POSIX qw(strftime);
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+our $client_id = undef;
+our $client_secret = undef;
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+my $apikeyfile = $ENV{'HOME'} . "/.aerisweather";
+if (-e ($apikeyfile)) {
+  require($apikeyfile);
+} else {
+  die "error: unable to read file $apikeyfile"
+}
+die "error: no API key set" unless defined($client_id) and defined($client_secret);
+
+my $short = 0;
+my $i = 0;
+my $loc;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /--full/) {
+    $short = 0;
+    $i++;
+    next;
+  }
+  if ($ARGV[$i] =~ /--short/) {
+    $short = 1;
+    $i++;
+    next;
+  }
+  if (defined($loc)) {
+    $loc = $loc . " " . $ARGV[$i];
+  } else {
+    $loc = $ARGV[$i];
+  }
+  $i++;
+}
+
+# decode command line from locale-specified codeset
+my $codeset = langinfo(CODESET);
+$loc = decode($codeset, $loc);
+
+if (defined($loc)) {
+  $loc =~ s/^\s*//;
+  $loc =~ s/\s*$//;
+}
+
+if (!defined($loc) or length($loc) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !wx <location>\n";
+  } else {
+    print "usage: $0 <location>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $geo = argToCoords($loc);
+$loc = $geo if defined $geo;
+my ($lat, $lon) = split(/,/, $geo) if defined($geo);
+my $encodedloc = uri_escape($loc);
+
+my $url = "https://api.aerisapi.com/forecasts/$encodedloc?filter=daynight&client_id=$client_id&client_secret=$client_secret";
+$url .= "&limit=3" if $short;
+open (HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+my $json = <HTTP>;
+close(HTTP);
+#print "$json\n";
+if (not $json =~ /^\s*{/) {
+  print "error1 while retrieving data: $json\n";
+  exit $exitnonzeroonerror;
+}
+my $j = decode_json($json);
+
+if (not $j->{success} or defined $j->{error}) {
+  print "error2 while retrieving data: $j->{error}\n";
+  exit $exitnonzeroonerror;
+}
+
+$ENV{TZ} = $j->{response}[0]->{profile}->{tz};
+
+$lat = $j->{response}[0]->{loc}->{lat};
+$lon = $j->{response}[0]->{loc}->{long};
+print "Forecast for ", bold(geolocate($lat, $lon)), " ($lat, $lon):\n";
+
+foreach my $period (@{$j->{response}[0]->{periods}}) {
+  my $dow = strftime("%A", localtime($period->{timestamp}));
+  if ($period->{isDay}) {
+    printf " %s: %s; high: %d°C/%d°F", $dow, $period->{weather}, $period->{maxTempC}, $period->{maxTempF};
+  } else {
+    printf " %s night: %s; low: %d°C/%d°F", $dow, $period->{weather}, $period->{minTempC}, $period->{minTempF};
+  }
+  if ($period->{snowCM} > 0.0) {
+    printf "; snow: %dcm/%din", round($period->{snowCM}), round($period->{snowIN});
+  } elsif ($period->{precipMM} > 0.0 and $short == 0) {
+    printf "; precip: %0.1fmm/%0.1fin", round($period->{precipMM}), round($period->{precipIN});
+  }
+  print "\n";
+}
+
+#---------- alerts
+
+$url = "https://api.aerisapi.com/alerts/$encodedloc?client_id=$client_id&client_secret=$client_secret";
+#print "$url\n";
+open (HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+$json = <HTTP>;
+close(HTTP);
+#print "$json\n";
+
+if (not $json =~ /^\s*{/) {
+  print "error1 while retrieving data: $json\n";
+  exit $exitnonzeroonerror;
+}
+$j = decode_json($json);
+
+if (not $j->{success} or (defined $j->{error} and $j->{error}->{code} ne "warn_no_data")) {
+  print "error2 while retrieving data: $j->{error}\n";
+  exit $exitnonzeroonerror;
+}
+
+if (defined $j->{response}) {
+  foreach my $alert (@{$j->{response}}) {
+    my $body = $alert->{details}->{body};
+    $body =~ s/\n/ /g;
+    $body =~ s/\* WH(AT|ERE|EN)//g;
+    $body =~ s/\* IMPACTS//g;
+    $body =~ s/\.\.\.\s*\.\.\./.../g;
+    $body =~ s/  / /g;
+    $body =~ s/\.\.\./…/g;
+    $body = substr($body, 0, 200) if $short == 1;
+    $body .= "…" if $short == 1;
+    
+    my $name = $alert->{details}->{name};
+    $name = red($name) if $alert->{details}->{emergency};
+    $name = yellow($name) if not $alert->{details}->{emergency};
+    printf " %s: %s\n", $name, $body;
+  }
+}
+

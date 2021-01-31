@@ -35,7 +35,7 @@ bind msg - !quakef quakef_msg
 
 
 set wxbin "/home/eggdrop/bin/aeris"
-set wxfbin "/home/eggdrop/bin/wxf"
+set wxfbin "/home/eggdrop/bin/aerisf"
 set metarbin "/home/eggdrop/bin/metar"
 set tafbin "/home/eggdrop/bin/taf"
 set quakebin "/home/eggdrop/bin/quake"
