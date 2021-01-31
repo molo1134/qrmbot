@@ -139,8 +139,14 @@ if ($full == 1) {
   print "; $ob->{trustFactor}% trust" if $ob->{trustFactor} < 100;
 
   $ENV{TZ} = $resp->{profile}->{tz};
+  my $now = time();
+  my $delta = $now - $ob->{timestamp};
   #print "), $ob->{dateTimeISO}\n";
-  print "), ", strftime("%H:%M %Z", localtime($ob->{timestamp})), "\n";
+  print "), ", strftime("%H:%M %Z", localtime($ob->{timestamp}));
+  print " (" if $delta > 900;
+  printf "%dh ", int($delta / 3600) if $delta > 3600;
+  printf "%dm ago)", int(($delta % 3600) / 60) if $delta > 900; # 15 minutes;
+  print "\n";
 }
 
 #short
