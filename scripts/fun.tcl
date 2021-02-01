@@ -19,8 +19,6 @@ bind pub - !senate senate_pub
 bind msg - !senate senate_msg
 bind pub - !house house_pub
 bind msg - !house house_msg
-bind pub - !tendies tendies
-bind pub - !k1nz k1nz
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
@@ -359,15 +357,6 @@ proc house_msg {nick uhand handle input} {
 	}
 	close $fd
 }
-
-proc tendies { nick host hand chan text} {
-	putchan $chan "Make a pull request W2XG"
-}
-
-proc k1nz { nick host hand chan text} {
-	putchan $chan "/kick K1NZ Like this?"
-}
-	
 
 bind pub - !ammo ammo_pub
 bind msg - !ammo ammo_msg
