@@ -1,17 +1,7 @@
 #!/usr/bin/perl -w
 
-# substantially hustled from the btc code written by:
 # 2-clause BSD license.
-# Copyright 2018 /u/molo1134. All rights reserved.
-#
-# Requires an API key from AlphaVantage. Place into your
-# $HOME/.alphavantage as follows:
-#
-# $apikey = "1234567890ABCDEF";
-#
-# NB: some things are in here, I assume, to make this
-# script play well with eggdrop and other IRC-related
-# stuff.
+# Copyright 2021 /u/molo1134. All rights reserved.
 
 use strict;
 use warnings;
@@ -19,8 +9,9 @@ use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
+use JSON qw( decode_json );
 use Math::Round;
-use URI::Escape;
+use POSIX qw(strftime);
 
 use File::Basename;
 use Cwd 'realpath';
@@ -40,115 +31,51 @@ $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
 my $quote;
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  $quote = "DJIA";
+  $quote = "DJI";
 } else {
   $quote = $ARGV[0];
 }
 
-my $apikeyfile = $ENV{'HOME'} . "/.alphavantage";
-if (-e ($apikeyfile)) {
-  require($apikeyfile);
-} else {
-  die "error: unable to read file $apikeyfile"
+
+my $url = "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=$quote";
+
+open(HTTP, '-|', "curl -4 --max-time 10 -s -k -L '$url'");
+binmode(HTTP, ":utf8");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+my $json = <HTTP>;
+close(HTTP);
+#print "$json\n"; #debug XXX
+
+if (not $json =~ /^\s*{/) {
+  print "error1 while retrieving data: $json\n";
+  exit $exitnonzeroonerror;
 }
-die "error: no API key set" unless defined($apikey);
+my $j = decode_json($json);
 
-# The AlphaVantage API outputs the following fields for point-in-time quotes:
-#
-# CSV:
-#
-# symbol,open,high,low,price,volume,latestDay,previousClose,change,changePercent
-#
-# JSON:
-#
-# {
-#    "Global Quote": {
-#        "01. symbol": "^DJI",
-#        "02. open": "24736.5400",
-#        "03. high": "24975.6800",
-#        "04. low": "24645.5600",
-#        "05. price": "24958.2000",
-#        "06. volume": "159230140",
-#        "07. latest trading day": "2018-10-25",
-#        "08. previous close": "24583.4200",
-#        "09. change": "374.7793",
-#        "10. change percent": "1.5245%"
-#    }
-#
-# Select via the datatype key/value pair in the URL (cvs or json)
-#
-# see https://www.alphavantage.co/documentation/ for more info.
+if (not defined($j->{quoteResponse}) or defined($j->{quoteResponse}->{error})) {
+  print "error while retrieving data:";
+  print $j->{quoteResponse}->{error};
+  print "\n";
+  exit $exitnonzeroonerror;
+}
 
-my $url = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=$quote&apikey=$apikey&datatype=csv";
+my $r = $j->{quoteResponse}->{result}[0];
 
 my ($ticker, $open, $price, $vol, $chg, $pct);
 
-open(HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
-binmode(HTTP, ":utf8");
-while (<HTTP>) {
-	chomp; chomp; # // CRLF
-	if (/if you would like to target a higher API call frequency./) {
-		print "rate exceeded. slow down.\n";
-		exit $exitnonzeroonerror;
-	}
-	s/\r//g;
-	next if $. < 2; # this skips the first line of CSV headers
-
-	($ticker, $open, undef, undef, $price, $vol, undef, undef, $chg, $pct) = split(',', $_);
-}
-close(HTTP);
-
-if (not defined($ticker) or not defined($pct)) {
-	my $encquote = uri_escape($quote);
-	my $url = "https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=$encquote&apikey=$apikey&datatype=csv";
-	my $found = 0;
-
-	open(HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
-	binmode(HTTP, ":utf8");
-	while (<HTTP>) {
-		next if m/^symbol,/;
-		if (/if you would like to target a higher API call frequency./) {
-			print "rate exceeded. slow down.\n";
-			exit $exitnonzeroonerror;
-		}
-		my ($symb,$name,$type,$reg) = split(',');
-		# TODO: switch to JSON API for symbol search
-		if ($symb eq "{}") {
-		  print "not found\n";
-		  exit $exitnonzeroonerror;
-		}
-		print(bold($symb), ": $name - $type, $reg; ");
-		$found = 1;
-	}
-	print "\n" if $found;
-
-	if (not $found) {
-		print "no data returned: $quote\n";
-	}
-	exit $exitnonzeroonerror;
-}
+$ticker = $r->{symbol};
+$open = $r->{regularMarketOpen};
+$price = $r->{regularMarketPrice};
+$vol = $r->{regularMarketVolume};
+$chg = $r->{regularMarketChange};
+$pct = $r->{regularMarketChangePercent};
 
 my $trend = 1;
-$trend = 0 if defined($pct) and $pct =~ m/-/;
+$trend = 0 if defined($pct) and $pct < 0;
 
 my $trendsymbol;
 $trendsymbol = green("↑") if $trend > 0;
 $trendsymbol = red("↓") if $trend <= 0;
-
-# the little circles look cool, too
-#$trend = green("●");
-#$trend = red("●") if $info[9] =~ /-/;
-
-# lop off some trailing 0s
-$price =~ s/(\.[0-9]*?[1-9]?)0+$/$1/;
-$price =~ s/\.$//;
-$open  =~ s/(\.[0-9]*?[1-9]?)0+$/$1/;
-$open  =~ s/\.$//;
-$chg   =~ s/(\.[0-9]*?[1-9]?)0+$/$1/;
-$chg   =~ s/\.$//;
-
-$pct =~ s/%//;
-$pct = nearest(0.1, $pct);
 
 $price = commify($price);
 $open = commify($open);
