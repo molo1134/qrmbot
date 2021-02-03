@@ -61,9 +61,13 @@ if (not defined($j->{quoteResponse}) or defined($j->{quoteResponse}->{error})) {
 
 my $r = $j->{quoteResponse}->{result}[0];
 
-my ($ticker, $open, $price, $vol, $chg, $pct);
+if (not defined $r) {
+  print "no result\n";
+  exit $exitnonzeroonerror;
+}
 
-$ticker = $r->{symbol};
+my ($open, $price, $vol, $chg, $pct);
+
 $open = $r->{regularMarketOpen};
 $price = $r->{regularMarketPrice};
 $vol = $r->{regularMarketVolume};
@@ -83,7 +87,11 @@ $chg = commify($chg);
 $vol = commify($vol);
 $pct = nearest(0.1, $pct);
 
-print bold($ticker), " ", "$trendsymbol$price ";
+my $name = $r->{displayName};
+$name = $r->{shortName} if not defined $name;
+$name = $r->{longName} if not defined $name;
+
+print bold($r->{symbol}), " ($name, $r->{fullExchangeName})", "$trendsymbol$price ";
 
 print "+$chg (" if $trend;
 print "$chg (" if not $trend;
