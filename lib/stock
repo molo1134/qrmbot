@@ -66,38 +66,37 @@ if (not defined $r) {
   exit $exitnonzeroonerror;
 }
 
-my ($open, $price, $vol, $chg, $pct);
-
-$open = $r->{regularMarketOpen};
-$price = $r->{regularMarketPrice};
-$vol = $r->{regularMarketVolume};
-$chg = $r->{regularMarketChange};
-$pct = $r->{regularMarketChangePercent};
+my ($open, $price, $vol, $chg, $pct, $prevclose);
+$open = commify($r->{regularMarketOpen});
+$price = bold(commify($r->{regularMarketPrice}));
+$vol = commify($r->{regularMarketVolume});
+$chg = commify($r->{regularMarketChange});
+$pct = nearest(0.1, $r->{regularMarketChangePercent});
+$prevclose = commify($r->{regularMarketPreviousClose});
 
 my $trend = 1;
-$trend = 0 if defined($pct) and $pct < 0;
+$trend = 0 if defined($pct) and $pct < 0.0;
 
 my $trendsymbol;
 $trendsymbol = green("↑") if $trend > 0;
 $trendsymbol = red("↓") if $trend <= 0;
 
-$price = commify($price);
-$open = commify($open);
-$chg = commify($chg);
-$vol = commify($vol);
-$pct = nearest(0.1, $pct);
-
 my $name = $r->{displayName};
 $name = $r->{shortName} if not defined $name;
 $name = $r->{longName} if not defined $name;
 
-print bold($r->{symbol}), " ($name, $r->{fullExchangeName})", "$trendsymbol$price ";
+print bold($r->{symbol}), " $trendsymbol$price ";
 
 print "+$chg (" if $trend;
 print "$chg (" if not $trend;
-
 print green("+$pct") if $trend;
 print red($pct) if not $trend;
+print "%)";
 
-print "%) open: $open volume: $vol\n";
+print " prev. close: $prevclose open: $open volume: $vol";
+print " ($name, $r->{fullExchangeName})";
 
+$ENV{TZ} = $r->{exchangeTimezoneName};
+print " as of ", strftime("%H:%M %Z", localtime($r->{regularMarketTime}));
+
+print "\n";
