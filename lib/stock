@@ -103,7 +103,7 @@ print " prev. close: $prevclose open: $open volume: $vol";
 print " ($name, $r->{fullExchangeName})";
 
 $ENV{TZ} = $r->{exchangeTimezoneName};
-print " as of ", strftime("%H:%M %Z", localtime($r->{regularMarketTime}));
+print " as of ", strftime("%H:%M:%S %Z", localtime($r->{regularMarketTime}));
 
 print "\n";
 
