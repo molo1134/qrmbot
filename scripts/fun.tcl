@@ -119,8 +119,9 @@ bind pub - !s stock_pub
 bind msg - !s stock_msg
 bind pub - !stonk stock_pub
 bind msg - !stonk stock_msg
-bind pub - !tendies stock_pub
-bind msg - !tendies stock_msg
+
+bind pub - !tendies tendies_pub
+bind msg - !tendies tendies_msg
 
 set stockbin "/home/eggdrop/bin/stock"
 proc stock_pub { nick host hand chan text } {
@@ -146,6 +147,12 @@ proc stock_msg {nick uhand handle input} {
 		putmsg $nick "$line"
 	}
 	close $fd
+}
+proc stock_pub { nick host hand chan text } {
+	stock_pub $nick $host $hand $chan "VIX"
+}
+proc stock_msg {nick uhand handle input} {
+	stock_msg $nick $uhand $handle "VIX"
 }
 
 bind pub - !wwv wwv_pub
