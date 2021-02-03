@@ -81,6 +81,7 @@ $price = commify($price);
 $open = commify($open);
 $chg = commify($chg);
 $vol = commify($vol);
+$pct = nearest(0.1, $pct);
 
 print bold($ticker), " ", "$trendsymbol$price ";
 
