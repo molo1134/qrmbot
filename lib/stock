@@ -12,6 +12,7 @@ binmode(STDOUT, ":utf8");
 use JSON qw( decode_json );
 use Math::Round;
 use POSIX qw(strftime);
+use URI::Escape;
 
 use File::Basename;
 use Cwd 'realpath';
@@ -30,8 +31,13 @@ our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
 my $quote;
+my $search;
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   $quote = "^DJI";
+} elsif ($#ARGV > 0) {
+  $search = join(" ", @ARGV);
+  doSearch($search);
+  exit $exitnonzeroonerror;
 } else {
   $quote = $ARGV[0];
 }
@@ -61,8 +67,8 @@ if (not defined($j->{quoteResponse}) or defined($j->{quoteResponse}->{error})) {
 
 my $r = $j->{quoteResponse}->{result}[0];
 
-if (not defined $r) {
-  print "no result\n";
+if (not defined $r or not defined $r->{regularMarketPrice}) {
+  doSearch($quote);
   exit $exitnonzeroonerror;
 }
 
@@ -100,3 +106,34 @@ $ENV{TZ} = $r->{exchangeTimezoneName};
 print " as of ", strftime("%H:%M %Z", localtime($r->{regularMarketTime}));
 
 print "\n";
+
+sub doSearch {
+  my $term = shift;
+  my $enc_term = uri_escape($term);
+  my $url = "https://query2.finance.yahoo.com/v1/finance/search?q=$enc_term&quotesCount=6&newsCount=0";
+
+  open(HTTP, '-|', "curl -4 --max-time 10 -s -k -L '$url'");
+  #binmode(HTTP, ":utf8");  #breaks
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $json = <HTTP>;
+  close(HTTP);
+  #print "$json\n"; #debug XXX
+
+  if (not $json =~ /^\s*{/) {
+    print "error1 while retrieving data: $json\n";
+    exit $exitnonzeroonerror;
+  }
+  my $j = decode_json($json);
+
+  if (not defined($j->{quotes})) {
+    print "error while retrieving data.\n";
+    exit $exitnonzeroonerror;
+  }
+
+  my $i = 0;
+  foreach my $quote (@{$j->{quotes}}) {
+    print " -- " if $i++ > 0 and $username eq "eggdrop";
+    print "$quote->{symbol}: $quote->{longname}";
+    print "\n" if $username ne "eggdrop";
+  }
+}
