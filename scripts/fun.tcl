@@ -115,6 +115,13 @@ proc spacex_msg {nick uhand handle input} {
 
 bind pub - !stock stock_pub
 bind msg - !stock stock_msg
+bind pub - !s stock_pub
+bind msg - !s stock_msg
+bind pub - !stonk stock_pub
+bind msg - !stonk stock_msg
+bind pub - !tendies stock_pub
+bind msg - !tendies stock_msg
+
 set stockbin "/home/eggdrop/bin/stock"
 proc stock_pub { nick host hand chan text } {
 	global stockbin
