@@ -11,6 +11,7 @@ binmode(STDOUT, ":utf8");
 
 use JSON qw( decode_json );
 use Math::Round;
+use Math::BigFloat;
 use POSIX qw(strftime);
 use URI::Escape;
 
@@ -76,9 +77,12 @@ my ($open, $price, $vol, $chg, $pct, $prevclose);
 $open = commify($r->{regularMarketOpen});
 $price = bold(commify($r->{regularMarketPrice}));
 $vol = commify($r->{regularMarketVolume});
-$chg = commify($r->{regularMarketPrice} - $r->{regularMarketPreviousClose}); #regularMarketChange suffers from floating point errors
 $pct = nearest(0.1, $r->{regularMarketChangePercent});
 $prevclose = commify($r->{regularMarketPreviousClose});
+
+#regularMarketChange suffers from floating point errors
+$chg = Math::BigFloat->new($r->{regularMarketPrice});
+$chg->bsub($r->{regularMarketPreviousClose});
 
 my $trend = 1;
 $trend = 0 if defined($pct) and $pct < 0.0;
