@@ -31,7 +31,7 @@ $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
 my $quote;
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  $quote = "DJI";
+  $quote = "^DJI";
 } else {
   $quote = $ARGV[0];
 }
