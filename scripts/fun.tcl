@@ -148,10 +148,10 @@ proc stock_msg {nick uhand handle input} {
 	}
 	close $fd
 }
-proc stock_pub { nick host hand chan text } {
+proc tendies_pub { nick host hand chan text } {
 	stock_pub $nick $host $hand $chan "VIX"
 }
-proc stock_msg {nick uhand handle input} {
+proc tendies_msg {nick uhand handle input} {
 	stock_msg $nick $uhand $handle "VIX"
 }
 
