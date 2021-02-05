@@ -7,7 +7,7 @@
 package Colors;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(darkRed red redOnWhite blackOnWhite yellow green lightgreen lightblue darkYellow lightGrey grey cyan lightcyan bold underline inverse italic strikethrough blink monospace);
+@EXPORT = qw(darkRed red redOnWhite blackOnWhite yellow green lightgreen lightblue darkYellow lightGrey grey cyan lightcyan bold underline inverse italic strikethrough blink monospace optimizeIrcColor);
 
 BEGIN {
   our $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
@@ -269,6 +269,28 @@ sub monospace {
   }
 }
 
+# join consecutive color blocks
+sub optimizeIrcColor {
+  my $s = shift;
 
+  return $s if $highlight ne "irc";
+
+  for (my $i = 0; $i < 64; $i++) {
+    my $lastlen = length($s);
+    my $newlen = 0;
+    #my $n = 0;
+    while ($newlen < $lastlen) {
+      $lastlen = length($s);
+      #print "doing $i before: $s\n";
+      $s =~ s/\x03$i\x02\x02([^\x0F]+)\x0F\x03$i\x02\x02([^\x0F]+)\x0F/\x03$i\x02\x02$1$2\x0F/g;
+      #print "doing $i after : $s\n";
+      #print "---$n---\n";
+      #$n++;
+      $newlen = length($s);
+    }
+  }
+
+  return $s;
+}
 
 return 1;

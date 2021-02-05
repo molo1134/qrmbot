@@ -955,7 +955,8 @@ if ($#interest >= 0) {
     my $min = $result[0];
     my $max = $result[1];
     my @spark = @result[2 .. $#result];
-    printf "%s weekly chart: %s: max %s weekly cases per 100k pop\n", $isocode, join("", @spark), colorByRate(sprintf("%0.1f", $max), $max);
+    my $sparkline = optimizeIrcColor(join("", @spark));
+    printf "%s weekly chart: %s: max %s weekly cases per 100k pop\n", $isocode, $sparkline, colorByRate(sprintf("%0.1f", $max), $max);
 
     my @last31cases = @cases[$#cases-31 .. $#cases];
     my @last30caseDeltas;
@@ -973,8 +974,8 @@ if ($#interest >= 0) {
     $min = $result[0];
     $max = $result[1];
     @spark = @result[2 .. $#result];
-
-    printf "%s last 30d: %s: %s-%s daily new cases", $isocode, join("", @spark), commify($dailyCaseMin), commify($dailyCaseMax);
+    $sparkline = optimizeIrcColor(join("", @spark));
+    printf "%s last 30d: %s: %s-%s daily new cases", $isocode, $sparkline, commify($dailyCaseMin), commify($dailyCaseMax);
 
     my $sevenDayTotal = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]);
     my $sevenDayPerCap = $sevenDayTotal / ($countryPop{$isocode} / 100000.0);
@@ -1085,7 +1086,8 @@ if ($#states >= 0) {
     my $min = $result[0];
     my $max = $result[1];
     my @spark = @result[2 .. $#result];
-    printf "%s weekly chart: %s: max %s weekly cases per 100k pop\n", $s, join("", @spark), colorByRate(sprintf("%0.1f", $max), $max);
+    my $sparkline = optimizeIrcColor(join("", @spark));
+    printf "%s weekly chart: %s: max %s weekly cases per 100k pop\n", $s, $sparkline, colorByRate(sprintf("%0.1f", $max), $max);
 
 
     my @last31cases = @cases[$#cases-31 .. $#cases];
@@ -1103,8 +1105,9 @@ if ($#states >= 0) {
     $min = $result[0];
     $max = $result[1];
     @spark = @result[2 .. $#result];
+    $sparkline = optimizeIrcColor(join("", @spark));
 
-    printf "%s last 30d: %s: %s-%s daily new cases", $s, join("", @spark), commify($dailyCaseMin), commify($dailyCaseMax);
+    printf "%s last 30d: %s: %s-%s daily new cases", $s, $sparkline, commify($dailyCaseMin), commify($dailyCaseMax);
 
     my $sevenDayTotal = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]);
     my $sevenDayPerCap = $sevenDayTotal / ($statePop{$s} / 100000.0);
@@ -1162,8 +1165,9 @@ if ($#states >= 0) {
     my $min = $result[0];
     my $max = $result[1];
     my @spark = @result[2 .. $#result];
+    my $sparkline = optimizeIrcColor(join("", @spark));
 #    # dubious data? FIXME
-#    printf "%s weekly percent positive %s: max %s weekly; last %s weekly\n", $s, join("", @spark),
+#    printf "%s weekly percent positive %s: max %s weekly; last %s weekly\n", $s, $sparkline,
 #      colorByPctPos(sprintf("%0.1f%%", $max), $max),
 #      colorByPctPos(sprintf("%0.1f%%", $weeklyPctPositives[$#weeklyPctPositives]), $weeklyPctPositives[$#weeklyPctPositives]);
 
