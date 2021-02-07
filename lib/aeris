@@ -228,7 +228,7 @@ if (defined $j->{response}) {
     my $name = $alert->{details}->{name};
     $name = red($name) if $alert->{details}->{emergency};
     $name = yellow($name) if not $alert->{details}->{emergency};
-    printf " %s: %s\n", $name, $body;
+    printf " %s: %s\n\n", $name, $body;
   }
 }
 
