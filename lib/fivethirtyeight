@@ -173,7 +173,7 @@ if ($senate == 0 and $house == 0 and $housepoll == 0 and $generic == 0) {
 
   #print "$url\n";
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  open (JSON, '-|', "curl --max-time 10 -s -k -L $url");
+  open (JSON, '-|', "curl --max-time 10 -s -k -L '$url'");
   my $json = <JSON>;
   close(JSON);
   my $j = decode_json($json) or die "parse error: $json\n";
