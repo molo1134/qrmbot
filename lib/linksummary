@@ -950,7 +950,7 @@ sub doImgur {
     $hash = $1;
     $isalb = 1;
   }
-  if ($url =~ m!imgur.com/+([0-9A-Za-z_]+)(\.(png|gifv?|jpe?g|mp4))?$!i) {
+  if ($url =~ m!imgur.com/+([0-9A-Za-z_]+)(\.(png|gifv?|jpe?g|mp4|webp))?(\?.*)?$!i) {
     $hash = $1;
     $isimg = 1;
   }
