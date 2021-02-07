@@ -74,9 +74,9 @@ if (not defined $r or not defined $r->{regularMarketPrice}) {
 }
 
 my ($open, $price, $vol, $chg, $pct, $prevclose);
-$open = commify($r->{regularMarketOpen});
+$open = commify($r->{regularMarketOpen}) if defined($r->{regularMarketOpen});
 $price = bold(commify($r->{regularMarketPrice}));
-$vol = commify($r->{regularMarketVolume});
+$vol = commify($r->{regularMarketVolume}) if defined($r->{regularMarketVolume});
 $pct = nearest(0.1, $r->{regularMarketChangePercent});
 $prevclose = commify($r->{regularMarketPreviousClose});
 
@@ -103,7 +103,12 @@ print green("+$pct") if $trend;
 print red($pct) if not $trend;
 print "%)";
 
-print " prev. close: $prevclose open: $open volume: $vol";
+#print " bid: $r->{bid}x$r->{bidSize} ask: $r->{ask}x$r->{askSize}";
+#print " bid: $r->{bid} ask: $r->{ask}";
+
+print " prev. close: $prevclose";
+print " open: $open" if defined $open;
+print " volume: $vol" if defined $vol;
 print " ($name, $r->{fullExchangeName})";
 
 $ENV{TZ} = $r->{exchangeTimezoneName};
