@@ -80,9 +80,9 @@ print bold($r->{name}), ": $r->{window_start} by $r->{launch_service_provider}->
 print " ($r->{launch_service_provider}->{type})" if defined $r->{launch_service_provider}->{type};
 print " ", bold("mission"), ": $r->{mission}->{name}";
 print " ($r->{mission}->{type})" if defined $r->{mission}->{type};
-print " ", bold("rocket"), ": $r->{rocket}->{full_name}";
+print " ", bold("rocket"), ": $r->{rocket}->{full_name}" if defined $r->{rocket}->{full_name};
 print " ", bold("site"), ": $r->{pad}->{name}, $r->{pad}->{location}->{name}";
-print " [$r->{mission}->{description}]" if defined $r->{mission}->{description};
+print " ", bold("desc"), ": $r->{mission}->{description}" if defined $r->{mission}->{description};
 print "\n";
 
 exit 0;
