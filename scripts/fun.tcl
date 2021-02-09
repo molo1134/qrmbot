@@ -89,29 +89,71 @@ proc debt_pub { nick host hand chan text } {
 	close $fd
 }
 
-bind msg - !spacex spacex_msg
-bind pub - !spacex spacex_pub
-set spacexbin "/home/eggdrop/bin/spacex"
-proc spacex_pub { nick host hand chan text } {
-	global spacexbin
-	putlog "spacex pub: $nick $host $hand $chan $text"
-	set fd [open "|${spacexbin}" r]
+
+bind msg - !launch launch_msg
+bind pub - !launch launch_pub
+set launchbin "/home/eggdrop/bin/launch"
+proc launch_pub { nick host hand chan text } {
+	global launchbin
+	set param [sanitize_string [string trim ${text}]]
+	putlog "launch pub: $nick $host $hand $chan $param"
+	set fd [open "|${launchbin} ${param}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
 	}
 	close $fd
 }
-proc spacex_msg {nick uhand handle input} {
-	global spacexbin
-	putlog "spacex msg: $nick $uhand $handle $input"
-	set fd [open "|${spacexbin}" r]
+proc launch_msg {nick uhand handle input} {
+	global launchbin
+	set param [sanitize_string [string trim ${input}]]
+	putlog "launch msg: $nick $uhand $handle $param"
+	set fd [open "|${launchbin} ${param}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
 	}
 	close $fd
 }
+bind msg - !spacex spacex_msg
+bind pub - !spacex spacex_pub
+proc spacex_pub { nick host hand chan text } {
+	launch_pub $nick $host $hand $chan "--spacex"
+}
+proc spacex_msg {nick uhand handle input} {
+	launch_msg $nick $uhand $handle "--spacex"
+}
+bind msg - !wallops wallops_msg
+bind pub - !wallops wallops_pub
+proc wallops_pub { nick host hand chan text } {
+	launch_pub $nick $host $hand $chan "--wallops"
+}
+proc wallops_msg {nick uhand handle input} {
+	launch_msg $nick $uhand $handle "--wallops"
+}
+bind msg - !vbg vandenberg_msg
+bind pub - !vbg vandenberg_pub
+bind msg - !vandenberg vandenberg_msg
+bind pub - !vandenberg vandenberg_pub
+proc vandenberg_pub { nick host hand chan text } {
+	launch_pub $nick $host $hand $chan "--vandenberg"
+}
+proc vandenberg_msg {nick uhand handle input} {
+	launch_msg $nick $uhand $handle "--vandenberg"
+}
+bind msg - !cape cape_msg
+bind pub - !cape cape_pub
+bind msg - !kennedy cape_msg
+bind pub - !kennedy cape_pub
+bind msg - !canaveral cape_msg
+bind pub - !canaveral cape_pub
+proc cape_pub { nick host hand chan text } {
+	launch_pub $nick $host $hand $chan "--cape"
+}
+proc cape_msg {nick uhand handle input} {
+	launch_msg $nick $uhand $handle "--cape"
+}
+
 
 bind pub - !stock stock_pub
 bind msg - !stock stock_msg
@@ -119,17 +161,11 @@ bind pub - !s stock_pub
 bind msg - !s stock_msg
 bind pub - !stonk stock_pub
 bind msg - !stonk stock_msg
-
-bind pub - !tendies tendies_pub
-bind msg - !tendies tendies_msg
-
 set stockbin "/home/eggdrop/bin/stock"
 proc stock_pub { nick host hand chan text } {
 	global stockbin
 	set param [sanitize_string [string trim ${text}]]
-
 	putlog "stock pub: $nick $host $hand $chan $param"
-
 	set fd [open "|${stockbin} ${param} " r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
@@ -148,6 +184,8 @@ proc stock_msg {nick uhand handle input} {
 	}
 	close $fd
 }
+bind pub - !tendies tendies_pub
+bind msg - !tendies tendies_msg
 proc tendies_pub { nick host hand chan text } {
 	stock_pub $nick $host $hand $chan "^VIX"
 }
