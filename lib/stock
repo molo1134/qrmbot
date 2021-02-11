@@ -54,7 +54,7 @@ close(HTTP);
 #print "$json\n"; #debug XXX
 
 if (not $json =~ /^\s*{/) {
-  if $json =~ /^<!doctype/i or $json =~ /<html/i {
+  if ($json =~ /^<!doctype/i or $json =~ /<html/i) {
     print "got html while retrieving data\n";
   } else {
     print "error1 while retrieving data: $json\n";
@@ -133,7 +133,7 @@ sub doSearch {
   #print "$json\n"; #debug XXX
 
   if (not $json =~ /^\s*{/) {
-    if $json =~ /^<!doctype/i or $json =~ /<html/i {
+    if ($json =~ /^<!doctype/i or $json =~ /<html/i) {
       print "got html while retrieving data\n";
     } else {
       print "error1 while retrieving data: $json\n";
