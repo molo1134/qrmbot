@@ -1022,7 +1022,7 @@ if ($#states >= 0) {
   my %lastFullVax;
   while (<CSV>) {
     chomp;
-    my ($date, $place, $total_dist, $total_vax, undef, undef,$ppl_vax, undef, $ppl_full_vax) = split /,/;
+    my ($date, $place, undef, undef, $ppl_vax, undef, undef, $ppl_full_vax) = split /,/;
     $place =~ s/New York State/New York/;
 
     #normalize
