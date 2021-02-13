@@ -7,11 +7,12 @@
 package Util;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify shortenUrl isNumeric);
+@EXPORT = qw(decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum shortenUrl isNumeric);
 
 use URI::Escape;
 use Date::Manip;
 use Switch;
+use Math::Round;
 
 sub decodeEntities {
   my $s = shift;
@@ -287,6 +288,17 @@ sub commify {
   }
   $num =~ s/(\d)(?=(\d{3})+(\D|$|\.\d*))/$1\,/g;
   $num = "$num.$frac" if defined($frac);
+  return $num;
+}
+sub humanNum {
+  my $num = shift;
+  if ($num > 1000000000) {
+    return nearest(0.01, $num / 1000000000.0) . "B";
+  } elsif ($num > 1000000) {
+    return nearest(0.01, $num / 1000000.0) . "M";
+  } elsif ($num > 1000) {
+    return nearest(0.01, $num / 1000.0) . "k";
+  }
   return $num;
 }
 

@@ -70,8 +70,8 @@ close(HTTP);
 
 my $target = lc($fiat);
 
-my $volume = commify(int($results{"volume_24h"}));
-my $mktcap = commify(int($results{"market_cap"})) if $results{"market_cap"} ne "null";
+my $volume = humanNum(int($results{"volume_24h"}));
+my $mktcap = humanNum(int($results{"market_cap"})) if $results{"market_cap"} ne "null";
 $mktcap = "" if not defined $mktcap;
 my $qty = int ($results{"volume_24h"} / $results{"price"}) || 0;
 $results{"price"} = commify($results{"price"}) if defined($results{"price"});
@@ -89,7 +89,7 @@ if ($trend ne "null") {
   }
 }
 
-print bold("$crypto$fiat"). " $trendsymbol" . $results{"price"} . " $trend% qty " . commify($qty) . " $crypto/24h ($volume $fiat/24h) MktCap $mktcap $fiat\n";
+print bold("$crypto$fiat"). " $trendsymbol" . $results{"price"} . " $trend% qty " . humanNum($qty) . " $crypto/24h ($volume $fiat/24h) MktCap $mktcap $fiat\n";
 
 exit 0;
 
