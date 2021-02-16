@@ -1050,7 +1050,7 @@ if ($#states >= 0) {
     my @fullVax = undef;
     foreach my $k (sort keys %caseTotals) {
       if (rindex($k, $n, 0) == 0) { # if $k startswith $n
-	#print "$n: $caseTotals{$k}\n";
+	#print "$n: $k $caseTotals{$k}\n";
 	push @cases, $caseTotals{$k};
 	push @deaths, $deathTotals{$k};
 	push @vax, $peopleVax{$k};
@@ -1114,6 +1114,7 @@ if ($#states >= 0) {
     printf("; %s total for last 7d (%s per 100k over 7d)\n", commify($sevenDayTotal), colorByRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
 
     # compute weekly percent positives
+    ## FIXME not used currently
     my $url = "https://api.covidtracking.com/v1/states/" . lc $s. "/daily.csv";
     my $positiveDeltaPosition = -1;
     my $testDeltaPosition = -1;
@@ -1177,6 +1178,7 @@ if ($#states >= 0) {
     my @last30vaxDeltas;
     for (my $i = 1; $i <= $#last31vax; $i++) {
       $last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
+      $last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
     }
 
     my $dailyVaxMin = min(@last30vaxDeltas);
@@ -1201,6 +1203,7 @@ if ($#states >= 0) {
     @last30vaxDeltas;
     for (my $i = 1; $i <= $#last31vax; $i++) {
       $last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
+      $last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
     }
 
     $dailyVaxMin = min(@last30vaxDeltas);
