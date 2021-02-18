@@ -14,6 +14,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Util;
 
 use Time::Local;
 use Time::Piece ();
@@ -392,9 +393,9 @@ sub formatOdds {
   if (not defined $odds) {
     $odds = "";
   } else {
-    if ($odds == 100.0) {
+    if (isNumeric($odds) and $odds == 100.0) {
       $odds = green(" 100%");
-    } elsif ($odds == 0.0) {
+    } elsif (isNumeric($odds) and $odds == 0.0) {
       $odds = red(" 0%");
     } else {
       $odds = yellow(" $odds%");
