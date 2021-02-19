@@ -381,7 +381,8 @@ sub getOdds {
   }
 
   foreach my $line (split /\n/, $oddscache{$appid}) {
-    my ($app, $target, $odds) = split /,/, $line;
+    next if $line =~ /^#/;
+    my ($app, undef, undef, $target, $odds) = split /,/, $line;
     return $odds if $appid == $app and $target eq $vcall;
   }
 
