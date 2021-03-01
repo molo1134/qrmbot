@@ -1316,7 +1316,8 @@ if ($#countyList >= 0) {
     my $min = $result[0];
     my $max = $result[1];
     my @spark = @result[2 .. $#result];
-    printf "%s, %s weekly chart: %s: max %s weekly cases per 100k pop\n", $cty, $st, join("", @spark), colorByRate(sprintf("%0.1f", $max), $max);
+    my $sparkline = optimizeIrcColor(join("", @spark));
+    printf "%s, %s weekly chart: %s: max %s weekly cases per 100k pop\n", $cty, $st, $sparkline, colorByRate(sprintf("%0.1f", $max), $max);
 
     my @last31cases = @cases[$#cases-31 .. $#cases];
     my @last30caseDeltas;
@@ -1333,8 +1334,9 @@ if ($#countyList >= 0) {
     $min = $result[0];
     $max = $result[1];
     @spark = @result[2 .. $#result];
+    $sparkline = optimizeIrcColor(join("", @spark));
 
-    printf "%s, %s last 30d: %s: %s-%s daily new cases", $cty, $st, join("", @spark), commify($dailyCaseMin), commify($dailyCaseMax);
+    printf "%s, %s last 30d: %s: %s-%s daily new cases", $cty, $st, $sparkline, commify($dailyCaseMin), commify($dailyCaseMax);
 
     my $sevenDayTotal = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]);
     my $sevenDayPerCap = $sevenDayTotal / ($pop / 100000.0);
