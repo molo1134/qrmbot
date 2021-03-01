@@ -25,7 +25,7 @@ use Clone qw(clone);
 no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 if ($ARGV[0] =~ /about/i){
-  print "Covid19 case counts.  Data sources: https://github.com/CSSEGISandData/COVID-19 https://github.com/nytimes/covid-19-data/ https://github.com/jgehrcke/covid-19-germany-gae https://www.worldometers.info/coronavirus/";
+  print "Covid19 case counts.  Data sources: https://github.com/CSSEGISandData/COVID-19 https://github.com/nytimes/covid-19-data/ https://github.com/jgehrcke/covid-19-germany-gae https://www.worldometers.info/coronavirus/ https://github.com/owid/covid-19-data/tree/master/public/data/vaccinations";
 
   my @casespercap = ( 1.0, 5.0, 25.0, 38.0, 50.0, 100.0 );
   my @result = seriesToSparkLine(\@casespercap, 1, 0);
