@@ -44,6 +44,7 @@ while (<HTTP>) {
     $contests{$i} = join("::", $start, $end, $summary, $conturl);
     $i++;
   }
+  s/DTSTART:0202/DTSTART:2021/; # data bug in "NZART Sangster Shield Contest"
   if ($in_event == 1 and /DT(START|END):(\d{8})T(\d{6})Z/) {
     #print "$2-$3 UTC\n";
     #my $ts = Time::Piece->strptime("$2-$3 UTC", "%Y%m%d-%H%M%S %Z")->epoch;
@@ -92,8 +93,10 @@ while (defined $contests{$i}) {
 	($end-$start) > 43100) {
     if (($yday - $jdate) < 6) {
       push @thisweekend, $summary;
-    } else {
+    } elsif (($yday - $jdate) < 13) {
       push @nextweekend, $summary;
+    } else {
+      #print "2 weeks or more away: $summary\n";
     }
     $i++;
     next
@@ -107,8 +110,10 @@ while (defined $contests{$i}) {
 	($end-$start) > 43100) {
     if (($yday - $jdate) < 6) {
       push @thisweekend, $summary;
-    } else {
+    } elsif (($yday - $jdate) < 13) {
       push @nextweekend, $summary;
+    } else {
+      #print "2 week or more away: $summary\n";
     }
   }
 
