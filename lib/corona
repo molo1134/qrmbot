@@ -1022,56 +1022,60 @@ if ($#interest >= 0) {
     my $sevenDayPerCap = $sevenDayTotal / ($countryPop{$isocode} / 100000.0);
     printf("; %s total for last 7d (%s per 100k over 7d)\n", commify($sevenDayTotal), colorByRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
 
-    # daily initial vaccinations
-    my @last31vax = @vax[$#vax-31 .. $#vax];
-    my @last30vaxDeltas;
-    for (my $i = 1; $i <= $#last31vax; $i++) {
-      $last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
-      $last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
+    if ($#vax > 0) {
+      # daily initial vaccinations - per country
+      my @last31vax = @vax[$#vax-31 .. $#vax];
+      my @last30vaxDeltas;
+      for (my $i = 1; $i <= $#last31vax; $i++) {
+	$last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
+	$last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
+      }
+
+      my $dailyVaxMin = min(@last30vaxDeltas);
+      my $dailyVaxMax = max(@last30vaxDeltas);
+
+      my $sum = 0;
+      for (my $i = 6; $i >= 0; $i--) {
+	$sum += $last30vaxDeltas[$#last30vaxDeltas-$i];
+      }
+      my $avg = round($sum / 7.0);
+      #print "$sum - avg: $avg new vax/day\n";
+      my $percap = $sum / ($countryPop{$isocode} / 100000.0);
+
+      @result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
+      $min = $result[0];
+      $max = $result[1];
+      @spark = @result[2 .. $#result];
+      printf "%s ppl newly vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly newly vaxxed per 100k pop\n", $isocode, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap)));
     }
 
-    my $dailyVaxMin = min(@last30vaxDeltas);
-    my $dailyVaxMax = max(@last30vaxDeltas);
+    if ($#fullVax > 0) {
+      # daily full vaccinations - per country
+      my @last31vax = @fullVax[$#vax-31 .. $#vax];
+      my @last30vaxDeltas;
+      for (my $i = 1; $i <= $#last31vax; $i++) {
+	$last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
+	$last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
+      }
 
-    my $sum = 0;
-    for (my $i = 6; $i >= 0; $i--) {
-      $sum += $last30vaxDeltas[$#last30vaxDeltas-$i];
+      my $dailyVaxMin = min(@last30vaxDeltas);
+      my $dailyVaxMax = max(@last30vaxDeltas);
+
+      $sum = 0;
+      for (my $i = 6; $i >= 0; $i--) {
+	$sum += $last30vaxDeltas[$#last30vaxDeltas-$i];
+      }
+      my $avg = round($sum / 7.0);
+      #print "$sum - avg: $avg new vax/day\n";
+      my $percap = $sum / ($countryPop{$isocode} / 100000.0);
+
+      @result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
+      $min = $result[0];
+      $max = $result[1];
+      @spark = @result[2 .. $#result];
+      printf "%s ppl fully vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly fully vaxxed per 100k pop\n", $isocode, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap)));
+
     }
-    my $avg = round($sum / 7.0);
-    #print "$sum - avg: $avg new vax/day\n";
-    my $percap = $sum / ($countryPop{$isocode} / 100000.0);
-
-    @result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
-    $min = $result[0];
-    $max = $result[1];
-    @spark = @result[2 .. $#result];
-    printf "%s ppl newly vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly newly vaxxed per 100k pop\n", $isocode, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap)));
-
-    # daily full vaccinations
-    @last31vax = @fullVax[$#vax-31 .. $#vax];
-    @last30vaxDeltas;
-    for (my $i = 1; $i <= $#last31vax; $i++) {
-      $last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
-      $last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
-    }
-
-    $dailyVaxMin = min(@last30vaxDeltas);
-    $dailyVaxMax = max(@last30vaxDeltas);
-
-    $sum = 0;
-    for (my $i = 6; $i >= 0; $i--) {
-      $sum += $last30vaxDeltas[$#last30vaxDeltas-$i];
-    }
-    $avg = round($sum / 7.0);
-    #print "$sum - avg: $avg new vax/day\n";
-    $percap = $sum / ($countryPop{$isocode} / 100000.0);
-
-    @result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
-    $min = $result[0];
-    $max = $result[1];
-    @spark = @result[2 .. $#result];
-    printf "%s ppl fully vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly fully vaxxed per 100k pop\n", $isocode, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap)));
-
   }
 }
 
