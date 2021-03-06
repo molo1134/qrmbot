@@ -167,6 +167,9 @@ sub doAe7qCall {
     if (m|<kbd>$call</kbd> is expired, but is not yet|) {
       $callStatus = red("Expired, but not yet available");
     }
+    if (m|<kbd>$call</kbd> is reserved \((.*?)\)|) {  # example: KA2ZU
+      $callStatus = red("Reserved ($1)");
+    }
     if (m|style='background-color:#99CCFF; '><kbd>$call</kbd> is (expired\|canceled) and is <|) {
       $callStatus = lightblue("Application Pending");
       $pending = 1;
