@@ -1024,7 +1024,12 @@ if ($#interest >= 0) {
 
     if ($#vax > 0) {
       # daily initial vaccinations - per country
-      my @last31vax = @vax[$#vax-31 .. $#vax];
+      my @last31vax;
+      if ($#vax > 31) {
+	@last31vax = @vax[$#vax-31 .. $#vax];
+      } else {
+	@last31vax = @vax[0 .. $#vax];
+      }
       my @last30vaxDeltas;
       for (my $i = 1; $i <= $#last31vax; $i++) {
 	$last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
@@ -1052,7 +1057,12 @@ if ($#interest >= 0) {
 
     if ($#fullVax > 0) {
       # daily full vaccinations - per country
-      my @last31vax = @fullVax[$#vax-31 .. $#vax];
+      my @last31vax;
+      if ($#vax > 31) {
+	@last31vax = @fullVax[$#fullVax-31 .. $#fullVax];
+      } else {
+	@last31vax = @fullVax[0 .. $#fullVax];
+      }
       my @last30vaxDeltas;
       for (my $i = 1; $i <= $#last31vax; $i++) {
 	$last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
