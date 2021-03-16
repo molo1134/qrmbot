@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 #
 # Scrape info from ae7q.com
 #
@@ -144,7 +144,6 @@ sub doAe7qRegion {
 sub doAe7qCall {
   my $call = uc shift;
   my $saved = $_;
-  my $url = "http://www.ae7q.com/query/data/CallHistory.php?CALL=$call";
 
   my ($frn, $name, $class, $status, $state, $grant, $eff, $cxl, $expire);
   my $availdate;
@@ -155,6 +154,29 @@ sub doAe7qCall {
   my $pending = 0;
   my $found = 0;
   my @frns;
+  my %odds_sim;
+
+  my $url = "http://104.154.130.35:8018/predict/vanity-$call.csv";
+  open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
+  while(<CSV>) {
+    chomp;
+    next if /^#/;
+    my ($appid, undef, undef, $vanity, $pred) = split /,/;
+    $odds_sim{"${appid}_$vanity"} = $pred;
+  }
+  close(CSV);
+
+  $url = "http://104.154.130.35:8018/predict/call-$call.csv";
+  open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
+  while(<CSV>) {
+    chomp;
+    next if /^#/;
+    my ($appid, undef, undef, $vanity, $pred) = split /,/;
+    $odds_sim{"${appid}_$vanity"} = $pred;
+  }
+  close(CSV);
+
+  $url = "http://www.ae7q.com/query/data/CallHistory.php?CALL=$call";
   open(HTTP, '-|', "curl --max-time $ae7qTimeout -L -k -s '$url'");
   while(<HTTP>) {
     $inLicTable = 1 if m|<table class='Database' cellpadding='4' align='center'><tbody class='Database'>|;
@@ -209,7 +231,8 @@ sub doAe7qCall {
       }
       if (m|</tr>| and defined $name) {
 	$availdate = getAvailDate($expire, $cxl);
-	print bold($call), ": $callStatus";
+	print bold($call), ": ";
+	print $callStatus if defined $callStatus;
 	print " - previous licensee:" if $status ne "Active";
 	print " - $name (FRN $frn; $state) - ";
 	print "$class - " if defined $class and length($class) > 0;
@@ -242,8 +265,8 @@ sub doAe7qCall {
       if (m|</tr>| and defined $filenum) {
 	#print "$receipt $process $appl $class $state $filenum $seq $pred\n";
 	#printf "%-6s ($state) $seq $pred\n", $appl;
-	my $odds = formatOdds(getOdds($filenum, $call));
-	printf "$receipt -> $process %-6s ($state) App $filenum #%-5s $pred$odds\n", $appl, $seq;
+	my $odds = formatOdds($odds_sim{"${filenum}_$call"});
+	printf "$receipt -> $process %-6s ($state) App $filenum #%-5s $pred%s\n", $appl, $seq, $odds;
 	$filenum = $seq = $pred = undef;
       }
       if (m|<td class="DatabaseField" style='background-color:White; Text-Align: right'><a href='/query/list/AppByReceipt.php\?DATE=([0-9-]+)' title='Show vanity applications received on [0-9-]+'>\w+ [0-9-]+</a></td><td class="DatabaseField" style='background-color:.*?; Text-Align: right'><a href='/query/list/ProcessDate.php\?DATE=([0-9-]+)' title='Show application &amp; license processing for [0-9-]+'>\w+ [0-9-]+</a></td>|) {
@@ -284,7 +307,7 @@ sub doAe7qCall {
   close(HTTP);
 
   foreach my $f (@frns) {
-    printFrnApps($f);
+    printFrnApps($f, \%odds_sim);
   }
 
   print bold($call), ": $callStatus\n" if defined $callStatus and not $found;
@@ -326,6 +349,7 @@ sub uniq {
 
 sub printFrnApps {
   my $frn = shift;
+  my $odds_sim = shift;
   my $saved = $_;
   my $url = "http://ae7q.com/query/data/FrnHistory.php?FRN=$frn";
   my $inpred = 0;
@@ -359,37 +383,11 @@ sub printFrnApps {
 
       $procdate = "????-??-??" if not defined $procdate or $pred =~ /^Offlined/;
 
-      my $odds = formatOdds(getOdds($appidnum, $vanity));
+      my $odds = formatOdds($odds_sim->{"${appidnum}_$vanity"});
       print "$appdate -> $procdate: App $appid ($type) #$seqnum $vanity $pred$odds\n";
     }
   }
   $_ = $saved;
-}
-
-sub getOdds {
-  my $appid = shift;
-  my $vcall = shift;
-  my $saved = $_; # ugh $_ is a global
-
-  # cache to prevent extra requests for the same appid over and over
-  our %oddscache;
-  if (not defined $oddscache{$appid}) {
-    my $url = "http://104.154.130.35:8018/predict/app-$appid.csv";
-    local $/; # read entire file
-    #my $url = "file://$ENV{HOME}/src/vanity-predict/html/app-$appid.csv";
-    open(CSV, '-|', "curl --max-time 5 -L -k -s '$url'");
-    my $csv = <CSV>;
-    close(CSV);
-    $oddscache{$appid} = $csv;
-  }
-
-  foreach my $line (split /\n/, $oddscache{$appid}) {
-    next if $line =~ /^#/;
-    my ($app, undef, undef, $target, $odds) = split /,/, $line;
-    return $odds if $appid == $app and $target eq $vcall;
-  }
-
-  return undef;
 }
 
 sub formatOdds {
@@ -411,7 +409,8 @@ sub formatOdds {
 sub getDaysInMonth {
   my $m = shift;
   my $y = shift;
-  if ($m == 9, $m == 4, $m == 6, $m == 11) {
+  return undef if not isNumeric($m) or not isNumeric($y);
+  if ($m == 9 or $m == 4 or $m == 6 or $m == 11) {
     return 30;
   }
   if ($m != 2) {
