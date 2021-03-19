@@ -25,6 +25,7 @@ print cyan("cyan"), $sep;
 print lightcyan("lightcyan"), $sep;
 print lightGrey("lightGrey"), $sep;
 print grey("grey"), $sep;
+print magenta("magenta"), $sep;
 print bold("bold"), $sep;
 print underline("underline"), $sep;
 print inverse("inverse"), $sep;
