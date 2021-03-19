@@ -27,18 +27,19 @@ no if $] >= 5.018, warnings => "experimental::smartmatch";
 if ($ARGV[0] =~ /about/i){
   print "Covid19 case counts.  Data sources: https://github.com/CSSEGISandData/COVID-19 https://github.com/nytimes/covid-19-data/ https://github.com/jgehrcke/covid-19-germany-gae https://www.worldometers.info/coronavirus/ https://github.com/owid/covid-19-data/tree/master/public/data/vaccinations";
 
-  my @casespercap = ( 1.0, 5.0, 25.0, 38.0, 50.0, 100.0 );
+  my @casespercap = ( 1.0, 5.0, 25.0, 38.0, 50.0, 100.0, 325.0 );
   my @result = seriesToSparkLine(\@casespercap, 1, 0);
   my $min = $result[0];
   my $max = $result[1];
   my @spark = @result[2 .. $#result];
-  printf " -- sparkline colored by per-capita case counts: %s - %s,%s,%s,%s,%s,%s cases per 100k population over 7 days\n", join("", @spark),
+  printf " -- sparkline colored by per-capita case counts: %s - %s,%s,%s,%s,%s,%s,%s cases per 100k population over 7 days\n", join("", @spark),
     colorByRate("<5", 1),
     colorByRate("5", 5),
     colorByRate("25", 25),
     colorByRate("38", 38),
     colorByRate("50", 50),
-    colorByRate(">100", 100);
+    colorByRate("100", 100),
+    colorByRate(">325", 325);
 
 
   exit 0;
@@ -1565,8 +1566,10 @@ sub colorByRate {
     return darkYellow($str);
   } elsif ($rate < 100.0) {
     return darkRed($str);
-  } elsif ($rate >= 100.0) {
+  } elsif ($rate < 325.0) {
     return red($str);
+  } elsif ($rate >= 325.0) {
+    return magenta($str);
   }
   return $str;
 }
