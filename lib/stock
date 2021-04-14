@@ -79,10 +79,14 @@ if (not defined $r or not defined $r->{regularMarketPrice}) {
 
 my ($open, $price, $vol, $chg, $pct, $prevclose);
 $open = commify($r->{regularMarketOpen}) if defined($r->{regularMarketOpen});
-$price = bold(commify($r->{regularMarketPrice}));
+$price = bold(commify($r->{regularMarketPrice})) if defined($r->{regularMarketPrice});
 $vol = commify($r->{regularMarketVolume}) if defined($r->{regularMarketVolume});
-$pct = nearest(0.1, $r->{regularMarketChangePercent});
-$prevclose = commify($r->{regularMarketPreviousClose});
+if (defined ($r->{regularMarketChangePercent}) and isNumeric($r->{regularMarketChangePercent})) {
+  $pct = nearest(0.1, $r->{regularMarketChangePercent})
+} else {
+  $pct = 0.0;
+}
+$prevclose = commify($r->{regularMarketPreviousClose}) if defined($r->{regularMarketPreviousClose});
 
 #regularMarketChange suffers from floating point errors
 $chg = Math::BigFloat->new($r->{regularMarketPrice});
@@ -110,7 +114,7 @@ print "%)";
 #print " bid: $r->{bid}x$r->{bidSize} ask: $r->{ask}x$r->{askSize}";
 #print " bid: $r->{bid} ask: $r->{ask}";
 
-print " prev. close: $prevclose";
+print " prev. close: $prevclose" if defined $prevclose;
 print " open: $open" if defined $open;
 print " volume: $vol" if defined $vol;
 print " ($name, $r->{fullExchangeName})";
