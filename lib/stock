@@ -89,8 +89,12 @@ if (defined ($r->{regularMarketChangePercent}) and isNumeric($r->{regularMarketC
 $prevclose = commify($r->{regularMarketPreviousClose}) if defined($r->{regularMarketPreviousClose});
 
 #regularMarketChange suffers from floating point errors
-$chg = Math::BigFloat->new($r->{regularMarketPrice});
-$chg->bsub($r->{regularMarketPreviousClose});
+if (defined $r->{regularMarketPrice}) {
+  $chg = Math::BigFloat->new($r->{regularMarketPrice});
+  $chg->bsub($r->{regularMarketPreviousClose});
+} else {
+  $chg = 0.0;
+}
 
 my $trend = 1;
 $trend = 0 if defined($pct) and $pct < 0.0;
