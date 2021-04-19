@@ -2,6 +2,11 @@
 
 A collection of command line tools and wrapper scripts for the eggdrop IRC bot.
 
+Eggdrop is an IRC bot written in C with a built-in TCL scripting environment.
+These IRC bot scripts are based around command-line tools written in perl with
+a TCL wrapper layer.  The command line tools are designed to be standalone with
+VT220/ANSI terminal output, and have been adapted for IRC color output.
+
 ## License
 
 All original code is 2-clause BSD licensed.  See [LICENSE](LICENSE) file.
@@ -54,26 +59,32 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 
 ## Configuration files
 
-* `$HOME/.aprs.fi` -- required [aprs.fi](http://aprs.fi/) API key for `aprs`
-  tool
-* `$HOME/.hamspotlogin` -- required login credentials for
-  [hamspots.net](http://hamspots.net) use
-* `$HOME/.qrzlogin` -- required login credentials for
-  [qrz.com](http://qrz.com/) lookup
-* `$HOME/.wunderground` -- required API key for
-  [WUnderground](http://wundergound.com/) weather lookup
+* `$HOME/.adsbx` -- API key for adsbexchange.com
+* `$HOME/.aerisweather` -- API key for aerisweather.com
+* `$HOME/.aprs.fi` -- required [aprs.fi](http://aprs.fi/) API key for `aprs` tool
+* `$HOME/.bitlyapikey` -- key for bit.ly API
+* `$HOME/.coinmarketcapkey` -- API key for coinmarketcap.com
+* `$HOME/.darksky` -- API key for darksky.com
+* `$HOME/.googleapikeys` -- key for Google APIs
+* `$HOME/.hamspotlogin` -- required login credentials for [hamspots.net](http://hamspots.net) use
+* `$HOME/.imgurkey` -- API key for imgur.com
 * `$HOME/.nicks.csv` -- irc and reddit nicknames -- optional, will override repository data
+* `$HOME/.qrzlogin` -- required login credentials for [qrz.com](http://qrz.com/) lookup
+* `$HOME/.wunderground` -- required API key for [WUnderground](http://wundergound.com/) weather lookup
 
 ## Cache files / state
 
-* `$HOME/.cty.dat` -- cached DXCC data from
-  [country-files.com](http://www.country-files.com/)
-* `$HOME/.mostwanted.txt` -- cached DXCC "most wanted" data from
-  [clublog.org](http://clublog.org/)
+* `$HOME/.clublogusers.gz` -- cache of clublog.org user data
+* `$HOME/.cty.dat` -- cached DXCC data from [country-files.com](http://www.country-files.com/)
+* `$HOME/.dmr-id-repeaters.csv` -- cache of DMR repeater IDs
+* `$HOME/.dmr-id-users.csv` -- cache of DMR user IDs
 * `$HOME/.hamspotcookies` -- HTTP cookies for hamspots.net session
-* `$HOME/.qrzcookies` -- HTTP cookies for qrz.com session
+* `$HOME/.icao-types` -- cache of ICAO aircraft type data
 * `$HOME/.lotw-dates.txt` -- cached LOTW upload dates
+* `$HOME/.mostwanted.txt` -- cached DXCC "most wanted" data from [clublog.org](http://clublog.org/)
+* `$HOME/.qrzcookies` -- HTTP cookies for qrz.com session
 * `$HOME/.spottimestamps` -- used for spots monitor mode; safe to remove
+
 
 ## Security
 
@@ -85,20 +96,13 @@ needed.
 ## TODO
 
 1. Clean up and modularize TCL scripts
-2. ~~Add TCL scripts~~
-3. Document how to use and configure TCL scripts
-4. ~~Clarify this week/next week for `contests`~~
-5. Accept other formats for `!setgeo`
-6. Use geo grid for `!activity`
-7. Cleanup needed in `qrz` script
-8. Add a preferred wx station in addition to `!setgeo` geo coords
-9. ~~Find nearest ionosonde for !muf/!muf2~~
-10. ~~A command to get elevation data at a location~~
-11. ~~AE7Q scraping~~
-12. If no callsign is specified with `!spots` use irc nick.
-13. Requested by K1NZ: `!untappd` for beer info -- they are not giving out API keys. :(
-14. ~~Current dxpedition list~~ by scraping https://www.ng3k.com/misc/adxo.html
-15. ~~Replace wunderground APIs which are now dead~~
+2. Document how to use and configure TCL scripts
+3. Accept other formats for `!setgeo`
+4. Use geo grid for `!activity`
+5. Cleanup needed in `qrz` script
+6. Add a preferred wx station in addition to `!setgeo` geo coords
+7. If no callsign is specified with `!spots` use irc nick.
+8. Requested by K1NZ: `!untappd` for beer info -- they are not giving out API keys. :(
 
 ## Contributors
 
