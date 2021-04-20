@@ -38,7 +38,7 @@ $curr_time =~ s/:00$//;
 my $max_time = $data{max_time};
 $max_time =~ s/:00$//;
 
-print "Xray status: ". colorize($data{current_class}) . " at ${curr_time}z; recent flare: " . colorize($data{max_class}) . " at ${max_time}z\n";
+print "Xray status: ". colorize($data{current_class}) . " at ${curr_time}; recent flare: " . colorize($data{max_class}) . " at ${max_time}\n";
 
 #print colorize("M1.1"), "\n";
 #print colorize("M5.1"), "\n";
