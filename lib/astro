@@ -157,7 +157,7 @@ if ($doMoon == 1) {
   } else {
     print bold("Moon"), " az/el ", bold("$moon_az°/$moon_el°"), "; dist $moon_range km;";
   }
-  print " phase: $phasetext$phaseunicode, $illum% illum.;";
+  print " phase: $phasetext $phaseunicode, $illum% illum.;";
 }
 
 # rise/set
