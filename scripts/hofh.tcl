@@ -1,7 +1,7 @@
-# Maintain a quote list
+# Maintain a quote list across channels
 #
 # 2-clause BSD license.
-# Copyright (c) 2018 /u/molo1134. All rights reserved.
+# Copyright (c) 2018, 2019 molo1134@github. All rights reserved.
 
 bind pub - !addhofh h_addquote
 bind pub - !hofh h_pubquote

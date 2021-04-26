@@ -1,7 +1,7 @@
 # Wunderground weather reports.
 
 # 2-clause BSD license.
-# Copyright (c) 2018 /u/molo1134. All rights reserved.
+# Copyright (c) 2018, 2019, 2020, 2021 molo1134@github. All rights reserved.
 
 bind pub - !wx wx
 bind msg - !wx msg_wx

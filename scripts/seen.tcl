@@ -1,4 +1,7 @@
 # a simple seen script
+#
+# 2-clause BSD license.
+# Copyright (c) 2018, 2019 molo1134@github. All rights reserved.
 
 # Returns: number of minutes that person has been idle; 0 if the specified user
 # isn't on the channel

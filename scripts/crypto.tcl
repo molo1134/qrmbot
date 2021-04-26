@@ -1,7 +1,7 @@
 # Display prices of crypto currencies
 
 # 2-clause BSD license.
-# Copyright (c) 2018 /u/molo1134. All rights reserved.
+# Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
 
 bind pub - !crypto crypto_pub
 bind msg - !crypto crypto_msg

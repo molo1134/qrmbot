@@ -1,4 +1,7 @@
 # utility methods
+#
+# 2-clause BSD license.
+# Copyright (c) 2018, 2019 molo1134@github. All rights reserved.
 
 proc sanitize_string {text} {
   regsub -all ">" $text "" text

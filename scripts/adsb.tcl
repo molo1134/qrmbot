@@ -1,5 +1,10 @@
+#
+# 2-clause BSD license.
+# Copyright (c) 2019, 2020 molo1134@github. All rights reserved.
+#
+
 bind pub - !adsb adsb
-bind msg - !adsb adsb_msg 
+bind msg - !adsb adsb_msg
 
 set adsbbin "/home/eggdrop/bin/adsb"
 

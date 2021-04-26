@@ -1,7 +1,7 @@
 # Some stuff just for fun
 
 # 2-clause BSD license.
-# Copyright (c) 2018 /u/molo1134. All rights reserved.
+# Copyright (c) 2018, 2019, 2020, 2021 molo1134@github. All rights reserved.
 
 bind pub - !phonetics phoneticise
 bind pub - !phoneticise phoneticise

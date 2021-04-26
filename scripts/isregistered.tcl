@@ -2,7 +2,7 @@
 # networks.
 #
 # 2-clause BSD license.
-# Copyright (c) 2018 /u/molo1134. All rights reserved.
+# Copyright (c) 2018 molo1134@github. All rights reserved.
 
 if { ${net-type} == 2 } {
   # only for undernet type networks

@@ -1,8 +1,7 @@
 # http link announcer
 #
-
 # 2-clause BSD license.
-# Copyright (c) 2018 /u/molo1134. All rights reserved.
+# Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
 
 # From the eggdrop command reference:
 

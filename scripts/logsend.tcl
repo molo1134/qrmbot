@@ -1,7 +1,7 @@
 # Send #hamfest logs via DCC
 
 # 2-clause BSD license.
-# Copyright (c) 2018 /u/molo1134. All rights reserved.
+# Copyright (c) 2018 molo1134@github. All rights reserved.
 
 bind pub - !hamfestlog  dcchamfestlog
 bind pub - !hamfestlog2 dcchamfestlog2

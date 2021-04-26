@@ -1,7 +1,7 @@
 # Use GNU bc as calculator
 #
 # 2-clause BSD license.
-# Copyright (c) 2020 molo1134. All rights reserved.
+# Copyright (c) 2020 molo1134@github. All rights reserved.
 
 # prevent blocking on input and looping, but don't mess up variable names
 proc sanitize_bc {text} {
