@@ -146,7 +146,6 @@ my $lossdiff = nearest(0.1, $loss2m - $minloss2m);
 my ($phase, $illum) = $moon->phase($now);
 $phase = rad2deg($phase);
 my ($phasetext, $phaseunicode) = phaseText($phase);
-$phaseunicode = "" if $username eq "eggdrop";
 $phasetext = red($phasetext)
     if ($doEme == 1 && $phasetext eq "new moon");
 
