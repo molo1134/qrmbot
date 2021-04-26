@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+# 2-clause BSD license.
+# Copyright (c) 2019 molo1134@github. All rights reserved.
 
 BASEPATH=$(dirname $0)
 EXECUTABLES=$(find $BASEPATH/lib -type f -perm /111 | grep -v '\.pl$' | sort)
