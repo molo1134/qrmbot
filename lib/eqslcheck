@@ -1,7 +1,8 @@
 #!/usr/bin/perl -w
-# Lookup callsign on eQSL.  2-clause BSD license.
+# Lookup callsign on eQSL.
 
-# Copyright 2018 /u/molo1134. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2018, 2019 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;

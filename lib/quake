@@ -3,6 +3,9 @@
 # earthquake data for qrmbot
 # written by aa4jq
 
+# 2-clause BSD license.
+# Copyright (c) 2019 AA4JQ. All rights reserved.
+
 use strict;
 use utf8;
 use feature 'unicode_strings';

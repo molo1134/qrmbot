@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 
-# qrz.com callsign lookup.  2-clause BSD license.
+# qrz.com callsign lookup.
 
-# Copyright 2017 /u/molo1134. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2017, 2018, 2019, 2020 molo1134@github. All rights reserved.
 
 # in order to retrieve info from qrz.com, you need to put these two lines in
 # $HOME/.qrzlogin:

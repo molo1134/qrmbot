@@ -2,6 +2,7 @@
 
 # 2-clause BSD license.
 # Copyright (c) 2018, 2019, 2020, 2021 molo1134@github. All rights reserved.
+# Copyright (c) 2019 W9VFR. All rights reserved.
 
 bind pub - !wx wx
 bind msg - !wx msg_wx

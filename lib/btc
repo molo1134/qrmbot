@@ -1,7 +1,8 @@
 #!/usr/bin/perl -w
-# Report cryptocurrency prices.  2-clause BSD license.
+# Report cryptocurrency prices.
 
-# Copyright 2020 /u/molo1134. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2018, 2019, 2020, 2021 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;

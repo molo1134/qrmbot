@@ -1,4 +1,8 @@
 #!/usr/bin/perl -w
+# wttr.in weather conditions
+
+# 2-clause BSD license.
+# Copyright (c) 2021 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;

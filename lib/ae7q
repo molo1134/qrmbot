@@ -2,7 +2,8 @@
 #
 # Scrape info from ae7q.com
 #
-# Copyright 2019 K2CR. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2019, 2020, 2021 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;

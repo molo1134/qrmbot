@@ -2,6 +2,8 @@
 
 # 2-clause BSD license.
 # Copyright (c) 2018, 2019, 2020, 2021 molo1134@github. All rights reserved.
+# Copyright (c) 2019 W9VFR. All rights reserved.
+# Copyright (c) 2019 OliverUK. All rights reserved.
 
 bind pub - !phonetics phoneticise
 bind pub - !phoneticise phoneticise

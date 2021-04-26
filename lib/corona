@@ -3,6 +3,11 @@
 # coronavirus info for qrmbot
 # initial version by aa4jq
 # modified by k2cr
+#
+# 2-clause BSD license.
+#
+# Copyright (c) 2020 AA4JQ. All rights reserved.
+# Copyright (c) 2020, 2021 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;

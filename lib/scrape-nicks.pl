@@ -3,7 +3,7 @@
 # Scrape /r/amateurradio's user flair and user IDs to populate nicks.csv.
 # 2-clause BSD license.
 
-# Copyright 2018 /u/molo1134. All rights reserved.
+# Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;

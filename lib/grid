@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 
-# Grid reference calculation.  2-clause BSD license.
+# Grid reference calculation.
 
-# Copyright 2018 /u/molo1134. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2018 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;

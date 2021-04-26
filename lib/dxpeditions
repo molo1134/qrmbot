@@ -1,4 +1,9 @@
 #!/usr/bin/perl
+#
+# get current dxpeditions
+
+# 2-clause BSD license.
+# Copyright (c) 2019 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;

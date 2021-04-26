@@ -1,5 +1,10 @@
 #!/usr/bin/perl -w
 
+# lookup fivethrityeight.com election prediction data
+
+# 2-clause BSD license.
+# Copyright (c) 2020, 2021 molo1134@github. All rights reserved.
+
 use strict;
 use utf8;
 use feature 'unicode_strings';

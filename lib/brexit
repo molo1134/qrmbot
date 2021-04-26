@@ -1,4 +1,9 @@
 #!/usr/bin/perl
+# brexit countdown; contributed by OliverUK
+#
+# 2-clause BSD license.
+# Copyright (c) 2019, 2020 molo1134@github. All rights reserved.
+
 use strict;
 use DateTime;
 use POSIX;

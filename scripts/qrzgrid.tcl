@@ -2,6 +2,7 @@
 
 # 2-clause BSD license.
 # Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
+# Copyright (c) 2020 Andrew Rodland. All rights reserved.
 
 bind pub - !qrz qrz
 bind pub - !call qrz

@@ -1,4 +1,9 @@
 #!/usr/bin/perl
+# query upcoming rocket launches using launch library API
+#
+
+# 2-clause BSD license.
+# Copyright (c) 2021 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;

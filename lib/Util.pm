@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 #
-# Utility functions.  2-clause BSD license.
+# Utility functions.
 #
-# Copyright 2020 /u/molo1134. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2020, 2021 molo1134@github. All rights reserved.
 
 package Util;
 require Exporter;

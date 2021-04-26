@@ -1,9 +1,13 @@
 #!/usr/bin/perl
 
-# DarkSky API client -- current conditions.  2-clause BSD license.
+# DarkSky API client -- current conditions.
 
+# 2-clause BSD license.
 # Substantially hustled from the qrm's original wx script which is
-# Copyright 2018 /u/molo1134. All rights reserved.
+# Copyright (c) 2018 molo1134@github. All rights reserved.
+#
+# Copyright 2019 AA4JQ. All rights reserved.
+# Copyright (c) 2019, 2020 molo1134@github. All rights reserved.
 
 # requires an API key from DarkSky.com  Place into $HOME/.darksky:
 #

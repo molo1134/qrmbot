@@ -1,7 +1,8 @@
 #!/usr/bin/perl -w
-# Lookup callsign in LoTW usage data.  2-clause BSD license.
+# Lookup callsign in LoTW usage data.
 
-# Copyright 2018 /u/molo1134. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;

@@ -1,4 +1,9 @@
 #!/usr/bin/perl
+# Retrieve TAF weather data
+#
+# 2-clause BSD license.
+# Copyright (c) 2019 W9VFR. All rights reserved.
+# Copyright (c) 2019 molo1134@github. All rights reserved.
 
 if ($#ARGV < 0) {
 	print "usage: !taf <airportcode>\n";

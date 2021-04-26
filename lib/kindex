@@ -1,7 +1,8 @@
 #!/usr/bin/perl -w
-# Lookup K index prediction and display graph.  2-clause BSD license.
+# Lookup K index prediction and display graph.
 
-# Copyright 2018 /u/molo1134. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2018, 2020 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;

@@ -109,7 +109,7 @@ needed.
 * Chris K2CR
 * AA4JQ
 * Dan VK3DAN
-* W9VFR
+* Josh W9VFR
 * Oliver M6WRF
 * Andrew KC2G
 

@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 #
-# Geocoding utility functions.  Uses Google API.  2-clause BSD license.
+# Geocoding utility functions.  Uses Google API.
 #
-# Copyright 2018 /u/molo1134. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
 
 package Location;
 require Exporter;

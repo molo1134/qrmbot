@@ -1,9 +1,9 @@
 #!/usr/bin/perl -w
 
 # ham spots lookup, using pskreporter, reverse beacon network and dxwatch.
-# 2-clause BSD license.
 
-# Copyright 2018 /u/molo1134. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2018 molo1134@github. All rights reserved.
 
 
 use strict;

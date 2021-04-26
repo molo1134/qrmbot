@@ -1,7 +1,8 @@
 #!/usr/bin/perl -w
-# Convert from morse code symbols to text.  2-clause BSD license.
+# Convert from morse code symbols to text.
 
-# Copyright 2018 /u/molo1134. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2018 molo1134@github. All rights reserved.
 
 use strict;
 

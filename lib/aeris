@@ -2,6 +2,9 @@
 
 # aeris weather
 #
+# 2-clause BSD license.
+# Copyright (c) 2021 molo1134@github. All rights reserved.
+#
 # requires an API key from aerisweather.com  Place into the file $HOME/.aerisweather as follows:
 #
 # $client_id = "0123456789abcdef";

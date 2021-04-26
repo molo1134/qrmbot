@@ -1,4 +1,8 @@
 #!/usr/bin/perl
+# Retrieve METAR weather data
+#
+# 2-clause BSD license.
+# Copyright (c) 2019 molo1134@github. All rights reserved.
 
 if ($#ARGV < 0) {
 	print "usage: !metar <airportcode>\n";

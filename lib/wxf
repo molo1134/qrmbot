@@ -1,7 +1,10 @@
 #!/usr/bin/perl -w
-# WUnderground API client -- forecast.  2-clause BSD license.
+# WUnderground API client -- forecast.
 
-# Copyright 2018 /u/molo1134. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
+
+# DEPRECATED -- wunderground no longer provides API access
 
 # requires an API key from wunderground.com  Place into the file $HOME/.wunderground as follows:
 #

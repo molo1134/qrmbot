@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 #
-# APRS Query using aprs.fi   2-clause BSD license.
+# APRS Query using aprs.fi
 #
-# Copyright 2018 /u/molo1134. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
 
 # requires an API key from aprs.fi.  Place into the file $HOME/.aprs.fi as follows:
 #

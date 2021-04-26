@@ -1,7 +1,8 @@
 #!/usr/bin/perl -w
 
 # 2-clause BSD license.
-# Copyright 2021 /u/molo1134. All rights reserved.
+# Copyright (c) 2018 AA4JQ. All rights reserved.
+# Copyright (c) 2018, 2019, 2020, 2021 molo1134@github. All rights reserved.
 
 use strict;
 use warnings;

@@ -1,8 +1,10 @@
 #!/usr/bin/perl -w
 #
-# Lookup DXCC for given call or prefix.  2-clause BSD license.
+# Lookup DXCC for given call or prefix.
 
-# Copyright 2018 /u/molo1134. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
+# Copyright (c) 2020 Andrew Rodland. All rights reserved.
 
 use strict;
 

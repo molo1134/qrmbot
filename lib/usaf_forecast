@@ -1,7 +1,9 @@
 #!/usr/bin/perl -w
-# Lookup 45-day solar forecast, output as graph.  2-clause BSD license.
+# Lookup 45-day solar forecast, output as graph.
+# Based on NOAA solarforecast 27-day output script.
 
-# Copyright 2020 /u/molo1134. All rights reserved.
+# 2-clause BSD license.
+# Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;

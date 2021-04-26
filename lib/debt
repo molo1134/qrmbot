@@ -1,6 +1,9 @@
 #!/usr/bin/perl
 #
 # US National debt, updated daily
+#
+# 2-clause BSD license.
+# Copyright (c) 2018, 2020, 2021 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;
