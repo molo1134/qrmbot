@@ -9,6 +9,7 @@ bind pub - !phonetics phoneticise
 bind pub - !phoneticise phoneticise
 bind pub - !phoneticize phoneticise
 bind pub - !metard metard
+bind pub - !truck truck
 bind pub - !brexit brexit
 bind pub - !christmas christmas
 bind pub - !translate translate
@@ -235,6 +236,10 @@ proc do_wwv_beep_pub { chan } {
 
 proc metard { nick host hand chan text} {
 	putchan $chan "$nick you tard"
+}
+
+proc truck { nick host hand chan text} {
+	putchan $chan "truck you, $nick"
 }
 
 proc brexit { nick host hand chan text } {
