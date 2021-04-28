@@ -181,6 +181,6 @@ proc msg_gold {nick uhand handle arg} {
 proc msg_silver {nick uhand handle arg} {
   msg_convert_units $nick $uhand $handle "silverprice * 1 troyounce in USD"
 }
-proc msg_platinum {nick uhand handle arg} {
+proc msg_plat {nick uhand handle arg} {
   msg_convert_units $nick $uhand $handle "platinumprice * 1 troyounce in USD"
 }
