@@ -21,6 +21,11 @@ my ($updated, $aindex, $kindex, $solarflux, $sunspots);
 my @bands;
 my @phenom;
 
+if (defined($ARGV[0]) and $ARGV[0] eq "about") {
+  print "via hamqsl.com\n";
+  exit 0;
+}
+
 my ($esfi, $essn);
 {
   my $url = "http://beta.kc2g.com/api/essn.json";
