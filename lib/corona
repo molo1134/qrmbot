@@ -186,6 +186,7 @@ $statePop{MP} = 55194;
 $statePop{AS} = 55641;
 $statePop{VI} = 104914;
 $statePop{GU} = 165718;
+$statePop{DC} = 705749;
 $statePop{PR} = 3193694;
 
 my %countryPop;
