@@ -93,6 +93,7 @@ my $encodedloc = uri_escape($loc);
 
 #my $url = "https://api.aerisapi.com/observations/$encodedloc?filter=allstations&client_id=$client_id&client_secret=$client_secret";
 my $url = "https://api.aerisapi.com/observations/closest?p=$encodedloc&filter=allstations&client_id=$client_id&client_secret=$client_secret&limit=1";
+#print "$url\n";
 open (HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
 local $/;   # read entire file -- FIXME: potentially memory hungry
 my $json = <HTTP>;
@@ -152,8 +153,12 @@ if ($full == 1) {
   print "\n";
 }
 
+my $emoji = " " . getEmojiFromIcon($ob->{icon});
+
 #short
-print " conditions: ", bold($ob->{weather}), "  Temp: ", bold("$ob->{tempC}°C/$ob->{tempF}°F");
+print " conditions: ", bold($ob->{weather});
+print $emoji if length $emoji > 1;
+print "  Temp: ", bold("$ob->{tempC}°C/$ob->{tempF}°F");
 print "  Humidity: $ob->{humidity}%" if defined $ob->{humidity};
 print " " if ($full == 0);
 
@@ -235,3 +240,129 @@ if (defined $j->{response}) {
   }
 }
 
+
+sub getEmojiFromIcon {
+  my $icon = shift;
+  #print "$icon\n";
+  my %iconToEmojiMap = (
+
+    "blizzard.png" => "🌬️🌨️",
+    "blizzardn.png" => "🌬️🌨️",
+    "blowingsnow.png" => "",
+    "blowingsnown.png" => "",
+    "clear.png" => "☀️",
+    "clearn.png" => "🌙",
+    "cloudy.png" => "☁️",
+    "cloudyn.png" => "☁️",
+    "cloudyw.png" => "🌬️☁️",
+    "cloudywn.png" => "🌬️☁️",
+    "cold.png" => "🥶",
+    "coldn.png" => "🥶",
+    "drizzle.png" => "🌧️",
+    "drizzlen.png" => "🌧️",
+    "dust.png" => "",
+    "dustn.png" => "",
+    "fair.png" => "🌤️",
+    "fairn.png" => "",
+    "drizzlef.png" => "",
+    "fdrizzlen.png" => "",
+    "flurries.png" => "🌨️",
+    "flurriesn.png" => "🌨️",
+    "flurriesw.png" => "🌬️🌨️",
+    "flurrieswn.png" => "🌬️🌨️",
+    "fog.png" => "🌫️",
+    "fogn.png" => "🌫️",
+    "freezingrain.png" => "❄️ 🌧️",
+    "freezingrainn.png" => "❄️ 🌧️",
+    "hazy.png" => "",
+    "hazyn.png" => "",
+    "hot.png" => "🌡️",
+    "mcloudy.png" => "🌥️",
+    "mcloudyn.png" => "",
+    "mcloudyr.png" => "",
+    "mcloudyrn.png" => "",
+    "mcloudyrw.png" => "",
+    "mcloudyrwn.png" => "",
+    "mcloudys.png" => "🌥️🌨️",
+    "mcloudysn.png" => "",
+    "mcloudysf.png" => "",
+    "mcloudysfn.png" => "",
+    "mcloudysfw.png" => "",
+    "mcloudysfwn.png" => "",
+    "mcloudysw.png" => "🌬️🌥️🌨️",
+    "mcloudyswn.png" => "",
+    "mcloudyt.png" => "🌥️🌩️",
+    "mcloudytn.png" => "",
+    "mcloudytw.png" => "🌬️🌥️🌩️",
+    "mcloudytwn.png" => "",
+    "mcloudyw.png" => "🌬️🌥️",
+    "mcloudywn.png" => "",
+    "pcloudy.png" => "⛅",
+    "pcloudyn.png" => "",
+    "pcloudyr.png" => "",
+    "pcloudyrn.png" => "",
+    "pcloudyrw.png" => "",
+    "pcloudyrwn.png" => "",
+    "pcloudys.png" => "⛅🌨️",
+    "pcloudysn.png" => "",
+    "pcloudysf.png" => "",
+    "pcloudysfn.png" => "",
+    "pcloudysfw.png" => "",
+    "pcloudysfwn.png" => "",
+    "pcloudysw.png" => "🌬️⛅🌨️",
+    "pcloudyswn.png" => "",
+    "pcloudyt.png" => "⛅🌩️",
+    "pcloudytn.png" => "",
+    "pcloudytw.png" => "🌬️⛅🌩️",
+    "pcloudytwn.png" => "",
+    "pcloudyw.png" => "🌬️⛅",
+    "pcloudywn.png" => "",
+    "rain.png" => "🌧️",
+    "rainn.png" => "🌧️",
+    "rainandsnow.png" => "🌧️🌨️",
+    "rainandsnown.png" => "🌧️🌨️",
+    "raintosnow.png" => "🌧️🌨️",
+    "raintosnown.png" => "🌧️🌨️",
+    "rainw.png" => "🌬️🌧️",
+    "rainwn.png" => "🌬️🌧️",
+    "showers.png" => "🌧️",
+    "showersn.png" => "🌧️",
+    "showersw.png" => "🌬️🌧️",
+    "showerswn.png" => "🌬️🌧️",
+    "sleet.png" => "",
+    "sleetn.png" => "",
+    "sleetsnow.png" => "",
+    "sleetsnown.png" => "",
+    "smoke.png" => "",
+    "smoken.png" => "",
+    "snow.png" => "🌨️",
+    "snown.png" => "🌨️",
+    "snoww.png" => "🌬️🌨️",
+    "snowwn.png" => "🌬️🌨️",
+    "snowshowers.png" => "🌨️",
+    "snowshowersn.png" => "🌨️",
+    "snowshowersw.png" => "🌬️🌨️",
+    "snowshowerswn.png" => "🌬️🌨️",
+    "snowtorain.png" => "🌨️🌧️",
+    "snowtorainn.png" => "🌨️🌧️",
+    "sunny.png" => "☀️",
+    "sunnyn.png" => "🌙",
+    "sunnyw.png" => "🌬️☀️",
+    "sunnywn.png" => "🌬️🌙",
+    "tstorm.png" => "⛈️",
+    "tstormn.png" => "⛈️",
+    "tstorms.png" => "⛈️",
+    "tstormsn.png" => "⛈️",
+    "tstormsw.png" => "🌬️⛈️",
+    "tstormswn.png" => "🌬️⛈️",
+    "wind.png" => "🌬️",
+    "windn.png" => "🌬️",
+    "wintrymix.png" => "🌨️🌧️",
+    "wintrymixn.png" => "🌨️🌧️",
+  );
+  if (defined $iconToEmojiMap{$icon}) {
+    return $iconToEmojiMap{$icon};
+  } else {
+    return "";
+  }
+}
