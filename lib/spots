@@ -1,10 +1,16 @@
 #!/usr/bin/perl -w
 
-# ham spots lookup, using pskreporter, reverse beacon network and dxwatch.
+# ham spots lookup, using pskreporter, reverse beacon network, dxwatch and
+# hamspots.net
 
 # 2-clause BSD license.
 # Copyright (c) 2018 molo1134@github. All rights reserved.
 
+# for hamspots.net, please use a $HOME/.hamspotlogin with the following
+# contents:
+#
+# $login_callsign="YOURCALL";
+# $login_password="xxxxxxxxxxxxxxx";
 
 use strict;
 use POSIX qw(floor strftime);
