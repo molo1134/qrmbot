@@ -90,8 +90,125 @@ $loc = $geo if defined $geo;
 my ($lat, $lon) = split(/,/, $geo) if defined($geo);
 my $encodedloc = uri_escape($loc);
 
+our %iconToEmojiMap = (
+  "blizzard.png" => "🌬️🌨️",
+  "blizzardn.png" => "🌬️🌨️",
+  "blowingsnow.png" => undef,
+  "blowingsnown.png" => undef,
+  "clear.png" => "☀️",
+  "clearn.png" => "🌙",
+  "cloudy.png" => "☁️",
+  "cloudyn.png" => "☁️",
+  "cloudyw.png" => "🌬️☁️",
+  "cloudywn.png" => "🌬️☁️",
+  "cold.png" => "🥶",
+  "coldn.png" => "🥶",
+  "drizzle.png" => "🌧️",
+  "drizzlen.png" => "🌧️",
+  "dust.png" => undef,
+  "dustn.png" => undef,
+  "fair.png" => "🌤️",
+  "fairn.png" => undef,
+  "drizzlef.png" => undef,
+  "fdrizzlen.png" => undef,
+  "flurries.png" => "🌨️",
+  "flurriesn.png" => "🌨️",
+  "flurriesw.png" => "🌬️🌨️",
+  "flurrieswn.png" => "🌬️🌨️",
+  "fog.png" => "🌫️",
+  "fogn.png" => "🌫️",
+  "freezingrain.png" => "❄️ 🌧️",
+  "freezingrainn.png" => "❄️ 🌧️",
+  "hazy.png" => undef,
+  "hazyn.png" => undef,
+  "hot.png" => "🌡️",
+  "mcloudy.png" => "🌥️",
+  "mcloudyn.png" => undef,
+  "mcloudyr.png" => "🌥️🌧️",
+  "mcloudyrn.png" => undef,
+  "mcloudyrw.png" => undef,
+  "mcloudyrwn.png" => undef,
+  "mcloudys.png" => "🌥️🌨️",
+  "mcloudysn.png" => undef,
+  "mcloudysf.png" => undef,
+  "mcloudysfn.png" => undef,
+  "mcloudysfw.png" => undef,
+  "mcloudysfwn.png" => undef,
+  "mcloudysw.png" => "🌬️🌥️🌨️",
+  "mcloudyswn.png" => undef,
+  "mcloudyt.png" => "🌥️🌩️",
+  "mcloudytn.png" => undef,
+  "mcloudytw.png" => "🌬️🌥️🌩️",
+  "mcloudytwn.png" => undef,
+  "mcloudyw.png" => "🌬️🌥️",
+  "mcloudywn.png" => undef,
+  "pcloudy.png" => "⛅",
+  "pcloudyn.png" => undef,
+  "pcloudyr.png" => "⛅🌧️",
+  "pcloudyrn.png" => undef,
+  "pcloudyrw.png" => undef,
+  "pcloudyrwn.png" => undef,
+  "pcloudys.png" => "⛅🌨️",
+  "pcloudysn.png" => undef,
+  "pcloudysf.png" => undef,
+  "pcloudysfn.png" => undef,
+  "pcloudysfw.png" => undef,
+  "pcloudysfwn.png" => undef,
+  "pcloudysw.png" => "🌬️⛅🌨️",
+  "pcloudyswn.png" => undef,
+  "pcloudyt.png" => "⛅🌩️",
+  "pcloudytn.png" => undef,
+  "pcloudytw.png" => "🌬️⛅🌩️",
+  "pcloudytwn.png" => undef,
+  "pcloudyw.png" => "🌬️⛅",
+  "pcloudywn.png" => undef,
+  "rain.png" => "🌧️",
+  "rainn.png" => "🌧️",
+  "rainandsnow.png" => "🌧️🌨️",
+  "rainandsnown.png" => "🌧️🌨️",
+  "raintosnow.png" => "🌧️🌨️",
+  "raintosnown.png" => "🌧️🌨️",
+  "rainw.png" => "🌬️🌧️",
+  "rainwn.png" => "🌬️🌧️",
+  "showers.png" => "🌧️",
+  "showersn.png" => "🌧️",
+  "showersw.png" => "🌬️🌧️",
+  "showerswn.png" => "🌬️🌧️",
+  "sleet.png" => undef,
+  "sleetn.png" => undef,
+  "sleetsnow.png" => undef,
+  "sleetsnown.png" => undef,
+  "smoke.png" => undef,
+  "smoken.png" => undef,
+  "snow.png" => "🌨️",
+  "snown.png" => "🌨️",
+  "snoww.png" => "🌬️🌨️",
+  "snowwn.png" => "🌬️🌨️",
+  "snowshowers.png" => "🌨️",
+  "snowshowersn.png" => "🌨️",
+  "snowshowersw.png" => "🌬️🌨️",
+  "snowshowerswn.png" => "🌬️🌨️",
+  "snowtorain.png" => "🌨️🌧️",
+  "snowtorainn.png" => "🌨️🌧️",
+  "sunny.png" => "☀️",
+  "sunnyn.png" => "🌙",
+  "sunnyw.png" => "🌬️☀️",
+  "sunnywn.png" => "🌬️🌙",
+  "tstorm.png" => "⛈️",
+  "tstormn.png" => "⛈️",
+  "tstorms.png" => "⛈️",
+  "tstormsn.png" => "⛈️",
+  "tstormsw.png" => "🌬️⛈️",
+  "tstormswn.png" => "🌬️⛈️",
+  "wind.png" => "🌬️",
+  "windn.png" => "🌬️",
+  "wintrymix.png" => "🌨️🌧️",
+  "wintrymixn.png" => "🌨️🌧️",
+);
+
 my $url = "https://api.aerisapi.com/forecasts/$encodedloc?filter=daynight&client_id=$client_id&client_secret=$client_secret";
 $url .= "&limit=3" if $short;
+#print "$url\n";
 open (HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
 local $/;   # read entire file -- FIXME: potentially memory hungry
 my $json = <HTTP>;
@@ -116,10 +233,11 @@ print "Forecast for ", bold(geolocate($lat, $lon)), " ($lat, $lon):\n";
 
 foreach my $period (@{$j->{response}[0]->{periods}}) {
   my $dow = strftime("%A", localtime($period->{timestamp}));
+  my $emoji = " " . getEmojiFromIcon($period->{icon});
   if ($period->{isDay}) {
-    printf " %s: %s; high: %d°C/%d°F", bold($dow), $period->{weather}, $period->{maxTempC}, $period->{maxTempF};
+    printf " %s: %s%s; high: %d°C/%d°F", bold($dow), $period->{weather}, $emoji, $period->{maxTempC}, $period->{maxTempF};
   } else {
-    printf " %s: %s; low: %d°C/%d°F", bold($dow . " night"), $period->{weather}, $period->{minTempC}, $period->{minTempF};
+    printf " %s: %s%s; low: %d°C/%d°F", bold($dow . " night"), $period->{weather}, $emoji, $period->{minTempC}, $period->{minTempF};
   }
   if ($period->{snowCM} > 0.0) {
     printf "; snow: %dcm/%din", round($period->{snowCM}), round($period->{snowIN});
@@ -169,3 +287,16 @@ if (defined $j->{response}) {
   }
 }
 
+sub getEmojiFromIcon {
+  my $icon = shift;
+  our %iconToEmojiMap;
+  #print "$icon :: $iconToEmojiMap{$icon}\n";
+  #print "$icon\n";
+  if (defined $iconToEmojiMap{$icon}) {
+    return $iconToEmojiMap{$icon} . " ";
+  } else {
+    $icon =~ s/\.png$//;
+    #return "[$icon]";
+    return "";
+  }
+}
