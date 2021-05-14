@@ -1484,7 +1484,8 @@ if ($#countyList >= 0) {
     my $sevenDayPerCap = $sevenDayTotal / ($pop / 100000.0);
     printf("; %s total for last 7d (%s per 100k over 7d)\n", commify($sevenDayTotal), colorByRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
 
-    my $full_vaxxed = $cty_vaxx{"${st}_${cty}"};
+    my $lcty = lc $cty;
+    my $full_vaxxed = $cty_vaxx{"${st}_${lcty}"};
     my $unknowncty_vaxxed = $cty_vaxx{"${st}_unknown county"};
 
     my $st_pop = undef;
