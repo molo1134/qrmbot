@@ -15,6 +15,7 @@ use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 use Encode qw(decode);
 use I18N::Langinfo qw(langinfo CODESET);
+use JSON qw( decode_json );
 
 use File::Basename;
 use Cwd 'realpath';
@@ -30,7 +31,7 @@ use Clone qw(clone);
 no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 if ($ARGV[0] =~ /about/i){
-  print "Covid19 case counts.  Data sources: https://github.com/CSSEGISandData/COVID-19 https://github.com/nytimes/covid-19-data/ https://github.com/jgehrcke/covid-19-germany-gae https://www.worldometers.info/coronavirus/ https://github.com/owid/covid-19-data/tree/master/public/data/vaccinations\n";
+  print "Covid19 case counts.  Data sources: https://github.com/CSSEGISandData/COVID-19 https://github.com/nytimes/covid-19-data/ https://github.com/jgehrcke/covid-19-germany-gae https://www.worldometers.info/coronavirus/ https://github.com/owid/covid-19-data/tree/master/public/data/vaccinations https://covid.cdc.gov/covid-data-tracker/#county-view\n";
 
   my @casespercap = ( 1.0, 5.0, 25.0, 38.0, 50.0, 100.0, 325.0 );
   my @result = seriesToSparkLine(\@casespercap, 1, 0);
@@ -1385,6 +1386,29 @@ if ($#countyList >= 0) {
   }
   close(HTTP);
 
+  $url = "https://covid.cdc.gov/covid-data-tracker/COVIDData/getAjaxData?id=vaccination_county_condensed_data";
+  my %cty_vaxx;
+  open(HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $json = <HTTP>;
+  close(HTTP);
+  if (not $json =~ /^\s*{/) {
+    print "error while retrieving data: $json\n";
+    exit 0;
+  }
+  my $j = decode_json($json);
+  if (defined $j->{vaccination_county_condensed_data}) {
+    foreach my $rec (@{$j->{vaccination_county_condensed_data}}) {
+      my $cty = lc $rec->{County};
+      my $st = $rec->{StateName};
+      $st =~ s/\s*$//;
+      my $dt = $rec->{Date};
+      my $num_full_vax = $rec->{Series_Complete_Yes};
+      $cty_vaxx{"${st}_${cty}"} = $num_full_vax;
+      #print "$st $cty => $num_full_vax\n";
+    }
+  }
+
   for my $c (@countyList) {
     my ($cty, $st) = split(";", $c);
     $cty = "New York City" if lc $cty eq "new york";
@@ -1459,6 +1483,26 @@ if ($#countyList >= 0) {
     my $sevenDayTotal = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]);
     my $sevenDayPerCap = $sevenDayTotal / ($pop / 100000.0);
     printf("; %s total for last 7d (%s per 100k over 7d)\n", commify($sevenDayTotal), colorByRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
+
+    my $full_vaxxed = $cty_vaxx{"${st}_${cty}"};
+    my $unknowncty_vaxxed = $cty_vaxx{"${st}_unknown county"};
+
+    my $st_pop = undef;
+    foreach my $k (keys %stateToName) {
+      if ($stateToName{$k} eq $st) {
+	$st_pop = $statePop{$k};
+	last;
+      }
+    }
+    #print "$unknowncty_vaxxed; $st_pop;\n";
+
+    if (defined $full_vaxxed) {
+      printf("%s, %s: %s%% of pop. fully vaccinated", $cty, $st, bold(nearest(0.1, $full_vaxxed * 100.0 / $pop)));
+      printf(" (vax for %s%% of state pop. unallocated to a county)",
+	nearest(0.1, $unknowncty_vaxxed * 100.0 / $st_pop)) if defined $st_pop and defined $unknowncty_vaxxed;
+      print "\n";
+    }
+
   }
 }
 
