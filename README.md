@@ -63,6 +63,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.aerisweather` -- API key for aerisweather.com
 * `$HOME/.aprs.fi` -- required [aprs.fi](http://aprs.fi/) API key for `aprs` tool
 * `$HOME/.bitlyapikey` -- key for bit.ly API
+* `$HOME/.clublogapikey` -- API key for clublog.org
 * `$HOME/.coinmarketcapkey` -- API key for coinmarketcap.com
 * `$HOME/.darksky` -- API key for darksky.com
 * `$HOME/.googleapikeys` -- key for Google APIs
@@ -103,6 +104,11 @@ needed.
 6. Add a preferred wx station in addition to `!setgeo` geo coords
 7. If no callsign is specified with `!spots` use irc nick.
 8. Requested by K1NZ: `!untappd` for beer info -- they are not giving out API keys. :(
+9. ~~Add [clublog log check](https://clublog.freshdesk.com/support/solutions/articles/96841-checking-logs-for-the-existence-of-a-qso) or [clublog log search](https://clublog.freshdesk.com/support/solutions/articles/3000071078-performing-a-log-search-using-json)~~
+10. Add [clublog DXCC activity data](https://clublog.freshdesk.com/support/solutions/articles/55364-activity-data-json-api)
+11. Add POTA
+12. Move dotfiles to a dot dir
+13. Add [clublog league status](https://bbs.km8v.com/bot/league?call=)
 
 ## Contributors
 

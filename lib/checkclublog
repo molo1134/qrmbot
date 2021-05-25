@@ -1,7 +1,11 @@
 #!/usr/bin/perl
 #
 # 2-clause BSD license.
-# Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
+# Copyright (c) 2018, 2019, 2020, 2021 molo1134@github. All rights reserved.
+
+# put the following in $HOME/.clublogapikey to use the log search:
+#
+#our $apikey="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
 use File::Basename;
 use Cwd 'realpath';
