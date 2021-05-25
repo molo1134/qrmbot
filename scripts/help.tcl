@@ -58,6 +58,7 @@ proc send_help {nick} {
   putmsg $nick "  !eqsl -- last login to eqsl.cc for a callsign"
   putmsg $nick "  !clublog !oqrs -- log and OQRS info on clublog.org"
   putmsg $nick "  !qsl -- check all of the above qsl methods"
+  putmsg $nick "  !league -- report clublog league standings"
   putmsg $nick "  !contests -- list current and upcoming contests"
   putmsg $nick "  !wx !wxfull -- show current weather conditions"
   pummsg $nick "  !metar -- show METAR weather data"

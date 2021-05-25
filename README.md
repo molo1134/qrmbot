@@ -108,7 +108,7 @@ needed.
 10. Add [clublog DXCC activity data](https://clublog.freshdesk.com/support/solutions/articles/55364-activity-data-json-api)
 11. Add POTA
 12. Move dotfiles to a dot dir
-13. Add [clublog league status](https://bbs.km8v.com/bot/league?call=)
+13. ~~Add [clublog league status](https://bbs.km8v.com/bot/league?call=)~~
 
 ## Contributors
 
