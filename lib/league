@@ -1,0 +1,64 @@
+#!/usr/bin/perl
+# get clublog DXCC league status
+#
+# 2-clause BSD license.
+# Copyright (c) 2021 molo1134@github. All rights reserved.
+
+use strict;
+use utf8;
+use Encode qw(decode);
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+use Time::Piece ();
+use JSON qw( decode_json );
+use POSIX qw(strftime);
+
+@ARGV = map { decode "utf-8", $_ } @ARGV;
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+my $club = 187; # reddit club
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if (isNumeric($ARGV[$i])) {
+    $club = $ARGV[$i];
+  }
+  $i++;
+}
+
+my $url = "https://secure.clublog.org/league_api.php?date=3&club=${club}";
+
+local $/;   # read entire file -- FIXME: potentially memory hungry
+open (JSON, '-|', "curl --max-time 60 -s -k -L '$url'");
+my $json = <JSON>;
+close(JSON);
+my $j = decode_json($json) or die "parse error: $json\n";
+
+my $limit = 20;
+$limit = 10 if $username eq "eggdrop";
+my $year = strftime("%Y", gmtime(time()));
+print "Clublog standings for $year: ";
+print "\n" if $username ne "eggdrop";
+foreach my $standing (@{$j}) {
+  my ($rank, $call, $dxcc, $sluts) = @{$standing};
+  print "$rank: $call $dxcc/$sluts" if $rank != 1;
+  print "$rank: " . bold($call). " " . bold($dxcc) . "/$sluts" if $rank == 1;
+  $limit--;
+  print "\n" if $username ne "eggdrop";
+  print "; " if $username eq "eggdrop" and $limit >= 1;
+  last if $limit < 1;
+}
+print " -- https://clublog.org/league.php?club=$club\n";

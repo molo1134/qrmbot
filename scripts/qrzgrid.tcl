@@ -63,6 +63,8 @@ bind pub - !oqrs pub_clublog
 bind msg - !oqrs msg_clublog
 bind pub - !clublog pub_clublog
 bind msg - !clublog msg_clublog
+bind pub - !league pub_league
+bind msg - !league msg_league
 
 bind pub - !dxcc dxcc
 bind msg - !dxcc msg_dxcc
@@ -167,6 +169,7 @@ set longtermforecastbin "/home/eggdrop/bin/longtermforecast"
 set lotwbin "/home/eggdrop/bin/lotwcheck"
 set eqslbin "/home/eggdrop/bin/eqslcheck"
 set clublogbin "/home/eggdrop/bin/checkclublog"
+set leaguebin "/home/eggdrop/bin/league"
 set dxccbin "/home/eggdrop/bin/dxcc"
 set spotsbin "/home/eggdrop/bin/spots"
 set contestsbin "/home/eggdrop/bin/contests"
@@ -711,6 +714,29 @@ proc msg_clublog {nick uhand handle input} {
 	set call [sanitize_string [string trim ${input}]]
 	putlog "clublog msg: $nick $uhand $handle $call"
 	set fd [open "|${clublogbin} ${call}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
+}
+
+proc pub_league { nick host hand chan text } {
+	global leaguebin
+	set param [sanitize_string [string trim ${text}]]
+	putlog "league pub: $nick $host $hand $chan $param"
+	set fd [open "|${leaguebin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc msg_league {nick uhand handle input} {
+	global leaguebin
+	set param [sanitize_string [string trim ${input}]]
+	putlog "league msg: $nick $uhand $handle $param"
+	set fd [open "|${leaguebin} ${param}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg $nick "$line"
