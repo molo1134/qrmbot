@@ -32,9 +32,9 @@ sub updatezip {
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq 'eggdrop') {
-    print "usage: !clublog <callsign>\n";
+    print "usage: !clublog <callsign> [logged call]\n";
   } else {
-    print "usage: $0 <callsign>\n";
+    print "usage: $0 <callsign> [logged call]\n";
   }
   exit $exitnonzeroonerror;
 }
@@ -42,6 +42,48 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 my $call = uc $ARGV[0];
 $call =~ s/^\s*//;
 $call =~ s/\s*$//;
+
+my $call2 = undef;
+if ($#ARGV >= 1) {
+  $call2 = uc $ARGV[1];
+  $call2 =~ s/^\s*//;
+  $call2 =~ s/\s*$//;
+}
+
+if (defined $call2) {
+  our $apikey;
+  require ($ENV{HOME} . "/.clublogapikey");
+  my $url = "https://clublog.org/logsearchjson.php?log=${call}&call=${call2}&api=$apikey";
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+  my $json = <JSON>;
+  close(JSON);
+  #print "$json\n";
+  my $j = decode_json($json);
+  if (ref($j) ne 'HASH') {
+    print "$call2 not found in $call clublog\n";
+    exit 0;
+  } 
+  print bold($call2), " in ", bold($call), " clublog: ";
+  print "\n" if $username ne "eggdrop";
+  foreach my $band (%{$j}) {
+    my ($ph, $cw, $dt) = (0,0,0);
+    next if not defined $j->{$band};
+    $ph = $j->{$band}->{P} if defined $j->{$band}->{P};
+    $cw = $j->{$band}->{C} if defined $j->{$band}->{C};
+    $dt = $j->{$band}->{D} if defined $j->{$band}->{D};
+    print bold("${band}m"), " - ";
+    print "Ph: $ph" if $ph > 0;
+    print ", " if $ph > 0 and ($cw > 0 or $dt > 0);
+    print "CW: $cw" if $cw > 0;
+    print ", " if $cw > 0 and $dt > 0;
+    print "Dg: $dt" if $dt > 0;
+    print "\n" if $username ne "eggdrop";
+    print "; " if $username eq "eggdrop";
+  }
+  print "\n" if $username eq "eggdrop";
+  exit 0;
+}
 
 my $now = time;
 my $needzip = 0;
