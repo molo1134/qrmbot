@@ -262,7 +262,8 @@ if (not defined $result) {
   exit $exitnonzeroonerror;
 }
 
-print "$lang{$source} to $lang{$target}: \"$query\" ⇒ \"$result\"\n";
+#print "$lang{$source} to $lang{$target}: \"$query\" ⇒ \"$result\"\n";
+print "$lang{$source} to $lang{$target} ⇒ \"$result\"\n";
 
 sub getTranslateAPIKey {
   my $apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
