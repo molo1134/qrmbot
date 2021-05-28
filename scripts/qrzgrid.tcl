@@ -298,9 +298,9 @@ proc qrz_setgeo { nick handle input } {
 		return
 	}
 
-	if [ regexp -nocase {[A-R][A-R][0-9][0-9]([a-x][a-x])?} "$input"] then {
+	if {[regexp -nocase {[A-R][A-R][0-9][0-9]([a-x][a-x])?} "$input"]} then {
 		set input [grid_to_coords $input]
-	} else if [ regexp "^-?\\d+\\.\\d+,\s*-?\\d+\\.\\d+$" "$input" ] then {
+	} elseif {[regexp "^-?\\d+\\.\\d+,\s*-?\\d+\\.\\d+$" "$input"]} then {
 		regsub "\s*" $input {} input
 	} else {
 		putmsg $nick "error, invalid input: $input"
