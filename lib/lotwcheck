@@ -75,7 +75,7 @@ if (-r $cachefile) {
       print "$dxcall: LoTW $d $t\n";
       $i++;
     }
-    last if $i > 5 and $username eq "eggdrop";
+    last if $i > 3 and $username eq "eggdrop";
   }
   close(INPUT);
 } else {
