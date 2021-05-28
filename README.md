@@ -24,7 +24,6 @@ bot](https://www.reddit.com/r/amateurradio/wiki/qrmbot).
 As tested on Debian:
 
 * `curl`
-* `netpbm`
 * `perl`
 * `perl-base`
 * `perl-modules`
@@ -98,7 +97,7 @@ needed.
 
 1. Clean up and modularize TCL scripts
 2. Document how to use and configure TCL scripts
-3. Accept other formats for `!setgeo`
+3. ~~Accept other formats for `!setgeo`~~
 4. Use geo grid for `!activity`
 5. Cleanup needed in `qrz` script
 6. Add a preferred wx station in addition to `!setgeo` geo coords
