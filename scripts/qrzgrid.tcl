@@ -251,6 +251,38 @@ proc qrz_getgeo_msg { nick uhand handle input } {
 	putmsg $nick "$geo"
 }
 
+proc grid_to_coords { grid } {
+	set grid [string toupper $grid]
+
+	scan [string index $grid 0] %c pos0
+	scan [string index $grid 1] %c pos1
+	scan [string index $grid 2] %c pos2
+	scan [string index $grid 3] %c pos3
+	scan [string index $grid 4] %c pos4
+	scan [string index $grid 5] %c pos5
+
+	set lon [expr (($pos0 - 65) * 20) - 180]
+	set lat [expr (($pos1 - 65) * 10) - 90]
+	set lon [expr $lon + (($pos2 - 48) * 2)]
+	set lat [expr $lat + (($pos3 - 48) * 1)]
+
+	if {[info exists pos4]} {
+		# have subsquares
+		set lon [expr $lon + (($pos4 - 65) * (5.0/60.0))]
+		set lat [expr $lat + (($pos5 - 65) * (2.5/60.0))]
+		# move to center of subsqure
+		set lon [expr $lon + 2.5/60]
+		set lat [expr $lat + 1.25/60]
+	} else {
+		# move to center of square
+		set lon [expr $lon + 1]
+		set lat [expr $lat + 0.5]
+	}
+
+	return "$lat,$lon"
+}
+
+
 proc qrz_setgeo { nick handle input } {
 	global geofile
 
@@ -260,13 +292,16 @@ proc qrz_setgeo { nick handle input } {
 	}
 
 	if { $input == {} } {
-		putmsg $nick "usage  : !setgeo <latitude>,<longitude>"
+		putmsg $nick "usage  : !setgeo <latitude>,<longitude>|<grid>"
 		putmsg $nick "example: !setgeo 39.735154,-77.421129"
-		putmsg $nick "(note there is no whitespace)"
+		putmsg $nick "example: !setgeo FN21wb"
 		return
 	}
 
-	if [ regexp "^-?\\d+\\.\\d+,-?\\d+\\.\\d+$" "$input" ] then {
+	if [ regexp -nocase "[A-R][A-R][0-9][0-9]([a-x][a-x])?" "$input"] then {
+		set input [grid_to_coords $input]
+	} else if [ regexp "^-?\\d+\\.\\d+,\s*-?\\d+\\.\\d+$" "$input" ] then {
+		regsub "\s*" $input {} input
 	} else {
 		putmsg $nick "error, invalid input: $input"
 		return
