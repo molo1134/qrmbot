@@ -17,7 +17,7 @@ if (length($code) != 4) {
 	exit 0;
 }
 
-my $url = "http://tgftp.nws.noaa.gov/data/forecasts/taf/stations/$code.TXT";
+my $url = "https://tgftp.nws.noaa.gov/data/forecasts/taf/stations/$code.TXT";
 #print "$url\n";
 my $found = 0;
 my @lines;
