@@ -107,7 +107,7 @@ proc pub_convert_units {nick host hand chan arg} {
 
 
   if {![info exists matched] && ![info exists matched2]} {
-    putnotc $nick "syntax: !units <foo> in <bar>"
+    putmsg $nick "syntax: !units <foo> in <bar>"
     return
   }
 

@@ -255,20 +255,20 @@ proc qrz_setgeo { nick handle input } {
 	global geofile
 
 	if {$handle == "*"} {
-		putnotc $nick "this command is valid only for registered bot users."
+		putmsg $nick "this command is valid only for registered bot users."
 		return
 	}
 
 	if { $input == {} } {
-		putnotc $nick "usage  : !setgeo <latitude>,<longitude>"
-		putnotc $nick "example: !setgeo 39.735154,-77.421129"
-		putnotc $nick "(note there is no whitespace)"
+		putmsg $nick "usage  : !setgeo <latitude>,<longitude>"
+		putmsg $nick "example: !setgeo 39.735154,-77.421129"
+		putmsg $nick "(note there is no whitespace)"
 		return
 	}
 
 	if [ regexp "^-?\\d+\\.\\d+,-?\\d+\\.\\d+$" "$input" ] then {
 	} else {
-		putnotc $nick "error, invalid input: $input"
+		putmsg $nick "error, invalid input: $input"
 		return
 	}
 
@@ -313,7 +313,7 @@ proc qrz_setgeo { nick handle input } {
 		file copy -force $tmpfile $geofile
 		file delete -force $tmpfile
 	}
-	putnotc $nick "set geo coords: $input"
+	putmsg $nick "set geo coords: $input"
 }
 
 proc grid { nick host hand chan text } {
@@ -812,13 +812,13 @@ proc msg_addspot {nick uhand handle input} {
 	global spotfile
 	putlog "addspot msg: $nick $uhand $handle $input"
 	if {$handle == "*"} {
-		putnotc $nick "this command is valid only for registered bot users."
+		putmsg $nick "this command is valid only for registered bot users."
 		return
 	}
 
 	if { $input == {} } {
-		putnotc $nick "usage  : !addspot <callsign>"
-		putnotc $nick "periodically checks for new spots for the given callsign"
+		putmsg $nick "usage  : !addspot <callsign>"
+		putmsg $nick "periodically checks for new spots for the given callsign"
 		return
 	}
 
@@ -826,7 +826,7 @@ proc msg_addspot {nick uhand handle input} {
 
 	if [ regexp {^[A-Z0-9/]+$} "$input" ] then {
 	} else {
-		putnotc $nick "error, invalid input: $input"
+		putmsg $nick "error, invalid input: $input"
 		return
 	}
 
@@ -872,20 +872,20 @@ proc msg_addspot {nick uhand handle input} {
 		file copy -force $tmpfile $spotfile
 		file delete -force $tmpfile
 	}
-	putnotc $nick "set periodic spot check: $input"
+	putmsg $nick "set periodic spot check: $input"
 }
 
 proc addspot { nick host handle chan text } {
 	global spotfile
 	putlog "addspot pub: $nick $host $handle $chan $text"
 	if {$handle == "*"} {
-		putnotc $nick "this command is valid only for registered bot users."
+		putmsg $nick "this command is valid only for registered bot users."
 		return
 	}
 
 	if { $text == {} } {
-		putnotc $nick "usage  : !addspot <callsign>"
-		putnotc $nick "periodically checks for new spots for the given callsign"
+		putmsg $nick "usage  : !addspot <callsign>"
+		putmsg $nick "periodically checks for new spots for the given callsign"
 		return
 	}
 
@@ -893,7 +893,7 @@ proc addspot { nick host handle chan text } {
 
 	if [ regexp {^[A-Z0-9/]+$} "$text" ] then {
 	} else {
-		putnotc $nick "error, invalid input: $text"
+		putmsg $nick "error, invalid input: $text"
 		return
 	}
 
@@ -945,13 +945,13 @@ proc delspot { nick host handle chan text } {
 	global spotfile
 	putlog "delspot pub: $nick $host $handle $chan $text"
 	if {$handle == "*"} {
-		putnotc $nick "this command is valid only for registered bot users."
+		putmsg $nick "this command is valid only for registered bot users."
 		return
 	}
 
 	if { $text == {} } {
-		putnotc $nick "usage  : !delspot <callsign>"
-		putnotc $nick "removes periodic check for new spots for the given callsign"
+		putmsg $nick "usage  : !delspot <callsign>"
+		putmsg $nick "removes periodic check for new spots for the given callsign"
 		return
 	}
 
@@ -959,13 +959,13 @@ proc delspot { nick host handle chan text } {
 
 	if [ regexp {^[A-Z0-9/]+$} "$text" ] then {
 	} else {
-		putnotc $nick "error, invalid input: $text"
+		putmsg $nick "error, invalid input: $text"
 		return
 	}
 
 	if { ![file exists $spotfile] } {
 		# no records
-		putnotc $nick "spot file not found"
+		putmsg $nick "spot file not found"
 		return
 	}
 
@@ -986,10 +986,10 @@ proc delspot { nick host handle chan text } {
 		}
 	}
 	if {$found == 0} {
-		putnotc $nick "not found"
+		putmsg $nick "not found"
 	} else {
 		putlog "removed spot: $text"
-		putnotc $nick "removed spot: $text"
+		putmsg $nick "removed spot: $text"
 	}
 
 	close $orig
@@ -1004,13 +1004,13 @@ proc msg_delspot {nick uhand handle input} {
 	global spotfile
 	putlog "delspot msg: $nick $uhand $handle $input"
 	if {$handle == "*"} {
-		putnotc $nick "this command is valid only for registered bot users."
+		putmsg $nick "this command is valid only for registered bot users."
 		return
 	}
 
 	if { $input == {} } {
-		putnotc $nick "usage  : !delspot <callsign>"
-		putnotc $nick "removes periodic check for new spots for the given callsign"
+		putmsg $nick "usage  : !delspot <callsign>"
+		putmsg $nick "removes periodic check for new spots for the given callsign"
 		return
 	}
 
@@ -1018,13 +1018,13 @@ proc msg_delspot {nick uhand handle input} {
 
 	if [ regexp {^[A-Z0-9/]+$} "$input" ] then {
 	} else {
-		putnotc $nick "error, invalid input: $input"
+		putmsg $nick "error, invalid input: $input"
 		return
 	}
 
 	if { ![file exists $spotfile] } {
 		# no records
-		putnotc $nick "spot file not found"
+		putmsg $nick "spot file not found"
 		return
 	}
 
@@ -1047,10 +1047,10 @@ proc msg_delspot {nick uhand handle input} {
 		}
 	}
 	if {$found == 0} {
-		putnotc $nick "not found"
+		putmsg $nick "not found"
 	} else {
 		putlog "removed spot: $input"
-		putnotc $nick "removed spot: $input"
+		putmsg $nick "removed spot: $input"
 	}
 
 	close $orig
@@ -1070,7 +1070,7 @@ proc msg_delspot {nick uhand handle input} {
 # periodicly called by timer
 proc check_spots {} {
 	# do stuff
-	#putnotc molo "timer"
+	#putmsg molo "timer"
 
 	global spotfile
 	if { [file exists $spotfile] } {
@@ -1088,7 +1088,7 @@ proc check_spots {} {
 			set ts [lindex $line 3]
 			set nick [hand2nick $handle]
 
-			#putnotc molo "handle: $handle nick: $nick call: $call chan: $chan"
+			#putmsg molo "handle: $handle nick: $nick call: $call chan: $chan"
 
 			if { $chan == "msg" && $nick != "" } {
 				msg_spots $nick "" $handle "--mon $call"
@@ -1106,7 +1106,7 @@ proc check_spots {} {
 
 proc stop_spots { nick host handle chan text } {
 	if {$handle == "*"} {
-		putnotc $nick "this command is valid only for registered bot users."
+		putmsg $nick "this command is valid only for registered bot users."
 		return
 	}
 
@@ -1118,7 +1118,7 @@ proc stop_spots { nick host handle chan text } {
 
 proc start_spots { nick host handle chan text } {
 	if {$handle == "*"} {
-		putnotc $nick "this command is valid only for registered bot users."
+		putmsg $nick "this command is valid only for registered bot users."
 		return
 	}
 
