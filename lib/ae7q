@@ -157,7 +157,7 @@ sub doAe7qCall {
   my @frns;
   my %odds_sim;
 
-  my $url = "http://104.154.130.35:8018/predict/vanity-$call.csv";
+  my $url = "http://35.194.32.186:8018/predict/vanity-$call.csv";
   open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
   while(<CSV>) {
     chomp;
@@ -167,7 +167,7 @@ sub doAe7qCall {
   }
   close(CSV);
 
-  $url = "http://104.154.130.35:8018/predict/call-$call.csv";
+  $url = "http://35.194.32.186:8018/predict/call-$call.csv";
   open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
   while(<CSV>) {
     chomp;
