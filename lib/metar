@@ -16,7 +16,7 @@ if (length($code) != 4) {
 	exit 0;
 }
 
-my $url = "http://tgftp.nws.noaa.gov/data/observations/metar/stations/$code.TXT";
+my $url = "https://tgftp.nws.noaa.gov/data/observations/metar/stations/$code.TXT";
 #print "$url\n";
 my $found = 0;
 
