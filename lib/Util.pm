@@ -6,6 +6,10 @@
 # Copyright (c) 2020, 2021 molo1134@github. All rights reserved.
 
 package Util;
+
+use utf8;
+use feature 'unicode_strings';
+
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum shortenUrl isNumeric);
