@@ -90,7 +90,7 @@ proc msg_wx {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -138,7 +138,7 @@ proc msg_wxfull {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -186,7 +186,7 @@ proc msg_wxf {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -216,7 +216,7 @@ proc wxflong { nick host hand chan text } {
 }
 
 proc msg_wxflong_pub { nick host hand chan text } {
-	msg_wxflong $nick $host $hand $text
+	msg_wxflong "$nick" $host $hand $text
 }
 
 proc msg_wxflong {nick uhand handle input} {
@@ -238,7 +238,7 @@ proc msg_wxflong {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -266,7 +266,7 @@ proc msg_metar {nick uhand handle input} {
 	set fd [open "|${metarbin} ${loc} " r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -294,7 +294,7 @@ proc msg_taf {nick uhand handle input} {
 	set fd [open "|${tafbin} ${loc} " r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -316,7 +316,7 @@ proc quake_msg {nick uhand handle input} {
 	set fd [open "|${quakebin}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -338,7 +338,7 @@ proc quakef_msg {nick uhand handle input} {
 	set fd [open "|${quakefbin}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -386,7 +386,7 @@ proc msg_darksky {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -434,7 +434,7 @@ proc msg_aeris {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -482,7 +482,7 @@ proc msg_wttr {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }

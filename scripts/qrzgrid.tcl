@@ -226,18 +226,18 @@ proc msg_qrz {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
 
 proc qrz_setgeo_pub { nick host hand chan text } {
 	putlog "setgeo pub: $nick $host $hand $chan $text"
-	qrz_setgeo $nick $hand $text
+	qrz_setgeo "$nick" $hand $text
 }
 proc qrz_setgeo_msg { nick uhand handle input } {
 	putlog "setgeo msg: $nick $uhand $handle $input"
-	qrz_setgeo $nick $handle $input
+	qrz_setgeo "$nick" $handle $input
 }
 
 proc qrz_getgeo_pub { nick host hand chan text } {
@@ -248,7 +248,7 @@ proc qrz_getgeo_pub { nick host hand chan text } {
 proc qrz_getgeo_msg { nick uhand handle input } {
 	putlog "getgeo msg: $nick $uhand $handle $input"
 	set geo [qrz_getgeo $handle]
-	putmsg $nick "$geo"
+	putmsg "$nick" "$geo"
 }
 
 proc grid_to_coords { grid } {
@@ -287,14 +287,14 @@ proc qrz_setgeo { nick handle input } {
 	global geofile
 
 	if {$handle == "*"} {
-		putmsg $nick "this command is valid only for registered bot users."
+		putmsg "$nick" "this command is valid only for registered bot users."
 		return
 	}
 
 	if { $input == {} } {
-		putmsg $nick "usage  : !setgeo <latitude>,<longitude>|<grid>"
-		putmsg $nick "example: !setgeo 39.735154,-77.421129"
-		putmsg $nick "example: !setgeo FN21wb"
+		putmsg "$nick" "usage  : !setgeo <latitude>,<longitude>|<grid>"
+		putmsg "$nick" "example: !setgeo 39.735154,-77.421129"
+		putmsg "$nick" "example: !setgeo FN21wb"
 		return
 	}
 
@@ -303,7 +303,7 @@ proc qrz_setgeo { nick handle input } {
 	} elseif {[regexp "^-?\\d+\\.\\d+,\\s*-?\\d+\\.\\d+$" "$input"]} then {
 		regsub -all {\s+} $input "" input
 	} else {
-		putmsg $nick "error, invalid input: $input"
+		putmsg "$nick" "error, invalid input: $input"
 		return
 	}
 
@@ -348,7 +348,7 @@ proc qrz_setgeo { nick handle input } {
 		file copy -force $tmpfile $geofile
 		file delete -force $tmpfile
 	}
-	putmsg $nick "set geo coords: $input"
+	putmsg "$nick" "set geo coords: $input"
 }
 
 proc grid { nick host hand chan text } {
@@ -385,7 +385,7 @@ proc msg_grid {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -404,7 +404,7 @@ proc drive_msg {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -442,7 +442,7 @@ proc transit_msg {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -501,7 +501,7 @@ proc msg_timezone {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -540,7 +540,7 @@ proc msg_elev {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -563,7 +563,7 @@ proc msg_bands {nick uhand handle input} {
 	set fd [open "|${bandsbin}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -585,7 +585,7 @@ proc msg_solar {nick uhand handle input} {
 	set fd [open "|${bandsbin} -q" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -607,7 +607,7 @@ proc msg_solarforecast {nick uhand handle input} {
 	set fd [open "|${forecastbin} " r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -636,7 +636,7 @@ proc msg_usafforecast {nick uhand handle input} {
 	set fd [open "|${usafforecastbin} " r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -649,7 +649,7 @@ proc longtermforecast { nick host hand chan text } {
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
-		#putmsg $nick "$line"
+		#putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -660,7 +660,7 @@ proc msg_longtermforecast {nick uhand handle input} {
 	set fd [open "|${longtermforecastbin} " r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -682,7 +682,7 @@ proc msg_xray {nick uhand handle input} {
 	set fd [open "|${xraybin} " r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -705,7 +705,7 @@ proc msg_lotw {nick uhand handle input} {
 	set fd [open "|${lotwbin} ${call}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -728,7 +728,7 @@ proc msg_eqsl {nick uhand handle input} {
 	set fd [open "|${eqslbin} ${call}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -751,7 +751,7 @@ proc msg_clublog {nick uhand handle input} {
 	set fd [open "|${clublogbin} ${call}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -774,7 +774,7 @@ proc msg_league {nick uhand handle input} {
 	set fd [open "|${leaguebin} ${param}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -814,7 +814,7 @@ proc msg_dxcc {nick uhand handle input} {
 
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -837,7 +837,7 @@ proc msg_spots {nick uhand handle input} {
 	set fd [open "|${spotsbin} ${input}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -847,13 +847,13 @@ proc msg_addspot {nick uhand handle input} {
 	global spotfile
 	putlog "addspot msg: $nick $uhand $handle $input"
 	if {$handle == "*"} {
-		putmsg $nick "this command is valid only for registered bot users."
+		putmsg "$nick" "this command is valid only for registered bot users."
 		return
 	}
 
 	if { $input == {} } {
-		putmsg $nick "usage  : !addspot <callsign>"
-		putmsg $nick "periodically checks for new spots for the given callsign"
+		putmsg "$nick" "usage  : !addspot <callsign>"
+		putmsg "$nick" "periodically checks for new spots for the given callsign"
 		return
 	}
 
@@ -861,7 +861,7 @@ proc msg_addspot {nick uhand handle input} {
 
 	if [ regexp {^[A-Z0-9/]+$} "$input" ] then {
 	} else {
-		putmsg $nick "error, invalid input: $input"
+		putmsg "$nick" "error, invalid input: $input"
 		return
 	}
 
@@ -907,20 +907,20 @@ proc msg_addspot {nick uhand handle input} {
 		file copy -force $tmpfile $spotfile
 		file delete -force $tmpfile
 	}
-	putmsg $nick "set periodic spot check: $input"
+	putmsg "$nick" "set periodic spot check: $input"
 }
 
 proc addspot { nick host handle chan text } {
 	global spotfile
 	putlog "addspot pub: $nick $host $handle $chan $text"
 	if {$handle == "*"} {
-		putmsg $nick "this command is valid only for registered bot users."
+		putmsg "$nick" "this command is valid only for registered bot users."
 		return
 	}
 
 	if { $text == {} } {
-		putmsg $nick "usage  : !addspot <callsign>"
-		putmsg $nick "periodically checks for new spots for the given callsign"
+		putmsg "$nick" "usage  : !addspot <callsign>"
+		putmsg "$nick" "periodically checks for new spots for the given callsign"
 		return
 	}
 
@@ -928,7 +928,7 @@ proc addspot { nick host handle chan text } {
 
 	if [ regexp {^[A-Z0-9/]+$} "$text" ] then {
 	} else {
-		putmsg $nick "error, invalid input: $text"
+		putmsg "$nick" "error, invalid input: $text"
 		return
 	}
 
@@ -980,13 +980,13 @@ proc delspot { nick host handle chan text } {
 	global spotfile
 	putlog "delspot pub: $nick $host $handle $chan $text"
 	if {$handle == "*"} {
-		putmsg $nick "this command is valid only for registered bot users."
+		putmsg "$nick" "this command is valid only for registered bot users."
 		return
 	}
 
 	if { $text == {} } {
-		putmsg $nick "usage  : !delspot <callsign>"
-		putmsg $nick "removes periodic check for new spots for the given callsign"
+		putmsg "$nick" "usage  : !delspot <callsign>"
+		putmsg "$nick" "removes periodic check for new spots for the given callsign"
 		return
 	}
 
@@ -994,13 +994,13 @@ proc delspot { nick host handle chan text } {
 
 	if [ regexp {^[A-Z0-9/]+$} "$text" ] then {
 	} else {
-		putmsg $nick "error, invalid input: $text"
+		putmsg "$nick" "error, invalid input: $text"
 		return
 	}
 
 	if { ![file exists $spotfile] } {
 		# no records
-		putmsg $nick "spot file not found"
+		putmsg "$nick" "spot file not found"
 		return
 	}
 
@@ -1021,10 +1021,10 @@ proc delspot { nick host handle chan text } {
 		}
 	}
 	if {$found == 0} {
-		putmsg $nick "not found"
+		putmsg "$nick" "not found"
 	} else {
 		putlog "removed spot: $text"
-		putmsg $nick "removed spot: $text"
+		putmsg "$nick" "removed spot: $text"
 	}
 
 	close $orig
@@ -1039,13 +1039,13 @@ proc msg_delspot {nick uhand handle input} {
 	global spotfile
 	putlog "delspot msg: $nick $uhand $handle $input"
 	if {$handle == "*"} {
-		putmsg $nick "this command is valid only for registered bot users."
+		putmsg "$nick" "this command is valid only for registered bot users."
 		return
 	}
 
 	if { $input == {} } {
-		putmsg $nick "usage  : !delspot <callsign>"
-		putmsg $nick "removes periodic check for new spots for the given callsign"
+		putmsg "$nick" "usage  : !delspot <callsign>"
+		putmsg "$nick" "removes periodic check for new spots for the given callsign"
 		return
 	}
 
@@ -1053,13 +1053,13 @@ proc msg_delspot {nick uhand handle input} {
 
 	if [ regexp {^[A-Z0-9/]+$} "$input" ] then {
 	} else {
-		putmsg $nick "error, invalid input: $input"
+		putmsg "$nick" "error, invalid input: $input"
 		return
 	}
 
 	if { ![file exists $spotfile] } {
 		# no records
-		putmsg $nick "spot file not found"
+		putmsg "$nick" "spot file not found"
 		return
 	}
 
@@ -1082,10 +1082,10 @@ proc msg_delspot {nick uhand handle input} {
 		}
 	}
 	if {$found == 0} {
-		putmsg $nick "not found"
+		putmsg "$nick" "not found"
 	} else {
 		putlog "removed spot: $input"
-		putmsg $nick "removed spot: $input"
+		putmsg "$nick" "removed spot: $input"
 	}
 
 	close $orig
@@ -1125,10 +1125,10 @@ proc check_spots {} {
 
 			#putmsg molo "handle: $handle nick: $nick call: $call chan: $chan"
 
-			if { $chan == "msg" && $nick != "" } {
-				msg_spots $nick "" $handle "--mon $call"
+			if { $chan == "msg" && "$nick" != "" } {
+				msg_spots "$nick" "" $handle "--mon $call"
 			} else {
-				spots $nick "" $handle $chan "--mon $call"
+				spots "$nick" "" $handle $chan "--mon $call"
 			}
 		}
 		close $input
@@ -1141,7 +1141,7 @@ proc check_spots {} {
 
 proc stop_spots { nick host handle chan text } {
 	if {$handle == "*"} {
-		putmsg $nick "this command is valid only for registered bot users."
+		putmsg "$nick" "this command is valid only for registered bot users."
 		return
 	}
 
@@ -1153,7 +1153,7 @@ proc stop_spots { nick host handle chan text } {
 
 proc start_spots { nick host handle chan text } {
 	if {$handle == "*"} {
-		putmsg $nick "this command is valid only for registered bot users."
+		putmsg "$nick" "this command is valid only for registered bot users."
 		return
 	}
 
@@ -1174,7 +1174,7 @@ proc utc_msg {nick uhand handle input} {
 	putlog "utc msg: $nick $uhand $handle $input"
 	set time [unixtime]
 	set fmt [clock format $time -gmt "true" -format "%Y-%m-%d %T UTC"]
-	putmsg $nick $fmt
+	putmsg "$nick" $fmt
 }
 
 proc contests { nick host hand chan text } {
@@ -1193,7 +1193,7 @@ proc contests_msg {nick uhand handle input} {
 	set fd [open "|${contestsbin}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -1216,7 +1216,7 @@ proc activity_msg {nick uhand handle input} {
 	set fd [open "|${activitybin} ${params}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -1237,7 +1237,7 @@ proc kindex_msg {nick uhand handle input} {
 	set fd [open "|${kindexbin}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -1260,7 +1260,7 @@ proc morse_msg {nick uhand handle input} {
 	set fd [open "|${morsebin} ${msg}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -1283,7 +1283,7 @@ proc unmorse_msg {nick uhand handle input} {
 	set fd [open "|${unmorsebin} ${msg}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -1306,7 +1306,7 @@ proc repeater_msg {nick uhand handle input} {
 	set fd [open "|${repeaterbin} ${msg}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -1329,7 +1329,7 @@ proc aprs_msg {nick uhand handle input} {
 	set fd [open "|${aprsbin} ${params}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -1343,7 +1343,7 @@ proc muf_pub { nick host hand chan text } {
 	while {[gets $fd line] >= 0} {
 		# list via msg
 		if [string equal "list" $params] then {
-			putmsg $nick "$line"
+			putmsg "$nick" "$line"
 		} else {
 			putchan $chan "$line"
 		}
@@ -1357,7 +1357,7 @@ proc muf_msg {nick uhand handle input} {
 	set fd [open "|${mufbin} ${params}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -1370,7 +1370,7 @@ proc muf2_pub { nick host hand chan text } {
 proc muf2_msg {nick uhand handle input} {
 	set params [sanitize_string [string trim ${input}]]
 	putlog "muf2 msg: $nick $uhand $handle $params"
-	putmsg $nick "please use !muf"
+	putmsg "$nick" "please use !muf"
 }
 
 proc eme_pub { nick host hand chan text } {
@@ -1401,7 +1401,7 @@ proc eme_msg {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -1434,7 +1434,7 @@ proc moon_msg {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -1467,7 +1467,7 @@ proc sun_msg {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -1490,7 +1490,7 @@ proc graves_msg {nick uhand handle input} {
 	set fd [open "|${astrobin} --graves ${params}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -1509,7 +1509,7 @@ proc sat_pub { nick host hand chan text } {
 	while {[gets $fd line] >= 0} {
 		# list via msg
 		if [string equal "list" $params] then {
-			putmsg $nick "$line"
+			putmsg "$nick" "$line"
 		} else {
 			putchan $chan "$line"
 		}
@@ -1528,21 +1528,21 @@ proc sat_msg {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
 proc satpass_msg {nick uhand handle input} {
-	sat_msg $nick $uhand $handle "--pass $input"
+	sat_msg "$nick" $uhand $handle "--pass $input"
 }
 proc satinfo_msg {nick uhand handle input} {
-	sat_msg $nick $uhand $handle "--info $input"
+	sat_msg "$nick" $uhand $handle "--info $input"
 }
 proc satpass_pub { nick host hand chan text } {
-	sat_pub $nick $host $hand $chan "--pass $text"
+	sat_pub "$nick" $host $hand $chan "--pass $text"
 }
 proc satinfo_pub { nick host hand chan text } {
-	sat_pub $nick $host $hand $chan "--info $text"
+	sat_pub "$nick" $host $hand $chan "--info $text"
 }
 
 proc qcode_pub { nick host hand chan text } {
@@ -1563,7 +1563,7 @@ proc qcode_msg {nick uhand handle input} {
 	set fd [open "|${qcodebin} ${msg}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -1674,7 +1674,7 @@ proc blitz_msg {nick uhand handle input} {
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -1701,7 +1701,7 @@ proc msg_ae7q {nick uhand handle input} {
 	set fd [open "|${ae7qbin} ${input}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }

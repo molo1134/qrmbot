@@ -62,7 +62,7 @@ proc msg_colortest {nick uhand handle input} {
 	set fd [open "|${colortestbin}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -77,7 +77,7 @@ proc debt_msg {nick uhand handle input} {
 	set fd [open "|${debtbin}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -114,35 +114,35 @@ proc launch_msg {nick uhand handle input} {
 	set fd [open "|${launchbin} ${param}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
 bind msg - !spacex spacex_msg
 bind pub - !spacex spacex_pub
 proc spacex_pub { nick host hand chan text } {
-	launch_pub $nick $host $hand $chan "--spacex"
+	launch_pub "$nick" $host $hand $chan "--spacex"
 }
 proc spacex_msg {nick uhand handle input} {
-	launch_msg $nick $uhand $handle "--spacex"
+	launch_msg "$nick" $uhand $handle "--spacex"
 }
 bind msg - !wallops wallops_msg
 bind pub - !wallops wallops_pub
 proc wallops_pub { nick host hand chan text } {
-	launch_pub $nick $host $hand $chan "--wallops"
+	launch_pub "$nick" $host $hand $chan "--wallops"
 }
 proc wallops_msg {nick uhand handle input} {
-	launch_msg $nick $uhand $handle "--wallops"
+	launch_msg "$nick" $uhand $handle "--wallops"
 }
 bind msg - !vbg vandenberg_msg
 bind pub - !vbg vandenberg_pub
 bind msg - !vandenberg vandenberg_msg
 bind pub - !vandenberg vandenberg_pub
 proc vandenberg_pub { nick host hand chan text } {
-	launch_pub $nick $host $hand $chan "--vandenberg"
+	launch_pub "$nick" $host $hand $chan "--vandenberg"
 }
 proc vandenberg_msg {nick uhand handle input} {
-	launch_msg $nick $uhand $handle "--vandenberg"
+	launch_msg "$nick" $uhand $handle "--vandenberg"
 }
 bind msg - !cape cape_msg
 bind pub - !cape cape_pub
@@ -151,10 +151,10 @@ bind pub - !kennedy cape_pub
 bind msg - !canaveral cape_msg
 bind pub - !canaveral cape_pub
 proc cape_pub { nick host hand chan text } {
-	launch_pub $nick $host $hand $chan "--cape"
+	launch_pub "$nick" $host $hand $chan "--cape"
 }
 proc cape_msg {nick uhand handle input} {
-	launch_msg $nick $uhand $handle "--cape"
+	launch_msg "$nick" $uhand $handle "--cape"
 }
 
 
@@ -183,17 +183,17 @@ proc stock_msg {nick uhand handle input} {
 	set fd [open "|${stockbin} ${param} " r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
 bind pub - !tendies tendies_pub
 bind msg - !tendies tendies_msg
 proc tendies_pub { nick host hand chan text } {
-	stock_pub $nick $host $hand $chan "^VIX"
+	stock_pub "$nick" $host $hand $chan "^VIX"
 }
 proc tendies_msg {nick uhand handle input} {
-	stock_msg $nick $uhand $handle "^VIX"
+	stock_msg "$nick" $uhand $handle "^VIX"
 }
 
 bind pub - !wwv wwv_pub
@@ -333,7 +333,7 @@ proc corona_msg {nick uhand handle input} {
 	set fd [open "|${coronabin} ${param} " r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -368,7 +368,7 @@ proc fivethirtyeight_msg {nick uhand handle input} {
 	set fd [open "|${fivethirtyeightbin} ${param}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -390,7 +390,7 @@ proc senate_msg {nick uhand handle input} {
 	set fd [open "|${fivethirtyeightbin} --senate ${param}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -412,7 +412,7 @@ proc house_msg {nick uhand handle input} {
 	set fd [open "|${fivethirtyeightbin} --house ${param}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -445,7 +445,7 @@ proc ammo_msg {nick uhand handle input} {
 	set fd [open "|${ammobin} ${param} " r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -467,26 +467,26 @@ bind pub - !flip coinflip_pub
 bind pub - !coin coinflip_pub
 bind pub - !coinflip coinflip_pub
 proc coinflip_pub { nick host hand chan text } {
-	rando_pub $nick $host $hand $chan "--coinflip"
+	rando_pub "$nick" $host $hand $chan "--coinflip"
 }
 bind pub - !dice dice_pub
 proc dice_pub { nick host hand chan text } {
-	rando_pub $nick $host $hand $chan "--dice"
+	rando_pub "$nick" $host $hand $chan "--dice"
 }
 bind pub - !8ball eightball_pub
 bind pub - !magic8ball eightball_pub
 bind pub - !eightball eightball_pub
 proc eightball_pub { nick host hand chan text } {
-	rando_pub $nick $host $hand $chan "--8ball"
+	rando_pub "$nick" $host $hand $chan "--8ball"
 }
 bind pub - !card card_pub
 proc card_pub { nick host hand chan text } {
-	rando_pub $nick $host $hand $chan "--card"
+	rando_pub "$nick" $host $hand $chan "--card"
 }
 bind pub - !roulette roulette_pub
 bind pub - !wheel roulette_pub
 proc roulette_pub { nick host hand chan text } {
-	rando_pub $nick $host $hand $chan "--roulette"
+	rando_pub "$nick" $host $hand $chan "--roulette"
 }
 bind pub - !draw draw_pub
 bind pub - !deal draw_pub

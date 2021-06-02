@@ -14,29 +14,29 @@ set hamfestlogfile2 "/home/eggdrop/qrm-reddit/logs/hamfest.log.yesterday"
 proc dcchamfestlog { nick host hand chan text } {
 	global hamfestlogfile
 	putxferlog "!hamfestlog pub $nick $chan"
-	dccsend $hamfestlogfile $nick
+	dccsend $hamfestlogfile "$nick"
 }
 proc dcchamfestlog2 { nick host hand chan text } {
 	global hamfestlogfile2
 	putxferlog "!hamfestlog2 pub $nick $chan"
-	dccsend $hamfestlogfile2 $nick
+	dccsend $hamfestlogfile2 "$nick"
 }
 
 proc dcchamfestlog_msg {nick uhand handle input} {
 	global hamfestlogfile
 	putxferlog "!hamfestlog msg $nick"
-	set result [dccsend $hamfestlogfile $nick]
+	set result [dccsend $hamfestlogfile "$nick"]
 	if { $result != 0 } {
-		putmsg $nick "error: $result"
+		putmsg "$nick" "error: $result"
 		putxferlog "hamfestlog error: $result"
 	}
 }
 proc dcchamfestlog2_msg {nick uhand handle input} {
 	global hamfestlogfile2
 	putxferlog "!hamfestlog2 msg $nick"
-	set result [dccsend $hamfestlogfile2 $nick]
+	set result [dccsend $hamfestlogfile2 "$nick"]
 	if { $result != 0 } {
-		putmsg $nick "error: $result"
+		putmsg "$nick" "error: $result"
 		putxferlog "hamfestlog2 error: $result"
 	}
 }

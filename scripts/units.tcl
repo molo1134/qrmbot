@@ -32,23 +32,23 @@ proc msg_convert_units {nick uhand handle arg} {
   regexp {^([A-Za-z0-9_]+(\([0-9.]+\))?)$} $arg matched2 subA
 
   if {[info exists matched]} {
-    #putmsg $nick "matched: $matched"
+    #putmsg "$nick" "matched: $matched"
     set term1 [sanitize_string $sub1]
     set term2 [sanitize_string $sub2]
   }
   if {[info exists matched2]} {
-    #putmsg $nick "matched2: $matched2"
-    #putmsg $nick "subA: $subA"
+    #putmsg "$nick" "matched2: $matched2"
+    #putmsg "$nick" "subA: $subA"
     set term1 $subA
     #unset term2
   }
 
   if {![info exists matched] && ![info exists matched2]} {
-    putmsg $nick "syntax: !units <foo> in <bar>"
+    putmsg "$nick" "syntax: !units <foo> in <bar>"
     return
   }
 
-  #putmsg $nick "$matched"
+  #putmsg "$nick" "$matched"
   #catch {exec ${unitsbin} -t -- ${sub1} ${sub2} | head -1} data
   #catch {exec ${unitsbin} -- ${sub1} ${sub2} } data
   #catch {exec ${unitsbin} -- ${sub1} ${sub2} \| grep -v "reciprocal conversion" \| head -1 \| sed -e "s/^.*\\*\\s\\(.*\\)/\\1/"} data
@@ -65,26 +65,26 @@ proc msg_convert_units {nick uhand handle arg} {
   set output [split $data "\n"]
 
   #foreach line $output {
-  #  putmsg $nick "$line"
+  #  putmsg "$nick" "$line"
   #}
 
   if (![info exists term2]) {
     foreach line $output {
-      putmsg $nick "$line"
+      putmsg "$nick" "$line"
     }
     return
   }
 
   if {[string match -nocase {*error*} $data] ||
       [string match -nocase {*unknown*} $data]} {
-    putmsg $nick [lindex $output 0]
+    putmsg "$nick" [lindex $output 0]
     return
   }
 
   if {[string match -nocase {* + *} $data]} {
-    putmsg $nick [concat "$term1 = " [lindex $output 0]]
+    putmsg "$nick" [concat "$term1 = " [lindex $output 0]]
   } else {
-    putmsg $nick [concat "$term1 = " [lindex $output 0] " $term2"]
+    putmsg "$nick" [concat "$term1 = " [lindex $output 0] " $term2"]
   }
 }
 
@@ -94,24 +94,24 @@ proc pub_convert_units {nick host hand chan arg} {
   regexp {^([A-Za-z0-9_]+(\([0-9.]+\))?)$} $arg matched2 subA
 
   if {[info exists matched]} {
-    #putmsg $nick "matched: $matched"
+    #putmsg "$nick" "matched: $matched"
     set term1 [sanitize_string $sub1]
     set term2 [sanitize_string $sub2]
   }
   if {[info exists matched2]} {
-    #putmsg $nick "matched2: $matched2"
-    #putmsg $nick "subA: $subA"
+    #putmsg "$nick" "matched2: $matched2"
+    #putmsg "$nick" "subA: $subA"
     set term1 [sanitize_string $subA]
     #unset term2
   }
 
 
   if {![info exists matched] && ![info exists matched2]} {
-    putmsg $nick "syntax: !units <foo> in <bar>"
+    putmsg "$nick" "syntax: !units <foo> in <bar>"
     return
   }
 
-  #putnotc $nick "$matched"
+  #putnotc "$nick" "$matched"
   #catch {exec ${unitsbin} -t -- ${sub1} ${sub2} | head -1} data
   #catch {exec ${unitsbin} -- ${sub1} ${sub2} \| grep -v "reciprocal conversion" \| head -1 \| sed -e "s/^.*\\*\\s\\(.*\\)/\\1/"} data
   #catch {exec ${unitsbin} -- ${sub1} ${sub2} \| grep -v "reciprocal conversion" \| head -1 \| sed -e "s/^\\s*\\*\\?\\s//"} data
@@ -150,37 +150,37 @@ proc pub_convert_units {nick host hand chan arg} {
 
 proc msg_ftoc {nick uhand handle arg} {
   set arg [sanitize_string $arg]
-  msg_convert_units $nick $uhand $handle "tempF($arg) in tempC"
+  msg_convert_units "$nick" $uhand $handle "tempF($arg) in tempC"
 }
 proc pub_ftoc {nick host hand chan arg} {
   set arg [sanitize_string $arg]
-  pub_convert_units $nick $host $hand $chan "tempF($arg) in tempC"
+  pub_convert_units "$nick" $host $hand $chan "tempF($arg) in tempC"
 }
 
 proc msg_ctof {nick uhand handle arg} {
   set arg [sanitize_string $arg]
-  msg_convert_units $nick $uhand $handle "tempC($arg) in tempF"
+  msg_convert_units "$nick" $uhand $handle "tempC($arg) in tempF"
 }
 proc pub_ctof {nick host hand chan arg} {
   set arg [sanitize_string $arg]
-  pub_convert_units $nick $host $hand $chan "tempC($arg) in tempF"
+  pub_convert_units "$nick" $host $hand $chan "tempC($arg) in tempF"
 }
 
 proc pub_gold {nick host hand chan arg} {
-  pub_convert_units $nick $host $hand $chan "goldprice * 1 troyounce in USD"
+  pub_convert_units "$nick" $host $hand $chan "goldprice * 1 troyounce in USD"
 }
 proc pub_silver {nick host hand chan arg} {
-  pub_convert_units $nick $host $hand $chan "silverprice * 1 troyounce in USD"
+  pub_convert_units "$nick" $host $hand $chan "silverprice * 1 troyounce in USD"
 }
 proc pub_plat {nick host hand chan arg} {
-  pub_convert_units $nick $host $hand $chan "platinumprice * 1 troyounce in USD"
+  pub_convert_units "$nick" $host $hand $chan "platinumprice * 1 troyounce in USD"
 }
 proc msg_gold {nick uhand handle arg} {
-  msg_convert_units $nick $uhand $handle "goldprice * 1 troyounce in USD"
+  msg_convert_units "$nick" $uhand $handle "goldprice * 1 troyounce in USD"
 }
 proc msg_silver {nick uhand handle arg} {
-  msg_convert_units $nick $uhand $handle "silverprice * 1 troyounce in USD"
+  msg_convert_units "$nick" $uhand $handle "silverprice * 1 troyounce in USD"
 }
 proc msg_plat {nick uhand handle arg} {
-  msg_convert_units $nick $uhand $handle "platinumprice * 1 troyounce in USD"
+  msg_convert_units "$nick" $uhand $handle "platinumprice * 1 troyounce in USD"
 }

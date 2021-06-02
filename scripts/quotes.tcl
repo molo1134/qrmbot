@@ -28,7 +28,7 @@ proc q_addquote { nick uhost hand chan arg } {
 
   puts $qf $entry
 
-  putmsg $nick "added quote for $chan: $arg"
+  putmsg "$nick" "added quote for $chan: $arg"
 
   close $qf
 }
@@ -54,14 +54,14 @@ proc q_pubquote { nick uhost hand chan arg } {
 
     if { [string trim $arg] == "" } {
       set j [rand $tmp]
-      putmsg $nick "picked quote [expr $j + 1] of $tmp"
+      putmsg "$nick" "picked quote [expr $j + 1] of $tmp"
     } else {
       set j $arg
       if { ( $j >= 1 ) && ( $j <= $tmp ) } {
-        putmsg $nick "displaying quote $j of $tmp"
+        putmsg "$nick" "displaying quote $j of $tmp"
         incr j -1
       } else {
-        putmsg $nick "valid quotes number from 1 to $tmp"
+        putmsg "$nick" "valid quotes number from 1 to $tmp"
         return
       }
     }
@@ -79,7 +79,7 @@ proc q_pubquote { nick uhost hand chan arg } {
 
 
   } else {
-    putmsg $nick "error, $quotefile not found!"
+    putmsg "$nick" "error, $quotefile not found!"
   }
 }
 
@@ -90,7 +90,7 @@ proc q_pubquotesearch { nick uhost hand chan arg } {
     set newarg [string trim $arg]
 
     if { [string length $newarg] < 3 } {
-	putmsg $nick "error, search string too short"
+	putmsg "$nick" "error, search string too short"
     } elseif { [file exists $quotefile] } {
         set qf [open $quotefile r]
         
@@ -109,17 +109,17 @@ proc q_pubquotesearch { nick uhost hand chan arg } {
         while {$i < $tmp} {
             set line [gets $qf]
             if { [string first $newarg [string tolower [lindex $line 0] ] ] != -1 } {
-                putmsg $nick "found quote [expr $i+1]:"
-                putmsg $nick "[lindex $line 0]"
+                putmsg "$nick" "found quote [expr $i+1]:"
+                putmsg "$nick" "[lindex $line 0]"
                 incr j
             }
             incr i
         }
 
-	putmsg $nick "found $j hit(s) for $arg"
+	putmsg "$nick" "found $j hit(s) for $arg"
         
     } else {
-        putmsg $nick "error, $quotefile not found!"
+        putmsg "$nick" "error, $quotefile not found!"
     }
 }
 

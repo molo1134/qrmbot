@@ -19,7 +19,7 @@ proc seen_pub { nick host hand chan text } {
 	putlog "seen pub: $nick $host $hand $chan $text"
 	set origQuery [sanitize_string [string trim ${text}]]
 	set target [string tolower $origQuery]
-	set nick [string tolower $nick]
+	set nick [string tolower "$nick"]
 
 	if {${target} == ${nick}} {
 		putchan $chan "welp, there you are."

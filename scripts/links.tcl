@@ -44,14 +44,14 @@ proc http_msg { nick host hand text } {
 	global linkbin
 	global net-type
 
-	if { ${net-type} == 2 && ! [isRegistered $nick] } { return }
+	if { ${net-type} == 2 && ! [isRegistered "$nick"] } { return }
 
 	set params [sanitize_url [string trim ${text}]]
 	putlog "http msg: $nick $host $hand $params"
 	set fd [open "|${linkbin} ${params}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
@@ -63,9 +63,9 @@ proc http_pub { nick host hand chan text } {
 	global linkbin
 	global net-type
 
-	if { ${net-type} == 2 && ! [isRegistered $nick] } { return }
+	if { ${net-type} == 2 && ! [isRegistered "$nick"] } { return }
 
-	if [string equal -nocase "SpaceWeatherBot" $nick] then {
+	if [string equal -nocase "SpaceWeatherBot" "$nick"] then {
 	  return
 	}
 
@@ -87,5 +87,5 @@ proc github { nick host hand chan text } {
 proc msg_github { nick uhand handle input } {
 	global githublink
 	putlog "github msg: $nick $uhand $handle"
-	putmsg $nick "$githublink"
+	putmsg "$nick" "$githublink"
 }

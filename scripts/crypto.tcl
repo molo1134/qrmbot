@@ -30,16 +30,16 @@ source scripts/util.tcl
 set btcbin "/home/eggdrop/bin/btc"
 
 proc btc_msg {nick uhand handle input} {
-	crypto_msg $nick $uhand $handle "BTC $input"
+	crypto_msg "$nick" $uhand $handle "BTC $input"
 }
 proc ltc_msg {nick uhand handle input} {
-	crypto_msg $nick $uhand $handle "LTC $input"
+	crypto_msg "$nick" $uhand $handle "LTC $input"
 }
 proc eth_msg {nick uhand handle input} {
-	crypto_msg $nick $uhand $handle "ETH $input"
+	crypto_msg "$nick" $uhand $handle "ETH $input"
 }
 proc doge_msg {nick uhand handle input} {
-	crypto_msg $nick $uhand $handle "DOGE $input"
+	crypto_msg "$nick" $uhand $handle "DOGE $input"
 }
 
 proc crypto_msg {nick uhand handle input} {
@@ -51,22 +51,22 @@ proc crypto_msg {nick uhand handle input} {
 	set fd [open "|${btcbin} ${input}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
 
 proc btc_pub { nick host hand chan input } {
-	crypto_pub $nick $host $hand $chan "BTC $input"
+	crypto_pub "$nick" $host $hand $chan "BTC $input"
 }
 proc ltc_pub { nick host hand chan input } {
-	crypto_pub $nick $host $hand $chan "LTC $input"
+	crypto_pub "$nick" $host $hand $chan "LTC $input"
 }
 proc eth_pub { nick host hand chan input } {
-	crypto_pub $nick $host $hand $chan "ETH $input"
+	crypto_pub "$nick" $host $hand $chan "ETH $input"
 }
 proc doge_pub { nick host hand chan input } {
-	crypto_pub $nick $host $hand $chan "DOGE $input"
+	crypto_pub "$nick" $host $hand $chan "DOGE $input"
 }
 
 proc crypto_pub { nick host hand chan input } {

@@ -16,7 +16,7 @@ bind pub - !calc pub_calc
 
 proc msg_calc {nick uhand handle arg} {
   if {![info exists arg]} {
-    putmsg $nick "syntax: !calc <expression>"
+    putmsg "$nick" "syntax: !calc <expression>"
     return
   }
   set term [sanitize_string $arg]
@@ -25,7 +25,7 @@ proc msg_calc {nick uhand handle arg} {
   set fd [open "|echo \"${expression}\" | /usr/bin/bc -l  2>@1" r]
   fconfigure $fd -encoding utf-8
   while {[gets $fd line] >= 0} {
-    putmsg $nick "$line"
+    putmsg "$nick" "$line"
   }
 }
 

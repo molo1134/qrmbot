@@ -41,7 +41,7 @@ proc adsb_msg {nick uhand handle input} {
 	fconfigure $fd -encoding utf-8
 	set output [split $data "\n"]
 	while {[gets $fd line] >= 0} {
-		putmsg $nick "$line"
+		putmsg "$nick" "$line"
 	}
 	close $fd
 }
