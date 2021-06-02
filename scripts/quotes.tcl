@@ -11,8 +11,8 @@ bind pub - !quotesearch q_pubquotesearch
 proc q_addquote { nick uhost hand chan arg } {
   set quotefile "quotelist-$chan"
 
-  set newarg [string trim $arg]
-  if { [string length $newarg] == 0 } {
+  set newarg [string trim "$arg"]
+  if { [string length "$newarg"] == 0 } {
     putchan $chan "usage: !addquote <msg>"
   }
 
@@ -24,7 +24,7 @@ proc q_addquote { nick uhost hand chan arg } {
   fconfigure $qf -encoding utf-8
   
   set entry [list]
-  lappend entry $arg
+  lappend entry "$arg"
 
   puts $qf $entry
 
@@ -52,11 +52,11 @@ proc q_pubquote { nick uhost hand chan arg } {
 
     set i 0
 
-    if { [string trim $arg] == "" } {
+    if { [string trim "$arg"] == "" } {
       set j [rand $tmp]
       putmsg "$nick" "picked quote [expr $j + 1] of $tmp"
     } else {
-      set j $arg
+      set j "$arg"
       if { ( $j >= 1 ) && ( $j <= $tmp ) } {
         putmsg "$nick" "displaying quote $j of $tmp"
         incr j -1
@@ -87,9 +87,9 @@ proc q_pubquote { nick uhost hand chan arg } {
 proc q_pubquotesearch { nick uhost hand chan arg } {
     set quotefile "quotelist-$chan"
 
-    set newarg [string trim $arg]
+    set newarg [string trim "$arg"]
 
-    if { [string length $newarg] < 3 } {
+    if { [string length "$newarg"] < 3 } {
 	putmsg "$nick" "error, search string too short"
     } elseif { [file exists $quotefile] } {
         set qf [open $quotefile r]
@@ -101,7 +101,7 @@ proc q_pubquotesearch { nick uhost hand chan arg } {
         }
         close $fd
         
-        set newarg [string tolower $newarg]
+        set newarg [string tolower "$newarg"]
         
         set i 0
         set j 0

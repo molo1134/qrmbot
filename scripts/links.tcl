@@ -46,7 +46,7 @@ proc http_msg { nick host hand text } {
 
 	if { ${net-type} == 2 && ! [isRegistered "$nick"] } { return }
 
-	set params [sanitize_url [string trim ${text}]]
+	set params [sanitize_url [string trim "${text}"]]
 	putlog "http msg: $nick $host $hand $params"
 	set fd [open "|${linkbin} ${params}" r]
 	fconfigure $fd -encoding utf-8
@@ -69,7 +69,7 @@ proc http_pub { nick host hand chan text } {
 	  return
 	}
 
-	set params [sanitize_url [string trim ${text}]]
+	set params [sanitize_url [string trim "${text}"]]
 	putlog "http pub: $nick $host $hand $chan $params"
 	set fd [open "|${linkbin} ${params}" r]
 	fconfigure $fd -encoding utf-8

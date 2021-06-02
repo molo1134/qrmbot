@@ -35,7 +35,7 @@ source scripts/util.tcl
 
 proc phoneticise { nick host hand chan text } {
 	global phoneticsbin
-	set param [sanitize_string [string trim ${text}]]
+	set param [sanitize_string [string trim "${text}"]]
 
 	putlog "phonetics pub: $nick $host $hand $chan $param"
 
@@ -49,7 +49,7 @@ proc phoneticise { nick host hand chan text } {
 
 bind pub - !sandwich sandwich
 proc sandwich { nick host hand chan text } {
-	set param [sanitize_string [string trim ${text}]]
+	set param [sanitize_string [string trim "${text}"]]
 	putlog "sandwich pub: $nick $host $hand $chan $param"
 	putchan $chan "sudo make ${nick} a sandwich: https://xkcd.com/149/"
 }
@@ -98,7 +98,7 @@ bind pub - !launch launch_pub
 set launchbin "/home/eggdrop/bin/launch"
 proc launch_pub { nick host hand chan text } {
 	global launchbin
-	set param [sanitize_string [string trim ${text}]]
+	set param [sanitize_string [string trim "${text}"]]
 	putlog "launch pub: $nick $host $hand $chan $param"
 	set fd [open "|${launchbin} ${param}" r]
 	fconfigure $fd -encoding utf-8
@@ -109,7 +109,7 @@ proc launch_pub { nick host hand chan text } {
 }
 proc launch_msg {nick uhand handle input} {
 	global launchbin
-	set param [sanitize_string [string trim ${input}]]
+	set param [sanitize_string [string trim "${input}"]]
 	putlog "launch msg: $nick $uhand $handle $param"
 	set fd [open "|${launchbin} ${param}" r]
 	fconfigure $fd -encoding utf-8
@@ -167,7 +167,7 @@ bind msg - !stonk stock_msg
 set stockbin "/home/eggdrop/bin/stock"
 proc stock_pub { nick host hand chan text } {
 	global stockbin
-	set param [sanitize_string [string trim ${text}]]
+	set param [sanitize_string [string trim "${text}"]]
 	putlog "stock pub: $nick $host $hand $chan $param"
 	set fd [open "|${stockbin} ${param} " r]
 	fconfigure $fd -encoding utf-8
@@ -178,7 +178,7 @@ proc stock_pub { nick host hand chan text } {
 }
 proc stock_msg {nick uhand handle input} {
 	global stockbin
-	set param [sanitize_string [string trim ${input}]]
+	set param [sanitize_string [string trim "${input}"]]
 	putlog "stock msg: $nick $uhand $handle $param"
 	set fd [open "|${stockbin} ${param} " r]
 	fconfigure $fd -encoding utf-8
@@ -293,7 +293,7 @@ proc translate { nick host hand chan text } {
 	#putlog "encoding: [encoding system]"
 	#putlog ${text}
 	#putlog [chars2hexlist ${text}]
-	set cleantext [sanitize_string [string trim ${text}]]
+	set cleantext [sanitize_string [string trim "${text}"]]
 	#putlog [chars2hexlist ${cleantext}]
 
 	putlog "translate pub: $nick $host $hand $chan $cleantext"
@@ -317,7 +317,7 @@ bind msg - !c19 corona_msg
 set coronabin "/home/eggdrop/bin/corona"
 proc corona_pub { nick host hand chan text } {
 	global coronabin
-	set cleantext [sanitize_string [string trim ${text}]]
+	set cleantext [sanitize_string [string trim "${text}"]]
 	putlog "corona: $nick $host $hand $chan $cleantext"
 	set fd [open "|${coronabin} ${cleantext}" r]
 	fconfigure $fd -encoding utf-8
@@ -328,7 +328,7 @@ proc corona_pub { nick host hand chan text } {
 }
 proc corona_msg {nick uhand handle input} {
 	global coronabin
-	set param [sanitize_string [string trim ${input}]]
+	set param [sanitize_string [string trim "${input}"]]
 	putlog "corona msg: $nick $uhand $handle $param"
 	set fd [open "|${coronabin} ${param} " r]
 	fconfigure $fd -encoding utf-8
@@ -340,7 +340,7 @@ proc corona_msg {nick uhand handle input} {
 
 proc primaries { nick host hand chan text } {
 	global primariesbin
-	set cleantext [sanitize_string [string trim ${text}]]
+	set cleantext [sanitize_string [string trim "${text}"]]
 	putlog "primaries: $nick $host $hand $chan $cleantext"
 	set fd [open "|${primariesbin} ${cleantext}" r]
 	fconfigure $fd -encoding utf-8
@@ -352,7 +352,7 @@ proc primaries { nick host hand chan text } {
 
 proc fivethirtyeight_pub { nick host hand chan text } {
 	global fivethirtyeightbin
-	set param [sanitize_string [string trim ${text}]]
+	set param [sanitize_string [string trim "${text}"]]
 	putlog "fivethirtyeight pub: $nick $host $hand $chan $param"
 	set fd [open "|${fivethirtyeightbin} ${param}" r]
 	fconfigure $fd -encoding utf-8
@@ -363,7 +363,7 @@ proc fivethirtyeight_pub { nick host hand chan text } {
 }
 proc fivethirtyeight_msg {nick uhand handle input} {
 	global fivethirtyeightbin
-	set param [sanitize_string [string trim ${input}]]
+	set param [sanitize_string [string trim "${input}"]]
 	putlog "fivethirtyeight msg: $nick $uhand $handle $param"
 	set fd [open "|${fivethirtyeightbin} ${param}" r]
 	fconfigure $fd -encoding utf-8
@@ -374,7 +374,7 @@ proc fivethirtyeight_msg {nick uhand handle input} {
 }
 proc senate_pub { nick host hand chan text } {
 	global fivethirtyeightbin
-	set param [sanitize_string [string trim ${text}]]
+	set param [sanitize_string [string trim "${text}"]]
 	putlog "senate pub: $nick $host $hand $chan $param"
 	set fd [open "|${fivethirtyeightbin} --senate ${param}" r]
 	fconfigure $fd -encoding utf-8
@@ -385,7 +385,7 @@ proc senate_pub { nick host hand chan text } {
 }
 proc senate_msg {nick uhand handle input} {
 	global fivethirtyeightbin
-	set param [sanitize_string [string trim ${input}]]
+	set param [sanitize_string [string trim "${input}"]]
 	putlog "senate msg: $nick $uhand $handle $param"
 	set fd [open "|${fivethirtyeightbin} --senate ${param}" r]
 	fconfigure $fd -encoding utf-8
@@ -396,7 +396,7 @@ proc senate_msg {nick uhand handle input} {
 }
 proc house_pub { nick host hand chan text } {
 	global fivethirtyeightbin
-	set param [sanitize_string [string trim ${text}]]
+	set param [sanitize_string [string trim "${text}"]]
 	putlog "house pub: $nick $host $hand $chan $param"
 	set fd [open "|${fivethirtyeightbin} --house ${param}" r]
 	fconfigure $fd -encoding utf-8
@@ -407,7 +407,7 @@ proc house_pub { nick host hand chan text } {
 }
 proc house_msg {nick uhand handle input} {
 	global fivethirtyeightbin
-	set param [sanitize_string [string trim ${input}]]
+	set param [sanitize_string [string trim "${input}"]]
 	putlog "house msg: $nick $uhand $handle $param"
 	set fd [open "|${fivethirtyeightbin} --house ${param}" r]
 	fconfigure $fd -encoding utf-8
@@ -422,7 +422,7 @@ bind msg - !ammo ammo_msg
 set ammobin "/home/eggdrop/bin/ammo"
 proc ammo_pub { nick host hand chan text } {
 	global ammobin
-	set param [sanitize_string [string trim ${text}]]
+	set param [sanitize_string [string trim "${text}"]]
 	putlog "ammo pub: $nick $host $hand $chan $param"
 	set params [split $param]
 	set count [lindex $params 1]
@@ -440,7 +440,7 @@ proc ammo_pub { nick host hand chan text } {
 }
 proc ammo_msg {nick uhand handle input} {
 	global ammobin
-	set param [sanitize_string [string trim ${input}]]
+	set param [sanitize_string [string trim "${input}"]]
 	putlog "ammo msg: $nick $uhand $handle $param"
 	set fd [open "|${ammobin} ${param} " r]
 	fconfigure $fd -encoding utf-8
@@ -454,7 +454,7 @@ set randobin "/home/eggdrop/bin/rando"
 bind pub - !rand rando_pub
 proc rando_pub { nick host hand chan text } {
 	global randobin
-	set param [sanitize_string [string trim ${text}]]
+	set param [sanitize_string [string trim "${text}"]]
 	putlog "rando pub: $nick $host $hand $chan $param"
 	set fd [open "|${randobin} ${param}" r]
 	fconfigure $fd -encoding utf-8
@@ -492,7 +492,7 @@ bind pub - !draw draw_pub
 bind pub - !deal draw_pub
 proc draw_pub { nick host hand chan text } {
 	global randobin
-	set param [sanitize_string [string trim ${text}]]
+	set param [sanitize_string [string trim "${text}"]]
 	putlog "draw pub: $nick $host $hand $chan $param"
 	set fd [open "|${randobin} --draw ${param}" r]
 	fconfigure $fd -encoding utf-8
@@ -504,7 +504,7 @@ proc draw_pub { nick host hand chan text } {
 
 bind pub - !cat cat_pub
 proc cat_pub { nick host hand chan text } {
-	set param [sanitize_string [string trim ${text}]]
+	set param [sanitize_string [string trim "${text}"]]
 	putlog "cat pub: $nick $host $hand $chan $param"
 	set msg(0) "cat"
 	set msg(1) "kitty"

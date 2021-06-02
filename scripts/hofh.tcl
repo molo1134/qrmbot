@@ -19,7 +19,7 @@ proc h_addquote { nick uhost hand chan arg } {
   }
 
   set entry [list]
-  lappend entry $arg
+  lappend entry "$arg"
 
   puts $qf $entry
 
@@ -46,11 +46,11 @@ proc h_pubquote { nick uhost hand chan arg } {
 
     set i 0
 
-    if { [string trim $arg] == "" } {
+    if { [string trim "$arg"] == "" } {
       set j [rand $tmp]
       putmsg "$nick" "picked hofh [expr $j + 1] of $tmp"
     } else {
-      set j $arg
+      set j "$arg"
       if { ( $j >= 1 ) && ( $j <= $tmp ) } {
         putmsg "$nick" "displaying hofh $j of $tmp"
         incr j -1
@@ -81,9 +81,9 @@ proc h_pubquote { nick uhost hand chan arg } {
 proc h_pubquotesearch { nick uhost hand chan arg } {
     global hofhfile
 
-    set newarg [string trim $arg]
+    set newarg [string trim "$arg"]
 
-    if { [string length $newarg] < 3 } {
+    if { [string length "$newarg"] < 3 } {
 	putmsg "$nick" "error, search string too short"
     } elseif { [file exists $hofhfile] } {
         set qf [open $hofhfile r]
@@ -95,14 +95,14 @@ proc h_pubquotesearch { nick uhost hand chan arg } {
         }
         close $fd
 
-        set newarg [string tolower $newarg]
+        set newarg [string tolower "$newarg"]
 
         set i 0
         set j 0
 
         while {$i < $tmp} {
             set line [gets $qf]
-            if { [string first $newarg [string tolower [lindex $line 0] ] ] != -1 } {
+            if { [string first "$newarg" [string tolower [lindex $line 0] ] ] != -1 } {
                 putmsg "$nick" "found hofh [expr $i+1]:"
                 putmsg "$nick" "[lindex $line 0]"
                 incr j

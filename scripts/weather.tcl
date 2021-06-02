@@ -49,7 +49,7 @@ source scripts/util.tcl
 
 proc wx { nick host hand chan text } {
 	global wxbin
-	set loc [sanitize_string [string trim ${text}]]
+	set loc [sanitize_string [string trim "${text}"]]
 	# from util.tcl:
 	set geo [qrz_getgeo $hand]
 
@@ -73,7 +73,7 @@ proc wx { nick host hand chan text } {
 
 proc msg_wx {nick uhand handle input} {
 	global wxbin
-	set loc [sanitize_string [string trim ${input}]]
+	set loc [sanitize_string [string trim "${input}"]]
 	# from util.tcl:
 	set geo [qrz_getgeo $handle]
 
@@ -97,7 +97,7 @@ proc msg_wx {nick uhand handle input} {
 
 proc wxfull { nick host hand chan text } {
 	global wxbin
-	set loc [sanitize_string [string trim ${text}]]
+	set loc [sanitize_string [string trim "${text}"]]
 	# from util.tcl:
 	set geo [qrz_getgeo $hand]
 
@@ -121,7 +121,7 @@ proc wxfull { nick host hand chan text } {
 
 proc msg_wxfull {nick uhand handle input} {
 	global wxbin
-	set loc [sanitize_string [string trim ${input}]]
+	set loc [sanitize_string [string trim "${input}"]]
 	# from util.tcl:
 	set geo [qrz_getgeo $handle]
 
@@ -145,7 +145,7 @@ proc msg_wxfull {nick uhand handle input} {
 
 proc wxf { nick host hand chan text } {
 	global wxfbin
-	set loc [sanitize_string [string trim ${text}]]
+	set loc [sanitize_string [string trim "${text}"]]
 	# from util.tcl:
 	set geo [qrz_getgeo $hand]
 
@@ -169,7 +169,7 @@ proc wxf { nick host hand chan text } {
 
 proc msg_wxf {nick uhand handle input} {
 	global wxfbin
-	set loc [sanitize_string [string trim ${input}]]
+	set loc [sanitize_string [string trim "${input}"]]
 	# from util.tcl:
 	set geo [qrz_getgeo $handle]
 
@@ -193,7 +193,7 @@ proc msg_wxf {nick uhand handle input} {
 
 proc wxflong { nick host hand chan text } {
 	global wxfbin
-	set loc [sanitize_string [string trim ${text}]]
+	set loc [sanitize_string [string trim "${text}"]]
 	# from util.tcl:
 	set geo [qrz_getgeo $hand]
 
@@ -221,7 +221,7 @@ proc msg_wxflong_pub { nick host hand chan text } {
 
 proc msg_wxflong {nick uhand handle input} {
 	global wxfbin
-	set loc [sanitize_string [string trim ${input}]]
+	set loc [sanitize_string [string trim "${input}"]]
 	# from util.tcl:
 	set geo [qrz_getgeo $handle]
 
@@ -245,7 +245,7 @@ proc msg_wxflong {nick uhand handle input} {
 
 proc metar {nick host hand chan text} {
 	global metarbin
-	set loc [sanitize_string [string trim ${text}]]
+	set loc [sanitize_string [string trim "${text}"]]
 
 	putlog "metar pub: $nick $host $hand $chan $loc"
 
@@ -259,7 +259,7 @@ proc metar {nick host hand chan text} {
 
 proc msg_metar {nick uhand handle input} {
 	global metarbin
-	set loc [sanitize_string [string trim ${input}]]
+	set loc [sanitize_string [string trim "${input}"]]
 
 	putlog "metar msg: $nick $uhand $handle $loc"
 
@@ -273,7 +273,7 @@ proc msg_metar {nick uhand handle input} {
 
 proc taf {nick host hand chan text} {
 	global tafbin
-	set loc [sanitize_string [string trim ${text}]]
+	set loc [sanitize_string [string trim "${text}"]]
 
 	putlog "taf pub: $nick $host $hand $chan $loc"
 
@@ -287,7 +287,7 @@ proc taf {nick host hand chan text} {
 
 proc msg_taf {nick uhand handle input} {
 	global tafbin
-	set loc [sanitize_string [string trim ${input}]]
+	set loc [sanitize_string [string trim "${input}"]]
 
 	putlog "taf msg: $nick $uhand $handle $loc"
 
@@ -345,7 +345,7 @@ proc quakef_msg {nick uhand handle input} {
 
 proc darksky { nick host hand chan text } {
 	global darkskybin
-	set loc [sanitize_string [string trim ${text}]]
+	set loc [sanitize_string [string trim "${text}"]]
 	# from util.tcl:
 	set geo [qrz_getgeo $hand]
 
@@ -369,7 +369,7 @@ proc darksky { nick host hand chan text } {
 
 proc msg_darksky {nick uhand handle input} {
 	global darkskybin
-	set loc [sanitize_string [string trim ${input}]]
+	set loc [sanitize_string [string trim "${input}"]]
 	# from util.tcl:
 	set geo [qrz_getgeo $handle]
 
@@ -393,7 +393,7 @@ proc msg_darksky {nick uhand handle input} {
 
 proc aeris { nick host hand chan text } {
 	global aerisbin
-	set loc [sanitize_string [string trim ${text}]]
+	set loc [sanitize_string [string trim "${text}"]]
 	# from util.tcl:
 	set geo [qrz_getgeo $hand]
 
@@ -417,7 +417,7 @@ proc aeris { nick host hand chan text } {
 
 proc msg_aeris {nick uhand handle input} {
 	global aerisbin
-	set loc [sanitize_string [string trim ${input}]]
+	set loc [sanitize_string [string trim "${input}"]]
 	# from util.tcl:
 	set geo [qrz_getgeo $handle]
 
@@ -441,7 +441,7 @@ proc msg_aeris {nick uhand handle input} {
 
 proc wttr { nick host hand chan text } {
 	global wttrbin
-	set loc [sanitize_string [string trim ${text}]]
+	set loc [sanitize_string [string trim "${text}"]]
 	# from util.tcl:
 	set geo [qrz_getgeo $hand]
 
@@ -465,7 +465,7 @@ proc wttr { nick host hand chan text } {
 
 proc msg_wttr {nick uhand handle input} {
 	global wttrbin
-	set loc [sanitize_string [string trim ${input}]]
+	set loc [sanitize_string [string trim "${input}"]]
 	# from util.tcl:
 	set geo [qrz_getgeo $handle]
 

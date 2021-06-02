@@ -17,7 +17,7 @@ bind pub - !seen seen_pub
 proc seen_pub { nick host hand chan text } {
 	global botnick
 	putlog "seen pub: $nick $host $hand $chan $text"
-	set origQuery [sanitize_string [string trim ${text}]]
+	set origQuery [sanitize_string [string trim "${text}"]]
 	set target [string tolower $origQuery]
 	set nick [string tolower "$nick"]
 

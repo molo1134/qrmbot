@@ -195,7 +195,7 @@ source scripts/util.tcl
 
 proc qrz { nick host hand chan text } {
 	global qrzbin
-	set callsign [sanitize_string [string trim ${text}]]
+	set callsign [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
 
 	putlog "qrz pub: $nick $host $hand $chan $callsign $geo"
@@ -214,7 +214,7 @@ proc qrz { nick host hand chan text } {
 
 proc msg_qrz {nick uhand handle input} {
 	global qrzbin
-	set callsign [sanitize_string [string trim ${input}]]
+	set callsign [sanitize_string [string trim "${input}"]]
 	set geo [qrz_getgeo $handle]
 
 	putlog "qrz msg: $nick $uhand $handle $callsign $geo"
@@ -353,7 +353,7 @@ proc qrz_setgeo { nick handle input } {
 
 proc grid { nick host hand chan text } {
 	global gridbin
-	set grid [sanitize_string [string trim ${text}]]
+	set grid [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
 
 	putlog "grid pub: $nick $host $hand $chan $grid $geo"
@@ -373,7 +373,7 @@ proc grid { nick host hand chan text } {
 
 proc msg_grid {nick uhand handle input} {
 	global gridbin
-	set grid [sanitize_string [string trim ${input}]]
+	set grid [sanitize_string [string trim "${input}"]]
 	set geo [qrz_getgeo $handle]
 
 	putlog "grid msg: $nick $uhand $handle $grid $geo"
@@ -392,7 +392,7 @@ proc msg_grid {nick uhand handle input} {
 
 proc drive_msg {nick uhand handle input} {
 	global drivebin
-	set grid [sanitize_string [string trim ${input}]]
+	set grid [sanitize_string [string trim "${input}"]]
 	set geo [qrz_getgeo $handle]
 
 	putlog "drive msg: $nick $uhand $handle $grid $geo"
@@ -411,7 +411,7 @@ proc drive_msg {nick uhand handle input} {
 
 proc drive_pub { nick host hand chan text } {
 	global drivebin
-	set grid [sanitize_string [string trim ${text}]]
+	set grid [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
 
 	putlog "drive pub: $nick $host $hand $chan $grid $geo"
@@ -430,7 +430,7 @@ proc drive_pub { nick host hand chan text } {
 
 proc transit_msg {nick uhand handle input} {
 	global drivebin
-	set grid [sanitize_string [string trim ${input}]]
+	set grid [sanitize_string [string trim "${input}"]]
 	set geo [qrz_getgeo $handle]
 
 	putlog "transit msg: $nick $uhand $handle $grid $geo"
@@ -449,7 +449,7 @@ proc transit_msg {nick uhand handle input} {
 
 proc transit_pub { nick host hand chan text } {
 	global drivebin
-	set grid [sanitize_string [string trim ${text}]]
+	set grid [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
 
 	putlog "transit pub: $nick $host $hand $chan $grid $geo"
@@ -469,7 +469,7 @@ proc transit_pub { nick host hand chan text } {
 
 proc timezone { nick host hand chan text } {
 	global tzbin
-	set timezone [sanitize_string [string trim ${text}]]
+	set timezone [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
 
 	putlog "timezone pub: $nick $host $hand $chan $timezone $geo"
@@ -489,7 +489,7 @@ proc timezone { nick host hand chan text } {
 
 proc msg_timezone {nick uhand handle input} {
 	global tzbin
-	set timezone [sanitize_string [string trim ${input}]]
+	set timezone [sanitize_string [string trim "${input}"]]
 	set geo [qrz_getgeo $handle]
 
 	putlog "timezone msg: $nick $uhand $handle $timezone $geo"
@@ -508,7 +508,7 @@ proc msg_timezone {nick uhand handle input} {
 
 proc elev { nick host hand chan text } {
 	global elevbin
-	set elev [sanitize_string [string trim ${text}]]
+	set elev [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
 
 	putlog "elev pub: $nick $host $hand $chan $elev $geo"
@@ -528,7 +528,7 @@ proc elev { nick host hand chan text } {
 
 proc msg_elev {nick uhand handle input} {
 	global elevbin
-	set elev [sanitize_string [string trim ${input}]]
+	set elev [sanitize_string [string trim "${input}"]]
 	set geo [qrz_getgeo $handle]
 
 	putlog "elev msg: $nick $uhand $handle $elev $geo"
@@ -689,7 +689,7 @@ proc msg_xray {nick uhand handle input} {
 
 proc lotw { nick host hand chan text } {
 	global lotwbin
-	set call [sanitize_string [string trim ${text}]]
+	set call [sanitize_string [string trim "${text}"]]
 	putlog "lotw pub: $nick $host $hand $chan $call"
 	set fd [open "|${lotwbin} ${call}" r]
 	fconfigure $fd -encoding utf-8
@@ -700,7 +700,7 @@ proc lotw { nick host hand chan text } {
 }
 proc msg_lotw {nick uhand handle input} {
 	global lotwbin
-	set call [sanitize_string [string trim ${input}]]
+	set call [sanitize_string [string trim "${input}"]]
 	putlog "lotw msg: $nick $uhand $handle $call"
 	set fd [open "|${lotwbin} ${call}" r]
 	fconfigure $fd -encoding utf-8
@@ -712,7 +712,7 @@ proc msg_lotw {nick uhand handle input} {
 
 proc eqsl { nick host hand chan text } {
 	global eqslbin
-	set call [sanitize_string [string trim ${text}]]
+	set call [sanitize_string [string trim "${text}"]]
 	putlog "eqsl pub: $nick $host $hand $chan $call"
 	set fd [open "|${eqslbin} ${call}" r]
 	fconfigure $fd -encoding utf-8
@@ -723,7 +723,7 @@ proc eqsl { nick host hand chan text } {
 }
 proc msg_eqsl {nick uhand handle input} {
 	global eqslbin
-	set call [sanitize_string [string trim ${input}]]
+	set call [sanitize_string [string trim "${input}"]]
 	putlog "eqsl msg: $nick $uhand $handle $call"
 	set fd [open "|${eqslbin} ${call}" r]
 	fconfigure $fd -encoding utf-8
@@ -735,7 +735,7 @@ proc msg_eqsl {nick uhand handle input} {
 
 proc pub_clublog { nick host hand chan text } {
 	global clublogbin
-	set call [sanitize_string [string trim ${text}]]
+	set call [sanitize_string [string trim "${text}"]]
 	putlog "clublog pub: $nick $host $hand $chan $call"
 	set fd [open "|${clublogbin} ${call}" r]
 	fconfigure $fd -encoding utf-8
@@ -746,7 +746,7 @@ proc pub_clublog { nick host hand chan text } {
 }
 proc msg_clublog {nick uhand handle input} {
 	global clublogbin
-	set call [sanitize_string [string trim ${input}]]
+	set call [sanitize_string [string trim "${input}"]]
 	putlog "clublog msg: $nick $uhand $handle $call"
 	set fd [open "|${clublogbin} ${call}" r]
 	fconfigure $fd -encoding utf-8
@@ -758,7 +758,7 @@ proc msg_clublog {nick uhand handle input} {
 
 proc pub_league { nick host hand chan text } {
 	global leaguebin
-	set param [sanitize_string [string trim ${text}]]
+	set param [sanitize_string [string trim "${text}"]]
 	putlog "league pub: $nick $host $hand $chan $param"
 	set fd [open "|${leaguebin} ${param}" r]
 	fconfigure $fd -encoding utf-8
@@ -769,7 +769,7 @@ proc pub_league { nick host hand chan text } {
 }
 proc msg_league {nick uhand handle input} {
 	global leaguebin
-	set param [sanitize_string [string trim ${input}]]
+	set param [sanitize_string [string trim "${input}"]]
 	putlog "league msg: $nick $uhand $handle $param"
 	set fd [open "|${leaguebin} ${param}" r]
 	fconfigure $fd -encoding utf-8
@@ -782,7 +782,7 @@ proc msg_league {nick uhand handle input} {
 
 proc dxcc { nick host hand chan text } {
 	global dxccbin
-	set call [sanitize_string [string trim ${text}]]
+	set call [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
 
 	putlog "dxcc pub: $nick $host $hand $chan $call"
@@ -801,7 +801,7 @@ proc dxcc { nick host hand chan text } {
 }
 proc msg_dxcc {nick uhand handle input} {
 	global dxccbin
-	set call [sanitize_string [string trim ${input}]]
+	set call [sanitize_string [string trim "${input}"]]
 	set geo [qrz_getgeo $handle]
 
 	putlog "dxcc msg: $nick $uhand $handle $call"
@@ -821,7 +821,7 @@ proc msg_dxcc {nick uhand handle input} {
 
 proc spots { nick host hand chan text } {
 	global spotsbin
-	set input [sanitize_string [string trim ${text}]]
+	set input [sanitize_string [string trim "${text}"]]
 	putlog "spots pub: $nick $host $hand $chan $input"
 	set fd [open "|${spotsbin} ${input}" r]
 	fconfigure $fd -encoding utf-8
@@ -832,7 +832,7 @@ proc spots { nick host hand chan text } {
 }
 proc msg_spots {nick uhand handle input} {
 	global spotsbin
-	set input [sanitize_string [string trim ${input}]]
+	set input [sanitize_string [string trim "${input}"]]
 	putlog "spots msg: $nick $uhand $handle $input"
 	set fd [open "|${spotsbin} ${input}" r]
 	fconfigure $fd -encoding utf-8
@@ -1200,7 +1200,7 @@ proc contests_msg {nick uhand handle input} {
 
 proc activity { nick host hand chan text } {
 	global activitybin
-	set params [sanitize_string [string trim ${text}]]
+	set params [sanitize_string [string trim "${text}"]]
 	putlog "activity pub: $nick $host $hand $chan $params"
 	set fd [open "|${activitybin} ${params}" r]
 	fconfigure $fd -encoding utf-8
@@ -1211,7 +1211,7 @@ proc activity { nick host hand chan text } {
 }
 proc activity_msg {nick uhand handle input} {
 	global activitybin
-	set params [sanitize_string [string trim ${input}]]
+	set params [sanitize_string [string trim "${input}"]]
 	putlog "activity msg: $nick $uhand $handle $params"
 	set fd [open "|${activitybin} ${params}" r]
 	fconfigure $fd -encoding utf-8
@@ -1244,7 +1244,7 @@ proc kindex_msg {nick uhand handle input} {
 
 proc morse_pub { nick host hand chan text } {
 	global morsebin
-	set msg [sanitize_string [string trim ${text}]]
+	set msg [sanitize_string [string trim "${text}"]]
 	putlog "morse pub: $nick $host $hand $chan $msg"
 	set fd [open "|${morsebin} ${msg}" r]
 	fconfigure $fd -encoding utf-8
@@ -1255,7 +1255,7 @@ proc morse_pub { nick host hand chan text } {
 }
 proc morse_msg {nick uhand handle input} {
 	global morsebin
-	set msg [sanitize_string [string trim ${input}]]
+	set msg [sanitize_string [string trim "${input}"]]
 	putlog "morse msg: $nick $uhand $handle $msg"
 	set fd [open "|${morsebin} ${msg}" r]
 	fconfigure $fd -encoding utf-8
@@ -1267,7 +1267,7 @@ proc morse_msg {nick uhand handle input} {
 
 proc unmorse_pub { nick host hand chan text } {
 	global unmorsebin
-	set msg [sanitize_string [string trim ${text}]]
+	set msg [sanitize_string [string trim "${text}"]]
 	putlog "unmorse pub: $nick $host $hand $chan $msg"
 	set fd [open "|${unmorsebin} ${msg}" r]
 	fconfigure $fd -encoding utf-8
@@ -1278,7 +1278,7 @@ proc unmorse_pub { nick host hand chan text } {
 }
 proc unmorse_msg {nick uhand handle input} {
 	global unmorsebin
-	set msg [sanitize_string [string trim ${input}]]
+	set msg [sanitize_string [string trim "${input}"]]
 	putlog "unmorse msg: $nick $uhand $handle $msg"
 	set fd [open "|${unmorsebin} ${msg}" r]
 	fconfigure $fd -encoding utf-8
@@ -1290,7 +1290,7 @@ proc unmorse_msg {nick uhand handle input} {
 
 proc repeater_pub { nick host hand chan text } {
 	global repeaterbin
-	set msg [sanitize_string [string trim ${text}]]
+	set msg [sanitize_string [string trim "${text}"]]
 	putlog "repeater pub: $nick $host $hand $chan $msg"
 	set fd [open "|${repeaterbin} ${msg}" r]
 	fconfigure $fd -encoding utf-8
@@ -1301,7 +1301,7 @@ proc repeater_pub { nick host hand chan text } {
 }
 proc repeater_msg {nick uhand handle input} {
 	global repeaterbin
-	set msg [sanitize_string [string trim ${input}]]
+	set msg [sanitize_string [string trim "${input}"]]
 	putlog "repeater msg: $nick $uhand $handle $msg"
 	set fd [open "|${repeaterbin} ${msg}" r]
 	fconfigure $fd -encoding utf-8
@@ -1313,7 +1313,7 @@ proc repeater_msg {nick uhand handle input} {
 
 proc aprs_pub { nick host hand chan text } {
 	global aprsbin
-	set params [sanitize_string [string trim ${text}]]
+	set params [sanitize_string [string trim "${text}"]]
 	putlog "aprs pub: $nick $host $hand $chan $params"
 	set fd [open "|${aprsbin} ${params}" r]
 	fconfigure $fd -encoding utf-8
@@ -1324,7 +1324,7 @@ proc aprs_pub { nick host hand chan text } {
 }
 proc aprs_msg {nick uhand handle input} {
 	global aprsbin
-	set params [sanitize_string [string trim ${input}]]
+	set params [sanitize_string [string trim "${input}"]]
 	putlog "aprs msg: $nick $uhand $handle $params"
 	set fd [open "|${aprsbin} ${params}" r]
 	fconfigure $fd -encoding utf-8
@@ -1336,7 +1336,7 @@ proc aprs_msg {nick uhand handle input} {
 
 proc muf_pub { nick host hand chan text } {
 	global mufbin
-	set params [sanitize_string [string trim ${text}]]
+	set params [sanitize_string [string trim "${text}"]]
 	putlog "muf pub: $nick $host $hand $chan $params"
 	set fd [open "|${mufbin} ${params}" r]
 	fconfigure $fd -encoding utf-8
@@ -1352,7 +1352,7 @@ proc muf_pub { nick host hand chan text } {
 }
 proc muf_msg {nick uhand handle input} {
 	global mufbin
-	set params [sanitize_string [string trim ${input}]]
+	set params [sanitize_string [string trim "${input}"]]
 	putlog "muf msg: $nick $uhand $handle $params"
 	set fd [open "|${mufbin} ${params}" r]
 	fconfigure $fd -encoding utf-8
@@ -1363,19 +1363,19 @@ proc muf_msg {nick uhand handle input} {
 }
 
 proc muf2_pub { nick host hand chan text } {
-	set params [sanitize_string [string trim ${text}]]
+	set params [sanitize_string [string trim "${text}"]]
 	putlog "muf2 pub: $nick $host $hand $chan $params"
 	putchan $chan "$nick: please use !muf"
 }
 proc muf2_msg {nick uhand handle input} {
-	set params [sanitize_string [string trim ${input}]]
+	set params [sanitize_string [string trim "${input}"]]
 	putlog "muf2 msg: $nick $uhand $handle $params"
 	putmsg "$nick" "please use !muf"
 }
 
 proc eme_pub { nick host hand chan text } {
 	global astrobin
-	set params [sanitize_string [string trim ${text}]]
+	set params [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
 	putlog "eme pub: $nick $host $hand $chan $geo $params"
 	if {(( [string equal "" $geo] ) || !( [string equal "" $params] ) || ( $params != {} ))} then {
@@ -1391,7 +1391,7 @@ proc eme_pub { nick host hand chan text } {
 }
 proc eme_msg {nick uhand handle input} {
 	global astrobin
-	set params [sanitize_string [string trim ${input}]]
+	set params [sanitize_string [string trim "${input}"]]
 	set geo [qrz_getgeo $handle]
 	putlog "eme msg: $nick $uhand $handle $geo $params"
 	if {(( [string equal "" $geo] ) || !( [string equal "" $params] ) || ( $params != {} ))} then {
@@ -1408,7 +1408,7 @@ proc eme_msg {nick uhand handle input} {
 
 proc moon_pub { nick host hand chan text } {
 	global astrobin
-	set params [sanitize_string [string trim ${text}]]
+	set params [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
 	putlog "moon pub: $nick $host $hand $chan $geo $params"
 	if {(( [string equal "" $geo] ) || !( [string equal "" $params] ) || ( $params != {} ))} then {
@@ -1424,7 +1424,7 @@ proc moon_pub { nick host hand chan text } {
 }
 proc moon_msg {nick uhand handle input} {
 	global astrobin
-	set params [sanitize_string [string trim ${input}]]
+	set params [sanitize_string [string trim "${input}"]]
 	set geo [qrz_getgeo $handle]
 	putlog "moon msg: $nick $uhand $handle $geo $params"
 	if {(( [string equal "" $geo] ) || !( [string equal "" $params] ) || ( $params != {} ))} then {
@@ -1441,7 +1441,7 @@ proc moon_msg {nick uhand handle input} {
 
 proc sun_pub { nick host hand chan text } {
 	global astrobin
-	set params [sanitize_string [string trim ${text}]]
+	set params [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
 	putlog "sun pub: $nick $host $hand $chan $geo $params"
 	if {(( [string equal "" $geo] ) || !( [string equal "" $params] ) || ( $params != {} ))} then {
@@ -1457,7 +1457,7 @@ proc sun_pub { nick host hand chan text } {
 }
 proc sun_msg {nick uhand handle input} {
 	global astrobin
-	set params [sanitize_string [string trim ${input}]]
+	set params [sanitize_string [string trim "${input}"]]
 	set geo [qrz_getgeo $handle]
 	putlog "sun msg: $nick $uhand $handle $geo $params"
 	if {(( [string equal "" $geo] ) || !( [string equal "" $params] ) || ( $params != {} ))} then {
@@ -1474,7 +1474,7 @@ proc sun_msg {nick uhand handle input} {
 
 proc graves_pub { nick host hand chan text } {
 	global astrobin
-	set params [sanitize_string [string trim ${text}]]
+	set params [sanitize_string [string trim "${text}"]]
 	putlog "graves pub: $nick $host $hand $chan $params"
 	set fd [open "|${astrobin} --graves ${params}" r]
 	fconfigure $fd -encoding utf-8
@@ -1485,7 +1485,7 @@ proc graves_pub { nick host hand chan text } {
 }
 proc graves_msg {nick uhand handle input} {
 	global astrobin
-	set params [sanitize_string [string trim ${input}]]
+	set params [sanitize_string [string trim "${input}"]]
 	putlog "graves msg: $nick $uhand $handle $params"
 	set fd [open "|${astrobin} --graves ${params}" r]
 	fconfigure $fd -encoding utf-8
@@ -1497,7 +1497,7 @@ proc graves_msg {nick uhand handle input} {
 
 proc sat_pub { nick host hand chan text } {
 	global satbin
-	set params [sanitize_string [string trim ${text}]]
+	set params [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
 	putlog "sat pub: $nick $host $hand $chan $geo $params"
 	if {(( [string equal "" $geo] )  )} then {
@@ -1518,7 +1518,7 @@ proc sat_pub { nick host hand chan text } {
 }
 proc sat_msg {nick uhand handle input} {
 	global satbin
-	set params [sanitize_string [string trim ${input}]]
+	set params [sanitize_string [string trim "${input}"]]
 	set geo [qrz_getgeo $handle]
 	putlog "sat msg: $nick $uhand $handle $geo $params"
 	if {(( [string equal "" $geo] ))} then {
@@ -1547,7 +1547,7 @@ proc satinfo_pub { nick host hand chan text } {
 
 proc qcode_pub { nick host hand chan text } {
 	global qcodebin
-	set msg [sanitize_string [string trim ${text}]]
+	set msg [sanitize_string [string trim "${text}"]]
 	putlog "qcode pub: $nick $host $hand $chan $msg"
 	set fd [open "|${qcodebin} ${msg}" r]
 	fconfigure $fd -encoding utf-8
@@ -1558,7 +1558,7 @@ proc qcode_pub { nick host hand chan text } {
 }
 proc qcode_msg {nick uhand handle input} {
 	global qcodebin
-	set msg [sanitize_string [string trim ${input}]]
+	set msg [sanitize_string [string trim "${input}"]]
 	putlog "qcode msg: $nick $uhand $handle $msg"
 	set fd [open "|${qcodebin} ${msg}" r]
 	fconfigure $fd -encoding utf-8
@@ -1580,7 +1580,7 @@ proc qslcheck_msg {nick uhand handle input} {
 
 proc dxpeditions_pub { nick host hand chan text } {
 	global dxpedbin
-	set params [sanitize_string [string trim ${text}]]
+	set params [sanitize_string [string trim "${text}"]]
 	putlog "dxped pub: $nick $host $hand $chan $params"
 	set fd [open "|${dxpedbin}" r]
 	fconfigure $fd -encoding utf-8
@@ -1591,7 +1591,7 @@ proc dxpeditions_pub { nick host hand chan text } {
 }
 proc dxpeditions_msg {nick uhand handle input} {
 	global dxpedbin
-	set params [sanitize_string [string trim ${input}]]
+	set params [sanitize_string [string trim "${input}"]]
 	putlog "dxped msg: $nick $uhand $handle $params"
 	set fd [open "|${dxpedbin}" r]
 	fconfigure $fd -encoding utf-8
@@ -1603,7 +1603,7 @@ proc dxpeditions_msg {nick uhand handle input} {
 
 proc iono_pub { nick host hand chan text } {
 	global ionobin
-	set iono [sanitize_string [string trim ${text}]]
+	set iono [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
 
 	putlog "iono pub: $nick $host $hand $chan $iono $geo"
@@ -1623,7 +1623,7 @@ proc iono_pub { nick host hand chan text } {
 
 proc iono_msg {nick uhand handle input} {
 	global ionobin
-	set iono [sanitize_string [string trim ${input}]]
+	set iono [sanitize_string [string trim "${input}"]]
 	set geo [qrz_getgeo $handle]
 
 	putlog "iono msg: $nick $uhand $handle $iono $geo"
@@ -1642,7 +1642,7 @@ proc iono_msg {nick uhand handle input} {
 
 proc blitz_pub { nick host hand chan text } {
 	global blitzbin
-	set blitz [sanitize_string [string trim ${text}]]
+	set blitz [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
 
 	putlog "blitz pub: $nick $host $hand $chan $blitz $geo"
@@ -1662,7 +1662,7 @@ proc blitz_pub { nick host hand chan text } {
 
 proc blitz_msg {nick uhand handle input} {
 	global blitzbin
-	set blitz [sanitize_string [string trim ${input}]]
+	set blitz [sanitize_string [string trim "${input}"]]
 	set geo [qrz_getgeo $handle]
 
 	putlog "blitz msg: $nick $uhand $handle $blitz $geo"
@@ -1685,7 +1685,7 @@ bind msg - !ae7q msg_ae7q
 
 proc pub_ae7q { nick host hand chan text } {
 	global ae7qbin
-	set input [sanitize_string [string trim ${text}]]
+	set input [sanitize_string [string trim "${text}"]]
 	putlog "ae7q pub: $nick $host $hand $chan $input"
 	set fd [open "|${ae7qbin} ${input}" r]
 	fconfigure $fd -encoding utf-8
@@ -1696,7 +1696,7 @@ proc pub_ae7q { nick host hand chan text } {
 }
 proc msg_ae7q {nick uhand handle input} {
 	global ae7qbin
-	set input [sanitize_string [string trim ${input}]]
+	set input [sanitize_string [string trim "${input}"]]
 	putlog "ae7q msg: $nick $uhand $handle $input"
 	set fd [open "|${ae7qbin} ${input}" r]
 	fconfigure $fd -encoding utf-8

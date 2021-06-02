@@ -13,7 +13,7 @@ source scripts/util.tcl
 
 proc adsb { nick host hand chan text } {
 	global adsbbin
-	set query [sanitize_string [string trim ${text}]]
+	set query [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
 	putlog "adsb pub: $nick $host $hand $chan $query $geo"
 	if [string equal "" $query] then {
@@ -30,7 +30,7 @@ proc adsb { nick host hand chan text } {
 
 proc adsb_msg {nick uhand handle input} {
 	global adsbbin
-	set query [sanitize_string [string trim ${input}]]
+	set query [sanitize_string [string trim "${input}"]]
 	set geo [qrz_getgeo $handle]
 	putlog "adsb msg: $nick $uhand $handle $query $geo"
 	if [string equal "" $query] then {

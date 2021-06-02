@@ -44,7 +44,7 @@ proc doge_msg {nick uhand handle input} {
 
 proc crypto_msg {nick uhand handle input} {
 	global btcbin
-	set input [sanitize_string [string trim ${input}]]
+	set input [sanitize_string [string trim "${input}"]]
 
 	putlog "crypto msg: $nick $uhand $handle $input"
 
@@ -71,7 +71,7 @@ proc doge_pub { nick host hand chan input } {
 
 proc crypto_pub { nick host hand chan input } {
 	global btcbin
-	set input [sanitize_string [string trim ${input}]]
+	set input [sanitize_string [string trim "${input}"]]
 
 	putlog "crypto pub: $nick $host $hand $chan $input"
 
