@@ -157,7 +157,7 @@ sub doAe7qCall {
   my @frns;
   my %odds_sim;
 
-  print "Note: ae7q.com is not providing full data after changes on the site. See https://www.ae7q.com/query/text/News.php\n";
+  #  print "Note: ae7q.com is not providing full data after changes on the site. See https://www.ae7q.com/query/text/News.php\n";
 
   my $url = "http://188.166.39.140:8018/predict/vanity-$call.csv";
   open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
@@ -213,7 +213,7 @@ sub doAe7qCall {
       if (/^<td class='Database'>(Technician|General|Amateur Extra|Novice|Advanced)<\/td>$/) {
 	$class = $1;
       }
-      if (/^<td class='Database' style='background-color:#[0-9A-F]+;\s*'>(Canceled|Active|Expired)<\/td>$/) {
+      if (/^<td class='Database' style='background-color:#[0-9A-F]+;\s*'>. - (Canceled|Active|Expired)<\/td>$/) {
 	$status = $1;
       }
       if (m|</a> / ([A-Z]+)</td>|) {
@@ -234,6 +234,8 @@ sub doAe7qCall {
       }
       if (m|</tr>| and defined $name) {
 	$availdate = getAvailDate($expire, $cxl);
+	$callStatus = green("Active")
+	  if not defined $callStatus and $status eq "Active";
 	print bold($call), ": ";
 	print $callStatus if defined $callStatus;
 	print " - previous licensee:" if $status ne "Active";
