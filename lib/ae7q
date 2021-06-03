@@ -157,7 +157,9 @@ sub doAe7qCall {
   my @frns;
   my %odds_sim;
 
-  my $url = "http://35.194.32.186:8018/predict/vanity-$call.csv";
+  print "Note: ae7q.com is not providing full data after changes on the site. See https://www.ae7q.com/query/text/News.php\n";
+
+  my $url = "http://188.166.39.140:8018/predict/vanity-$call.csv";
   open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
   while(<CSV>) {
     chomp;
@@ -167,7 +169,7 @@ sub doAe7qCall {
   }
   close(CSV);
 
-  $url = "http://35.194.32.186:8018/predict/call-$call.csv";
+  $url = "http://188.166.39.140:8018/predict/call-$call.csv";
   open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
   while(<CSV>) {
     chomp;
