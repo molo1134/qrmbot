@@ -4,6 +4,7 @@
 # Copyright (c) 2018, 2019, 2020, 2021 molo1134@github. All rights reserved.
 # Copyright (c) 2019 W9VFR. All rights reserved.
 # Copyright (c) 2019 OliverUK. All rights reserved.
+# Copyright (c) 2021 molo1134@github. All rights reserved.
 
 bind pub - !phonetics phoneticise
 bind pub - !phoneticise phoneticise
@@ -22,6 +23,8 @@ bind pub - !senate senate_pub
 bind msg - !senate senate_msg
 bind pub - !house house_pub
 bind msg - !house house_msg
+bind pub - !github github
+bind msg - !github msg_github
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
@@ -29,6 +32,8 @@ set christmasbin "/home/eggdrop/bin/christmas"
 set translatebin "/home/eggdrop/bin/translate"
 set primariesbin "/home/eggdrop/bin/primaries"
 set fivethirtyeightbin "/home/eggdrop/bin/fivethirtyeight"
+
+set githublink "https://github.com/molo1134/qrmbot/"
 
 # load utility methods
 source scripts/util.tcl
@@ -528,6 +533,17 @@ proc cat_pub { nick host hand chan text } {
 		putchan $chan "$msg($index): $line"
 	}
 	close $fd
+}
+
+proc github { nick host hand chan text } {
+	global githublink
+	putlog "github pub: $nick $host $hand $chan"
+	putchan $chan "$githublink"
+}
+proc msg_github { nick uhand handle input } {
+	global githublink
+	putlog "github msg: $nick $uhand $handle"
+	putmsg "$nick" "$githublink"
 }
 
 putlog "fun.tcl loaded."

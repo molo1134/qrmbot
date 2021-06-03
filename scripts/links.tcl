@@ -34,11 +34,7 @@ bind pubm - *://* http_pub
 #bind msgm - *https://* http_msg
 #bind pubm - *https://* http_pub
 
-bind pub - !github github
-bind msg - !github msg_github
-
 set linkbin "/home/eggdrop/bin/linksummary"
-set githublink "https://github.com/molo1134/qrmbot/"
 
 proc http_msg { nick host hand text } {
 	global linkbin
@@ -79,13 +75,3 @@ proc http_pub { nick host hand chan text } {
 	close $fd
 }
 
-proc github { nick host hand chan text } {
-	global githublink
-	putlog "github pub: $nick $host $hand $chan"
-	putchan $chan "$githublink"
-}
-proc msg_github { nick uhand handle input } {
-	global githublink
-	putlog "github msg: $nick $uhand $handle"
-	putmsg "$nick" "$githublink"
-}
