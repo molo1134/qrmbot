@@ -319,7 +319,7 @@ if ($xml == 1) {
   $lname =~ s/^.*\s+//;
   my $fname = $name;
   $fname =~ s/^\s*//;
-  $fname =~ s/\s+.*$//;
+  $fname =~ s/^(.*)\s+.*?$/$1/;
 
   print("    <fname>$fname</fname>\n");
   print("    <name>$lname</name>\n");
