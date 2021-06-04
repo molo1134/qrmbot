@@ -3,7 +3,7 @@
 # qrz.com callsign lookup.
 
 # 2-clause BSD license.
-# Copyright (c) 2017, 2018, 2019, 2020 molo1134@github. All rights reserved.
+# Copyright (c) 2017, 2018, 2019, 2020, 2021 molo1134@github. All rights reserved.
 
 # in order to retrieve info from qrz.com, you need to put these two lines in
 # $HOME/.qrzlogin:
@@ -256,7 +256,7 @@ our ($retcall, $country, $name, $sk, $class, $mail, $grid, $lat, $lon, $geosrc,
   $born, @prevcalls, $email, $codes, $website, $iota, $lotw, $eqsl,
   $mailqsl, $qsl, $expiration, @othercalls, $trustee, $incomplete, $addr1,
   $addr2, $state, $zip, $mailcountry, $county, $ituzone, $cqzone, $qrzserial,
-  $qrzadmin, $effective, $dxcc, $subscriber, $twofa, $nickname);
+  $qrzadmin, $effective, $dxcc, $subscriber, $twofa, $nickname, $attn);
 
 getAndParseData();
 
@@ -306,7 +306,7 @@ if ($csv == 1) {
 
 if ($xml == 1) {
   #print("<?xml version=\"1.0\" ?>\n");
-  #print("<QRZDatabase version=\"1.33\">\n");
+  #print("<QRZDatabase version=\"1.34\">\n");
   print("  <Callsign>\n");
 
   print("    <call>$retcall</call>\n");
@@ -320,9 +320,15 @@ if ($xml == 1) {
   my $fname = $name;
   $fname =~ s/^\s*//;
   $fname =~ s/^(.*)\s+.*?$/$1/;
+  my $name_fmt = $fname;
+  $name_fmt .= " \"$nickname\"" if defined $nickname;
+  $name_fmt .= " $lname";
 
   print("    <fname>$fname</fname>\n");
   print("    <name>$lname</name>\n");
+  print("    <nickname>$nickname</nickname>\n") if defined $nickname;
+  print("    <name_fmt>$name_fmt</name_fmt>\n");
+  print("    <attn>$attn</attn>\n") if defined $attn and length($attn) > 0;
   print("    <addr1>$addr1</addr1>\n");
   print("    <addr2>$addr2</addr2>\n");
   print("    <state>$state</state>\n") if defined $state;
@@ -604,6 +610,7 @@ sub scrapeXML {
     $country = $1 if (m|<country>(.*)</country>|);
     $fname = $1 if (m|<fname>(.*)</fname>|);
     $name = $1 if (m|<name>(.*)</name>|);
+    $nickname = $1 if (m|<nickname>(.*)</nickname>|);
     $email = $1 if (m|<email>(.*)</email>|);
     $codes = $1 if (m|<codes>(.*)</codes>|);
     $class = $1 if (m|<class>(.*)</class>|);
@@ -615,6 +622,7 @@ sub scrapeXML {
     $effective = $1 if (m|<efdate>(.*)</efdate>|);
     $aliases = $1 if (m|<aliases>(.*)</aliases>|);
     $trustee = $1 if (m|<trustee>(.*?),.*</trustee>|);
+    $attn = $1 if (m|<attn>(.*)</attn>|);
     $addr1 = $1 if (m|<addr1>(.*)</addr1>|);
     $addr2 = $1 if (m|<addr2>(.*)</addr2>|);
     $state = $1 if (m|<state>(.*)</state>|);
@@ -641,6 +649,7 @@ sub scrapeXML {
   $country = "USA" if $country eq "United States";
   $mailcountry = "USA" if $mailcountry eq "United States";
   $mail = "";
+  $mail .= "Attn: $attn; " if defined $attn;
   $mail .= "$addr1; " if defined $addr1;
   $mail .= "$addr2" if defined $addr2;
   $mail .= " $state" if defined $state;
@@ -804,12 +813,15 @@ sub getAndParseData {
     }
     if (defined($retcall) and length($retcall) > 0 and
 	  $calldata and !defined($name) and
-	  /^<p class="m0".*?<span style="color: black; font-weight: bold">(<span style='font-weight: normal'>)?([^<]+)(<span style='font-weight:bold'>)?( "([^"]*)" )?(<\/span>)?([^<]*)<\/span.*?<br *\/>(.*)$/) {
-      $name = "$2$7";
-      $addr1 = $addr2 = $mailcountry = $mail = $8;
-      $nickname = $5;
+	  /^<p class="m0".*?>(.*?)?(<br>)?<span style="color: black; font-weight: bold">(<span style='font-weight: normal'>)?([^<]+)(<span style='font-weight:bold'>)?( "([^"]*)" )?(<\/span>)?([^<]*)<\/span.*?<br *\/>(.*)$/) {
+      $attn = $1;
+      $name = "$4$9";
+      $addr1 = $addr2 = $mailcountry = $mail = $10;
+      $nickname = $7;
       $mail =~ s/<br *\/>/; /g;
       $mail =~ s/<\/p>//g;
+      $attn =~ s/^\s+//;
+      $mail = "Attn: $attn; $mail" if defined $attn and length($attn) > 0;
       $addr1 =~ s/^([^<]*)<br *\/>.*$/$1/;
       $addr2 =~ s/^[^<]*<br *\/>([^<]*)<br *\/>.*$/$1/;
       if ($addr2 =~ m/(.*),\s+([A-Z]{2})\s+([0-9]{5})/) {
