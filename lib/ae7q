@@ -186,20 +186,20 @@ sub doAe7qCall {
     if ($inLicTable and m|title='Show licensee FRN history for (\d+)'>(.*)</a></td>|) {
       ($frn, $name) = ($1, $2);
     }
-    if (m|<kbd>$call</kbd> is canceled, but is not yet|) {
+    if (m|<kbd>$call</kbd> is (. - )?canceled, but is not yet|) {
       $callStatus = red("Canceled, but not yet available");
     }
-    if (m|<kbd>$call</kbd> is expired, but is not yet|) {
+    if (m|<kbd>$call</kbd> is (. - )?expired, but is not yet|) {
       $callStatus = red("Expired, but not yet available");
     }
     if (m|<kbd>$call</kbd> is reserved \((.*?)\)|) {  # example: KA2ZU
       $callStatus = red("Reserved ($1)");
     }
-    if (m|style='background-color:#99CCFF; '><kbd>$call</kbd> is (expired\|canceled) and is <|) {
+    if (m|style='background-color:#99CCFF; '><kbd>$call</kbd> is (. - )?(expired\|canceled) and is <|) {
       $callStatus = lightblue("Application Pending");
       $pending = 1;
     }
-    if (m|style='background-color:#99FF66; '><kbd>$call</kbd> is (expired\|canceled) and is <|) {
+    if (m|style='background-color:#99FF66; '><kbd>$call</kbd> is (. -)?\s*(expired\|canceled) and is <|) {
       $callStatus = green("Available");
     }
     if (m|style='background-color:#99FF66; '><kbd>$call</kbd> is  <|) {
@@ -210,11 +210,11 @@ sub doAe7qCall {
       $pending = 1;
     }
     if ($inLicTable) {
-      if (/^<td class='Database'>(Technician|General|Amateur Extra|Novice|Advanced)<\/td>$/) {
-	$class = $1;
+      if (/^<td class='Database'>(. - )?(Technician|General|Amateur Extra|Novice|Advanced)<\/td>$/) {
+	$class = $2;
       }
-      if (/^<td class='Database' style='background-color:#[0-9A-F]+;\s*'>. - (Canceled|Active|Expired)<\/td>$/) {
-	$status = $1;
+      if (/^<td class='Database' style='background-color:#[0-9A-F]+;\s*'>(. - )?(Canceled|Active|Expired)<\/td>$/) {
+	$status = $2;
       }
       if (m|</a> / ([A-Z]+)</td>|) {
 	$state = $1;
