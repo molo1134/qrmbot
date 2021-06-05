@@ -374,7 +374,7 @@ sub printFrnApps {
       $appid = yellow($appid) if $appcolor eq "FFFF66";
       $appid = red($appid) if $appcolor eq "FF99CC";
     }
-    $type = $1 if m|/AppByType.*>([^<]*)</a>| and $inpred == 1;
+    $type = $2 if m|/AppByType.*>(. - )?([^<]*)</a>| and $inpred == 1;
     $seqnum = $1 if m|<td class='DatabaseField' align='right'>\s*([0-9]+)\s*</td>| and $inpred == 1;
     $vanity = $1 if m|/CallHistory\.php\?CALL=([0-9A-Z]+)#Apps| and $inpred == 1;
     if (m|background-color:#([0-9A-F]+);.*/Prediction\.php\?PREDICT=(.*?)'| and $inpred == 1) {
