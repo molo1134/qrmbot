@@ -26,7 +26,7 @@ my $maxage=86400; # 1 day
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq 'eggdrop') {
-    print "usage: !lotw <callsign>\n";
+    print "usage: !lotw [--loose] <callsign>\n";
   } else {
     print "usage: $0 <callsign>\n";
   }
@@ -38,8 +38,25 @@ if ($#ARGV == 0 && $ARGV[0] =~ m/ /) {
   @ARGV = split / /, $ARGV[0];
 }
 
-my $call = uc $ARGV[0];
+my $exact = 1;
+my $i = 0;
+my $call = undef;
+
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /--lo?ose/) {
+    $exact = 0;
+  } else {
+    $call = uc $ARGV[$i];
+    last;
+  }
+  $i++;
+}
+
 $call =~ s/[^A-Z0-9\/\$\^]//g;
+
+if ($exact == 1 and not $call =~ m/[\$\^]/) {
+  $call = "^${call}\$";
+}
 
 if ( ! -r $cachefile ) {
 	#print "system 1\n";
@@ -63,7 +80,7 @@ if ($age > $maxage or $size == 0) {
   system "/usr/bin/curl --max-time 10 -s -k -L -o $cachefile '$url'";
 }
 
-my $i = 0;
+$i = 0;
 if (-r $cachefile) {
   open (INPUT, "<", $cachefile) or die "Can't open cache: $!";
   while (<INPUT>) {
@@ -87,7 +104,7 @@ if ($i == 0) {
   exit $exitnonzeroonerror;
 }
 
-if ($i > 5 and $username eq "eggdrop") {
+if ($i > 3 and $username eq "eggdrop") {
   print "(truncated. see $url )\n";
 }
 
