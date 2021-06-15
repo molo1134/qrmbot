@@ -27,6 +27,8 @@ my $highlight="vt220";
 $highlight = "none" if ! -t STDOUT;
 $highlight = "irc" if $username eq "eggdrop";
 
+my $predictionBaseUrl = "http://188.166.39.140:8018/predict/";
+
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
@@ -159,7 +161,7 @@ sub doAe7qCall {
 
   #  print "Note: ae7q.com is not providing full data after changes on the site. See https://www.ae7q.com/query/text/News.php\n";
 
-  my $url = "http://188.166.39.140:8018/predict/vanity-$call.csv";
+  my $url = "${predictionBaseUrl}/vanity-$call.csv";
   open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
   while(<CSV>) {
     chomp;
@@ -169,7 +171,7 @@ sub doAe7qCall {
   }
   close(CSV);
 
-  $url = "http://188.166.39.140:8018/predict/call-$call.csv";
+  $url = "${predictionBaseUrl}/call-$call.csv";
   open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
   while(<CSV>) {
     chomp;
