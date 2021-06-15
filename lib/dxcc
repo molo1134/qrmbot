@@ -38,6 +38,11 @@ my @lastentity = undef;
 my @records;
 our ($mylat, $mylon, $localgrid);
 
+my $loginfile = $ENV{'HOME'} . "/.qrzlogin";
+if (-e ($loginfile)) {
+  require($loginfile);
+}
+
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 
   if ($username eq 'eggdrop') {
@@ -83,6 +88,9 @@ $term = uc $term;
 if (defined($de)) {
   my $degeo = argToCoords($de);
   ($mylat, $mylon) = split(',', $degeo) if defined $degeo;
+}
+
+if (defined($mylat)) {
   $localgrid = coordToGrid($mylat, $mylon);
 }
 
