@@ -1400,6 +1400,7 @@ if ($#countyList >= 0) {
   if (defined $j->{vaccination_county_condensed_data}) {
     foreach my $rec (@{$j->{vaccination_county_condensed_data}}) {
       my $cty = lc $rec->{County};
+      $cty =~ s/\s*(county|city|parish|area|boro)\s*$//i;
       my $st = $rec->{StateName};
       $st =~ s/\s*$//;
       my $dt = $rec->{Date};
