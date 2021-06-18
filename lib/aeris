@@ -301,7 +301,9 @@ if (not defined($ob->{windSpeedMPH})) {
   } else {
     $wind = "at $ob->{windSpeedKPH}kmph/$ob->{windSpeedMPH}mph";
   }
-  print " Wind: $ob->{windDir} $wind ";
+  print " Wind: ";
+  print "$ob->{windDir} " if defined $ob->{windDir};
+  print "$wind ";
   print "(gust $ob->{windGustKPH}kph/$ob->{windGustMPH}mph) " if defined $ob->{windGustKPH} and $ob->{windGustKPH} > 0.0;
 }
 
