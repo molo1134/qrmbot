@@ -118,9 +118,9 @@ if (defined($vals{wind_calm}) and $vals{wind_calm} == 1) {
 print " (gust $vals{wind_gust_kph}kph/$vals{wind_gust_mph}mph)" if defined ($vals{wind_gust}) && $vals{wind_gust} > 0;
 print "  Pressure: $vals{pressure}mb/$vals{pressure_inhg}inHg" if defined ($vals{pressure});
 print "  Precipitation:"
-	if (defined($vals{rain_1h}) || defined($vals{rain_24h}) || defined($vals{rain_mn}))
-	  and ($vals{rain_1h} > 0 || $vals{rain_24h} > 0 || $vals{rain_mn} > 0);
-	;
+	if ((defined$vals{rain_1h} and $vals{rain_1h} > 0) ||
+	  (defined$vals{rain_24h} and $vals{rain_24h} > 0) ||
+	  (defined$vals{rain_mn} and $vals{rain_mn} > 0));
 print " last hour: $vals{rain_1h}mm/$vals{rain_1h_inch}in"
 	if defined$vals{rain_1h} and $vals{rain_1h} > 0;
 print " last 24h: $vals{rain_24h}mm/$vals{rain_24h_inch}in"
