@@ -108,7 +108,7 @@ needed.
 11. Add POTA
 12. Move dotfiles to a dot dir
 13. ~~Add [clublog league status](https://bbs.km8v.com/bot/league?call=)~~
-14. Add free space path loss calculation using gnu units.
+14. ~~Add free space path loss calculation using gnu units.~~
 15. Add wavelength and frequency calculation (free space and in-wire w/ velocity factor).
 16. Add coax loss calculation by length, frequency/band and type.
 17. ~~Add nearest fires command from aeris wx api.~~

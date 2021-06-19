@@ -22,6 +22,7 @@ bind msg - !silver msg_silver
 bind msg - !platinum msg_plat
 
 bind msg - !fspl msg_fspl
+bind pub - !fspl pub_fspl
 
 set unitsbin "/usr/bin/units"
 
@@ -199,4 +200,17 @@ proc msg_fspl {nick uhand handle arg} {
   set dist [lrange $argl 0 1]
   set freq [lrange $argl 2 3]
   msg_convert_units "$nick" $uhand $handle "(4 * pi * $dist * $freq / c)^2 in dB"
+}
+
+proc pub_fspl {nick host hand chan arg} {
+  set arg [sanitize_string $arg]
+  if {![info exists arg] || [string trim $arg] == ""} {
+    putmsg "$nick" "syntax : !fspl <dist> <dist units> <freq> <freq units>"
+    putmsg "$nick" "example: !fspl 25 km 146 MHz"
+    return
+  }
+  set argl [split $arg]
+  set dist [lrange $argl 0 1]
+  set freq [lrange $argl 2 3]
+  pub_convert_units "$nick" $uhand $handle "(4 * pi * $dist * $freq / c)^2 in dB"
 }
