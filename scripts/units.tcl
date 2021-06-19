@@ -21,6 +21,8 @@ bind msg - !gold msg_gold
 bind msg - !silver msg_silver
 bind msg - !platinum msg_plat
 
+bind msg - !fspl msg_fspl
+
 set unitsbin "/usr/bin/units"
 
 # load utility methods
@@ -183,4 +185,13 @@ proc msg_silver {nick uhand handle arg} {
 }
 proc msg_plat {nick uhand handle arg} {
   msg_convert_units "$nick" $uhand $handle "platinumprice * 1 troyounce in USD"
+}
+
+
+proc msg_fspl {nick uhand handle arg} {
+  set arg [sanitize_string $arg]
+  set argl [split $arg]
+  set dist [lrange $argl 0 1]
+  set freq [lrange $argl 2 3]
+  msg_convert_units "$nick" $uhand $handle "(4 * pi * $dist * $freq / c)^2 in dB"
 }
