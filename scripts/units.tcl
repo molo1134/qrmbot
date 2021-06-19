@@ -212,5 +212,5 @@ proc pub_fspl {nick host hand chan arg} {
   set argl [split $arg]
   set dist [lrange $argl 0 1]
   set freq [lrange $argl 2 3]
-  pub_convert_units "$nick" $uhand $handle "(4 * pi * $dist * $freq / c)^2 in dB"
+  pub_convert_units "$nick" $host $hand $chan "(4 * pi * $dist * $freq / c)^2 in dB"
 }
