@@ -34,6 +34,8 @@ bind msg - !quake quake_msg
 bind pub - !quakef quakef_pub
 bind msg - !quakef quakef_msg
 
+bind pub - !fire fire_pub
+bind msg - !fire fire_msg
 
 set wxbin "/home/eggdrop/bin/aeris"
 set wxfbin "/home/eggdrop/bin/aerisf"
@@ -43,6 +45,7 @@ set quakebin "/home/eggdrop/bin/quake"
 set quakefbin "/home/eggdrop/bin/quakef"
 set darkskybin "/home/eggdrop/bin/darksky"
 set wttrbin "/home/eggdrop/bin/wttr"
+set firebin "/home/eggdrop/bin/fire"
 
 # load utility methods
 source scripts/util.tcl
@@ -242,6 +245,55 @@ proc msg_wxflong {nick uhand handle input} {
 	}
 	close $fd
 }
+
+proc fire_pub { nick host hand chan text } {
+	global firebin
+	set loc [sanitize_string [string trim "${text}"]]
+	# from util.tcl:
+	set geo [qrz_getgeo $hand]
+
+	putlog "fire pub: $nick $host $hand $chan $loc $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${firebin} ${loc} " r]
+	} else {
+		if [string equal "" ${loc}] then {
+			set fd [open "|${firebin} ${geo} " r]
+		} else {
+			set fd [open "|${firebin} ${loc} " r]
+		}
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc fire_msg {nick uhand handle input} {
+	global firebin
+	set loc [sanitize_string [string trim "${input}"]]
+	# from util.tcl:
+	set geo [qrz_getgeo $handle]
+
+	putlog "fire msg: $nick $uhand $handle $loc $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${firebin} ${loc} " r]
+	} else {
+		if [string equal "" ${loc}] then {
+			set fd [open "|${firebin} ${geo} " r]
+		} else {
+			set fd [open "|${firebin} ${loc} " r]
+		}
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
 
 proc metar {nick host hand chan text} {
 	global metarbin

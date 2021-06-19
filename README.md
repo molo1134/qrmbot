@@ -111,7 +111,7 @@ needed.
 14. Add free space path loss calculation using gnu units.
 15. Add wavelength and frequency calculation (free space and in-wire w/ velocity factor).
 16. Add coax loss calculation by length, frequency/band and type.
-17. Add nearest fires command from aeris wx api.
+17. ~~Add nearest fires command from aeris wx api.~~
 
 
 ## Contributors

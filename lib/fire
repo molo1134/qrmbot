@@ -1,0 +1,147 @@
+#!/usr/bin/perl -w
+
+# aeris weather fire data
+#
+# 2-clause BSD license.
+# Copyright (c) 2021 molo1134@github. All rights reserved.
+#
+# requires an API key from aerisweather.com  Place into the file $HOME/.aerisweather as follows:
+#
+# $client_id = "0123456789abcdef";
+# $client_secret = "0123456789abcdef";
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use Encode qw(decode);
+use I18N::Langinfo qw(langinfo CODESET);
+use JSON qw( decode_json );
+use Math::Round;
+use URI::Escape;
+use POSIX qw(strftime);
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+our $client_id = undef;
+our $client_secret = undef;
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+my $apikeyfile = $ENV{'HOME'} . "/.aerisweather";
+if (-e ($apikeyfile)) {
+  require($apikeyfile);
+} else {
+  die "error: unable to read file $apikeyfile"
+}
+die "error: no API key set" unless defined($client_id) and defined($client_secret);
+
+my $i = 0;
+my $loc;
+while ($i <= $#ARGV) {
+  if (defined($loc)) {
+    $loc = $loc . " " . $ARGV[$i];
+  } else {
+    $loc = $ARGV[$i];
+  }
+  $i++;
+}
+
+# decode command line from locale-specified codeset
+my $codeset = langinfo(CODESET);
+$loc = decode($codeset, $loc);
+
+if (defined($loc)) {
+  $loc =~ s/^\s*//;
+  $loc =~ s/\s*$//;
+}
+
+if (!defined($loc) or length($loc) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !fire <location>\n";
+  } else {
+    print "usage: $0 <location>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $geo = argToCoords($loc);
+$loc = $geo if defined $geo;
+my $encodedloc = uri_escape($loc);
+
+my $url = "https://api.aerisapi.com/fires/closest?p=$encodedloc&format=json&radius=10000km&client_id=$client_id&client_secret=$client_secret";
+#print "$url\n";
+open (HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+my $json = <HTTP>;
+close(HTTP);
+#print "$json\n";
+if (not $json =~ /^\s*{/) {
+  print "error1 while retrieving data: $json\n";
+  exit $exitnonzeroonerror;
+}
+my $j = decode_json($json);
+
+if (defined $j->{error} && $j->{error}->{code} eq "warn_no_data") {
+  print "no fires found near ", coordToGrid(split(",", $loc)), "\n";
+  exit 0;
+}
+
+if (not $j->{success} or defined $j->{error}) {
+  print "error2 while retrieving data: $j->{error}->{code}: $j->{error}->{description}\n";
+  exit $exitnonzeroonerror;
+}
+
+my $resp = $j->{response}[0];
+
+# place name
+my $place = $resp->{place}->{name};
+if (defined $resp->{place}->{city} and $place ne $resp->{place}->{city}) {
+  $place .= ", " . $resp->{place}->{city}
+}
+if (defined $resp->{place}->{state} and $place ne $resp->{place}->{state} and $resp->{place}->{state} ne "") {
+  $place .= ", " . uc $resp->{place}->{state}
+}
+if (defined $resp->{place}->{country} and $place ne $resp->{place}->{country}) {
+  $place .= ", " . uc $resp->{place}->{country}
+}
+
+# geo coords
+my $lat = nearest(.001, $resp->{loc}->{lat});
+my $lon = nearest(.001, $resp->{loc}->{long});
+
+my $r = $resp->{report};
+
+# OUTPUT
+print "Fire near ", bold($place), ": \"", bold("$r->{name} Fire"), "\" ($lat,$lon) as of ";
+
+$ENV{TZ} = $resp->{profile}->{tz};
+print strftime("%a %H:%M %Z", localtime($r->{timestamp}));
+
+print "\n" if $username ne "eggdrop";
+print " --" if $username eq "eggdrop";
+
+my ($dist, $bearing) = distBearing(split(",", $loc), $lat, $lon);
+my $dist_mi = nearest(0.1, $dist * 0.62137119);
+printf(" %0.1f km (%0.1f mi) %s from %s\n", nearest(0.1, $dist), $dist_mi, azToNEWS($bearing), coordToGrid(split(",", $loc)));
+print " area burned: $r->{areaKM} km² ($r->{areaMI} mi²)";
+
+print "\n" if $username ne "eggdrop";
+print " --" if $username eq "eggdrop";
+
+print " $r->{perContained}% contained";
+print " (expected containment ",
+  strftime("%b %d", localtime($r->{expContainedTimestamp})), ")"
+	if defined($r->{expContainedTimestamp});
+print "\n";
+
+
