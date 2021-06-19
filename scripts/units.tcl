@@ -190,6 +190,11 @@ proc msg_plat {nick uhand handle arg} {
 
 proc msg_fspl {nick uhand handle arg} {
   set arg [sanitize_string $arg]
+  if {[regexp "^\s*$" $arg match]} {
+    putmsg "$nick" "syntax : !fspl <dist> <dist units> <freq> <freq units>"
+    putmsg "$nick" "example: !fspl 25 km 146 MHz"
+    return
+  }
   set argl [split $arg]
   set dist [lrange $argl 0 1]
   set freq [lrange $argl 2 3]
