@@ -114,7 +114,8 @@ if ($freq_units ne "MHz") {
 }
 
 my @types = keys %loss;
-if (not $coax ~~ @types and not (uc $coax) ~~ @types) {
+my $uc_coax = uc $coax;
+if (not $coax ~~ @types and not $uc_coax ~~ @types) {
   print "Unable to find coax type \"$coax\". Valid types: ", join(", ", sort keys %loss), "\n";
   exit $exitnonzeroonerror;
 }
