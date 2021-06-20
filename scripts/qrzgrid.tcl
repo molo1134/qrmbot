@@ -157,6 +157,11 @@ bind msg - !qsl qslcheck_msg
 bind pub - !dxped dxpeditions_pub
 bind msg - !dxped dxpeditions_msg
 
+bind msg - !atten atten_msg
+bind pub - !atten atten_pub
+bind msg - !coax atten_msg
+bind pub - !coax atten_pub
+
 set qrzbin "/home/eggdrop/bin/qrz"
 set gridbin "/home/eggdrop/bin/grid"
 set drivebin "/home/eggdrop/bin/drivetime"
@@ -186,6 +191,7 @@ set satbin "/home/eggdrop/bin/sat"
 set qcodebin "/home/eggdrop/bin/qcode"
 set dxpedbin "/home/eggdrop/bin/dxpeditions"
 set blitzbin "/home/eggdrop/bin/blitz"
+set attenbin "/home/eggdrop/bin/atten"
 
 set spotfile spotlist
 
@@ -1705,6 +1711,30 @@ proc msg_ae7q {nick uhand handle input} {
 	}
 	close $fd
 }
+
+proc atten_pub { nick host hand chan text } {
+	global attenbin
+	set params [sanitize_string [string trim "${text}"]]
+	putlog "atten pub: $nick $host $hand $chan $params"
+	set fd [open "|${attenbin} ${params}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc atten_msg {nick uhand handle input} {
+	global attenbin
+	set params [sanitize_string [string trim "${input}"]]
+	putlog "atten msg: $nick $uhand $handle $params"
+	set fd [open "|${attenbin} ${params}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
 
 putlog "Ham utils loaded."
 
