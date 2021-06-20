@@ -114,9 +114,13 @@ if ($freq_units ne "MHz") {
 }
 
 my @types = keys %loss;
-if (not $coax ~~ @types) {
+if (not $coax ~~ @types and not (uc $coax) ~~ @types) {
   print "Unable to find coax type \"$coax\". Valid types: ", join(", ", sort keys %loss), "\n";
   exit $exitnonzeroonerror;
+}
+
+if (not defined $loss{$coax}) {
+  $coax = uc $coax;
 }
 
 $i = 0;
@@ -159,10 +163,10 @@ while ($i <= $#lossMHz) {
   $i++;
 }
 
-while (not defined $loss{$coax}[$l]) {
+while (not defined $loss{$coax}[$l] and $l >= 0) {
   $l--;
 }
-while (not defined $loss{$coax}[$h]) {
+while (not defined $loss{$coax}[$h] and $h <= $#lossMHz) {
   $h++;
 }
 
