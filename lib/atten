@@ -17,36 +17,38 @@ use Math::Round;
 
 my %loss; # dB per 100 ft
 
-my @lossMHz       = (    1,    10,   30,    50,   100,   146,   150,   200,    220,   440,   450,   900,  1000,  1500,  2400);
+my @lossMHz       = (    1,    10,   30,    50,   100,   146,   150,   200,    220,   400,   440,   450,   900,  1000,  1500,  2400);
 #-------------------------------------------------------------------------------------------------------
 # from universal-radio.com
-$loss{"LMR-100A"} = [undef, undef,   3.9,   5.1, undef,   8.8,   8.9, undef, undef,  15.6,  15.8, undef, undef, undef, undef];
-$loss{"RG-59"}    = [undef, undef, undef,   2.4,   3.5, undef, undef, undef, undef,   7.6, undef, undef,  12.0, undef, undef];
-$loss{"RG-8"}     = [undef, undef, undef,   1.2,   1.8, undef, undef, undef, undef, undef, undef, undef,   7.1, undef, undef];
-$loss{"RG-214"}   = [undef, undef,   1.2,   1.6,   1.9,   2.8,   2.8, undef, undef,   5.1,   5.1, undef,   8.0, undef,  13.7];
-$loss{"DRF-400"}  = [undef, undef,   0.7,   0.9, undef,   1.5, undef, undef, undef, undef,   2.7, undef, undef, undef,   6.7];
-$loss{"Bury-FLEX"}= [undef, undef, undef,   1.1,   1.5, undef, undef, undef, undef, undef, undef, undef,   4.8, undef, undef];
-$loss{"9086"}     = [undef, undef, undef, undef,   1.4, undef, undef, undef, undef,   2.8,   2.8, undef, undef, undef, undef];
+$loss{"LMR-100A"} = [undef, undef,   3.9,   5.1, undef,   8.8,   8.9, undef, undef, undef,  15.6,  15.8, undef, undef, undef, undef];
+$loss{"RG-59"}    = [undef, undef, undef,   2.4,   3.5, undef, undef, undef, undef, undef,   7.6, undef, undef,  12.0, undef, undef];
+$loss{"RG-8"}     = [undef, undef, undef,   1.2,   1.8, undef, undef, undef, undef, undef, undef, undef, undef,   7.1, undef, undef];
+$loss{"RG-214"}   = [undef, undef,   1.2,   1.6,   1.9,   2.8,   2.8, undef, undef, undef,   5.1,   5.1, undef,   8.0, undef,  13.7];
+$loss{"DRF-400"}  = [undef, undef,   0.7,   0.9, undef,   1.5, undef, undef, undef, undef, undef,   2.7, undef, undef, undef,   6.7];
+$loss{"Bury-FLEX"}= [undef, undef, undef,   1.1,   1.5, undef, undef, undef, undef, undef, undef, undef, undef,   4.8, undef, undef];
+$loss{"9086"}     = [undef, undef, undef, undef,   1.4, undef, undef, undef, undef, undef,   2.8,   2.8, undef, undef, undef, undef];
 
 # from w4rp.com
-$loss{"LMR-1200"} = [undef, undef,  0.21,  0.27, undef, undef,  0.48, undef,  0.59, undef,  0.86,  1.27, undef,  1.69, undef];
-$loss{"LMR-900"}  = [undef, undef,  0.29,  0.37, undef, undef,  0.66, undef,  0.80, undef,  1.17,  1.70, undef,  2.24, undef];
-$loss{"LMR-600"}  = [undef, undef,  0.42,  0.55, undef, undef,  0.96, undef,  1.18, undef,  1.72,  2.50, undef,  3.31, undef];
-$loss{"Superflex"}= [undef, undef,  0.56,  0.73, undef, undef,  1.29, undef,  1.58, undef,  2.32,  3.41, undef,  4.57, undef]; # half inch
-$loss{"9914"}     = [  0.3,   0.5,   0.8,   1.1,   1.5, undef,   1.7,   1.8,   2.1, undef,   3.1,   4.5,   5.3, undef, undef];
-$loss{"LMR-195"}  = [undef, undef,   1.8,   2.3, undef, undef,   4.0, undef,   4.8, undef,   7.0,   9.9, undef,  12.9, undef];
-$loss{"RG-6"}     = [  0.2,   0.6, undef,   1.4,   2.0, undef, undef,   2.8, undef, undef, undef, undef,   6.1, undef, undef];
-$loss{"RG-11"}    = [  0.2,   0.4, undef,   1.0,   1.6, undef, undef,   2.3, undef, undef, undef, undef,   5.6, undef, undef];
+$loss{"LMR-1200"} = [undef, undef,  0.21,  0.27, undef, undef,  0.48, undef,  0.59, undef, undef,  0.86,  1.27, undef,  1.69, undef];
+$loss{"LMR-900"}  = [undef, undef,  0.29,  0.37, undef, undef,  0.66, undef,  0.80, undef, undef,  1.17,  1.70, undef,  2.24, undef];
+$loss{"LMR-600"}  = [undef, undef,  0.42,  0.55, undef, undef,  0.96, undef,  1.18, undef, undef,  1.72,  2.50, undef,  3.31, undef];
+$loss{"Superflex"}= [undef, undef,  0.56,  0.73, undef, undef,  1.29, undef,  1.58, undef, undef,  2.32,  3.41, undef,  4.57, undef]; # half inch
+$loss{"LMR-195"}  = [undef, undef,   1.8,   2.3, undef, undef,   4.0, undef,   4.8, undef, undef,   7.0,   9.9, undef,  12.9, undef];
+
+$loss{"RG-6"}     = [  0.2,   0.6, undef,   1.4,   2.0, undef, undef,   2.8, undef,   4.3, undef, undef, undef,   6.1, undef, undef];
+$loss{"RG-11"}    = [  0.2,   0.4, undef,   1.0,   1.6, undef, undef,   2.3, undef,   3.5, undef, undef, undef,   5.6, undef, undef];
 
 # considated between w4rp.com and universal-radio.com
-$loss{"RG-174"}   = [  1.9,   3.3,   5.5,   6.6,   8.9,  13.0, undef,  11.9, undef,  25.0, undef,  27.9,  32.0, undef,  75.0];
-$loss{"RG-213"}   = [  0.2,   0.6, undef,   1.6,   2.2,   2.8,   2.8, undef, undef,   5.1,   5.1, undef,   8.3, undef, undef];
-$loss{"LMR-200"}  = [undef, undef,   1.8,   2.3, undef,   3.0,   4.0, undef,   4.8,   6.0,   7.0,   9.9, undef,  12.7,  16.5];
-$loss{"LMR-240"}  = [undef, undef,   1.3,   1.7, undef,   3.0,   3.0, undef,   3.7,   5.2,   5.3,   7.6, undef,   9.9,  12.7];
-$loss{"LMR-400"}  = [undef, undef,   0.7,   0.9, undef,   1.5,   1.5, undef,   1.8,   2.7,   2.7,   3.9, undef,   5.1,   6.6];
-$loss{"RG-8X"}    = [  0.5,   1.0,   2.0,   2.5,   3.6,   4.5,   4.7,   5.4,   6.0,   8.1,   8.6,  12.8,  13.5, undef,  21.6];
-$loss{"RG-58/U"}  = [  0.4,   1.4,   2.5,   4.1,   5.3,   6.1,   6.2,   7.3,   7.4,  10.4,  10.6,  16.5,  24.0, undef,  38.9];
-$loss{"9913"}     = [  0.2,   0.4,   0.8,   1.1,   1.4,   1.5,   1.7, undef,   2.1,   2.8,   3.1,   4.4,   4.5,   6.0,   7.5];
+$loss{"LMR-200"}  = [undef, undef,   1.8,   2.3, undef,   3.0,   4.0, undef,   4.8, undef,   6.0,   7.0,   9.9, undef,  12.7,  16.5];
+$loss{"LMR-240"}  = [undef, undef,   1.3,   1.7, undef,   3.0,   3.0, undef,   3.7, undef,   5.2,   5.3,   7.6, undef,   9.9,  12.7];
+$loss{"LMR-400"}  = [undef, undef,   0.7,   0.9, undef,   1.5,   1.5, undef,   1.8, undef,   2.7,   2.7,   3.9, undef,   5.1,   6.6];
+
+$loss{"RG-174"}   = [  1.9,   3.3,   5.5,   6.6,   8.9,  13.0, undef,  11.9, undef,  17.3,  25.0, undef,  27.9,  32.0, undef,  75.0];
+$loss{"RG-58/U"}  = [  0.4,   1.4,   2.5,   4.1,   5.3,   6.1,   6.2,   7.3,   7.4,  11.2,  10.4,  10.6,  16.5,  24.0, undef,  38.9];
+$loss{"RG-8X"}    = [  0.5,   1.0,   2.0,   2.5,   3.6,   4.5,   4.7,   5.4,   6.0,   7.9,   8.1,   8.6,  12.8,  13.5, undef,  21.6];
+$loss{"RG-213"}   = [  0.2,   0.6, undef,   1.6,   2.2,   2.8,   2.8, undef, undef,   4.8,   5.1,   5.1, undef,   8.3, undef, undef];
+$loss{"9914"}     = [  0.3,   0.5,   0.8,   1.1,   1.5, undef,   1.7,   1.8,   2.1,   2.9, undef,   3.1,   4.5,   5.3, undef, undef];
+$loss{"9913"}     = [  0.2,   0.4,   0.8,   1.1,   1.4,   1.5,   1.7, undef,   2.1,   2.6,   2.8,   3.1,   4.4,   4.5,   6.0,   7.5];
 
 my %imp;
 $imp{"RG-6"}      = 75;
