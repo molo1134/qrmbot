@@ -101,8 +101,8 @@ while (<JSON>) {
     $v = undef if $v eq "null" or $v eq "" or $v == -1;
 
     $fof2 = nearest(0.001, $v) if $k eq "fof2" and defined $v;
-    $mufd = $v if $k eq "mufd";
-    $md = $v if $k eq "md";
+    $mufd = nearest(0.001, $v) if $k eq "mufd" and defined $v;
+    $md = nearest(0.001, $v) if $k eq "md" and defined $v;
     $code = $v if $k eq "code";
     $name = $v if $k eq "name";
     $lat = $v if $k eq "latitude";
