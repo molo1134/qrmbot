@@ -132,10 +132,39 @@ sub doAe7qRegion {
   }
   close(HTTP);
 
+  my %regionPreds;
+  foreach my $c (@pending) {
+    my $url = "${predictionBaseUrl}/vanity-$c.csv";
+    my $sum = 0.0;
+    open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
+    while(<CSV>) {
+      chomp;
+      next if /^#/;
+      my (undef, undef, undef, $vanity, $pred) = split /,/;
+      print "error: expecting $c but found $vanity\n" if $vanity ne $c;
+      $sum += $pred;
+    }
+    close(CSV);
+    $regionPreds{$c} = $sum;
+    print "$c => $sum\n";
+  }
+
   print "Region $region: ", green(scalar @avail), " available";
   print ": ", green(join(", ", @avail)) if scalar @avail > 0;
   print "; ", lightblue(scalar @pending), " pending";
-  print ": ", lightblue(join(", ", @pending)) if scalar @pending > 0;
+
+  if (scalar @pending > 0) {
+    my $num = 0;
+    print ": ";
+    foreach my $c (@pending) {
+      print lightblue($c);
+      print yellow(" ($regionPreds{$c}%)") # \
+	if defined $regionPreds{$c} and $regionPreds{$c} < 99.5; # allow for rounding
+      print ", " unless ++$num == scalar @pending;
+    }
+    #print ": ", lightblue(join(", ", @pending)) if scalar @pending > 0;
+  }
+
   print "; ", yellow(scalar @upcoming), " upcoming";
   print ": ", yellow(join(", ", @upcoming)) if scalar @upcoming > 0;
   print "; ", red(scalar @unavail), " unavailable: ",
