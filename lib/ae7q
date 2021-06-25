@@ -27,7 +27,7 @@ my $highlight="vt220";
 $highlight = "none" if ! -t STDOUT;
 $highlight = "irc" if $username eq "eggdrop";
 
-my $predictionBaseUrl = "http://188.166.39.140:8018/predict/";
+my $predictionBaseUrl = "http://34.121.48.146:8018/predict/";
 
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
