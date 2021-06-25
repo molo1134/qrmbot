@@ -146,7 +146,7 @@ sub doAe7qRegion {
     }
     close(CSV);
     $regionPreds{$c} = $sum;
-    print "$c => $sum\n";
+    #print "$c => $sum\n";
   }
 
   print "Region $region: ", green(scalar @avail), " available";
