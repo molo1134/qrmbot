@@ -22,6 +22,9 @@ use Time::Piece ();
 use List::Util qw[min max];
 use POSIX qw(strftime);
 
+# disable "experimental" warning on smart match operator use
+no if $] >= 5.018, warnings => "experimental::smartmatch";
+
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $highlight="vt220";
 $highlight = "none" if ! -t STDOUT;
@@ -136,13 +139,17 @@ sub doAe7qRegion {
   foreach my $c (@pending) {
     my $url = "${predictionBaseUrl}/vanity-$c.csv";
     my $sum = 0.0;
+    my @seenApps;
     open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
     while(<CSV>) {
       chomp;
       next if /^#/;
-      my (undef, undef, undef, $vanity, $pred) = split /,/;
+      my ($appid, $rdate, $call, $vanity, $pred) = split /,/;
       print "error: expecting $c but found $vanity\n" if $vanity ne $c;
+      next if $appid ~~ @seenApps;
+      push @seenApps, $appid;
       $sum += $pred;
+      #print "$c += $pred = $sum\n";
     }
     close(CSV);
     $regionPreds{$c} = $sum;
