@@ -1369,7 +1369,7 @@ if ($#countyList >= 0) {
   my %caseTotals;
   my $last = 0; #debug
 
-  open(HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
+  open(HTTP, '-|', "curl --max-time 30 -s -k -L '$url'");
   while (<HTTP>) {
     my ($date,$county,$state,$fips,$cases,$deaths) = split /,/;
     $county =~ s/\s*\<(County|City|Parish|Borough|Census Area|City and Borough|Municipality)\>\s*$//i unless $county eq "New York City";
