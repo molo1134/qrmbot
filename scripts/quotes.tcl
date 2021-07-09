@@ -75,7 +75,7 @@ proc q_pubquote { nick uhost hand chan arg } {
 
     close $qf
 
-    putchan $chan "[lindex $line 0]"
+    putchan $chan "\[quote\] [lindex $line 0]"
 
 
   } else {
