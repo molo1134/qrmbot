@@ -244,7 +244,7 @@ if (defined $resp->{place}->{country} and $name ne $resp->{place}->{country}) {
 my $lat = nearest(.01, $resp->{loc}->{lat});
 my $lon = nearest(.01, $resp->{loc}->{long});
 my $elev_ft = $resp->{profile}->{elevFT};
-my $elev_m = nearest(0.1, $resp->{profile}->{elevM});
+my $elev_m = nearest(0.1, $resp->{profile}->{elevM}) if defined $resp->{profile}->{elevM};
 
 my $ob = $resp->{ob};
 
