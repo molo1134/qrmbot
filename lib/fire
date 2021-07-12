@@ -26,6 +26,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Util;
 use Location;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
@@ -137,7 +138,7 @@ printf(" %0.1f km (%0.1f mi) %s from %s", nearest(0.1, $dist), $dist_mi, azToNEW
 print "\n" if $username ne "eggdrop";
 print " --" if $username eq "eggdrop";
 
-print " area burned: $r->{areaKM} km² ($r->{areaMI} mi²)";
+printf " area burned: $r->{areaKM} km² ($r->{areaMI} mi², %s acres)", commify(round($r->{areaAC}));
 
 print "\n" if $username ne "eggdrop";
 print " --" if $username eq "eggdrop";
