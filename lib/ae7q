@@ -136,7 +136,10 @@ sub doAe7qRegion {
   close(HTTP);
 
   my %regionPreds;
-  foreach my $c (@pending) {
+  my @callsToCheck;
+  push (@callsToCheck, @pending);
+  push (@callsToCheck, @avail);
+  foreach my $c (@callsToCheck) {
     my $url = "${predictionBaseUrl}/vanity-$c.csv";
     my $sum = 0.0;
     my @seenApps;
@@ -157,7 +160,19 @@ sub doAe7qRegion {
   }
 
   print "Region $region: ", green(scalar @avail), " available";
-  print ": ", green(join(", ", @avail)) if scalar @avail > 0;
+
+  if (scalar @avail > 0) {
+    #print ": ", green(join(", ", @avail));
+    my $num = 0;
+    print ": ";
+    foreach my $c (@avail) {
+      print green($c);
+      print yellow(" ($regionPreds{$c}%)") # \
+	if defined $regionPreds{$c} and $regionPreds{$c} > 0.0;
+      print ", " unless ++$num == scalar @avail;
+    }
+}
+
   print "; ", lightblue(scalar @pending), " pending";
 
   if (scalar @pending > 0) {
@@ -254,7 +269,7 @@ sub doAe7qCall {
       if (/^<td class='Database' style='background-color:#[0-9A-F]+;\s*'>(. - )?(Canceled|Active|Expired)<\/td>$/) {
 	$status = $2;
       }
-      if (m|</a> / ([A-Z]+)</td>|) {
+      if (m|> / ([A-Z]{2})</td>|) {
 	$state = $1;
       }
       if (m|href='/query/list/ProcessDate.php\?DATE=([0-9-]+)'|){
