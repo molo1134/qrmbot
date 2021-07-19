@@ -1045,8 +1045,8 @@ if ($#interest >= 0) {
 	$last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
       }
 
-      my $dailyVaxMin = min(@last30vaxDeltas);
-      my $dailyVaxMax = max(@last30vaxDeltas);
+      #my $dailyVaxMin = min(@last30vaxDeltas);
+      #my $dailyVaxMax = max(@last30vaxDeltas);
 
       my $sum = 0;
       for (my $i = 6; $i >= 0; $i--) {
@@ -1057,11 +1057,12 @@ if ($#interest >= 0) {
       my $percap = $sum / ($countryPop{$isocode} / 100000.0);
       my $popvax = ($vax[$#vax] / $countryPop{$isocode}) * 100.0;
 
-      @result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
-      $min = $result[0];
-      $max = $result[1];
-      @spark = @result[2 .. $#result];
-      printf "%s ppl newly vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly newly vaxxed per 100k pop; %s of pop. partially vaxxed\n", $isocode, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+      #@result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
+      #$min = $result[0];
+      #$max = $result[1];
+      #@spark = @result[2 .. $#result];
+      #printf "%s ppl newly vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly newly vaxxed per 100k pop; %s of pop. partially vaxxed\n", $isocode, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+      printf "%s avg newly vaxxed %s/day in last 7d; %s weekly newly vaxxed per 100k pop; %s of pop. partially vaxxed\n", $isocode, commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
     }
 
     if ($#fullVax > 0) {
@@ -1078,8 +1079,8 @@ if ($#interest >= 0) {
 	$last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
       }
 
-      my $dailyVaxMin = min(@last30vaxDeltas);
-      my $dailyVaxMax = max(@last30vaxDeltas);
+      #my $dailyVaxMin = min(@last30vaxDeltas);
+      #my $dailyVaxMax = max(@last30vaxDeltas);
 
       $sum = 0;
       for (my $i = 6; $i >= 0; $i--) {
@@ -1090,11 +1091,12 @@ if ($#interest >= 0) {
       my $percap = $sum / ($countryPop{$isocode} / 100000.0);
       my $popvax = ($fullVax[$#fullVax] / $countryPop{$isocode}) * 100.0;
 
-      @result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
-      $min = $result[0];
-      $max = $result[1];
-      @spark = @result[2 .. $#result];
-      printf "%s ppl fully vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly fully vaxxed per 100k pop; %s of pop. fully vaxxed\n", $isocode, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+      #@result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
+      #$min = $result[0];
+      #$max = $result[1];
+      #@spark = @result[2 .. $#result];
+      #printf "%s ppl fully vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly fully vaxxed per 100k pop; %s of pop. fully vaxxed\n", $isocode, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+      printf "%s avg fully vaxxed %s/day in last 7d; %s weekly fully vaxxed per 100k pop; %s of pop. fully vaxxed\n", $isocode, commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
 
     }
   }
@@ -1298,8 +1300,8 @@ if ($#states >= 0) {
       $last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
     }
 
-    my $dailyVaxMin = min(@last30vaxDeltas);
-    my $dailyVaxMax = max(@last30vaxDeltas);
+    #my $dailyVaxMin = min(@last30vaxDeltas);
+    #my $dailyVaxMax = max(@last30vaxDeltas);
 
     my $sum = 0;
     for (my $i = 6; $i >= 0; $i--) {
@@ -1310,11 +1312,12 @@ if ($#states >= 0) {
     my $percap = $sum / ($statePop{$s} / 100000.0);
     my $popvax = ($vax[$#vax] / $statePop{$s}) * 100.0;
 
-    @result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
-    $min = $result[0];
-    $max = $result[1];
-    @spark = @result[2 .. $#result];
-    printf "%s ppl newly vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly newly vaxxed per 100k pop; %s of pop. partially vaxxed\n", $s, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+    #@result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
+    #$min = $result[0];
+    #$max = $result[1];
+    #@spark = @result[2 .. $#result];
+    #printf "%s ppl newly vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly newly vaxxed per 100k pop; %s of pop. partially vaxxed\n", $s, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+    printf "%s avg newly vaxxed %s/day in last 7d; %s weekly newly vaxxed per 100k pop; %s of pop. partially vaxxed\n", $s, commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
 
     # daily full vaccinations
     @last31vax = @fullVax[$#vax-31 .. $#vax];
@@ -1324,8 +1327,8 @@ if ($#states >= 0) {
       $last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
     }
 
-    $dailyVaxMin = min(@last30vaxDeltas);
-    $dailyVaxMax = max(@last30vaxDeltas);
+    #$dailyVaxMin = min(@last30vaxDeltas);
+    #$dailyVaxMax = max(@last30vaxDeltas);
 
     $sum = 0;
     for (my $i = 6; $i >= 0; $i--) {
@@ -1336,11 +1339,12 @@ if ($#states >= 0) {
     $percap = $sum / ($statePop{$s} / 100000.0);
     $popvax = ($fullVax[$#fullVax] / $statePop{$s}) * 100.0;
 
-    @result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
-    $min = $result[0];
-    $max = $result[1];
-    @spark = @result[2 .. $#result];
-    printf "%s ppl fully vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly fully vaxxed per 100k pop; %s of pop. fully vaxxed\n", $s, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+    #@result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
+    #$min = $result[0];
+    #$max = $result[1];
+    #@spark = @result[2 .. $#result];
+    #printf "%s ppl fully vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly fully vaxxed per 100k pop; %s of pop. fully vaxxed\n", $s, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+    printf "%s avg fully vaxxed %s/day in last 7d; %s weekly fully vaxxed per 100k pop; %s of pop. fully vaxxed\n", $s, commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
 
 
   }
