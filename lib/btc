@@ -93,6 +93,7 @@ if (defined $trend and $trend ne "null") {
 } else {
   $trend = "??"
 }
+$volume = 0 if not defined $volume;
 
 print bold("$crypto$fiat"). " $trendsymbol" . $results{"price"} . " $trend% qty " . humanNum($qty) . " $crypto/24h ($volume $fiat/24h) MktCap $mktcap $fiat\n";
 
