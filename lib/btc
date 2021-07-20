@@ -35,8 +35,8 @@ my $crypto = undef;
 my $i = 0;
 while ($i <= $#ARGV) {
   # list comes from here: https://coinmarketcap.com/api/
-  if (uc($ARGV[$i]) =~ /^(AUD|BRL|CAD|CHF|CLP|CNY|CZK|DKK|EUR|GBP|HKD|HUF|IDR|ILS|INR|JPY|KRW|MXN|MYR|NOK|NZD|PHP|PKR|PLN|RUB|SEK|SGD|THB|TRY|TWD|USD|ZAR)$/) {
-    $fiat = $1;
+  if (uc($ARGV[$i]) =~ /^(AUD|BRL|CAD|CHF|CLP|CNY|CZK|DKK|EUR|GBP|HKD|HUF|IDR|ILS|INR|JPY|KRW|MXN|MYR|NOK|NZD|PHP|PKR|PLN|RUB|SEK|SGD|THB|TRY|TWD|USD|ZAR)$/i) {
+    $fiat = uc $1;
   } else {
     $crypto = uc($ARGV[$i]);
   }
@@ -45,6 +45,9 @@ while ($i <= $#ARGV) {
 
 $crypto = "BTC" unless defined($crypto);
 $fiat = "USD" unless defined($fiat);
+
+$crypto =~ s/[^A-Z]//g;
+$fiat =~ s/[^A-Z]//g;
 
 # example: https://api.coinmarketcap.com/v1/ticker/bitcoin/?convert=USD
 #my $url = "https://api.coinmarketcap.com/v1/ticker/$id/?convert=$fiat";
