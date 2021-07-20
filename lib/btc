@@ -71,23 +71,27 @@ close(HTTP);
 
 my $target = lc($fiat);
 
-my $volume = humanNum(int($results{"volume_24h"}));
-my $mktcap = humanNum(int($results{"market_cap"})) if $results{"market_cap"} ne "null";
+my ($volume, $mktcap, $qty);
+$qty = 0;
+$volume = humanNum(int($results{"volume_24h"})) if defined $results{"volume_24h"};
+$mktcap = humanNum(int($results{"market_cap"})) if defined $results{"market_cap"} and $results{"market_cap"} ne "null";
 $mktcap = "" if not defined $mktcap;
-my $qty = int ($results{"volume_24h"} / $results{"price"}) || 0;
+$qty = int ($results{"volume_24h"} / $results{"price"}) if defined $results{"price"} and defined $results{"volume_24h"};
 $results{"price"} = commify($results{"price"}) if defined($results{"price"});
 
 my $trendsymbol;
 my $trend = $results{percent_change_24h};
-$trendsymbol = green("↑") if $trend ne "null" and $trend > 0.0;
-$trendsymbol = red("↓") if $trend ne "null" and $trend < 0.0;
+$trendsymbol = green("↑") if defined $trend and $trend ne "null" and $trend > 0.0;
+$trendsymbol = red("↓") if defined $trend and $trend ne "null" and $trend < 0.0;
 $trendsymbol = "·" if !defined $trendsymbol;
-if ($trend ne "null") {
+if (defined $trend and $trend ne "null") {
   if ($trend < 0) {
     $trend = red(nearest(0.1, $trend));
   } elsif ($trend > 0) {
     $trend = green("+" . nearest(0.1, $trend));
   }
+} else {
+  $trend = "??"
 }
 
 print bold("$crypto$fiat"). " $trendsymbol" . $results{"price"} . " $trend% qty " . humanNum($qty) . " $crypto/24h ($volume $fiat/24h) MktCap $mktcap $fiat\n";
