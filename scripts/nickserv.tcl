@@ -16,7 +16,6 @@ proc evnt:init_server {type} {
 
 # if a notice is received, identify to keep the nick
 bind notc - "*This nickname is registered and protected.*" identify
-bind notc - "This nickname is registered and protected*" identify
 
 proc identify {nick uhost hand text dest} {
   global nickservpassword
