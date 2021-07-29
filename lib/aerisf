@@ -240,9 +240,9 @@ foreach my $period (@{$j->{response}[0]->{periods}}) {
     printf " %s: %s%s; low: %d°C/%d°F", bold($dow . " night"), $period->{weather}, $emoji, $period->{minTempC}, $period->{minTempF};
   }
   if ($period->{snowCM} > 0.0) {
-    printf "; snow: %dcm/%din", round($period->{snowCM}), round($period->{snowIN});
+    printf "; snow: %scm/%sin", nearest(0.1, $period->{snowCM}), nearest(0.1, $period->{snowIN});
   } elsif ($period->{precipMM} > 0.0 and $short == 0) {
-    printf "; precip: %0.1fmm/%0.1fin", round($period->{precipMM}), round($period->{precipIN});
+    printf "; precip: %0.1fmm/%0.1fin", $period->{precipMM}, $period->{precipIN};
   }
   print "\n";
 }
