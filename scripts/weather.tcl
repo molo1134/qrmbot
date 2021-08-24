@@ -35,6 +35,7 @@ bind pub - !quakef quakef_pub
 bind msg - !quakef quakef_msg
 
 bind pub - !fire fire_pub
+bind pub - !ev fire_pub
 bind msg - !fire fire_msg
 
 set wxbin "/home/eggdrop/bin/aeris"
