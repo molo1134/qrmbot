@@ -54,11 +54,11 @@ proc q_pubquote { nick uhost hand chan arg } {
 
     if { [string trim "$arg"] == "" } {
       set j [rand $tmp]
-      putmsg "$nick" "picked quote [expr $j + 1] of $tmp"
+      #putmsg "$nick" "picked quote [expr $j + 1] of $tmp"
     } else {
       set j "$arg"
       if { ( $j >= 1 ) && ( $j <= $tmp ) } {
-        putmsg "$nick" "displaying quote $j of $tmp"
+        #putmsg "$nick" "displaying quote $j of $tmp"
         incr j -1
       } else {
         putmsg "$nick" "valid quotes number from 1 to $tmp"
