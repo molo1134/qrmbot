@@ -70,22 +70,45 @@ if (defined $call2) {
   } 
   print bold($call2), " in ", bold($call), " clublog: ";
   print "\n" if $username ne "eggdrop";
+  my @digi;
+  my @morse;
+  my @phone;
   foreach my $band (%{$j}) {
     my ($ph, $cw, $dt) = (0,0,0);
     next if not defined $j->{$band};
     $ph = $j->{$band}->{P} if defined $j->{$band}->{P};
     $cw = $j->{$band}->{C} if defined $j->{$band}->{C};
     $dt = $j->{$band}->{D} if defined $j->{$band}->{D};
-    print bold("${band}m"), " - ";
-    print "Ph: $ph" if $ph > 0;
-    print ", " if $ph > 0 and ($cw > 0 or $dt > 0);
-    print "CW: $cw" if $cw > 0;
-    print ", " if $cw > 0 and $dt > 0;
-    print "Dg: $dt" if $dt > 0;
-    print "\n" if $username ne "eggdrop";
-    print "; " if $username eq "eggdrop";
+
+    push @phone, $band if $ph > 0;
+    push @digi, $band if $dt > 0;
+    push @morse, $band if $cw > 0;
   }
-  print "\n" if $username eq "eggdrop";
+
+  # sort
+  @phone = sort { $b <=> $a } @phone;
+  @morse = sort { $b <=> $a } @morse;
+  @digi = sort { $b <=> $a } @digi;
+
+  if ($#phone > 0) {
+    print " Phone: ", join(",", @phone);
+
+    print "\n" if $username ne "eggdrop";
+    print ";" if $username eq "eggdrop";
+  }
+
+  if ($#morse > 0) {
+    print " CW: ", join(",", @morse);
+
+    print "\n" if $username ne "eggdrop";
+    print ";" if $username eq "eggdrop";
+  }
+
+  if ($#digi > 0) {
+    print " Digital: ", join(",", @digi);
+  }
+
+  print "\n";
   exit 0;
 }
 
