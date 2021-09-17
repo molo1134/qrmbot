@@ -147,6 +147,21 @@ sub printYouTubeMetaData {
 	  $nsfw = $v eq "False" ? 1 : 0 if $k eq "isFamilyFriendly";
 	  $unlisted = $v eq "True" ? 1 : 0 if $k eq "unlisted";
 	  $paid = $v eq "True" ? 1 : 0 if $k eq "paid";
+
+	  if ($k eq "duration") {
+	    # ISO 8601 duration; youtube only actually uses minutes and seconds?
+	    #print "duration: $v\n";
+	    $len = 0;
+	    if ($v =~ m/P((\d+)Y)?((\d+)M)?((\d+)D)?T((\d+)H)?((\d+)M)?((\d+)S)?/) {
+	      my ($y, $mo, $d, $h, $m, $s) = ($2, $4, $6, $8, $10, $12);
+	      $len += ($y * 60 * 60 * 24 * 365) if length $y > 1;
+	      $len += ($mo * 60 * 60 * 24 * 30) if length $mo > 1;
+	      $len += ($d * 60 * 60 * 24)       if length $d > 1;
+	      $len += ($h * 60 * 60)            if length $h > 1;
+	      $len += ($m * 60)                 if length $m > 1;
+	      $len += $s                        if length $s > 1;
+	    }
+	  }
 	}
       }
     }
@@ -165,8 +180,14 @@ sub printYouTubeMetaData {
     if (/"author\\?":\\?"([^"]+)\\?"/) {
       $author = $1;
     }
-    if (/dur=(\d+)/) {
-      $len = $1;
+    if (not defined $len and /dur=(\d+)/) {
+      #$len = $1;
+    }
+    if (not defined $len and /dur%3D(\d+)/) {
+      #$len = $1;
+    }
+    if (not defined $len and /approxDurationMs":"(\d+)"/) {
+      #$len = int($1 / 1000);
     }
     if (/([0-9,]+) watching now/i) {
       my $t = $1;
