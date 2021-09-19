@@ -90,21 +90,21 @@ if (defined $call2) {
   @morse = sort { $b <=> $a } @morse;
   @digi = sort { $b <=> $a } @digi;
 
-  if ($#phone > 0) {
+  if (scalar @phone > 0) {
     print " Phone: ", join(",", @phone);
 
     print "\n" if $username ne "eggdrop";
     print ";" if $username eq "eggdrop";
   }
 
-  if ($#morse > 0) {
+  if (scalar @morse > 0) {
     print " CW: ", join(",", @morse);
 
     print "\n" if $username ne "eggdrop";
     print ";" if $username eq "eggdrop";
   }
 
-  if ($#digi > 0) {
+  if (scalar @digi > 0) {
     print " Digital: ", join(",", @digi);
   }
 
