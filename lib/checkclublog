@@ -145,27 +145,46 @@ if (defined ($j->{$call})) {
 
 #print scalar(keys(%rec)), "\n";
 #print join (" ", keys(%rec)), "\n";
+#foreach my $k (keys %rec) {
+#  my $v = $rec{$k};
+#  $v = "undef" if not defined $v;
+#  print "$k => $v\n";
+#}
 
-if (scalar(keys(%rec)) == 0 or
-    (not defined $rec{firstqso} and
-      not defined $rec{lastqso} and
-      not defined $rec{lastupload})) {
+# get latest qso start and end dates from the API, because zip file is old
+our $apikey;
+require ($ENV{HOME} . "/.clublogapikey");
+my $url = "https://clublog.org/logcheck.php?call=${call}&api=${apikey}";
+
+local $/;   # read entire file -- FIXME: potentially memory hungry
+open(HTTP, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+my $output = <HTTP>;
+close(HTTP);
+#print "$output\n";
+if ($output =~ /Callsign not valid or not registered in Club Log/) {
   print "$call not found on clublog\n";
   exit 0;
+}
+if ($output =~ /\["([0-9-]+\s+[0-9:]+)",\s*"([0-9-]+\s+[0-9:]+)"\]/) {
+  $rec{firstqso} = $1;
+  $rec{lastqso} = $2;
 }
 
 # firstqso 1995-08-09 23:09:00
 # lastqso 2018-07-01 13:09:00
 # lastupload 2018-08-16 22:53:01
 # locator JO02AE
-# oqrs false
+# oqrs 0
 
 my ($start, undef) = split(" ",$rec{firstqso});
 my ($end, undef) = split(" ",$rec{lastqso});
-my ($upload, undef) = split(" ", $rec{lastupload});
+my ($upload, undef) = split(" ", $rec{lastupload}) if defined $rec{lastupload};
 
-print bold($call), ": clublog from $start to $end; last upload $upload";
-print "; " . bold("OQRS") if $rec{oqrs} eq "true";
+$upload = "${end}?" if $upload lt $end;
+
+print bold($call), ": clublog from $start to $end";
+print "; last upload $upload" if defined $upload;
+print "; " . bold("OQRS") if $rec{oqrs} eq "true" or $rec{oqrs} == 1;
 print "; grid $rec{locator}" if defined $rec{locator};
 print "\n";
 
