@@ -180,7 +180,7 @@ my ($start, undef) = split(" ",$rec{firstqso});
 my ($end, undef) = split(" ",$rec{lastqso});
 my ($upload, undef) = split(" ", $rec{lastupload}) if defined $rec{lastupload};
 
-$upload = "${end}?" if $upload lt $end;
+$upload = "${end}?" if defined $upload and $upload lt $end;
 
 print bold($call), ": clublog from $start to $end";
 print "; last upload $upload" if defined $upload;
