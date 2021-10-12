@@ -676,7 +676,7 @@ proc xray { nick host hand chan text } {
 	putlog "xray pub: $nick $host $hand $chan $text"
 
 	if [string equal -nocase "W2XG" "$nick"] then {
-		putchan $chan [encoding convertto utf-8 "🕳️   ⚪          🏌️"]
+		putchan $chan "🕳️   ⚪          🏌️"
 		return
 	}
 
