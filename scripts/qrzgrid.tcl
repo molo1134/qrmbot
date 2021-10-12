@@ -674,6 +674,12 @@ proc msg_longtermforecast {nick uhand handle input} {
 proc xray { nick host hand chan text } {
 	global xraybin
 	putlog "xray pub: $nick $host $hand $chan $text"
+
+	if [string equal -nocase "W2XG" "$nick"] then {
+		putchan $chan [encoding convertto utf-8 "🕳️   ⚪          🏌️"]
+		return
+	}
+
 	set fd [open "|${xraybin} " r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
