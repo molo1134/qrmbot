@@ -1001,12 +1001,13 @@ if ($#interest >= 0) {
       $sum = 0;
     }
 
-    my @result = seriesToSparkLine(\@weeklyCasesPerCap, 1, 0);
+    my @last52weeks = @weeklyCasesPerCap[$#weeklyCasesPerCap-52 .. $#weeklyCasesPerCap];
+    my @result = seriesToSparkLine(\@last52weeks, 1, 0);
     my $min = $result[0];
     my $max = $result[1];
     my @spark = @result[2 .. $#result];
     my $sparkline = optimizeIrcColor(join("", @spark));
-    printf "%s weekly chart: %s: max %s weekly cases per 100k pop\n", $isocode, $sparkline, colorByRate(sprintf("%0.1f", $max), $max);
+    printf "%s weekly chart: %s: max %s weekly cases per 100k pop in last 52 weeks\n", $isocode, $sparkline, colorByRate(sprintf("%0.1f", $max), $max);
 
     my @last31cases = @cases[$#cases-31 .. $#cases];
     my @last30caseDeltas;
@@ -1201,12 +1202,13 @@ if ($#states >= 0) {
       $sum = 0;
     }
 
-    my @result = seriesToSparkLine(\@weeklyCasesPerCap, 1, 0);
+    my @last52weeks = @weeklyCasesPerCap[$#weeklyCasesPerCap-52 .. $#weeklyCasesPerCap];
+    my @result = seriesToSparkLine(\@last52weeks, 1, 0);
     my $min = $result[0];
     my $max = $result[1];
     my @spark = @result[2 .. $#result];
     my $sparkline = optimizeIrcColor(join("", @spark));
-    printf "%s weekly chart: %s: max %s weekly cases per 100k pop\n", $s, $sparkline, colorByRate(sprintf("%0.1f", $max), $max);
+    printf "%s weekly chart: %s: max %s weekly cases per 100k pop in last 52 weeks\n", $s, $sparkline, colorByRate(sprintf("%0.1f", $max), $max);
 
 
     my @last31cases = @cases[$#cases-31 .. $#cases];
@@ -1459,12 +1461,13 @@ if ($#countyList >= 0) {
       $sum = 0;
     }
 
-    my @result = seriesToSparkLine(\@weeklyCasesPerCap, 1, 0);
+    my @last52weeks = @weeklyCasesPerCap[$#weeklyCasesPerCap-52 .. $#weeklyCasesPerCap];
+    my @result = seriesToSparkLine(\@last52weeks, 1, 0);
     my $min = $result[0];
     my $max = $result[1];
     my @spark = @result[2 .. $#result];
     my $sparkline = optimizeIrcColor(join("", @spark));
-    printf "%s, %s weekly chart: %s: max %s weekly cases per 100k pop\n", $cty, $st, $sparkline, colorByRate(sprintf("%0.1f", $max), $max);
+    printf "%s, %s weekly chart: %s: max %s weekly cases per 100k pop in last 52 weeks\n", $cty, $st, $sparkline, colorByRate(sprintf("%0.1f", $max), $max);
 
     my @last31cases = @cases[$#cases-31 .. $#cases];
     my @last30caseDeltas;
