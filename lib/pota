@@ -1,0 +1,100 @@
+#!/usr/bin/perl
+
+# https://api.pota.app/park/K-1619
+# https://api.pota.app/park/stats/K-1619
+# https://api.pota.app/park/leaderboard/K-1619?count=5
+# https://api.pota.app/park/activations/K-1619?count=10
+# https://api.pota.app/stats/user/N2CX
+# https://api.pota.app/locations/US-NJ
+# https://api.pota.app/locations
+# https://api.pota.app/lookup?search=nockamixon&size=10
+# https://api.pota.app/lookup?search=nv3y&size=10
+
+use URI::Escape;
+use JSON qw( decode_json );
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Util;
+use Colors;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+my $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+my $term = join(" ", @ARGV);
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !pota <search term>\n";
+  } else {
+    print "usage: $0 <search term>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+
+my $search_url = "https://api.pota.app/lookup?size=3&search=" . uri_escape("$term");
+
+#print "$search_url\n";
+
+local $/;   # read entire file -- FIXME: potentially memory hungry
+open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$search_url'");
+my $json = <JSON>;
+close(JSON);
+#print $json, "\n";
+my $j = decode_json($json);
+my $count = scalar @{$j};
+if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
+  print "found: ";
+  print "\n" if $username ne "eggdrop";
+  foreach my $r (@{$j}) {
+    print $r->{type}, ": ", $r->{display};
+    print "; " if $username eq "eggdrop";
+    print "\n" if $username ne "eggdrop";
+  }
+} elsif ($count == 0) {
+  print "not found\n";
+} elsif ($count == 1 or uc @{$j}[0]->{value} eq uc $term) {
+  #print "one\n";
+  my $srec = @{$j}[0];
+  if (@{$j}[0]->{type} eq "park") {
+    print "park: ", $srec->{display}, " -- TODO\n";
+    # TODO
+  } elsif (@{$j}[0]->{type} eq "user") {
+    #print "user\n";
+    my $url = "https://api.pota.app/stats/user/" . $srec->{value};
+
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+    my $json = <JSON>;
+    close(JSON);
+    #print $json, "\n";
+    my $j = decode_json($json);
+
+    printf "%s - %s: %s activations (%s parks, %s QSOs); hunter: %s parks (%s QSOs); %s awards (%s endorsements)\n",
+      bold($j->{callsign}),
+      $j->{name},
+      $j->{activator}->{activations},
+      $j->{activator}->{parks},
+      commify($j->{activator}->{qsos}),
+      $j->{hunter}->{parks},
+      commify($j->{hunter}->{qsos}),
+      $j->{awards},
+      $j->{endorsements};
+
+  } else {
+    print "error: unexpected type: ", @{$j}[0]->{type}, "\n";
+    exit $exitnonzeroonerror;
+  }
+} else {
+  print "bug\n";
+  exit $exitnonzeroonerror;
+}

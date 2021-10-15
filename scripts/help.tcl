@@ -59,6 +59,7 @@ proc send_help {nick} {
   putmsg "$nick" "  !clublog !oqrs -- log and OQRS info on clublog.org"
   putmsg "$nick" "  !qsl -- check all of the above qsl methods"
   putmsg "$nick" "  !league -- report clublog league standings"
+  putmsg "$nick" "  !pota -- search POTA parks and users"
   putmsg "$nick" "  !contests -- list current and upcoming contests"
   putmsg "$nick" "  !wx !wxfull -- show current weather conditions"
   putmsg "$nick" "  !wxf !wxflong -- weather forecast"
