@@ -66,8 +66,72 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
   #print "one\n";
   my $srec = @{$j}[0];
   if (@{$j}[0]->{type} eq "park") {
-    print "park: ", $srec->{display}, " -- TODO\n";
+    #print "park: ", $srec->{display}, " -- TODO\n";
     # TODO
+    my $url = "https://api.pota.app/park/" . $srec->{value};
+
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+    my $json = <JSON>;
+    close(JSON);
+    #print $json, "\n";
+    my $j = decode_json($json);
+
+    my $url = "https://api.pota.app/park/stats/" . $srec->{value};
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+    my $json = <JSON>;
+    close(JSON);
+    #print $json, "\n";
+    my $k = decode_json($json);
+
+    my $url = "https://api.pota.app/park/activations/$srec->{value}?count=1";
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+    my $json = <JSON>;
+    close(JSON);
+    #print $json, "\n";
+    my $l = decode_json($json);
+    my $last = undef if scalar @{$l} == 0;
+    $last = @{$l}[0] if scalar @{$l} > 0;
+
+
+    printf "%s - %s (%s): %s; %s, %s -- %s activations (%s QSOs)",
+      bold($j->{reference}),
+      $j->{name},
+      $j->{grid6},
+      $j->{parktypeDesc},
+      $j->{locationName},
+      $j->{entityName},
+      $k->{activations},
+      commify($k->{contacts});
+
+    if (defined($last)) {
+      printf " -- last activation: %s by %s (%s QSOs)",
+	$last->{qso_date} =~ s/^(....)(..)(..)$/$1-$2-$3/r,
+	$last->{activeCallsign},
+	commify($last->{totalQSOs});
+
+      my $url = "https://api.pota.app/park/leaderboard/$srec->{value}?count=3";
+      local $/;   # read entire file -- FIXME: potentially memory hungry
+      open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+      my $json = <JSON>;
+      close(JSON);
+      #print $json, "\n";
+      my $b = decode_json($json);
+      my $i = 0;
+      print " -- top activations: ";
+      foreach my $r (@{$b->{activator_qsos}}) {
+	$i++;
+	print "; " if $i > 1;
+	printf "#%d: %s: %s QSOs",
+	  $i,
+	  $r->{callsign},
+	  $r->{count};
+      }
+    }
+    print "\n";
+
   } elsif (@{$j}[0]->{type} eq "user") {
     #print "user\n";
     my $url = "https://api.pota.app/stats/user/" . $srec->{value};
