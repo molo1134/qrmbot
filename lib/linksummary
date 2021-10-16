@@ -1049,8 +1049,8 @@ sub doImgur {
   print yellow(" [sound]")
     if defined $data{has_sound} and $data{has_sound} eq "true";
   print red(" [NSFW]") if defined $data{nsfw} and $data{nsfw} eq "true";
-  print " preview: http://i.imgur.com/${hash}l.jpg" if $isimg == 1 and
-	($data{width} > 640 or $data{height} > 640);
+#  print " preview: http://i.imgur.com/${hash}l.jpg" if $isimg == 1 and
+#	($data{width} > 640 or $data{height} > 640);
   print ": $desc" if defined $desc;
   print "\n";
 }
