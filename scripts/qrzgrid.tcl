@@ -165,6 +165,9 @@ bind pub - !coax atten_pub
 bind msg - !pota pota_msg
 bind pub - !pota pota_pub
 
+bind msg - !1x1 onebyone_msg
+bind pub - !1x1 onebyone_pub
+
 set qrzbin "/home/eggdrop/bin/qrz"
 set gridbin "/home/eggdrop/bin/grid"
 set drivebin "/home/eggdrop/bin/drivetime"
@@ -196,6 +199,7 @@ set dxpedbin "/home/eggdrop/bin/dxpeditions"
 set blitzbin "/home/eggdrop/bin/blitz"
 set attenbin "/home/eggdrop/bin/atten"
 set potabin "/home/eggdrop/bin/pota"
+set onebyonebin "/home/eggdrop/bin/1x1"
 
 set spotfile spotlist
 
@@ -1768,6 +1772,28 @@ proc pota_msg {nick uhand handle input} {
 	close $fd
 }
 
+proc onebyone_pub { nick host hand chan text } {
+	global onebyonebin
+	set params [sanitize_string [string trim "${text}"]]
+	putlog "1x1 pub: $nick $host $hand $chan $params"
+	set fd [open "|${onebyonebin} ${params}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc onebyone_msg {nick uhand handle input} {
+	global onebyonebin
+	set params [sanitize_string [string trim "${input}"]]
+	putlog "1x1 msg: $nick $uhand $handle $params"
+	set fd [open "|${onebyonebin} ${params}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
 
 putlog "Ham utils loaded."
 

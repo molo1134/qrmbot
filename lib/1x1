@@ -1,0 +1,115 @@
+#!/usr/bin/perl
+
+# 2-clause BSD license.
+# Copyright (c) 2021 molo1134@github. All rights reserved.
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+
+use URI::Escape;
+use Time::Piece ();
+use POSIX qw(strftime);
+use strict;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+my $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+my $callsearch_url = "http://www.1x1callsigns.org/index.php/index.php?option=com_jumi&fileid=4";
+my $callsearch_params = "action=callSearch&submit=Search&searchCall=";
+
+my $eventsearch_url = "http://www.1x1callsigns.org/index.php/index.php?option=com_jumi&fileid=4&action=search_event";
+my $eventsearch_params = "action=search_event&Submit3=Search&evnt_string=";
+
+my $detail_url = "http://www.1x1callsigns.org/index.php/index.php?option=com_jumi&fileid=4&action=recDetail&recid=";
+
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !1x1 <callsign>|<search term>\n";
+  } else {
+    print "usage: $0 <callsign>|<search term>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $call = uc $ARGV[0];
+$call =~ s/^\s*//;
+$call =~ s/\s*$//;
+
+my $rec = undef;
+
+if ($call =~ /^[WNK][0-9][A-Z]$/) {
+  open(INDEX, '-|', "curl -k -L --max-time 10 --retry 1 -s '$callsearch_url' --data '${callsearch_params}${call}'");
+} else {
+  my $query = join(" ", @ARGV);
+  my $encodedquery = uri_escape($query);
+  open(INDEX, '-|', "curl -k -L --max-time 10 --retry 1 -s '$eventsearch_url' --data '${eventsearch_params}${encodedquery}'");
+}
+
+while (<INDEX>) {
+  if (not defined $rec and m|<a href=index.php\?option=com_jumi&fileid=4&action=recDetail&recid=(\d+)>details</a>|) {
+    $rec = $1;
+    #print "rec: $rec\n";
+  }
+  next;
+}
+close(INDEX);
+
+if (not defined $rec) {
+  print "not found\n";
+  exit $exitnonzeroonerror;
+}
+
+
+my ($rcall, $event, $sdate, $edate, $by, $orig_call, $addr, $email, $phone);
+
+open(DETAIL, '-|', "curl -k -L --max-time 10 --retry 1 -s '${detail_url}${rec}'");
+while (<DETAIL>) {
+  if (m|<td nowrap colspan="2"><font face="Verdana, Arial, Helvetica, sans-serif" size="2" color="#7F6E4E"><b><font color="#252525">([WNK][0-9][A-Z])</font> : (.*?)</b></font></td>|) {
+    $rcall = $1;
+    $event = $2;
+  }
+  if (m|<td valign="top" width="99%" nowrap><font face="Verdana, Arial, Helvetica, sans-serif" size="-2" color="#3D536A"><b>(.*?)</b></font></td>|) {
+    $sdate = $1;
+    $sdate = Time::Piece->strptime($sdate, "%B %d, %Y")->epoch;
+    $sdate = strftime("%Y-%m-%d", gmtime($sdate));
+  }
+  if (m|<td valign="top" height="21" width="99%" nowrap><font face="Verdana, Arial, Helvetica, sans-serif" size="-2" color="#3D536A"><b>(.*?)</b></font></td>|) {
+    $edate = $1;
+    $edate = Time::Piece->strptime($edate, "%B %d, %Y")->epoch;
+    $edate = strftime("%Y-%m-%d", gmtime($edate));
+  }
+  if (m|<td valign="top" width="99%" height="18" nowrap><font face="Verdana, Arial, Helvetica, sans-serif" size="1" color="#535353"><b>(.*?)</b></font></td>|) {
+    $by = $1;
+  }
+  if (m|<td valign="top" width="99%" nowrap><font color="#212121" face="Courier New, Courier, mono" size="2">(.*?)</font></td>|) {
+    $orig_call = $1;
+  }
+
+  if (m|<td valign="top" width="99%" nowrap> <font color="#535353" face="Verdana, Arial, Helvetica, sans-serif" size="-2">(.*?)</font></td>|) {
+    $email = $1;
+  }
+  if (m|<td valign="top" width="99%" nowrap><font color="#535353" face="Verdana, Arial, Helvetica, sans-serif" size="-2">(.*?)</font></td>|) {
+    $phone = $1;
+  }
+}
+close(DETAIL);
+
+
+if (defined $rcall and $event) {
+  print bold($rcall), ": ",  bold($event),
+    " from $sdate to $edate by $orig_call ($by; $email)\n";
+  exit 0;
+}
+
+print "error, not found\n";
+exit $exitnonzeroonerror;
+
