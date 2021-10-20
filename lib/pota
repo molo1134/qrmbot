@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+#
+# 2-clause BSD license.
+# Copyright (c) 2021 molo1134@github. All rights reserved.
 
 # https://api.pota.app/park/K-1619
 # https://api.pota.app/park/stats/K-1619
@@ -147,6 +150,11 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
     my $json = <JSON>;
     close(JSON);
     #print $json, "\n";
+    if ($json =~ /not found/i) {
+      print "error: seemed that we had a user, but no stats\n";
+      exit $exitnonzeroonerror;
+    }
+
     my $j = decode_json($json);
 
     printf "%s - %s: %s activations (%s parks, %s QSOs); hunter: %s parks (%s QSOs); %s awards (%s endorsements)\n",
