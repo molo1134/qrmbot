@@ -25,6 +25,7 @@ my $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
 my $term = join(" ", @ARGV);
+$term =~ s/[øØ]/0/g;
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq 'eggdrop') {
