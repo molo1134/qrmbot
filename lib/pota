@@ -18,6 +18,7 @@ use JSON qw( decode_json );
 use strict;
 use utf8;
 use feature 'unicode_strings';
+use Encode qw(decode);
 binmode(STDOUT, ":utf8");
 
 use File::Basename;
@@ -32,6 +33,7 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
+@ARGV = map { decode "utf-8", $_ } @ARGV;
 my $term = join(" ", @ARGV);
 $term =~ s/[øØ]/0/g;
 

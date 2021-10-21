@@ -10,6 +10,7 @@ use POSIX qw(strftime);
 use strict;
 use utf8;
 use feature 'unicode_strings';
+use Encode qw(decode);
 binmode(STDOUT, ":utf8");
 
 use File::Basename;
@@ -24,6 +25,7 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
+@ARGV = map { decode "utf-8", $_ } @ARGV;
 my $term = join(" ", @ARGV);
 $term =~ s/[øØ]/0/g;
 
@@ -37,6 +39,7 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 }
 
 my $search_url = "https://api-db.sota.org.uk/admin/find_summit?search=" . uri_escape("$term");
+#print "$search_url\n";
 
 local $/;   # read entire file -- FIXME: potentially memory hungry
 open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$search_url'");
