@@ -1,0 +1,97 @@
+#!/usr/bin/perl
+#
+# 2-clause BSD license.
+# Copyright (c) 2021 molo1134@github. All rights reserved.
+
+use URI::Escape;
+use JSON qw( decode_json );
+use Time::Piece ();
+use POSIX qw(strftime);
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Util;
+use Colors;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+my $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+my $term = join(" ", @ARGV);
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !sota <search term>\n";
+  } else {
+    print "usage: $0 <search term>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $search_url = "https://api-db.sota.org.uk/admin/find_summit?search=" . uri_escape("$term");
+
+local $/;   # read entire file -- FIXME: potentially memory hungry
+open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$search_url'");
+my $json = <JSON>;
+close(JSON);
+#print $json, "\n";
+my $j = decode_json($json);
+if (defined $j and ref($j) eq 'HASH' and defined $j->{error}) {
+  printf "error: %s\n", $j->{error};
+  exit $exitnonzeroonerror;
+}
+my $count = scalar @{$j};
+
+if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
+  print "found: ";
+  print "\n" if $username ne "eggdrop";
+  foreach my $r (@{$j}) {
+    print $r->{SummitCode}, ": ", $r->{Name};
+    print "; " if $username eq "eggdrop";
+    print "\n" if $username ne "eggdrop";
+  }
+} elsif ($count == 0) {
+  print "not found\n";
+} elsif ($count == 1 or uc @{$j}[0]->{SummitCode} eq uc $term) {
+
+  #print "summit: ", @{$j}[0]->{SummitCode}, "\n";
+  my $sid = @{$j}[0]->{SummitId};
+
+  my $url = "https://api-db.sota.org.uk/admin/summit_history?summitID=" . $sid;
+
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+  my $json = <JSON>;
+  close(JSON);
+  #print $json, "\n";
+  my $j = decode_json($json);
+
+  my $rec = $j->{info}[0];
+  printf "%s - %s (%d m / %d ft; %s): %s region, %d pts.",
+    bold($rec->{SummitCode}),
+    bold($rec->{Name}),
+    $rec->{AltM},
+    $rec->{AltFt},
+    $rec->{Locator},
+    $rec->{RegionName},
+    $rec->{Points};
+  if (defined ($j->{activations}[0])) {
+    print "; " if $username eq "eggdrop";
+    print "\n" if $username ne "eggdrop";
+    my $lastdate = Time::Piece->strptime($j->{activations}[0]->{ActivationDate}, "%d/%b/%Y")->epoch;
+    $lastdate = strftime("%Y-%m-%d", gmtime($lastdate));
+    printf "last activation: %s %s (%d QSOs)",
+      $lastdate,
+      $j->{activations}[0]->{OwnCallsign},
+      $j->{activations}[0]->{QSOs};
+  }
+  print "\n";
+
+}
