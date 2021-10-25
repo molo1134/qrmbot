@@ -133,8 +133,11 @@ if ($html =~ m|<th>Requires validation</th>.*?<td>(.*?)</td>|s) {
   $validation = (uc $1 ne "NO");
 }
 
+my $mapurl = shortenUrl("https://www.iota-world.org/iotamaps/?grpref=$id");
+
 print bold($id), ": $desc ($dxcc, $grid)";
 print " -- is own dxcc" if $dxcciota;
 print " -- requrires validation" if $validation;
+print " -- map: $mapurl";
 print "\n";
 
