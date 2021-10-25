@@ -168,6 +168,9 @@ bind pub - !pota pota_pub
 bind msg - !sota sota_msg
 bind pub - !sota sota_pub
 
+bind msg - !iota iota_msg
+bind pub - !iota iota_pub
+
 bind msg - !1x1 onebyone_msg
 bind pub - !1x1 onebyone_pub
 
@@ -203,6 +206,7 @@ set blitzbin "/home/eggdrop/bin/blitz"
 set attenbin "/home/eggdrop/bin/atten"
 set potabin "/home/eggdrop/bin/pota"
 set sotabin "/home/eggdrop/bin/sota"
+set iotabin "/home/eggdrop/bin/iota"
 set onebyonebin "/home/eggdrop/bin/1x1"
 
 set spotfile spotlist
@@ -1792,6 +1796,29 @@ proc sota_msg {nick uhand handle input} {
 	set params [sanitize_string [string trim "${input}"]]
 	putlog "sota msg: $nick $uhand $handle $params"
 	set fd [open "|${sotabin} ${params}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
+proc iota_pub { nick host hand chan text } {
+	global iotabin
+	set params [sanitize_string [string trim "${text}"]]
+	putlog "iota pub: $nick $host $hand $chan $params"
+	set fd [open "|${iotabin} ${params}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc iota_msg {nick uhand handle input} {
+	global iotabin
+	set params [sanitize_string [string trim "${input}"]]
+	putlog "iota msg: $nick $uhand $handle $params"
+	set fd [open "|${iotabin} ${params}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg "$nick" "$line"

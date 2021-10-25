@@ -1,0 +1,140 @@
+#!/usr/bin/perl
+#
+# 2-clause BSD license.
+# Copyright (c) 2021 molo1134@github. All rights reserved.
+
+use URI::Escape;
+use JSON qw( decode_json );
+use strict;
+use utf8;
+use feature 'unicode_strings';
+use Encode qw(decode);
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Util;
+use Colors;
+use Location;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+my $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+
+@ARGV = map { decode "utf-8", $_ } @ARGV;
+my $term = join(" ", @ARGV);
+$term =~ s/[øØ]/0/g;
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq 'eggdrop') {
+    print "usage: !iota <search term>\n";
+  } else {
+    print "usage: $0 <search term>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+
+my $search_url = "https://www.iota-world.org/islands-on-the-air/iota-groups-islands/groups.html";
+my $data = uri_escape("filter[search]") . "=" . uri_escape($term);
+#print "$data\n";
+my $in_tbody = 0;
+my ($url, $id, $desc) = (undef, undef, undef);
+my @result;
+
+open(HTML, '-|', "curl -k -L --max-time 10 --retry 1 -s '$search_url' --data '$data'");
+while (<HTML>) {
+  $in_tbody = 1 if /<tbody>/;
+  if ($in_tbody and m|<a style="color:blue" href=".*/group/(\d+).html">|) {
+    $url = "https://www.iota-world.org/islands-on-the-air/iota-groups-islands/group/$1.html";
+    #print "url: $url\n";
+  }
+  if ($in_tbody and m|^\s*([A-Z]+-\d+)</a>\s*$|) {
+    $id = $1;
+    #print "id: $id\n";
+  }
+  if ($in_tbody and not defined($desc) and m|^\s*(\w.*?)\s*</td>\s*$|) {
+    $desc = $1;
+    #print "desc: $desc\n";
+  }
+  if ($in_tbody and m|</tr>|) {
+    #print "$id $desc -- $url\n";
+    push @result, "$id|$desc|$url";
+    ($id, $url, $desc) = (undef, undef, undef);
+  }
+  $in_tbody = 0 if m|</tbody>|;
+}
+close(HTML);
+
+if (scalar @result == 0) {
+  print "not found\n";
+  exit $exitnonzeroonerror;
+}
+
+if (scalar @result > 1) {
+  foreach my $r (@result) {
+    my ($id, $desc, $url) = split /\|/, $r;
+    print bold($id), ": ", $desc;
+    print "; " if $username eq "eggdrop";
+    print "\n" if $username ne "eggdrop";
+  }
+  exit 0;
+}
+
+($id, $desc, $url) = split /\|/, $result[0];
+
+local $/;   # read entire file -- FIXME: potentially memory hungry
+open(HTML, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+my $html = <HTML>;
+close(HTML);
+
+my ($minlat, $maxlat, $minlon, $maxlon);
+
+if ($html =~ m|<th>Minimum Latitude</th>.*?<td>([0-9.]+ [NS])</td>|s) {
+  my $num = $minlat = $1;
+  $num = $num =~ s/\s*[NS]//r;
+  $num *= -1 if $minlat =~ /S$/s;
+  $minlat = $num;
+}
+if ($html =~ m|<th>Maximum Latitude</th>.*?<td>([0-9.]+ [NS])</td>|s) {
+  my $num = $maxlat = $1;
+  $num = $num =~ s/\s*[NS]//r;
+  $num *= -1 if $maxlat =~ /S$/s;
+  $maxlat = $num;
+}
+if ($html =~ m|<th>Minimum Longitude</th>.*?<td>([0-9.]+ [EW])</td>|s) {
+  my $num = $minlon = $1;
+  $num = $num =~ s/\s*[EW]//r;
+  $num *= -1 if $minlon =~ /W$/s;
+  $minlon = $num;
+}
+if ($html =~ m|<th>Maximum Longitude</th>.*?<td>([0-9.]+ [EW])</td>|s) {
+  my $num = $maxlon = $1;
+  $num = $num =~ s/\s*[EW]//r;
+  $num *= -1 if $maxlon =~ /W$/s;
+  $maxlon = $num;
+}
+my $midlat = ($minlat + $maxlat) / 2;
+my $midlon = ($minlon + $maxlon) / 2;
+my $grid = coordToGrid($midlat, $midlon);
+
+my ($dxcc, $dxcciota, $validation);
+
+if ($html =~ m|<th>DXCC Entity Code</th>.*?<td>(.*?)</td>|s) {
+  $dxcc = $1;
+}
+if ($html =~ m|<th>DXCC matches one IOTA</th>.*?<td>(.*?)</td>|s) {
+  $dxcciota = (uc $1 ne "NO");
+}
+if ($html =~ m|<th>Requires validation</th>.*?<td>(.*?)</td>|s) {
+  $validation = (uc $1 ne "NO");
+}
+
+print bold($id), ": $desc ($dxcc, $grid)";
+print " -- is own dxcc" if $dxcciota;
+print " -- requrires validation" if $validation;
+print "\n";
+
