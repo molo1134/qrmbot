@@ -248,11 +248,11 @@ sub doAe7qCall {
     if (m|<kbd>$call</kbd> is reserved \((.*?)\)|) {  # example: KA2ZU
       $callStatus = red("Reserved ($1)");
     }
-    if (m|style='background-color:#99CCFF; '><kbd>$call</kbd> is (. - )?(expired\|canceled) and is <|) {
+    if (m|style='background-color:#99CCFF; '><kbd>$call</kbd> is (. - )?(expired\|canceled\|terminated) and is <|) {
       $callStatus = lightblue("Application Pending");
       $pending = 1;
     }
-    if (m|style='background-color:#99FF66; '><kbd>$call</kbd> is (. -)?\s*(expired\|canceled) and is <|) {
+    if (m|style='background-color:#99FF66; '><kbd>$call</kbd> is (. -)?\s*(expired\|canceled\|terminated) and is <|) {
       $callStatus = green("Available");
     }
     if (m|style='background-color:#99FF66; '><kbd>$call</kbd> is  <|) {
@@ -266,7 +266,7 @@ sub doAe7qCall {
       if (/^<td class='Database'>(. - )?(Technician|General|Amateur Extra|Novice|Advanced)<\/td>$/) {
 	$class = $2;
       }
-      if (/^<td class='Database' style='background-color:#[0-9A-F]+;\s*'>(. - )?(Canceled|Active|Expired)<\/td>$/) {
+      if (/^<td class='Database' style='background-color:#[0-9A-F]+;\s*'>(. - )?(Canceled|Active|Expired|Terminated)<\/td>$/) {
 	$status = $2;
       }
       if (m|> / ([A-Z]{2})</td>|) {
@@ -299,6 +299,9 @@ sub doAe7qCall {
 	print green($status) if $status eq "Active";
 	print red($status) if $status eq "Expired";
 	print yellow($status) if $status eq "Canceled";
+	print yellow($status) if $status eq "Terminated";
+	print $status if $status ne "Active" and $status ne "Expired"
+	  and $status ne "Canceled" and $status ne "Terminated";
 
 	print " - Grant $grant; Effective $eff; ";
 	print "Cancel $cxl; " if defined $cxl and length($cxl) > 0;
