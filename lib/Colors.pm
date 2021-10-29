@@ -14,7 +14,7 @@ BEGIN {
   our $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
   our $highlight="vt220";
   $highlight = "none" if ! -t STDOUT;
-  $highlight = "irc" if $username eq "eggdrop";
+  $highlight = "irc" if $username eq "eggdrop";  # edit this to customize the username of the eggdrop bot
 }
 
 sub ircColor {

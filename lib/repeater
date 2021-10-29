@@ -11,6 +11,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Util;
 
 use utf8;
 use feature 'unicode_strings';
@@ -20,7 +21,7 @@ my $http_timeout = 5;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !repeater [--world] <search terms> [band]\n";
   } else {
     print "usage: $0 [--world] <search terms> [band]\n";
@@ -155,7 +156,7 @@ foreach my $e (sort { (split(/,/,$a))[0] <=> (split(/,/,$b))[0] } keys %vals) {
     ($freq, $offset, $squelch, $location, $state, $county, $callsign) =
       split(/::/, $vals{$e});
     $found++;
-    if ($username eq "eggdrop" and $found == 2) {
+    if ($username eq getEggdropUID() and $found == 2) {
       print " -- truncated, see: $url";
       exit 0;
     }
@@ -164,7 +165,7 @@ foreach my $e (sort { (split(/,/,$a))[0] <=> (split(/,/,$b))[0] } keys %vals) {
     print "@ $location";
     print ", $county County" if length($county) > 0;
     print ", $state";
-    if ($username ne "eggdrop") {
+    if ($username ne getEggdropUID()) {
       print "\n";
     }
   }
@@ -229,7 +230,7 @@ foreach my $e (sort { (split(/,/,$a))[0] <=> (split(/,/,$b))[0] } keys %vals) {
     ($freq, $squelch, $location, $state, $callsign) =
       split(/::/, $vals{$e});
     $found++;
-    if ($username eq "eggdrop" and $found == 2) {
+    if ($username eq getEggdropUID() and $found == 2) {
       print " -- truncated, see: $url";
       exit 0;
     }
@@ -237,7 +238,7 @@ foreach my $e (sort { (split(/,/,$a))[0] <=> (split(/,/,$b))[0] } keys %vals) {
     print "$squelch PL " if length($squelch) > 0;
     print "@ $location";
     print ", $state";
-    if ($username ne "eggdrop") {
+    if ($username ne getEggdropUID()) {
       print "\n";
     }
   }

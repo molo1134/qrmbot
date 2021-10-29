@@ -21,7 +21,7 @@ my $baseurl="http://www.gunbot.net/ammo.php?cat1=x&cat2=x&cat3=";
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !ammo <type> [count]\n";
   } else {
     print "usage: $0 <type> [count]\n";
@@ -93,14 +93,14 @@ $cat3 = $type if not defined $cat3;
 my $url = $baseurl . $cat3;
 
 my $count = 10;
-if ($username eq 'eggdrop') {
+if ($username eq getEggdropUID()) {
   $count = 1;
 }
 
 if (defined $ARGV[1] and isNumeric($ARGV[1])) {
   $count = $ARGV[1];
 }
-$count = 10 if $count > 10 and $username eq 'eggdrop';
+$count = 10 if $count > 10 and $username eq getEggdropUID();
 
 open(HTTP, '-|', "curl --max-time 10 -s -k -L -H 'Cookie: gbsort=price; gbview2=1; gbview3=1;' '$url' | sed -e 's/tr><tr/tr>\\n<tr/g'");
 binmode(HTTP, ":utf8");

@@ -27,6 +27,7 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 use Location;
+use Util;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
@@ -34,7 +35,7 @@ our $apikey = undef;
 
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 my $apikeyfile = $ENV{'HOME'} . "/.wunderground";
 if (-e ($apikeyfile)) {
@@ -67,7 +68,7 @@ my $codeset = langinfo(CODESET);
 $loc = decode($codeset, $loc);
 
 if (!defined($loc)) {
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !wxf <location>";
   } else {
     print "usage: $0 <location>\n";

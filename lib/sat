@@ -63,7 +63,7 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 my $passThreshold = 5;       # degress above horizon
 my $goodPassThreshold = 45;  # degress above horizon
@@ -72,8 +72,8 @@ my $usageParams = "<sat> <qth>|<grid> [--commonpass <qth2>|<grid2>]";
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   #print "usage: $0 <sat> <grid>|<qth> [<elev>ft|<elev>m]\n";
-  print "usage: $0 $usageParams\n" if $username ne "eggdrop";
-  print "usage: !sat $usageParams\n" if $username eq "eggdrop";
+  print "usage: $0 $usageParams\n" if $username ne getEggdropUID();
+  print "usage: !sat $usageParams\n" if $username eq getEggdropUID();
   exit $exitnonzeroonerror;
 }
 
@@ -137,8 +137,8 @@ if (not $dopass and not $doinfo) {
 }
 
 if (length($query) == 0 && $sat ne "list") {
-  print "usage: $0 $usageParams\n" if $username ne "eggdrop";
-  print "usage: !sat $usageParams\n" if $username eq "eggdrop";
+  print "usage: $0 $usageParams\n" if $username ne getEggdropUID();
+  print "usage: !sat $usageParams\n" if $username eq getEggdropUID();
   exit $exitnonzeroonerror;
 }
 
@@ -230,7 +230,7 @@ if (lc($sat) eq "list") {
   my $list = join(" ", @sats);
   my $frag = undef;
   my $limit = 67;
-  $limit = 400 if $username eq "eggdrop";
+  $limit = 400 if $username eq getEggdropUID();
   do {
     # line wrap
     $frag = undef;
@@ -357,7 +357,7 @@ if (defined $sta2) {
     $found++;
     $i++; $j++;
 
-    exit 0 if $found >= 2 and $username eq "eggdrop";
+    exit 0 if $found >= 2 and $username eq getEggdropUID();
   }
   if (not $found) {
     print "No common passes found within the next ", $timewindow/3600, " hours\n";
@@ -366,7 +366,7 @@ if (defined $sta2) {
 }
 
 my $numpasses = 3;
-$numpasses = 100 if $username ne "eggdrop";
+$numpasses = 100 if $username ne getEggdropUID();
 my $first = 1;
 
 $numpasses = $#passes if $#passes < $numpasses;
@@ -385,7 +385,7 @@ foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
 	  coordToGrid($lat, $lon));
 	$first = 0;
       }
-      print "\n  " if $username ne "eggdrop";
+      print "\n  " if $username ne getEggdropUID();
       print green("AOS"),
 	    strftime(" %Y-%m-%d ", gmtime($event->{time})),
 	    bold(strftime("%H:%Mz", gmtime($event->{time}))),
@@ -405,7 +405,7 @@ foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
 
       --$numpasses;
       print "\n" if $numpasses == 0;
-      print " ‖ " if $numpasses > 0 && $username eq "eggdrop";
+      print " ‖ " if $numpasses > 0 && $username eq getEggdropUID();
       goto done if $numpasses == 0;
     }
 
@@ -454,13 +454,13 @@ foreach my $l (@{$j}) {
 
     if ($first == 1) {
       printf("%s (#%d): ", bold($name), $id);
-      print "\n" if $username ne "eggdrop";
+      print "\n" if $username ne getEggdropUID();
       $first = 0;
     } else {
-      print " ‖ " if $username eq "eggdrop";
+      print " ‖ " if $username eq getEggdropUID();
     }
 
-    print "  " if $username ne "eggdrop";
+    print "  " if $username ne getEggdropUID();
     if (defined $link{downlink_low} and
 	      not defined $link{downlink_high} and
 	      not defined $link{uplink_low} and
@@ -489,10 +489,10 @@ foreach my $l (@{$j}) {
     print " [inverting]" if $link{invert} and $link{mode_id} != 1;
     print " mode ", defined $link{mode} ? $link{mode} : mode($link{mode_id});
     print " $link{baud} baud" if defined $link{baud} and $link{baud} != 0;
-    print "\n" if $username ne "eggdrop";
+    print "\n" if $username ne getEggdropUID();
   }
 }
-print "\n" if $username eq "eggdrop";
+print "\n" if $username eq getEggdropUID();
 
 sub hzToMhz {
   my $hz = shift;

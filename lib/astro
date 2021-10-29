@@ -25,12 +25,13 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 use Location;
+use Util;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   print "usage: $0 [--moon] [--eme] [--sun] [--graves] \\\n\t<grid>|<qth> [<elev>ft|<elev>m]\n";
@@ -95,15 +96,15 @@ if ($doMoon == 0 && $doSun == 0 && $doGraves == 0) {
 my ($lat, $lon) = (0, 0);
 
 if ($query eq "" && ($doMoon == 1 || $doSun == 1)) {
-  print "usage: !eme <qth>|<grid>" if $username eq "eggdrop" && $doEme == 1;
-  print "usage: !sun <qth>|<grid>" if $username eq "eggdrop" && $doSun == 1;
-  print "usage: !moon <qth>|<grid>" if $username eq "eggdrop" && $doMoon == 1 && $doEme == 0;
+  print "usage: !eme <qth>|<grid>" if $username eq getEggdropUID() && $doEme == 1;
+  print "usage: !sun <qth>|<grid>" if $username eq getEggdropUID() && $doSun == 1;
+  print "usage: !moon <qth>|<grid>" if $username eq getEggdropUID() && $doMoon == 1 && $doEme == 0;
   exit $exitnonzeroonerror;
 }
 
 my $highlight="vt220";
 $highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq "eggdrop";
+$highlight = "irc" if $username eq getEggdropUID();
 
 my $result;
 $result = argToCoords($query) unless $query eq "" and $doGraves == 1;

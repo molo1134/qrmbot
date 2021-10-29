@@ -12,7 +12,7 @@ use feature 'unicode_strings';
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum shortenUrl isNumeric);
+@EXPORT = qw(decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum shortenUrl isNumeric getEggdropUID);
 
 use URI::Escape;
 use Date::Manip;
@@ -350,4 +350,8 @@ sub isNumeric {
   } else {
     warn "isNumeric requires an argument!";
   }
+}
+
+sub getEggdropUID {
+  return "eggdrop";  # edit this to customize the UID of the eggdrop bot
 }

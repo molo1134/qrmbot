@@ -16,6 +16,7 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 use Location;
+use Util;
 
 # Retrieve from here: http://www.country-files.com/big-cty/
 my $ctydat=$ENV{'HOME'} . "/.cty.dat";
@@ -30,7 +31,7 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
 my $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 ## end config options
 
@@ -45,7 +46,7 @@ if (-e ($loginfile)) {
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !dxcc <callsign>|<prefix>|<name> [de <grid>|<lat>,<lon>|<qth>]\n";
   } else {
     print "usage: $0 <callsign>|<prefix>|<name> [de <grid>|<lat>,<lon>|<qth>]\n";

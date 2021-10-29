@@ -15,6 +15,7 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 use Location;
+use Util;
 
 use Time::Piece ();
 use JSON qw( decode_json );
@@ -27,7 +28,7 @@ use POSIX qw(strftime);
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 my $geo = undef;
 my $query = undef;
@@ -49,7 +50,7 @@ while ($i <= $#ARGV) {
 }
 
 if (not defined $query and not defined $geo) {
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !blitz <grid>|<lat>,<lon>|<qth>\n";
   } else {
     print "usage: $0 <grid>|<lat>,<lon>|<qth>\n";

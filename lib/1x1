@@ -7,6 +7,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Util;
 
 use URI::Escape;
 use Time::Piece ();
@@ -17,7 +18,7 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
 my $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 my $callsearch_url = "http://www.1x1callsigns.org/index.php/index.php?option=com_jumi&fileid=4";
 my $callsearch_params = "action=callSearch&submit=Search&searchCall=";
@@ -29,7 +30,7 @@ my $detail_url = "http://www.1x1callsigns.org/index.php/index.php?option=com_jum
 
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !1x1 <callsign>|<search term>\n";
   } else {
     print "usage: $0 <callsign>|<search term>\n";

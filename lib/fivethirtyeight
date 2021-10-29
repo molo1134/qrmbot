@@ -329,7 +329,7 @@ if ($housepoll == 1) {
     $i = 0;
     my $currcycle = strftime("%Y", gmtime(time()));
     foreach my $poll (@{$j}) {
-      next if $username eq "eggdrop" and ++$i < scalar @{$j}; # only show latest
+      next if $username eq getEggdropUID() and ++$i < scalar @{$j}; # only show latest
       next if $poll->{cycle} ne $currcycle;
 
       my $grade = $poll->{grade};
@@ -389,7 +389,7 @@ if ($house == 1) {
       exit 0;
     }
 
-    if (not defined $dist and not $state ~~ @atLargeStates and $username eq "eggdrop") {
+    if (not defined $dist and not $state ~~ @atLargeStates and $username eq getEggdropUID()) {
       print "error: must provide district\n";
       exit 0;
     }

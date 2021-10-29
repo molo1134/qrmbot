@@ -11,6 +11,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Util;
 
 use JSON qw( decode_json );
 use File::Temp qw(tempfile);
@@ -23,7 +24,7 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
 my $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 sub updatezip {
   my (undef, $tmpfile) = tempfile();
@@ -35,7 +36,7 @@ sub updatezip {
 
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !clublog <callsign> [logged call]\n";
   } else {
     print "usage: $0 <callsign> [logged call]\n";
@@ -69,7 +70,7 @@ if (defined $call2) {
     exit 0;
   } 
   print bold($call2), " in ", bold($call), " clublog: ";
-  print "\n" if $username ne "eggdrop";
+  print "\n" if $username ne getEggdropUID();
   my @digi;
   my @morse;
   my @phone;
@@ -93,15 +94,15 @@ if (defined $call2) {
   if (scalar @phone > 0) {
     print " Phone: ", join(",", @phone);
 
-    print "\n" if $username ne "eggdrop";
-    print ";" if $username eq "eggdrop";
+    print "\n" if $username ne getEggdropUID();
+    print ";" if $username eq getEggdropUID();
   }
 
   if (scalar @morse > 0) {
     print " CW: ", join(",", @morse);
 
-    print "\n" if $username ne "eggdrop";
-    print ";" if $username eq "eggdrop";
+    print "\n" if $username ne getEggdropUID();
+    print ";" if $username eq getEggdropUID();
   }
 
   if (scalar @digi > 0) {

@@ -36,7 +36,7 @@ our $client_secret = undef;
 
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 my $apikeyfile = $ENV{'HOME'} . "/.aerisweather";
 if (-e ($apikeyfile)) {
@@ -67,7 +67,7 @@ if (defined($loc)) {
 }
 
 if (!defined($loc) or length($loc) == 0) {
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !fire <location>\n";
   } else {
     print "usage: $0 <location>\n";
@@ -128,20 +128,20 @@ print "Fire near ", bold($place), ": \"", bold("$r->{name} Fire"), "\" ($lat,$lo
 $ENV{TZ} = $resp->{profile}->{tz};
 print strftime("%a %H:%M %Z", localtime($r->{timestamp}));
 
-print "\n" if $username ne "eggdrop";
-print " --" if $username eq "eggdrop";
+print "\n" if $username ne getEggdropUID();
+print " --" if $username eq getEggdropUID();
 
 my ($dist, $bearing) = distBearing(split(",", $loc), $lat, $lon);
 my $dist_mi = nearest(0.1, $dist * 0.62137119);
 printf(" %0.1f km (%0.1f mi) %s from %s", nearest(0.1, $dist), $dist_mi, azToNEWS($bearing), coordToGrid(split(",", $loc)));
 
-print "\n" if $username ne "eggdrop";
-print " --" if $username eq "eggdrop";
+print "\n" if $username ne getEggdropUID();
+print " --" if $username eq getEggdropUID();
 
 printf " area burned: $r->{areaKM} km² ($r->{areaMI} mi², %s acres)", commify(round($r->{areaAC}));
 
-print "\n" if $username ne "eggdrop";
-print " --" if $username eq "eggdrop";
+print "\n" if $username ne getEggdropUID();
+print " --" if $username eq getEggdropUID();
 
 print " $r->{perContained}% contained";
 print " (expected containment ",

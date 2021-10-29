@@ -30,7 +30,7 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # configuration
 our $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 my $timestampfile = $ENV{'HOME'}.'/.spottimestamps';
 my $hamspotloginfile = $ENV{'HOME'}.'/.hamspotlogin';
@@ -43,7 +43,7 @@ my $defaultSpotsForEggdrop = 3;
 # TODO: unicode support?
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !spots [--dxw] [--rbn] [--psk] [--ham] <callsign> [limit]\n";
   } else {
     print "usage: $0 [--dxw] [--rbn] [--psk] [--ham] <callsign> [limit]\n";
@@ -56,7 +56,7 @@ my $i = 0;
 my $monitor = 0;
 
 my $limit;
-if ($username eq 'eggdrop') {
+if ($username eq getEggdropUID()) {
   $limit = $defaultSpotsForEggdrop;
 } else {
   $limit = $defaultSpots;
@@ -108,7 +108,7 @@ while ($i <= $#ARGV) {
   }
   if (defined($callsign) && $ARGV[$i] =~ /^\d+$/) {
     $limit = $ARGV[$i];
-    $limit = 8 if $limit > 8 and $username eq 'eggdrop';
+    $limit = 8 if $limit > 8 and $username eq getEggdropUID();
   }
   $i++;
 }

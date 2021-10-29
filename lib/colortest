@@ -13,10 +13,11 @@ use Cwd 'realpath';
 use File::Basename;
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Util;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $sep = "\n";
-$sep = " " if $username eq 'eggdrop';
+$sep = " " if $username eq getEggdropUID();
 
 print darkRed("darkRed"), $sep;
 print red("red"), $sep;
@@ -41,7 +42,7 @@ print redOnWhite("red on white"), $sep;
 print blackOnWhite("black on white"), $sep;
 print italic(red("red italic")), $sep;
 
-if ($username eq "eggdrop") {
+if ($username eq getEggdropUID()) {
   print "\nextended mirc color (sparkline chart): ";
   print "\x0344\x02\x02▁\x0F";
   print "\x0355\x02\x02▂\x0F";

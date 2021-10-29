@@ -20,15 +20,16 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 use Location;
+use Util;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 my $full = 0;
-$full = 1 if $username ne 'eggdrop';
+$full = 1 if $username ne getEggdropUID();
 
 my $i = 0;
 my $loc;
@@ -61,7 +62,7 @@ if (defined($loc)) {
 }
 
 if (!defined($loc) or length($loc) == 0) {
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !wx <location>\n";
   } else {
     print "usage: $0 <location>\n";

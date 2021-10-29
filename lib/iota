@@ -22,14 +22,14 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
 my $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 @ARGV = map { decode "utf-8", $_ } @ARGV;
 my $term = join(" ", @ARGV);
 $term =~ s/[øØ]/0/g;
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !iota <search term>\n";
   } else {
     print "usage: $0 <search term>\n";
@@ -78,8 +78,8 @@ if (scalar @result > 1) {
   foreach my $r (@result) {
     my ($id, $desc, $url) = split /\|/, $r;
     print bold($id), ": ", $desc;
-    print "; " if $username eq "eggdrop";
-    print "\n" if $username ne "eggdrop";
+    print "; " if $username eq getEggdropUID();
+    print "\n" if $username ne getEggdropUID();
   }
   exit 0;
 }

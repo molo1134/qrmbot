@@ -35,7 +35,7 @@ my $timeout = 4;	# max 4 seconds
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $highlight="vt220";
 $highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq "eggdrop";
+$highlight = "irc" if $username eq getEggdropUID();
 
 # eggdrop doesn't split args on spaces
 @ARGV=split(' ', join(' ',@ARGV));

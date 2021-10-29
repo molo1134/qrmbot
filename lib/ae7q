@@ -28,20 +28,20 @@ no if $] >= 5.018, warnings => "experimental::smartmatch";
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $highlight="vt220";
 $highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq "eggdrop";
+$highlight = "irc" if $username eq getEggdropUID();
 
 my $predictionBaseUrl = "http://34.121.48.146:8018/predict/";
 
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 # eggdrop doesn't split args on spaces
 @ARGV=split(' ', join(' ',@ARGV));
 @ARGV = uniq(@ARGV);	# deduplicate - no reason to process the same url twice
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !ae7q <call>|<region>\n";
   } else {
     print "usage: $0 <call>|<region>\n";

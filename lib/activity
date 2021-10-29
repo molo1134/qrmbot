@@ -17,6 +17,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Util;
 
 
 our %megacycles;
@@ -57,7 +58,7 @@ $megacycles{1296} = "0.23m";
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !activity [mode] <grid>\n";
   } else {
     print "usage: $0 [mode] <grid>\n";

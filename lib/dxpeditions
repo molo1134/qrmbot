@@ -14,18 +14,19 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Util;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $highlight="vt220";
 $highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq "eggdrop";
+$highlight = "irc" if $username eq getEggdropUID();
 
 use Time::Piece ();
 use POSIX qw(strftime);
 
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 # load mostwanted summary from $HOME/.mostwanted.txt, which will be populated
 # by the scrapeMW() subroutine.
@@ -114,8 +115,8 @@ while(<HTTP>) {
 	print ": ", bold($call);
 	print " to ", strftime("%b %d", gmtime($endstamp));
 	print " - $dxurl " if defined $dxurl;
-	print "\n" if $username ne "eggdrop";
-	print "; " if $username eq "eggdrop";
+	print "\n" if $username ne getEggdropUID();
+	print "; " if $username eq getEggdropUID();
       }
     }
     ($start, $end, $cty, $call, $dxurl) = (undef, undef, undef, undef, undef);

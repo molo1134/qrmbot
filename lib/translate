@@ -14,12 +14,13 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Util;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 #print "input:\n";
 #my $j = 0;
@@ -43,7 +44,7 @@ $exitnonzeroonerror = 0 if $username eq 'eggdrop';
 
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !translate [sourcelang] <targetlang> <text>\n";
   } else {
     print "usage: $0 [sourcelang] <targetlang> <text>\n";

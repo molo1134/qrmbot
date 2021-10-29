@@ -30,7 +30,7 @@ our $apikey = undef;
 
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 my $quote;
 my $search;
@@ -158,8 +158,8 @@ sub doSearch {
 
   my $i = 0;
   foreach my $quote (@{$j->{quotes}}) {
-    print " -- " if $i++ > 0 and $username eq "eggdrop";
+    print " -- " if $i++ > 0 and $username eq getEggdropUID();
     print "$quote->{symbol}: $quote->{longname}";
-    print "\n" if $username ne "eggdrop";
+    print "\n" if $username ne getEggdropUID();
   }
 }

@@ -27,7 +27,7 @@ use POSIX qw(strftime);
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
-$exitnonzeroonerror = 0 if $username eq 'eggdrop';
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 my $club = 187; # reddit club
 
@@ -48,17 +48,17 @@ close(JSON);
 my $j = decode_json($json) or die "parse error: $json\n";
 
 my $limit = 20;
-$limit = 10 if $username eq "eggdrop";
+$limit = 10 if $username eq getEggdropUID();
 my $year = strftime("%Y", gmtime(time()));
 print "Clublog standings for $year: ";
-print "\n" if $username ne "eggdrop";
+print "\n" if $username ne getEggdropUID();
 foreach my $standing (@{$j}) {
   my ($rank, $call, $dxcc, $sluts) = @{$standing};
   print "$rank: $call $dxcc/$sluts" if $rank != 1;
   print "$rank: " . bold($call). " " . bold($dxcc) . "/$sluts" if $rank == 1;
   $limit--;
-  print "\n" if $username ne "eggdrop";
-  print "; " if $username eq "eggdrop" and $limit >= 1;
+  print "\n" if $username ne getEggdropUID();
+  print "; " if $username eq getEggdropUID() and $limit >= 1;
   last if $limit < 1;
 }
 print " -- https://clublog.org/league.php?club=$club\n";

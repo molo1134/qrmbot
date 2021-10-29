@@ -23,7 +23,7 @@ my $timeout = 20;	# 20 seconds
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 
-  if ($username eq 'eggdrop') {
+  if ($username eq getEggdropUID()) {
     print "usage: !muf <station>  --or--  !muf list (use /msg)\n";
   } else {
     print "usage: $0 <station>  --or--  $0 list\n";
@@ -172,7 +172,7 @@ if (!defined $ursiCode or $place eq "list") {
       #print "$code $station\n";
 
       my $limit = 65;
-      $limit = 400 if $username eq "eggdrop";
+      $limit = 400 if $username eq getEggdropUID();
       if (lc($place) eq "list") {
 	if (length $list > $limit) {
 	  print "$list\n";
@@ -192,8 +192,8 @@ if (!defined $ursiCode or $place eq "list") {
   my $stationMap = "Map: http://giro.uml.edu/img/giro-map.gif";
 
   if (lc($place) eq "list") {
-    print "$list-- $stationMap\n" if $username eq "eggdrop";
-    print "$list\n$stationMap\n" if $username ne "eggdrop";
+    print "$list-- $stationMap\n" if $username eq getEggdropUID();
+    print "$list\n$stationMap\n" if $username ne getEggdropUID();
     exit 0;
   }
 
