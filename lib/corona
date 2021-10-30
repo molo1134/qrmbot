@@ -31,7 +31,7 @@ use Clone qw(clone);
 no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 if ($ARGV[0] =~ /about/i){
-  print "Covid19 case counts.  Data sources: https://github.com/CSSEGISandData/COVID-19 https://github.com/nytimes/covid-19-data/ https://github.com/jgehrcke/covid-19-germany-gae https://www.worldometers.info/coronavirus/ https://github.com/owid/covid-19-data/tree/master/public/data/vaccinations https://covid.cdc.gov/covid-data-tracker/#county-view\n";
+  print "Covid19 case counts.  Data sources: https://github.com/CSSEGISandData/COVID-19 https://github.com/nytimes/covid-19-data/ https://github.com/jgehrcke/covid-19-germany-gae https://www.worldometers.info/coronavirus/ https://github.com/owid/covid-19-data/tree/master/public/data/vaccinations https://covid.cdc.gov/covid-data-tracker/#county-view https://www.economist.com/graphic-detail/coronavirus-excess-deaths-estimates\n";
 
   my @casespercap = ( 1.0, 5.0, 25.0, 38.0, 50.0, 100.0, 325.0 );
   my @result = seriesToSparkLine(\@casespercap, 1, 0);
@@ -192,6 +192,7 @@ $statePop{PR} = 3193694;
 
 my %countryPop;
 my %countryName;
+my %economist_name;
 # source: http://api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL?format=json&per_page=500&date=2019
 $countryPop{EUU} = 447512041;
 $countryName{EUU} = "European Union";
@@ -637,6 +638,43 @@ $countryName{ZMB} = "Zambia";
 $countryPop{ZWE} = 14645468;
 $countryName{ZWE} = "Zimbabwe";
 
+
+#$economist_name{} = "Anguilla";
+#$economist_name{} = "Caribbean Netherlands";
+$economist_name{BIH} = "Bosnia";
+#$economist_name{} = "Ivory Coast";
+$economist_name{COD} = "Congo";
+$economist_name{COG} = "Congo-Brazzaville";
+#$economist_name{} = "Cook Islands";
+$economist_name{CPV} = "Cape Verde";
+$economist_name{CUW} = "Curaçao";
+$economist_name{CZE} = "Czech Republic";
+#$economist_name{} = "Eritrea";
+#$economist_name{} = "Falkland Islands";
+$economist_name{GBR} = "Britain";
+#$economist_name{} = "Guernsey";
+$economist_name{GMB} = "The Gambia";
+#$economist_name{} = "Jersey";
+$economist_name{KOR} = "South Korea";
+#$economist_name{} = "Macau";
+$economist_name{MMR} = "Myanmar";
+#$economist_name{} = "Montserrat";
+#$economist_name{} = "Niue";
+#$economist_name{} = "Pitcairn";
+#$economist_name{} = "North Korea";
+#$economist_name{} = "Palestinian Territories";
+#$economist_name{} = "St. Helena Ascension and Tristan da Cunha";
+$economist_name{STP} = "São Tomé and Príncipe";
+$economist_name{SXM} = "Sint Maarten";
+#$economist_name{} = "Tokelau";
+$economist_name{TWN} = "Taiwan";
+$economist_name{USA} = "United States";
+#$economist_name{} = "Vatican";
+$economist_name{VGB} = "Virgin Islands (British)";
+#$economist_name{} = "Wallis and Futuna";
+$economist_name{EU} = "European Union";
+
+
 my %needsTotal;
 $needsTotal{Australia} = "AUS";
 $needsTotal{Canada} = "CAN";
@@ -915,6 +953,21 @@ if ($#interest >= 0) {
   }
   close(CSV);
 
+  # get excess death estimate from The Economist
+  $url = "https://raw.githubusercontent.com/TheEconomist/covid-19-the-economist-global-excess-deaths-model/main/output-data/output-for-interactive/by_location_per_100k_cumulative.csv";
+
+  open(CSV, '-|', "curl --max-time 10 -s -k '$url'");
+  binmode(CSV, ":utf8");
+  my %excess_deaths_per100k;
+  while (<CSV>) {
+    chomp;
+    s/"Caribbean Netherlands \(Bonaire, Sint Eustatius and Saba\)"/Caribbean Netherlands/;
+    my ($cname, $date, $est, undef, undef, undef, undef, $official) = split /,/;
+    $excess_deaths_per100k{$cname} = join(',', ($date, $est, $official));
+    #print "$cname => ($date, $est, $official)\n";
+  }
+  close(CSV);
+
   foreach my $i (@interest) {
     my @cases = undef;
     my @deaths = undef;
@@ -1099,6 +1152,26 @@ if ($#interest >= 0) {
       #printf "%s ppl fully vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly fully vaxxed per 100k pop; %s of pop. fully vaxxed\n", $isocode, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
       printf "%s avg fully vaxxed %s/day in last 7d; %s weekly fully vaxxed per 100k pop; %s of pop. fully vaxxed\n", $isocode, commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
 
+    }
+
+    my $key = $countryName{$isocode};
+    $key = $economist_name{$isocode} if not defined $excess_deaths_per100k{$key};
+    #print "$isocode $countryName{$isocode} $excess_deaths_per100k{$key}\n";
+    if (defined $key and defined $excess_deaths_per100k{$key}) {
+      my ($date, $est, $official) = split /,/, $excess_deaths_per100k{$key};
+
+      if (defined $est and $est > 0.0 and (not defined $official or (defined $official and $official eq "NA"))) {
+	# estimate, no official
+	print $isocode, " est. ", bold(nearest(0.1, $est)), " excess deaths per 100k pop\n";
+      } elsif (defined $est and $est > 0.0 and defined $official and $official ne "NA" and $est > $official) {
+	# estimate > official
+	print $isocode, " est. ", bold(nearest(0.1, $est)), " excess deaths per 100k pop";
+	print " (", nearest(0.1, $est/$official), "x official death rate)\n";
+      } elsif (defined $est and $est > 0.0 and defined $official and $official ne "NA" and $est < $official) {
+	# estimate < official
+	print $isocode, " official deaths ", bold(nearest(0.1, $official)), " per 100k pop\n";
+      }
+      # no estimate, no official -- fall through
     }
   }
 }
