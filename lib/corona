@@ -1024,6 +1024,10 @@ if ($#interest >= 0) {
     }
     #print "$isocode\n";
     #print "$match\n";
+    if (not defined $isocode or $isocode eq "") {
+      print "not found: $searchname\n";
+      last;
+    }
 
     @cases = @{$countrySeries{$isocode}};
 
