@@ -1245,13 +1245,28 @@ if ($#states >= 0) {
     my @deaths = undef;
     my @vax = undef;
     my @fullVax = undef;
+    my ($lastVax, $lastFullVax);
     foreach my $k (sort keys %caseTotals) {
       if (rindex($k, $n, 0) == 0) { # if $k startswith $n
-	#print "$n: $k $caseTotals{$k}\n";
 	push @cases, $caseTotals{$k};
 	push @deaths, $deathTotals{$k};
-	push @vax, $peopleVax{$k};
-	push @fullVax, $peopleFullVax{$k};
+
+	#print "$n: $k $peopleVax{$k}\n";
+	if (defined $peopleVax{$k} and length($peopleVax{$k} > 0)) {
+	  push @vax, $peopleVax{$k};
+	  $lastVax = $peopleVax{$k};
+	} else {
+	  push @vax, $lastVax;
+	}
+
+	#print "$n: $k $peopleFullVax{$k}\n";
+	if (defined $peopleFullVax{$k} and length($peopleFullVax{$k} > 0)) {
+	  push @fullVax, $peopleFullVax{$k};
+	  $lastFullVax = $peopleFullVax{$k};
+	} else {
+	  push @fullVax, $lastFullVax;
+	}
+
       }
     }
 
@@ -1418,6 +1433,8 @@ if ($#states >= 0) {
     $percap = $sum / ($statePop{$s} / 100000.0);
     $popvax = ($fullVax[$#fullVax] / $statePop{$s}) * 100.0;
 
+    #print "popvax: $popvax; fullvax: $fullVax[$#fullVax]; countrypop: $statePop{$s}\n";
+
     #@result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
     #$min = $result[0];
     #$max = $result[1];
@@ -1572,6 +1589,8 @@ if ($#countyList >= 0) {
     my $lcty = lc $cty;
     my $full_vaxxed = $cty_vaxx{"${st}_${lcty}"};
     my $unknowncty_vaxxed = $cty_vaxx{"${st}_unknown county"};
+
+    #print "$st $cty $full_vaxxed $pop\n";
 
     my $st_pop = undef;
     foreach my $k (keys %stateToName) {
