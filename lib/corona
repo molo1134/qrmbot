@@ -1166,14 +1166,17 @@ if ($#interest >= 0) {
 
       if (defined $est and $est > 0.0 and (not defined $official or (defined $official and $official eq "NA"))) {
 	# estimate, no official
-	print $isocode, " est. ", bold(nearest(0.1, $est)), " excess deaths per 100k pop\n";
+	print $isocode, " est. ", bold(nearest(0.1, $est)), " excess deaths per 100k pop";
+	print "; est. total ", bold(humanNum(($countryPop{$isocode} / 100000.0) * $est) . " deaths"), "\n";
       } elsif (defined $est and $est > 0.0 and defined $official and $official ne "NA" and $est > $official) {
 	# estimate > official
 	print $isocode, " est. ", bold(nearest(0.1, $est)), " excess deaths per 100k pop";
-	print " (", nearest(0.1, $est/$official), "x official death rate)\n";
+	print " (", nearest(0.1, $est/$official), "x official death rate)";
+	print "; est. total ", bold(humanNum(($countryPop{$isocode} / 100000.0) * $est) . " deaths"), "\n";
       } elsif (defined $est and $est > 0.0 and defined $official and $official ne "NA" and $est < $official) {
 	# estimate < official
-	print $isocode, " official deaths ", bold(nearest(0.1, $official)), " per 100k pop\n";
+	print $isocode, " official deaths ", bold(nearest(0.1, $official)), " per 100k pop";
+	print "; official total ", bold(humanNum(($countryPop{$isocode} / 100000.0) * $official) . " deaths"), "\n";
       }
       # no estimate, no official -- fall through
     }
