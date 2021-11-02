@@ -109,8 +109,7 @@ proc q_pubquotesearch { nick uhost hand chan arg } {
         while {$i < $tmp} {
             set line [gets $qf]
             if { [string first $newarg [string tolower [lindex $line 0] ] ] != -1 } {
-                putmsg "$nick" "found quote [expr $i+1]:"
-                putmsg "$nick" "[lindex $line 0]"
+                putmsg "$nick" "\[quote #[expr $i+1]\] [lindex $line 0]"
                 incr j
             }
             incr i
