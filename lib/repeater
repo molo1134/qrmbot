@@ -17,7 +17,7 @@ use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
-my $http_timeout = 5;
+my $http_timeout = 10;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
