@@ -1,0 +1,363 @@
+#!/usr/bin/perl -w
+#
+# Pull info from FCC database
+#
+# 2-clause BSD license.
+# Copyright (c) 2019, 2020, 2021 molo1134@github. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+use Time::Local;
+use Time::Piece ();
+use List::Util qw[min max];
+use POSIX qw(strftime);
+
+# disable "experimental" warning on smart match operator use
+no if $] >= 5.018, warnings => "experimental::smartmatch";
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+my $highlight="vt220";
+$highlight = "none" if ! -t STDOUT;
+$highlight = "irc" if $username eq getEggdropUID();
+
+my $predictionBaseUrl = "http://34.121.48.146:8018/predict-fcc/";
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+@ARGV = uniq(@ARGV);	# deduplicate - no reason to process the same url twice
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq getEggdropUID()) {
+    print "usage: !vanity <call>|<region>\n";
+  } else {
+    print "usage: $0 <call>|<region>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $httpTimeout = 5;
+my $i = 0;
+while ($i <= $#ARGV) {
+
+  $ARGV[$i] =~ s/'//g; # sanitize
+
+  if ($ARGV[$i] =~ m/^[0-9]+$/) {
+    if ($ARGV[$i] == 12) {
+      doRegion("12_PR");
+      doRegion("12_VI");
+    } elsif ($ARGV[$i] == 13) {
+      doRegion("13_HI");
+      doRegion("13_GU");
+      doRegion("13_AS");
+      doRegion("13_MP");
+    } elsif ($ARGV[$i] > 13) {
+      print "invalid region\n";
+      exit $exitnonzeroonerror;
+    } else {
+      doRegion($ARGV[$i]);
+    }
+  } else {
+    if ($ARGV[$i] eq "AK") {
+      doRegion(11);
+    } elsif ($ARGV[$i] eq "HI") {
+      doRegion("13_HI");
+    } elsif ($ARGV[$i] eq "GU") {
+      doRegion("13_GU");
+    } elsif ($ARGV[$i] eq "AS") {
+      doRegion("13_AS");
+    } elsif ($ARGV[$i] eq "MP") {
+      doRegion("13_MP");
+    } elsif ($ARGV[$i] eq "PR") {
+      doRegion("12_PR");
+    } elsif ($ARGV[$i] eq "VI") {
+      doRegion("12_VI");
+    } else {
+      doCall($ARGV[$i]);
+    }
+  }
+  $i++;
+}
+
+sub doRegion {
+  my $region = shift;
+  my $saved = $_;
+  $region = 10 if isNumeric($region) and $region == 0;
+  my $url = "$predictionBaseUrl/shortcalls-$region.csv";
+  
+  my @avail;
+  my @pending;
+  my @upcoming;
+  my @unavail;
+  my $lastcall;
+  my $inCallTable = 0;
+  my %regionPreds;
+  open(HTTP, '-|', "curl --max-time $httpTimeout -L -k -s '$url'");
+  while(<HTTP>) {
+    chomp;
+    next if /^#/;
+    my ($call, $status, $odds) = split /,/;
+    push @avail, $call if $status eq "available";
+    push @unavail, $call if $status eq "blocked";
+    push @upcoming, $call if $status eq "upcoming";
+    push @pending, $call if $status eq "pending";
+    $regionPreds{$call} = $odds if $status eq "pending";
+  }
+  close(HTTP);
+
+  print "Region $region: ", green(scalar @avail), " available";
+
+  if (scalar @avail > 0) {
+    #print ": ", green(join(", ", @avail));
+    my $num = 0;
+    print ": ";
+    foreach my $c (@avail) {
+      print green($c);
+      print yellow(" ($regionPreds{$c}%)") # \
+	if defined $regionPreds{$c} and $regionPreds{$c} > 0.0;
+      if ($num >= 30) {
+	print " (truncated)";
+	last;
+      }
+      print ", " unless ++$num == scalar @avail;
+    }
+  }
+
+  print "; ", lightblue(scalar @pending), " pending";
+
+  if (scalar @pending > 0) {
+    my $num = 0;
+    print ": ";
+    foreach my $c (@pending) {
+      print lightblue($c);
+      print yellow(" ($regionPreds{$c}%)") # \
+	if defined $regionPreds{$c} and $regionPreds{$c} < 99.5; # allow for rounding
+      print ", " unless ++$num == scalar @pending;
+    }
+    #print ": ", lightblue(join(", ", @pending)) if scalar @pending > 0;
+  }
+
+  print "; ", yellow(scalar @upcoming), " upcoming";
+  print ": ", yellow(join(", ", @upcoming)) if scalar @upcoming > 0;
+  print "; ", red(scalar @unavail), " unavailable: ",
+	red(join(", ", @unavail)) if scalar @unavail > 0;
+  print "\n";
+  $_ = $saved;
+}
+
+sub doCall {
+  my $call = uc shift;
+  my $saved = $_;
+
+  my ($frn, $name, $class, $status, $state, $grant, $eff, $cxl, $expire);
+  my $availdate;
+  my ($receipt, $process, $appl, $filenum, $type, $seq, $pred);
+  my $callStatus;
+  my $found = 0;
+  my @frns;
+  my %odds_sim;
+
+  my $url = "${predictionBaseUrl}/vanity-$call.csv";
+  open(CSV, '-|', "curl --fail --max-time $httpTimeout -L -k -s '$url'");
+  while(<CSV>) {
+    chomp;
+    next if /^#/;
+    my ($appid, $rdate, $appcall, $seq, $vanity, $pred, $odds) = split /,/;
+    print "$rdate -> ????-??-?? $appcall (st?) App $appid #$seq/? $pred $odds%\n";
+    $found = 1;
+  }
+  close(CSV);
+
+  $url = "${predictionBaseUrl}/call-$call.csv";
+  open(CSV, '-|', "curl --fail --max-time $httpTimeout -L -k -s '$url'");
+  while(<CSV>) {
+    chomp;
+    next if /^#/;
+    my ($appid, $rdate, $call, $seq, $vanity, $pred, $odds) = split /,/;
+    print "$rdate -> ????-??-??: App $appid (type?) #$seq $vanity $pred $odds\n";
+    $found = 1;
+  }
+  close(CSV);
+
+  print "no current applications found matching $call\n" if $found == 0;
+  return;
+
+#	$pred =~ s/_/ /g;
+#	$pred = green($pred) if $pred eq "Assignment";
+#	$pred = lightblue($pred) if $pred =~ /^(Competition|Available)/;
+#	$pred = italic($pred) if $pred =~ /^Unneeded/;
+#	$pred = yellow($pred) if $pred =~ /^Offlined/;
+#	$pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv|Inactive|Block)/;
+
+#  foreach my $f (@frns) {
+#    printFrnApps($f, \%odds_sim);
+#  }
+
+#  print bold($call), ": $callStatus\n" if defined $callStatus and not $found;
+  $_ = $saved;
+}
+
+sub getAvailDate {
+  my $exp = shift;
+  my $cxl = shift;
+
+  return undef if not defined $exp or $exp eq "";
+
+  # convert from localtime in washington
+  $ENV{TZ} = "EST5EDT";
+  my ($y, $m, $d) = split('-', $exp);
+  my $expdate = timelocal(0, 0, 0, $d, $m-1, $y+2);
+  #print "exp: $exp $expdate\n";
+  $expdate += (24 * 60 * 60);
+
+  my $cxldate = 9999999999;
+  if (defined $cxl and length($cxl) > 0) {
+    ($y, $m, $d) = split('-', $cxl);
+    $cxldate = timelocal(0, 0, 0, $d, $m-1, $y+2);
+    #print "cxl: $cxl $cxldate\n";
+    $cxldate += (24 * 60 * 60);
+  }
+
+  my $availdate = min($expdate, $cxldate);
+  my $format = "%Y-%m-%d";
+  $format = bold($format) if $availdate <= time() + (24*60*60*31);
+
+  return strftime($format, localtime($availdate))
+}
+
+sub uniq {
+  my %seen;
+  grep !$seen{$_}++, @_;
+}
+
+sub printFrnApps {
+  my $frn = shift;
+  my $odds_sim = shift;
+  my $saved = $_;
+  my $url = "http://ae7q.com/query/data/FrnHistory.php?FRN=$frn";
+  my $inpred = 0;
+  my ($appdate, $procdate, $appid, $appidnum, $appcolor, $type, $seqnum, $vanity, $pred);
+  open(HTTP, '-|', "curl --max-time $httpTimeout -L -k -s '$url'");
+  while(<HTTP>) {
+    $inpred = 1 if /Retrieving predictions for pending applications from/;
+
+    $appdate = $1 if m|/AppByReceipt\.php\?DATE=([0-9-]+)'| and $inpred == 1;
+    $procdate = $1 if m|/ProcessDate\.php\?DATE=([0-9-]+)'| and $inpred == 1;
+    # <td class="DatabaseField" style='background-color:#99CCFF; '><a href='/query/data/AppDetail.php?UFN=0009052785'
+    if (m|background-color:#([0-9A-F]+).*/AppDetail\.php\?UFN=([0-9]+)'| and $inpred == 1) {
+      $appidnum = $appid = $2;
+      my $appcolor = $1;
+      $appid = lightblue($appid) if $appcolor eq "99CCFF";
+      $appid = green($appid) if $appcolor eq "99FF66";
+      $appid = yellow($appid) if $appcolor eq "FFFF66";
+      $appid = red($appid) if $appcolor eq "FF99CC";
+    }
+    $type = $2 if m|/AppByType.*>(. - )?([^<]*)</a>| and $inpred == 1;
+    $seqnum = $1 if m|<td class='DatabaseField' align='right'>\s*([0-9]+)\s*</td>| and $inpred == 1;
+    $vanity = $1 if m|/CallHistory\.php\?CALL=([0-9A-Z]+)#Apps| and $inpred == 1;
+    if (m|background-color:#([0-9A-F]+);.*/Prediction\.php\?PREDICT=(.*?)'| and $inpred == 1) {
+      $pred = $2;
+      $pred =~ s/_/ /g;
+      $pred = green($pred) if $pred eq "Assignment";
+      $pred = lightblue($pred) if $pred =~ /^(Competition|Available)/;
+      $pred = italic($pred) if $pred =~ /^Unneeded/;
+      $pred = yellow($pred) if $pred =~ /^Offlined/;
+      $pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv|Inactive)/;
+
+      $procdate = "????-??-??" if not defined $procdate or $pred =~ /^Offlined/;
+
+      my $odds = formatOdds($odds_sim->{"${appidnum}_$vanity"});
+      print "$appdate -> $procdate: App $appid ($type) #$seqnum $vanity $pred$odds\n";
+    }
+  }
+  $_ = $saved;
+}
+
+sub formatOdds {
+  my $odds = shift;
+  if (not defined $odds) {
+    $odds = "";
+  } else {
+    if (isNumeric($odds) and $odds == 100.0) {
+      $odds = green(" 100%");
+    } elsif (isNumeric($odds) and $odds == 0.0) {
+      $odds = red(" 0%");
+    } else {
+      $odds = yellow(" $odds%");
+    }
+  }
+  return $odds;
+}
+
+sub getDaysInMonth {
+  my $m = shift;
+  my $y = shift;
+  return undef if not isNumeric($m) or not isNumeric($y);
+  if ($m == 9 or $m == 4 or $m == 6 or $m == 11) {
+    return 30;
+  }
+  if ($m != 2) {
+    return 31;
+  }
+  if ($y % 4 != 0) {
+    return 28;
+  }
+  if ($y % 100 != 0) {
+    return 29;
+  }
+  if ($y % 400 == 0) {
+    return 29;
+  } else {
+    return 28;
+  }
+}
+
+sub assert {
+  my ($condition, $msg) = @_;
+  return if $condition;
+  if (!$msg) {
+    my ($pkg, $file, $line) = caller(0);
+    open my $fh, "<", $file;
+    my @lines = <$fh>;
+    close $fh;
+    $msg = "$file:$line: " . $lines[$line - 1];
+  }
+  die "Assertion failed: $msg";
+}
+
+sub testDaysInMonth {
+  # 1988, 1992, and 1996 are leap years.
+  assert(getDaysInMonth(2, 1988) == 29);
+  assert(getDaysInMonth(2, 1992) == 29);
+  assert(getDaysInMonth(2, 1996) == 29);
+  assert(getDaysInMonth(2, 2004) == 29);
+  # the following years are not leap years:
+  # 1700, 1800, 1900, 2100, 2200, 2300, 2500, 2600
+  assert(getDaysInMonth(2, 1700) == 28);
+  assert(getDaysInMonth(2, 1800) == 28);
+  assert(getDaysInMonth(2, 1900) == 28);
+  assert(getDaysInMonth(2, 2100) == 28);
+  assert(getDaysInMonth(2, 2200) == 28);
+  assert(getDaysInMonth(2, 2300) == 28);
+  assert(getDaysInMonth(2, 2500) == 28);
+  assert(getDaysInMonth(2, 2600) == 28);
+  # The following years are leap years: 1600, 2000, 2400
+  assert(getDaysInMonth(2, 1600) == 29);
+  assert(getDaysInMonth(2, 2000) == 29);
+  assert(getDaysInMonth(2, 2400) == 29);
+  # all others
+  assert(getDaysInMonth(2, 2001) == 28);
+}

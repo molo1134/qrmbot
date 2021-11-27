@@ -1734,6 +1734,34 @@ proc msg_ae7q {nick uhand handle input} {
 	close $fd
 }
 
+set vanitybin "/home/eggdrop/bin/vanity"
+bind pub - !vanity pub_vanity
+bind msg - !vanity msg_vanity
+
+proc pub_vanity { nick host hand chan text } {
+	global vanitybin
+	set input [sanitize_string [string trim "${text}"]]
+	putlog "vanity pub: $nick $host $hand $chan $input"
+	set fd [open "|${vanitybin} ${input}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc msg_vanity {nick uhand handle input} {
+	global vanitybin
+	set input [sanitize_string [string trim "${input}"]]
+	putlog "vanity msg: $nick $uhand $handle $input"
+	set fd [open "|${vanitybin} ${input}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
+
 proc atten_pub { nick host hand chan text } {
 	global attenbin
 	set params [sanitize_string [string trim "${text}"]]
