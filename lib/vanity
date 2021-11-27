@@ -42,9 +42,9 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq getEggdropUID()) {
-    print "usage: !vanity <call>|<region>\n";
+    print "usage: !vanity <call>|<region/AK/HI/territory>\n";
   } else {
-    print "usage: $0 <call>|<region>\n";
+    print "usage: $0 <call>|<region/AK/HI/territory>\n";
   }
   exit $exitnonzeroonerror;
 }
@@ -176,7 +176,12 @@ sub doCall {
     chomp;
     next if /^#/;
     my ($appid, $rdate, $appcall, $seq, $vanity, $pred, $odds) = split /,/;
-    print "$rdate -> ????-??-?? $appcall (st?) App $appid #$seq/? $pred $odds%\n";
+    $odds = formatOdds($odds);
+    $pred = formatPred($pred);
+    my $pdate = "????-??-??";	# TODO FIXME
+    my $state = "ST?";		# TODO FIXME
+    $seq = "$seq/?";		# TODO FIXME
+    printf "$rdate -> $pdate %-6s ($state) App $appid #%-5s $pred%s\n", $appcall, $seq, $odds;
     $found = 1;
   }
   close(CSV);
@@ -187,7 +192,11 @@ sub doCall {
     chomp;
     next if /^#/;
     my ($appid, $rdate, $call, $seq, $vanity, $pred, $odds) = split /,/;
-    print "$rdate -> ????-??-??: App $appid (type?) #$seq $vanity $pred $odds\n";
+    my $pdate = "????-??-??";	# TODO FIXME
+    my $type = "type?";		# TODO FIXME
+    $odds = formatOdds($odds);
+    $pred = formatPred($pred);
+    print "$rdate -> ????-??-?? App $appid ($type) #$seq $vanity $pred$odds\n";
     $found = 1;
   }
   close(CSV);
@@ -195,47 +204,9 @@ sub doCall {
   print "no current applications found matching $call\n" if $found == 0;
   return;
 
-#	$pred =~ s/_/ /g;
-#	$pred = green($pred) if $pred eq "Assignment";
-#	$pred = lightblue($pred) if $pred =~ /^(Competition|Available)/;
-#	$pred = italic($pred) if $pred =~ /^Unneeded/;
-#	$pred = yellow($pred) if $pred =~ /^Offlined/;
-#	$pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv|Inactive|Block)/;
-
-#  foreach my $f (@frns) {
-#    printFrnApps($f, \%odds_sim);
-#  }
 
 #  print bold($call), ": $callStatus\n" if defined $callStatus and not $found;
   $_ = $saved;
-}
-
-sub getAvailDate {
-  my $exp = shift;
-  my $cxl = shift;
-
-  return undef if not defined $exp or $exp eq "";
-
-  # convert from localtime in washington
-  $ENV{TZ} = "EST5EDT";
-  my ($y, $m, $d) = split('-', $exp);
-  my $expdate = timelocal(0, 0, 0, $d, $m-1, $y+2);
-  #print "exp: $exp $expdate\n";
-  $expdate += (24 * 60 * 60);
-
-  my $cxldate = 9999999999;
-  if (defined $cxl and length($cxl) > 0) {
-    ($y, $m, $d) = split('-', $cxl);
-    $cxldate = timelocal(0, 0, 0, $d, $m-1, $y+2);
-    #print "cxl: $cxl $cxldate\n";
-    $cxldate += (24 * 60 * 60);
-  }
-
-  my $availdate = min($expdate, $cxldate);
-  my $format = "%Y-%m-%d";
-  $format = bold($format) if $availdate <= time() + (24*60*60*31);
-
-  return strftime($format, localtime($availdate))
 }
 
 sub uniq {
@@ -243,52 +214,9 @@ sub uniq {
   grep !$seen{$_}++, @_;
 }
 
-sub printFrnApps {
-  my $frn = shift;
-  my $odds_sim = shift;
-  my $saved = $_;
-  my $url = "http://ae7q.com/query/data/FrnHistory.php?FRN=$frn";
-  my $inpred = 0;
-  my ($appdate, $procdate, $appid, $appidnum, $appcolor, $type, $seqnum, $vanity, $pred);
-  open(HTTP, '-|', "curl --max-time $httpTimeout -L -k -s '$url'");
-  while(<HTTP>) {
-    $inpred = 1 if /Retrieving predictions for pending applications from/;
-
-    $appdate = $1 if m|/AppByReceipt\.php\?DATE=([0-9-]+)'| and $inpred == 1;
-    $procdate = $1 if m|/ProcessDate\.php\?DATE=([0-9-]+)'| and $inpred == 1;
-    # <td class="DatabaseField" style='background-color:#99CCFF; '><a href='/query/data/AppDetail.php?UFN=0009052785'
-    if (m|background-color:#([0-9A-F]+).*/AppDetail\.php\?UFN=([0-9]+)'| and $inpred == 1) {
-      $appidnum = $appid = $2;
-      my $appcolor = $1;
-      $appid = lightblue($appid) if $appcolor eq "99CCFF";
-      $appid = green($appid) if $appcolor eq "99FF66";
-      $appid = yellow($appid) if $appcolor eq "FFFF66";
-      $appid = red($appid) if $appcolor eq "FF99CC";
-    }
-    $type = $2 if m|/AppByType.*>(. - )?([^<]*)</a>| and $inpred == 1;
-    $seqnum = $1 if m|<td class='DatabaseField' align='right'>\s*([0-9]+)\s*</td>| and $inpred == 1;
-    $vanity = $1 if m|/CallHistory\.php\?CALL=([0-9A-Z]+)#Apps| and $inpred == 1;
-    if (m|background-color:#([0-9A-F]+);.*/Prediction\.php\?PREDICT=(.*?)'| and $inpred == 1) {
-      $pred = $2;
-      $pred =~ s/_/ /g;
-      $pred = green($pred) if $pred eq "Assignment";
-      $pred = lightblue($pred) if $pred =~ /^(Competition|Available)/;
-      $pred = italic($pred) if $pred =~ /^Unneeded/;
-      $pred = yellow($pred) if $pred =~ /^Offlined/;
-      $pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv|Inactive)/;
-
-      $procdate = "????-??-??" if not defined $procdate or $pred =~ /^Offlined/;
-
-      my $odds = formatOdds($odds_sim->{"${appidnum}_$vanity"});
-      print "$appdate -> $procdate: App $appid ($type) #$seqnum $vanity $pred$odds\n";
-    }
-  }
-  $_ = $saved;
-}
-
 sub formatOdds {
   my $odds = shift;
-  if (not defined $odds) {
+  if (not defined $odds or length($odds) == 0) {
     $odds = "";
   } else {
     if (isNumeric($odds) and $odds == 100.0) {
@@ -302,62 +230,15 @@ sub formatOdds {
   return $odds;
 }
 
-sub getDaysInMonth {
-  my $m = shift;
-  my $y = shift;
-  return undef if not isNumeric($m) or not isNumeric($y);
-  if ($m == 9 or $m == 4 or $m == 6 or $m == 11) {
-    return 30;
-  }
-  if ($m != 2) {
-    return 31;
-  }
-  if ($y % 4 != 0) {
-    return 28;
-  }
-  if ($y % 100 != 0) {
-    return 29;
-  }
-  if ($y % 400 == 0) {
-    return 29;
-  } else {
-    return 28;
-  }
+sub formatPred {
+  my $pred = shift;
+  $pred =~ s/_/ /g;
+  $pred = green($pred) if $pred eq "Assignment";
+  $pred = lightblue($pred) if $pred =~ /^(Competition|Available)/;
+  $pred = italic($pred) if $pred =~ /^Unneeded/;
+  $pred = yellow($pred) if $pred =~ /^Offlined/;
+  $pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv|Inactive|Block)/;
+  return $pred;
 }
 
-sub assert {
-  my ($condition, $msg) = @_;
-  return if $condition;
-  if (!$msg) {
-    my ($pkg, $file, $line) = caller(0);
-    open my $fh, "<", $file;
-    my @lines = <$fh>;
-    close $fh;
-    $msg = "$file:$line: " . $lines[$line - 1];
-  }
-  die "Assertion failed: $msg";
-}
 
-sub testDaysInMonth {
-  # 1988, 1992, and 1996 are leap years.
-  assert(getDaysInMonth(2, 1988) == 29);
-  assert(getDaysInMonth(2, 1992) == 29);
-  assert(getDaysInMonth(2, 1996) == 29);
-  assert(getDaysInMonth(2, 2004) == 29);
-  # the following years are not leap years:
-  # 1700, 1800, 1900, 2100, 2200, 2300, 2500, 2600
-  assert(getDaysInMonth(2, 1700) == 28);
-  assert(getDaysInMonth(2, 1800) == 28);
-  assert(getDaysInMonth(2, 1900) == 28);
-  assert(getDaysInMonth(2, 2100) == 28);
-  assert(getDaysInMonth(2, 2200) == 28);
-  assert(getDaysInMonth(2, 2300) == 28);
-  assert(getDaysInMonth(2, 2500) == 28);
-  assert(getDaysInMonth(2, 2600) == 28);
-  # The following years are leap years: 1600, 2000, 2400
-  assert(getDaysInMonth(2, 1600) == 29);
-  assert(getDaysInMonth(2, 2000) == 29);
-  assert(getDaysInMonth(2, 2400) == 29);
-  # all others
-  assert(getDaysInMonth(2, 2001) == 28);
-}
