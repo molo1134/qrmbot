@@ -64,6 +64,8 @@ while ($i <= $#ARGV) {
       doRegion("13_GU");
       doRegion("13_AS");
       doRegion("13_MP");
+    } elsif ($ARGV[$i] > 13 and length($ARGV[$i]) == 10) {
+      doApp($ARGV[$i]);
     } elsif ($ARGV[$i] > 13) {
       print "invalid region\n";
       exit $exitnonzeroonerror;
@@ -102,8 +104,6 @@ sub doRegion {
   my @pending;
   my @upcoming;
   my @unavail;
-  my $lastcall;
-  my $inCallTable = 0;
   my %regionPreds;
   open(HTTP, '-|', "curl --max-time $httpTimeout -L -k -s '$url'");
   while(<HTTP>) {
@@ -201,12 +201,26 @@ sub doCall {
   }
   close(CSV);
 
-  print "no current applications found matching $call\n" if $found == 0;
-  return;
-
-
+  print "no pending applications found matching $call\n" if $found == 0;
 #  print bold($call), ": $callStatus\n" if defined $callStatus and not $found;
   $_ = $saved;
+}
+
+sub doApp {
+  my $app = shift;
+  my $url = "${predictionBaseUrl}/app-$app.csv";
+  open(CSV, '-|', "curl --fail --max-time $httpTimeout -L -k -s '$url'");
+  while(<CSV>) {
+    chomp;
+    next if /^#/;
+    my ($appid, $rdate, $pdate, $call, $seq, $vanity, $pred, $odds) = split /,/;
+    $pdate = " ?        " if $pdate eq "";
+    my $type = "type?";		# TODO FIXME
+    $odds = formatOdds($odds);
+    $pred = formatPred($pred);
+    print "$rdate -> $pdate App $appid ($type) #$seq $vanity $pred$odds\n";
+  }
+  close(CSV);
 }
 
 sub uniq {
