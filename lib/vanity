@@ -175,10 +175,10 @@ sub doCall {
   while(<CSV>) {
     chomp;
     next if /^#/;
-    my ($appid, $rdate, $appcall, $seq, $vanity, $pred, $odds) = split /,/;
+    my ($appid, $rdate, $pdate, $appcall, $seq, $vanity, $pred, $odds) = split /,/;
     $odds = formatOdds($odds);
     $pred = formatPred($pred);
-    my $pdate = "????-??-??";	# TODO FIXME
+    $pdate = " ?        " if $pdate eq "";
     my $state = "ST?";		# TODO FIXME
     $seq = "$seq/?";		# TODO FIXME
     printf "$rdate -> $pdate %-6s ($state) App $appid #%-5s $pred%s\n", $appcall, $seq, $odds;
@@ -191,12 +191,12 @@ sub doCall {
   while(<CSV>) {
     chomp;
     next if /^#/;
-    my ($appid, $rdate, $call, $seq, $vanity, $pred, $odds) = split /,/;
-    my $pdate = "????-??-??";	# TODO FIXME
+    my ($appid, $rdate, $pdate, $call, $seq, $vanity, $pred, $odds) = split /,/;
+    $pdate = " ?        " if $pdate eq "";
     my $type = "type?";		# TODO FIXME
     $odds = formatOdds($odds);
     $pred = formatPred($pred);
-    print "$rdate -> ????-??-?? App $appid ($type) #$seq $vanity $pred$odds\n";
+    print "$rdate -> $pdate App $appid ($type) #$seq $vanity $pred$odds\n";
     $found = 1;
   }
   close(CSV);
