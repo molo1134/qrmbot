@@ -791,6 +791,7 @@ sub doAmazon {
   #my $useragent = "foo";
   my ($price, $curr, $stars, $prime, $vendor, $fulfilled, $title);
   my $lastbuyboxlabel = undef;
+  my $coreprice = 0;
   open(HTTP, '-|', "curl -A \"$useragent\" --compressed --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
@@ -839,6 +840,18 @@ sub doAmazon {
       $curr =~ tr/￥/¥/;
       $price = "$2 to $1$4";
     }
+    $coreprice = 1 if /<div id="corePrice_feature_div"/ or /data-feature-name="corePrice"/;
+    if ($coreprice and /data-a-color="price">(<span.*?>)?([\$￥£]|CDN\$)\s*([0-9.,]+)\s*</) {
+      $curr = $2;
+      $curr =~ tr/￥/¥/;
+      $price = $3;
+      $coreprice = 0;
+    }
+    if ($coreprice and /data-a-color="price">(<span.*?>)?\s*([0-9.,]+)€\s*</) {
+      $price = $2;
+      $curr = '€';
+      $coreprice = 0;
+    }
     if (not defined $price and /span class=.*offer-price.*">([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
       $curr = $1;
       $curr =~ tr/￥/¥/;
@@ -860,15 +873,20 @@ sub doAmazon {
     if (/"([0-9,]+) von 5 Sternen"/ and not defined $stars) {
       $stars = $1;
     }
-    if (/"5つ星のうち ([0-9.]+)"/ and not defined $stars) {
+    if (/"5つ星のうち\s*([0-9.]+)"/ and not defined $stars) {
       $stars = $1;
     }
     $prime = 1 if /a-icon-prime.*aria-label="Free Shipping for Prime Members"/;
     $prime = 1 if /shipped by Amazon or get <b>Fast, Free Shipping<\/b> with/;
-    if (/(Sold by |この商品は、)<[^>]+>([^<]+)</) {
-      $vendor = $2;
+    #if (/(Sold by |この商品は、)<[^>]+>([^<]+)</) {
+    #  $vendor = $2;
+    #  print "setting vendor 3: $vendor\n";
+    #}
+    if (/(Ships|Dispatches) from and sold by <[^>]+>([^<]+)</) {
+      $vendor = $1;
+      $fulfilled = 0;
     }
-    if (/Ships from and sold by <[^>]+>([^<]+)</) {
+    if (/<span>Verkauf und Versand durch <\/span><a class="a-link-normal" href="[^"]*"><span>([^<]+)<\/span><\/a>/) {
       $vendor = $1;
       $fulfilled = 0;
     }
@@ -877,13 +895,23 @@ sub doAmazon {
     #($vendor, $fulfilled) = ("Amazon", 1) if /(Ships|Dispatched) from and sold by Amazon/;
     ($vendor, $fulfilled) = ("Amazon", 1) if /data-feature-name="shipsFromSoldByInsideBuyBox"/;
 
-    $lastbuyboxlabel = "ships" if /buybox-label">Ships from</;
-    $lastbuyboxlabel = "sold" if /buybox-label">Sold by</;
+    $lastbuyboxlabel = "ships" if /buybox-label" tabular-attribute-name="Ships from"/;
+    $lastbuyboxlabel = "ships" if /buybox-label" tabular-attribute-name="Dispatches from"/;
+    $lastbuyboxlabel = "ships" if /buybox-label" tabular-attribute-name="出荷元"/;
+    $lastbuyboxlabel = "sold" if /buybox-label" tabular-attribute-name="Sold by"/;
+    $lastbuyboxlabel = "sold" if /buybox-label" tabular-attribute-name="販売元"/;
 
-    if ($lastbuyboxlabel eq "sold" and m/<span class="tabular-buybox-text"><a .*?>(.*?)<\/a><\/span>/) {
+    if ($lastbuyboxlabel eq "sold" and m/<span class="a-size-small">.*?Amazon.*?<\/span>\s*<\/div>/) {
+      $vendor = "Amazon";
+      $lastbuyboxlabel = undef;
+    } elsif ($lastbuyboxlabel eq "sold" and m/<a.*?id='sellerProfileTriggerId'>(.*?)<\/a><\/span>/) {
       $vendor = $1;
+      $lastbuyboxlabel = undef;
     }
-    $fulfilled = 1 if $lastbuyboxlabel eq "ships" and /tabular-buybox-text">Amazon.com</;
+    if ($lastbuyboxlabel eq "ships" and m/<span class="a-size-small">.*?Amazon.*?<\/span>\s*<\/div>/) {
+      $fulfilled = 1;
+      $lastbuyboxlabel = undef;
+    }
   }
   close(HTTP);
 
