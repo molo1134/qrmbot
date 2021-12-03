@@ -30,7 +30,7 @@ my $highlight="vt220";
 $highlight = "none" if ! -t STDOUT;
 $highlight = "irc" if $username eq getEggdropUID();
 
-my $predictionBaseUrl = "http://35.236.62.70:8018/predict/";
+my $predictionBaseUrl = "http://www.k2cr.com/predict/";
 
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
