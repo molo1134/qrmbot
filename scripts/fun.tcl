@@ -535,6 +535,37 @@ proc cat_pub { nick host hand chan text } {
 	close $fd
 }
 
+
+set amconbin "/home/eggdrop/bin/amcon"
+bind pub - !amcon amcon_pub
+bind pub - !amccon amcon_pub
+bind pub - !amrron amcon_pub
+bind msg - !amcon amcon_msg
+bind msg - !amccon amcon_msg
+bind msg - !amrron amcon_msg
+proc amcon_pub { nick host hand chan text } {
+	global amconbin
+	set param [sanitize_string [string trim "${text}"]]
+	putlog "amcon pub: $nick $host $hand $chan $param"
+	set fd [open "|${amconbin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc amcon_msg {nick uhand handle input} {
+	global amconbin
+	set param [sanitize_string [string trim "${input}"]]
+	putlog "amcon msg: $nick $uhand $handle $param"
+	set fd [open "|${amconbin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
 proc github { nick host hand chan text } {
 	global githublink
 	putlog "github pub: $nick $host $hand $chan"
