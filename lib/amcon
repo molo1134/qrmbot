@@ -10,6 +10,9 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Util;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 if (defined $ARGV[0] and $ARGV[0] =~ /about/i){
   print "Returns current AmCON status from the AmRRON page.\n";
@@ -27,19 +30,34 @@ while ( my $line = <HTTP>) {
   my @data = split(/\//,$line);
   #print $data[7] . "\n";
   if ($data[7] =~ m/5/) {
-    print green("AmRRON Communications Condition Level: 5"), "\n";
+    print green("AmRRON Communications Condition Level: 5");
+    print " -- " if $username eq getEggdropUID();
+    print "\n" if $username ne getEggdropUID();
+    print "No Incident (no known or anticipated threat to communications)\n";
     $found = 1;
   } elsif ($data[7] =~ m/4/) {
-    print lightgreen("AmRRON Communications Condition Level: 4"), "\n";
+    print lightgreen("AmRRON Communications Condition Level: 4");
+    print " -- " if $username eq getEggdropUID();
+    print "\n" if $username ne getEggdropUID();
+    print "Incident Possible (Possible near-future interruption of conventional comms)\n";
     $found = 1;
   } elsif ($data[7] =~ m/3/) {
-    print yellow("AmRRON Communications Condition Level: 3"), "\n";
+    print yellow("AmRRON Communications Condition Level: 3");
+    print " -- " if $username eq getEggdropUID();
+    print "\n" if $username ne getEggdropUID();
+    print "Incident Probable (Increased probability of interruption of conventional comms; not imminent\n";
     $found = 1;
   } elsif ($data[7] =~ m/2/) {
-    print orange("AmRRON Communications Condition Level: 2"), "\n";
+    print orange("AmRRON Communications Condition Level: 2");
+    print " -- " if $username eq getEggdropUID();
+    print "\n" if $username ne getEggdropUID();
+    print "Incident IMMINENT (Disruption of communications expected or highly likely)\n";
     $found = 1;
   } elsif ($data[7] =~ m/1/) {
-    print red("AmRRON Communications Condition Level: 1"), "\n";
+    print red("AmRRON Communications Condition Level: 1");
+    print " -- " if $username eq getEggdropUID();
+    print "\n" if $username ne getEggdropUID();
+    print "ACTIVE INCIDENT (Conduct AmRRON Nets according to the Emergency Net Schedule. Make adjustments based on the situation.)\n";
     $found = 1;
   } else {
     print "unknown AmRRON Communications Condition Level\n";
