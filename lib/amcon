@@ -16,7 +16,8 @@ if (defined $ARGV[0] and $ARGV[0] =~ /about/i){
   exit 0;
 }
 
-my $url = "https://amrron.com/current-amccon-level/";
+#my $url = "https://amrron.com/current-amccon-level/";
+my $url = "https://amrron.com/net-resourcestools/amcon-amrron-communications-condition-level/";
 open(HTTP, '-|', "curl --max-time 10 -s -L --insecure '$url' | grep og:image ");
 binmode(HTTP, ":utf8");
 while ( my $line = <HTTP>) {
@@ -27,7 +28,7 @@ while ( my $line = <HTTP>) {
   if ($data[7] =~ m/5/) {
     print green("AmRRON Communications Condition Level: 5"), "\n";
   } elsif ($data[7] =~ m/4/) {
-    print green("AmRRON Communications Condition Level: 4"), "\n";
+    print lightgreen("AmRRON Communications Condition Level: 4"), "\n";
   } elsif ($data[7] =~ m/3/) {
     print yellow("AmRRON Communications Condition Level: 3"), "\n";
   } elsif ($data[7] =~ m/2/) {
