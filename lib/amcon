@@ -12,33 +12,25 @@ use Colors;
 use Switch;
 
 if ($ARGV[0] =~ /about/i){
-    print "Returns current AmCON status from the AmRRON page.\n";
-    exit 0;
+  print "Returns current AmCON status from the AmRRON page.\n";
+  exit 0;
 }
-
 
 my $url = "https://amrron.com/current-amccon-level/";
-
 open(HTTP, '-|', "curl --max-time 10 -s -L --insecure '$url' | grep og:image ");
-
 binmode(HTTP, ":utf8");
 while ( my $line = <HTTP>) {
-    chomp;
-
-	   my @data = split(/\//,$line);
-	   $data[7] =~ s/"//;
-	   #print $data[7] . "\n";
-	   if ($data[7] =~ m/5/) { print green("AmRRON Communications Condition Level: 5\n") }
-	   if ($data[7] =~ m/4/) { print green("AmRRON Communications Condition Level: 4\n") }
-	   if ($data[7] =~ m/3/) { print yellow("AmRRON Communications Condition Level: 3\n") }
-	   if ($data[7] =~ m/2/) { print orange("AmRRON Communications Condition Level: 2\n") }
-	   if ($data[7] =~ m/1/) { print red("AmRRON Communications Condition Level: 1\n") }
+  chomp;
+  #print $line;
+  my @data = split(/\//,$line);
+  $data[7] =~ s/"//;
+  #print $data[7] . "\n";
+  if ($data[7] =~ m/5/) { print green("AmRRON Communications Condition Level: 5\n") }
+  if ($data[7] =~ m/4/) { print green("AmRRON Communications Condition Level: 4\n") }
+  if ($data[7] =~ m/3/) { print yellow("AmRRON Communications Condition Level: 3\n") }
+  if ($data[7] =~ m/2/) { print orange("AmRRON Communications Condition Level: 2\n") }
+  if ($data[7] =~ m/1/) { print red("AmRRON Communications Condition Level: 1\n") }
 }
-
-
-
-
-
 close(HTTP);
 
 exit 0;
