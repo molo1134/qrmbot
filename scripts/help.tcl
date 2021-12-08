@@ -61,6 +61,7 @@ proc send_help {nick} {
   putmsg "$nick" "  !league -- report clublog league standings"
   putmsg "$nick" "  !pota -- search POTA parks and users"
   putmsg "$nick" "  !sota -- search SOTA summits"
+  putmsg "$nick" "  !iota -- search IOTA islands"
   putmsg "$nick" "  !1x1 -- search 1x1 special event stations"
   putmsg "$nick" "  !contests -- list current and upcoming contests"
   putmsg "$nick" "  !wx !wxfull -- show current weather conditions"
@@ -86,6 +87,7 @@ proc send_help {nick} {
   putmsg "$nick" "  !dxped -- get current dxpedition info"
   putmsg "$nick" "  !hofh -- why your radio is broke"
   putmsg "$nick" "  !ammo -- find a price for ammo"
+  putmsg "$nick" "  !amcon -- some dumb prepper shit"
   putmsg "$nick" "  !c19 !corona -- coronavirus stats"
   putmsg "$nick" "  !debt -- US government debt"
   putmsg "$nick" "  !github -- display bot github URL"
@@ -101,9 +103,10 @@ proc send_help {nick} {
 #  putmsg "$nick" "  !quit -- print the last signoff message of a bot user"
 #  putmsg "$nick" "  !ud -- urban dictionary lookup"
  
-  putmsg "$nick" [encoding convertto utf-8 "† Note: only available to bot users; to create an account: /msg qrm hello"]
+  global username
+  putmsg "$nick" [encoding convertto utf-8 "† Note: only available to bot users; to create an account: /msg $username hello"]
   putmsg "$nick" "For examples, see: https://reddit.com/r/amateurradio/wiki/qrmbot"
-  putmsg "$nick" "Also, /join #hamfest for bot-announced for-sale listings."
+  putmsg "$nick" "Also, /join #hamfest on geekshed for bot-announced for-sale listings."
   return
   putmsg "$nick" "test1: †"
   putmsg "$nick" "test2: \u2020"
