@@ -21,7 +21,7 @@ proc send_help {nick} {
   putmsg "$nick" "bot commands:"
   putmsg "$nick" "  !qrz !call -- lookup callsign on qrz.com"
   putmsg "$nick" "  !qth !grid -- lookup grid square or qth"
-  putmsg "$nick" [encoding convertto utf-8 "  !setgeo !getgeo -- set your qth for results in the above †"]
+  putmsg "$nick" "  !setgeo !getgeo -- set your qth for results in the above †"
   putmsg "$nick" "  !bands -- display HF propagation information"
   putmsg "$nick" "  !solar -- display solar ionospheric conditions"
   putmsg "$nick" "  !xray -- display xray flux"
@@ -104,7 +104,7 @@ proc send_help {nick} {
 #  putmsg "$nick" "  !ud -- urban dictionary lookup"
  
   global username
-  putmsg "$nick" [encoding convertto utf-8 "† Note: only available to bot users; to create an account: /msg $username hello"]
+  putmsg "$nick" "† Note: only available to bot users; to create an account: /msg $username hello"
   putmsg "$nick" "For examples, see: https://reddit.com/r/amateurradio/wiki/qrmbot"
   putmsg "$nick" "Also, /join #hamfest on geekshed for bot-announced for-sale listings."
   return
