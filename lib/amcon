@@ -18,6 +18,7 @@ if (defined $ARGV[0] and $ARGV[0] =~ /about/i){
 
 #my $url = "https://amrron.com/current-amccon-level/";
 my $url = "https://amrron.com/net-resourcestools/amcon-amrron-communications-condition-level/";
+my $found = 0;
 open(HTTP, '-|', "curl --max-time 10 -s -L --insecure '$url' | grep og:image ");
 binmode(HTTP, ":utf8");
 while ( my $line = <HTTP>) {
@@ -27,18 +28,29 @@ while ( my $line = <HTTP>) {
   #print $data[7] . "\n";
   if ($data[7] =~ m/5/) {
     print green("AmRRON Communications Condition Level: 5"), "\n";
+    $found = 1;
   } elsif ($data[7] =~ m/4/) {
     print lightgreen("AmRRON Communications Condition Level: 4"), "\n";
+    $found = 1;
   } elsif ($data[7] =~ m/3/) {
     print yellow("AmRRON Communications Condition Level: 3"), "\n";
+    $found = 1;
   } elsif ($data[7] =~ m/2/) {
     print orange("AmRRON Communications Condition Level: 2"), "\n";
+    $found = 1;
   } elsif ($data[7] =~ m/1/) {
     print red("AmRRON Communications Condition Level: 1"), "\n";
+    $found = 1;
   } else {
     print "unknown AmRRON Communications Condition Level\n";
+    exit 0;
   }
 }
 close(HTTP);
+
+if (not $found) {
+    print "unable to retrieve AmRRON Communications Condition Level\n";
+    exit 0;
+}
 
 exit 0;
