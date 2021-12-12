@@ -45,7 +45,7 @@ while ( my $line = <HTTP>) {
     print yellow("AmRRON Communications Condition Level: 3");
     print " -- " if $username eq getEggdropUID();
     print "\n" if $username ne getEggdropUID();
-    print "Incident Probable (Increased probability of interruption of conventional comms; not imminent\n";
+    print "Incident Probable (Increased probability of interruption of conventional comms; not imminent)\n";
     $found = 1;
   } elsif ($data[7] =~ m/2/) {
     print orange("AmRRON Communications Condition Level: 2");
