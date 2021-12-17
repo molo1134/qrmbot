@@ -154,12 +154,12 @@ sub printYouTubeMetaData {
 	    $len = 0;
 	    if ($v =~ m/P((\d+)Y)?((\d+)M)?((\d+)D)?T((\d+)H)?((\d+)M)?((\d+)S)?/) {
 	      my ($y, $mo, $d, $h, $m, $s) = ($2, $4, $6, $8, $10, $12);
-	      $len += ($y * 60 * 60 * 24 * 365) if length $y > 1;
-	      $len += ($mo * 60 * 60 * 24 * 30) if length $mo > 1;
-	      $len += ($d * 60 * 60 * 24)       if length $d > 1;
-	      $len += ($h * 60 * 60)            if length $h > 1;
-	      $len += ($m * 60)                 if length $m > 1;
-	      $len += $s                        if length $s > 1;
+	      $len += ($y * 60 * 60 * 24 * 365) if length $y > 0;
+	      $len += ($mo * 60 * 60 * 24 * 30) if length $mo > 0;
+	      $len += ($d * 60 * 60 * 24)       if length $d > 0;
+	      $len += ($h * 60 * 60)            if length $h > 0;
+	      $len += ($m * 60)                 if length $m > 0;
+	      $len += $s                        if length $s > 0;
 	    }
 	  }
 	}
