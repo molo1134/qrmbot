@@ -952,7 +952,7 @@ if ($#interest >= 0) {
     }
   }
 
-  # add german state data
+  # add german state data - cases
   # TODO: be smarter about when to get this data
   my $url = "https://raw.githubusercontent.com/jgehrcke/covid-19-germany-gae/master/cases-rki-by-state.csv";
   my %posmap;
@@ -978,6 +978,38 @@ if ($#interest >= 0) {
 	  my @prevData = @{clone($countrySeries{$posmap{$n}})};
 	  push @prevData, $row[$n];
 	  $countrySeries{$posmap{$n}} = clone(\@prevData);
+	}
+      }
+    }
+  }
+  close(CSV);
+
+  # add german state data - DEATHS
+  # TODO: be smarter about when to get this data
+  my $url = "https://raw.githubusercontent.com/jgehrcke/covid-19-germany-gae/master/deaths-rki-by-state.csv";
+  my %posmap;
+  my %statemap;
+  local $/ = "\n";   # read by line
+  open (CSV, '-|', "curl --max-time 10 -s -k -L '$url'");
+  while (<CSV>) {
+    s/,DE-/,DEU-/g if /^time_iso/;
+    my @row = split /,/;
+    if (/^time_iso/) { # header row
+      for (my $n = 0; $n <= $#row; $n++) {
+	#print "$n: $row[$n]\n";
+	$posmap{$n} = $row[$n];
+	$statemap{$row[$n]} = $n;
+      }
+    } else {
+      for (my $n = 1; $n <= $#row; $n++) {
+	if (not defined $countryDeathSeries{$posmap{$n}}) {
+	  my @deaths = ( $row[$n] );
+	  $countryDeathSeries{$posmap{$n}} = clone(\@deaths);
+	  push @countryDeathDataList, $countryName{$posmap{$n}};
+	} else {
+	  my @prevData = @{clone($countryDeathSeries{$posmap{$n}})};
+	  push @prevData, $row[$n];
+	  $countryDeathSeries{$posmap{$n}} = clone(\@prevData);
 	}
       }
     }
