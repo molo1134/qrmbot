@@ -1674,6 +1674,7 @@ if ($#countyList >= 0) {
 
   my $url = "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv";
   my %caseTotals;
+  my %deathTotals;
   my $last = 0; #debug
 
   open(HTTP, '-|', "curl --max-time 30 -s -k -L '$url'");
@@ -1688,6 +1689,7 @@ if ($#countyList >= 0) {
       #$last = $cases if $county =~ m/bergen/i;
       if ((lc $cty eq lc $county) and (lc $st eq lc $state)) {
 	$caseTotals{"${st}_${cty}_${date}"} = $cases;
+	$deathTotals{"${st}_${cty}_${date}"} = $deaths;
       }
     }
   }
@@ -1728,6 +1730,7 @@ if ($#countyList >= 0) {
       if (rindex(lc $k, $n, 0) == 0) { # if $k startswith $n
 	#print "$n: $caseTotals{$k}\n";
 	push @cases, $caseTotals{$k};
+	push @deaths, $deathTotals{$k};
       }
     }
 
@@ -1737,12 +1740,18 @@ if ($#countyList >= 0) {
     }
 
 
+    my $stAbbr;
+    foreach my $n (keys %stateToName) {
+      $stAbbr = $n if $stateToName{$n} eq $st;
+    }
+    $stAbbr = $st if not defined $stAbbr;
     #print "st: $st\n";
     #print "cty: $cty\n";
 
     my $pop = $ctypop{lc "${st}_$cty"};
     #print "pop: $pop\n";
 
+    # cases
     my $sum = 0;
     my @weeklyCasesPerCap;
     for (my $n = $#cases; $n > 0; $n--) {
@@ -1768,8 +1777,38 @@ if ($#countyList >= 0) {
     my $max = $result[1];
     my @spark = @result[2 .. $#result];
     my $sparkline = optimizeIrcColor(join("", @spark));
-    printf "%s, %s weekly chart: %s: max %s weekly cases per 100k pop in last 52 weeks\n", $cty, $st, $sparkline, colorByCaseRate(sprintf("%0.1f", $max), $max);
+    printf "%s, %s cases  weekly chart: %s: max %s weekly cases per 100k pop in last 52 weeks\n", $cty, $stAbbr, $sparkline, colorByCaseRate(sprintf("%0.1f", $max), $max);
 
+    # deaths
+    my $sum = 0;
+    my @weeklyDeathsPerCap;
+    for (my $n = $#deaths; $n > 0; $n--) {
+      my $delta = 0;
+      $delta = $deaths[$n] - $deaths[$n-1];
+      $sum += $delta;
+      #print "$sum\n";
+      if ($n < $#deaths and ($#deaths - $n) % 7 == 6) {
+	my $rate = $sum / ($pop / 1000000.0);
+	#print "$sum -> $rate\n";
+	unshift(@weeklyDeathsPerCap, $rate);   # insert at front
+	$sum = 0;
+      }
+    }
+    if ($sum > 0) {  # any leftover
+      unshift(@weeklyDeathsPerCap, $sum / ($pop / 1000000.0)); # FIXME
+      $sum = 0;
+    }
+
+    my @last52weeks = @weeklyDeathsPerCap[$#weeklyDeathsPerCap-52 .. $#weeklyDeathsPerCap];
+    my @result = seriesToSparkLine(\@last52weeks, 3, 0);
+    my $min = $result[0];
+    my $max = $result[1];
+    my @spark = @result[2 .. $#result];
+    my $sparkline = optimizeIrcColor(join("", @spark));
+    printf "%s, %s deaths weekly chart: %s: max %s weekly deaths per 1mil pop in last 52 weeks\n", $cty, $stAbbr, $sparkline, colorByDeathRate(sprintf("%0.1f", $max), $max);
+
+
+    # cases
     my @last31cases = @cases[$#cases-31 .. $#cases];
     my @last30caseDeltas;
     my @last30caseDeltasPerCap;
@@ -1787,11 +1826,40 @@ if ($#countyList >= 0) {
     @spark = @result[2 .. $#result];
     $sparkline = optimizeIrcColor(join("", @spark));
 
-    printf "%s, %s last 30d: %s: %s-%s daily new cases", $cty, $st, $sparkline, commify($dailyCaseMin), commify($dailyCaseMax);
+    printf "%s, %s cases  last 30d: %s: %s-%s daily new cases", $cty, $stAbbr, $sparkline, commify($dailyCaseMin), commify($dailyCaseMax);
 
     my $sevenDayTotal = sum(@last30caseDeltas[$#last30caseDeltas-6 .. $#last30caseDeltas]);
     my $sevenDayPerCap = $sevenDayTotal / ($pop / 100000.0);
     printf("; %s total for last 7d (%s per 100k over 7d)\n", commify($sevenDayTotal), colorByCaseRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
+
+    my $lcty = lc $cty;
+    my $full_vaxxed = $cty_vaxx{"${st}_${lcty}"};
+    my $unknowncty_vaxxed = $cty_vaxx{"${st}_unknown county"};
+
+
+    # deaths
+    my @last31deaths = @deaths[$#deaths-31 .. $#deaths];
+    my @last30deathDeltas;
+    my @last30deathDeltasPerCap;
+    for (my $i = 1; $i <= $#last31deaths; $i++) {
+      $last30deathDeltas[$i-1] = $last31deaths[$i] - $last31deaths[$i - 1];
+      $last30deathDeltasPerCap[$i-1] = $last30deathDeltas[$i-1] / ($pop / 1000000.0);
+    }
+
+    my $dailyDeathMin = min(@last30deathDeltas);
+    my $dailyDeathMax = max(@last30deathDeltas);
+
+    @result = seriesToSparkLine(\@last30deathDeltasPerCap, 3, 1);
+    $min = $result[0];
+    $max = $result[1];
+    @spark = @result[2 .. $#result];
+    $sparkline = optimizeIrcColor(join("", @spark));
+
+    printf "%s, %s deaths last 30d: %s: %s-%s daily new deaths", $cty, $stAbbr, $sparkline, commify($dailyDeathMin), commify($dailyDeathMax);
+
+    my $sevenDayTotal = sum(@last30deathDeltas[$#last30deathDeltas-6 .. $#last30deathDeltas]);
+    my $sevenDayPerCap = $sevenDayTotal / ($pop / 1000000.0);
+    printf("; %s total for last 7d (%s per 1mil over 7d)\n", commify($sevenDayTotal), colorByDeathRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
 
     my $lcty = lc $cty;
     my $full_vaxxed = $cty_vaxx{"${st}_${lcty}"};
@@ -1809,7 +1877,7 @@ if ($#countyList >= 0) {
     #print "$unknowncty_vaxxed; $st_pop;\n";
 
     if (defined $full_vaxxed) {
-      printf("%s, %s: %s%% of pop. fully vaccinated", $cty, $st, bold(nearest(0.1, $full_vaxxed * 100.0 / $pop)));
+      printf("%s, %s: %s%% of pop. fully vaccinated", $cty, $stAbbr, bold(nearest(0.1, $full_vaxxed * 100.0 / $pop)));
       printf(" (vax for %s%% of state pop. unallocated to a county)",
 	nearest(0.1, $unknowncty_vaxxed * 100.0 / $st_pop)) if defined $st_pop and defined $unknowncty_vaxxed;
       print "\n";
