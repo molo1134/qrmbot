@@ -2013,7 +2013,9 @@ sub colorByDeathRate {
   my $str = shift;
   my $rate = shift;
 
-  if ($rate < 5.0) {
+  if ($rate <= 0.0) {
+    return green($str);
+  } elsif ($rate < 5.0) {
     return yellow($str);
   } elsif ($rate < 10.0) {
     return darkYellow($str);
