@@ -1937,6 +1937,7 @@ sub seriesToSparkLine {
     $min = $e if $e < $min and $e > 0;
     $max = $e if $e > $max and $e > 0;
   }
+  $max = 0 if $max == -999999999999;
 
   push @result, ($min, $max);
 
