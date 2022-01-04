@@ -1,0 +1,49 @@
+#!/usr/bin/perl -w
+#
+# Pull data from IMDB
+#
+# 2-clause BSD license.
+# Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
+
+use strict;
+use utf8;
+use URI::Escape;
+use JSON qw( decode_json );
+use Data::Dumper;
+
+# TODO: Put this somewhere safer -- although IDC if anyone knows it.
+my $apikey = "k_twtvk4nv";
+
+if ( $#main::ARGV < 0 ) {
+  die "usage: !imdb <movie>\n"
+}
+
+my $query_parameters = join(" ", @ARGV);
+my $encoded_parameters = uri_escape($query_parameters);
+my $query_url = "https://imdb-api.com/en/API/SearchTitle/$apikey/$query_parameters";
+
+my $res = "";
+
+open(HTTP, '-|', "curl --max-time 10 -s -L --compressed --insecure '$query_url'");
+binmode(HTTP, ":utf8");
+while (my $line = <HTTP>) {
+  $res .= $line
+}
+close(HTTP);
+
+if ($res eq "") { die "error: request failed.\n" };
+
+my $decoded_json = decode_json( $res ) or die "error: could not decode response\n";
+my $results = $decoded_json->{results};
+
+my $totalMoviesFound = scalar(@$results);
+my $moviesLoopIndex = $totalMoviesFound > 2 ? 1 : $totalMoviesFound;
+
+my $hiddenMovies = $totalMoviesFound > 2 ? ", " . ($totalMoviesFound - 2) . " hidden" : "";
+print "Found ($totalMoviesFound movies$hiddenMovies): \n";
+for (0..$moviesLoopIndex) {
+  my $result = @$results[$_];
+  my $title = $result->{title};
+  my $description = $result->{description};
+  print "Title: $title, Description: $description\n";
+}
