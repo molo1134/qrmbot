@@ -4,46 +4,118 @@
 #
 # 2-clause BSD license.
 # Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
+#
+# requires an API key from www.omdbapi.com  Place into the file $HOME/.imdb as follows:
+#
+# $apikey = "0123456789abcdef";
 
 use strict;
 use utf8;
 use URI::Escape;
 use JSON qw( decode_json );
 use Data::Dumper;
+use Encode;
 
-# TODO: Put this somewhere safer -- although IDC if anyone knows it.
-my $apikey = "k_twtvk4nv";
+our $apikey = undef;
+
+# Maximum amount of movies to show
+my $maxMoviesToShow = 3;
 
 if ( $#main::ARGV < 0 ) {
   die "usage: !imdb <movie>\n"
 }
 
-my $query_parameters = join(" ", @ARGV);
-my $encoded_parameters = uri_escape($query_parameters);
-my $query_url = "https://imdb-api.com/en/API/SearchTitle/$apikey/$query_parameters";
-
-my $res = "";
-
-open(HTTP, '-|', "curl --max-time 10 -s -L --compressed --insecure '$query_url'");
-binmode(HTTP, ":utf8");
-while (my $line = <HTTP>) {
-  $res .= $line
+# TODO: Add the API-Key file
+my $apikeyfile = $ENV{'HOME'} . "/.imdb";
+if (-e ($apikeyfile)) {
+  require($apikeyfile);
+} else {
+  die "error: unable to read file $apikeyfile"
 }
-close(HTTP);
+die "error: no API key set" unless defined($apikey);
 
-if ($res eq "") { die "error: request failed.\n" };
+my $query_parameters = join(" ", @ARGV);
 
-my $decoded_json = decode_json( $res ) or die "error: could not decode response\n";
-my $results = $decoded_json->{results};
+sub MakeJSONRequest {
+  my $requestURI = $_[0];
+  my $res = "";
 
-my $totalMoviesFound = scalar(@$results);
-my $moviesLoopIndex = $totalMoviesFound > 2 ? 1 : $totalMoviesFound;
+  open(HTTP, '-|', "curl --max-time 10 -s -L --compressed --insecure '$requestURI'");
+  binmode(HTTP, ":utf8");
+  while (my $line = <HTTP>) {
+    $res .= $line
+  }
+  close(HTTP);
 
-my $hiddenMovies = $totalMoviesFound > 2 ? ", " . ($totalMoviesFound - 2) . " hidden" : "";
-print "Found ($totalMoviesFound movies$hiddenMovies): \n";
-for (0..$moviesLoopIndex) {
-  my $result = @$results[$_];
-  my $title = $result->{title};
-  my $description = $result->{description};
-  print "Title: $title, Description: $description\n";
+  if ($res eq "") { die "error: request failed.\n" };
+
+  my $decoded_json = decode_json( Encode::encode_utf8($res) ) or die "error: could not decode response\n";
+  return $decoded_json;
+}
+
+sub GetMovie {
+  my $title = $_[0];
+  my $encoded_parameters = uri_escape($title);
+  my $query_url = "http://www.omdbapi.com/?apikey=$apikey&t=$encoded_parameters";
+  my $results = MakeJSONRequest($query_url);
+
+  return $results;
+}
+
+sub SearchMovies {
+  my $movieName = $_[0];
+  my $encoded_parameters = uri_escape($movieName);
+  my $query_url = "http://www.omdbapi.com/?apikey=$apikey&s=$encoded_parameters";
+
+  my $results = MakeJSONRequest($query_url);
+
+  if ($results->{Response} eq "False") {
+    if ($results->{Error} eq "Movie not found!") {
+      die "error: no movies found.\n";
+    }
+    die "error: api error.\n";
+  };
+
+  my $tMovie = GetMovie($movieName);
+  my @movies;
+  my $moviesCount = $results->{totalResults} > $maxMoviesToShow ? $maxMoviesToShow : $results->{totalResults};
+
+  # Directly search for a movie -- If it finds the actual movie, set it as the first result.
+  my $tMovieName = "";
+  if ($tMovie->{Response} eq "True") {
+    push @movies, $tMovie;
+    $tMovieName = $tMovie->{Title};
+    $moviesCount--;
+  }
+
+  if ($moviesCount eq 0) { return @movies };
+
+  # Add search results to list
+  my $i = 0;
+  while ($i < $moviesCount) {
+    my $title = $results->{Search}[$i]->{Title};
+    if ($title ne $tMovieName) { # Omit search result if it is the same as the directly searched movie
+      my $movie = GetMovie($title);
+      push @movies, $movie;
+    } else {
+      if ($moviesCount < $results->{totalResults}) {
+        $moviesCount ++;
+      }
+    }
+    $i++;
+  }
+
+  return @movies;
+}
+
+my @results = SearchMovies($query_parameters);
+
+foreach (@results) {
+  my $title = exists $_->{Title} ? $_->{Title} : "N/A";
+  my $year = exists $_->{Year} ? $_->{Year} : "N/A";
+  my $genre = exists $_->{Genre} ? $_->{Genre} : "N/A";
+  my $boxOffice = exists $_->{BoxOffice} ? $_->{BoxOffice} : "N/A";
+  my $director = exists $_->{Director} ? $_->{Director} : "N/A";
+
+  print "Title: $title, Director: $director, Released: $year, Genre: $genre, Box Office: $boxOffice\n";
 }
