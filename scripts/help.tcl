@@ -82,6 +82,7 @@ proc send_help {nick} {
   putmsg "$nick" "  !drive -- compute drive time and distance"
   putmsg "$nick" "  !transit -- compute transit time and route"
   putmsg "$nick" "  !stock -- financial quotes"
+  putmsg "$nick" "  !imdb -- movie info"
   putmsg "$nick" "  !elev -- get elevation data for a place"
   putmsg "$nick" "  !adsb -- get plane information"
   putmsg "$nick" "  !ae7q -- get callsign availability info"

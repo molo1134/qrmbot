@@ -4,7 +4,7 @@
 # Copyright (c) 2018, 2019, 2020, 2021 molo1134@github. All rights reserved.
 # Copyright (c) 2019 W9VFR. All rights reserved.
 # Copyright (c) 2019 OliverUK. All rights reserved.
-# Copyright (c) 2021 molo1134@github. All rights reserved.
+# Copyright (c) 2021, 2022 molo1134@github. All rights reserved.
 
 bind pub - !phonetics phoneticise
 bind pub - !phoneticise phoneticise
@@ -323,7 +323,7 @@ set coronabin "/home/eggdrop/bin/corona"
 proc corona_pub { nick host hand chan text } {
 	global coronabin
 	set cleantext [sanitize_string [string trim "${text}"]]
-	putlog "corona: $nick $host $hand $chan $cleantext"
+	putlog "corona pub: $nick $host $hand $chan $cleantext"
 	set fd [open "|${coronabin} ${cleantext}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
@@ -575,6 +575,32 @@ proc msg_github { nick uhand handle input } {
 	global githublink
 	putlog "github msg: $nick $uhand $handle"
 	putmsg "$nick" "$githublink"
+}
+
+bind pub - !imdb imdb_pub
+bind msg - !imdb imdb_msg
+set imdbbin "/home/eggdrop/bin/imdb"
+proc imdb_pub { nick host hand chan text } {
+	global imdbbin
+	set cleantext [sanitize_string [string trim "${text}"]]
+	putlog "imdb pub: $nick $host $hand $chan $cleantext"
+	set fd [open "|${imdbbin} ${cleantext}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc imdb_msg {nick uhand handle input} {
+	global imdbbin
+	set param [sanitize_string [string trim "${input}"]]
+	putlog "imdb msg: $nick $uhand $handle $param"
+	set fd [open "|${imdbbin} ${param} " r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
 }
 
 putlog "fun.tcl loaded."

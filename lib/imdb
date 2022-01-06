@@ -1,62 +1,116 @@
 #!/usr/bin/perl -w
 #
-# Pull data from IMDB
+# Pull movie data from OMDB
 #
 # 2-clause BSD license.
-# Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
+# Copyright (c) 2022 KN6RAP. All rights reserved.
+# Copyright (c) 2022 molo1134@github. All rights reserved.
 #
-# requires an API key from www.omdbapi.com  Place into the file $HOME/.imdb as follows:
+# requires an API key from www.omdbapi.com  Place into the file $HOME/.omdbapi
+# as follows:
 #
 # $apikey = "0123456789abcdef";
 
 use strict;
 use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
 use URI::Escape;
-use JSON qw( decode_json );
-use Data::Dumper;
+use JSON qw( from_json );
 use Encode;
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+our $client_id = undef;
+our $client_secret = undef;
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 our $apikey = undef;
 
-# Maximum amount of movies to show
-my $maxMoviesToShow = 3;
-
 if ( $#main::ARGV < 0 ) {
-  die "usage: !imdb <movie>\n"
+  print "usage: !imdb <search term>\n";
+  exit $exitnonzeroonerror;
 }
 
-# TODO: Add the API-Key file
-my $apikeyfile = $ENV{'HOME'} . "/.imdb";
+my $apikeyfile = $ENV{'HOME'} . "/.omdbapi";
 if (-e ($apikeyfile)) {
   require($apikeyfile);
 } else {
-  die "error: unable to read file $apikeyfile"
+  print "error: unable to read file $apikeyfile\n";
+  exit $exitnonzeroonerror;
 }
-die "error: no API key set" unless defined($apikey);
+if (not defined $apikey) {
+  print "error: no API key set\n";
+  exit $exitnonzeroonerror;
+}
 
 my $query_parameters = join(" ", @ARGV);
+my $result = SearchMovies($query_parameters);
+
+if (not defined $result or not defined $result->{totalResults}) {
+  print "error: no result\n";
+  exit $exitnonzeroonerror;
+}
+
+my $m = $result->{Search}[0];
+
+if (not defined $m or not defined $m->{imdbID}) {
+  print "no result.\n";
+  exit 0;
+}
+
+my $imdbid = $m->{imdbID};
+
+my $r = GetMovie($imdbid);
+
+print bold($r->{Title}), " (", $r->{Year}, ")";
+print " [$r->{Rated}]" if defined $r->{Rated};
+print " $r->{imdbRating}", yellow("★") if defined $r->{imdbRating};
+foreach my $rating (@{$r->{Ratings}}) {
+  print " ", $rating->{Value}, "🍅" if $rating->{Source} eq "Rotten Tomatoes" and defined $rating->{Value};
+}
+print "; Genre: $r->{Genre}" if defined $r->{Genre};
+print "; Dir: $r->{Director}" if defined $r->{Director};
+print "; Starring: $r->{Actors}" if defined $r->{Actors};
+print "; http://imdb.com/title/$imdbid";
+print " ; Plot: $r->{Plot}" if defined $r->{Plot};
+print "\n";
+
+# "totalResults":"58"
+
+exit 0;
+
 
 sub MakeJSONRequest {
-  my $requestURI = $_[0];
-  my $res = "";
+  my $requestURI = shift;
 
-  open(HTTP, '-|', "curl --max-time 10 -s -L --compressed --insecure '$requestURI'");
+  open(HTTP, '-|', "curl --max-time 10 -s -k -L --compressed '$requestURI'");
+  local $/;   # read entire file -- FIXME: potentially memory hungry
   binmode(HTTP, ":utf8");
-  while (my $line = <HTTP>) {
-    $res .= $line
-  }
+  my $res = <HTTP>;
   close(HTTP);
 
-  if ($res eq "") { die "error: request failed.\n" };
+  if (not defined $res or $res eq "") { die "error: request failed.\n" };
 
-  my $decoded_json = decode_json( Encode::encode_utf8($res) ) or die "error: could not decode response\n";
+  # using from_json because $res is already utf-8
+  my $decoded_json = from_json($res) or die "error: could not decode response\n";
   return $decoded_json;
 }
 
 sub GetMovie {
-  my $title = $_[0];
-  my $encoded_parameters = uri_escape($title);
-  my $query_url = "http://www.omdbapi.com/?apikey=$apikey&t=$encoded_parameters";
+  my $imdbid = shift;
+  my $encoded_parameters = uri_escape_utf8($imdbid);
+  my $query_url = "http://www.omdbapi.com/?apikey=$apikey&i=$encoded_parameters";
   my $results = MakeJSONRequest($query_url);
 
   return $results;
@@ -64,58 +118,19 @@ sub GetMovie {
 
 sub SearchMovies {
   my $movieName = $_[0];
-  my $encoded_parameters = uri_escape($movieName);
-  my $query_url = "http://www.omdbapi.com/?apikey=$apikey&s=$encoded_parameters";
+  my $encoded_parameters = uri_escape_utf8($movieName);
+  my $query_url = "http://www.omdbapi.com/?apikey=$apikey&s=$encoded_parameters&type=movie";
 
   my $results = MakeJSONRequest($query_url);
 
   if ($results->{Response} eq "False") {
     if ($results->{Error} eq "Movie not found!") {
-      die "error: no movies found.\n";
+      print "no movie found\n";
+      exit 0;
     }
-    die "error: api error.\n";
+    print "error: api error: $results->{Error}\n";
+    exit $exitnonzeroonerror;
   };
 
-  my $tMovie = GetMovie($movieName);
-  my @movies;
-  my $moviesCount = $results->{totalResults} > $maxMoviesToShow ? $maxMoviesToShow : $results->{totalResults};
-
-  # Directly search for a movie -- If it finds the actual movie, set it as the first result.
-  my $tMovieName = "";
-  if ($tMovie->{Response} eq "True") {
-    push @movies, $tMovie;
-    $tMovieName = $tMovie->{Title};
-    $moviesCount--;
-  }
-
-  if ($moviesCount eq 0) { return @movies };
-
-  # Add search results to list
-  my $i = 0;
-  while ($i < $moviesCount) {
-    my $title = $results->{Search}[$i]->{Title};
-    if ($title ne $tMovieName) { # Omit search result if it is the same as the directly searched movie
-      my $movie = GetMovie($title);
-      push @movies, $movie;
-    } else {
-      if ($moviesCount < $results->{totalResults}) {
-        $moviesCount ++;
-      }
-    }
-    $i++;
-  }
-
-  return @movies;
-}
-
-my @results = SearchMovies($query_parameters);
-
-foreach (@results) {
-  my $title = exists $_->{Title} ? $_->{Title} : "N/A";
-  my $year = exists $_->{Year} ? $_->{Year} : "N/A";
-  my $genre = exists $_->{Genre} ? $_->{Genre} : "N/A";
-  my $boxOffice = exists $_->{BoxOffice} ? $_->{BoxOffice} : "N/A";
-  my $director = exists $_->{Director} ? $_->{Director} : "N/A";
-
-  print "Title: $title, Director: $director, Released: $year, Genre: $genre, Box Office: $boxOffice\n";
+  return $results;
 }
