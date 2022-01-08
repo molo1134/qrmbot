@@ -277,6 +277,7 @@ print " conditions: ", bold($ob->{weather});
 print $emoji if length $emoji > 1;
 print "  Temp: ", bold("$ob->{tempC}°C/$ob->{tempF}°F");
 print "  Humidity: $ob->{humidity}%" if defined $ob->{humidity};
+print "  Dew point: $ob->{dewpointC}°C/$ob->{dewpointF}°F" if defined $ob->{dewpointC};
 print " " if ($full == 0);
 
 # feelslike for full, or if sufficiently different for short
