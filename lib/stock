@@ -149,6 +149,7 @@ sub doSearch {
     }
     exit $exitnonzeroonerror;
   }
+  #print "$json\n";
   my $j = decode_json($json);
 
   if (not defined($j->{quotes})) {
@@ -158,8 +159,15 @@ sub doSearch {
 
   my $i = 0;
   foreach my $quote (@{$j->{quotes}}) {
+    my $name;
+    $name = $quote->{shortname} if defined $quote->{shortname};
+    $name = $quote->{longname} if defined $quote->{longname};
+    
     print " -- " if $i++ > 0 and $username eq getEggdropUID();
-    print "$quote->{symbol}: $quote->{longname}";
+    print "$quote->{symbol}: $name";
     print "\n" if $username ne getEggdropUID();
+  }
+  if (scalar @{$j->{quotes}} == 0) {
+    print "not found\n";
   }
 }
