@@ -170,20 +170,35 @@ sub doCall {
   my @frns;
   my %odds_sim;
 
+  my @tooearly;
+  my @toolate;
+
   my $url = "${predictionBaseUrl}/vanity-$call.csv";
   open(CSV, '-|', "curl --fail --max-time $httpTimeout -L -k -s '$url'");
   while(<CSV>) {
     chomp;
     next if /^#/;
     my ($appid, $rdate, $pdate, $appcall, $state, $seq, $vanity, $pred, $odds) = split /,/;
-    $odds = formatOdds($odds);
-    $pred = formatPred($pred);
-    $pdate = " ?        " if $pdate eq "";
-    $seq = "$seq/?";		# TODO FIXME
-    printf "$rdate -> $pdate %-6s ($state) App $appid #%-5s $pred%s\n", $appcall, $seq, $odds;
+    if ($pred =~ /^Too Early/i) {
+      push @tooearly, $appcall;
+    } elsif ($pred =~ /^Too Late/i) {
+      push @toolate, $appcall;
+    } else {
+      $odds = formatOdds($odds);
+      $pred = formatPred($pred);
+      $pdate = " ?        " if $pdate eq "";
+      $seq = "$seq/?";		# TODO FIXME
+      printf "$rdate -> $pdate %-6s ($state) App $appid #%-5s $pred%s\n", $appcall, $seq, $odds;
+    }
     $found = 1;
   }
   close(CSV);
+  if (scalar @tooearly > 0 or scalar @toolate > 0) {
+    print red("Too Early"), ": ", join (", ", @tooearly) if scalar @tooearly > 0;
+    print "; " if scalar @tooearly > 0 and scalar @toolate > 0;
+    print red("Too Late"), ": ", join (", ", @toolate) if scalar @toolate > 0;
+    print "\n";
+  }
 
   $url = "${predictionBaseUrl}/call-$call.csv";
   open(CSV, '-|', "curl --fail --max-time $httpTimeout -L -k -s '$url'");
