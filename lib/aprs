@@ -46,7 +46,7 @@ if (-e ($apikeyfile)) {
 }
 die "error: no API key set" unless defined($apikey);
 
-my $useragent = "molo1134Query/0.0.1 (+http://reddit.com/r/amateurradio/w/qrmbot)";
+my $useragent = "molo1134Query/0.0.2 (+http://reddit.com/r/amateurradio/w/qrmbot)";
 
 my $highlight = "vt100";
 $highlight = "none" if ! -t STDOUT;
@@ -74,7 +74,13 @@ if (defined $vals{found} and $vals{found} != 1) {
   exit $exitnonzeroonerror;
 }
 
-if ($vals{type} eq "w") {
+# aprs.fi doesn't always correctly flag type=w for aprs stations that report
+# weather periodically but not always.  So this is unreliable.  So always check
+# to see if there is WX data from the station.
+# Note: this makes a second request when we don't always need one.  This is an
+# API limitation, as wx and loc requests cannot be combined.
+#
+#if ($vals{type} eq "w") {
   # get weather fields
   $url = "http://api.aprs.fi/api/get?name=${targetcall}&what=wx&apikey=${apikey}&format=json";
   getvals($url, \%vals);
@@ -93,7 +99,7 @@ if ($vals{type} eq "w") {
 
   $vals{wind_dir} = azToNEWS($vals{wind_direction}) if defined $vals{wind_direction};
   $vals{pressure_inhg} = nearest(0.01, ($vals{pressure} * 0.029529983)) if defined $vals{pressure};
-}
+#}
 
 print bold($vals{name});
 if (defined $vals{srccall} and $vals{name} ne $vals{srccall}) {
