@@ -20,6 +20,7 @@ use lib dirname(realpath(__FILE__));
 use Colors;
 use Location;
 use Util;
+use List::Util qw[min max];
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
@@ -47,9 +48,11 @@ my $i = 0;
 
 my $query = undef;
 my $de = undef;
+my $word = undef;
 
 while ($i <= $#ARGV) {
-  if (!defined($de) and $ARGV[$i] =~ /^(--geo|de|from)$/i) {
+  if (!defined($de) and $ARGV[$i] =~ /^(de|from|to)$/i) {
+    $word = $1;
     $i++;
     $de = $ARGV[$i];
     $i++;
@@ -72,26 +75,118 @@ while ($i <= $#ARGV) {
   $i++;
 }
 
+if (lc $word ne "to") {
+  my $tmp = $query;
+  $query = $de;
+  $de = $tmp;
+}
+
 my $result = argToCoords($query);
+#print "$query: $result\n";
 if (!defined $result) {
   print "error: unable to find \"$query\"\n";
   exit $exitnonzeroonerror;
 }
 
 my ($lat, $lon) = split(',', $result);
-my $elev = coordToElev($lat, $lon);
-
-print "error: no elevation returned for $lat, $lon\n" if not defined $elev;
-exit $exitnonzeroonerror if not defined $elev;
-
-my $grid = coordToGrid($lat, $lon);
 my $placename = geolocate($lat, $lon);
+$placename = "$lat,$lon" if not defined $placename;
+my $grid = coordToGrid($lat, $lon);
 
-print bold($grid), ": $lat, $lon";
-if (defined($placename)) {
-  print ": $placename";
+if (defined $de) {
+  # path profile
+
+  my $result2 = argToCoords($de);
+  #print "$de $result2\n";
+  if (!defined $result2) {
+    print "error: unable to find \"$de\"\n";
+    exit $exitnonzeroonerror;
+  }
+  my ($lat2, $lon2) = split(',', $result2);
+  my $placename2 = geolocate($lat2, $lon2);
+  $placename2 = "$lat2,$lon2" if not defined $placename2;
+  my $grid2 = coordToGrid($lat2, $lon2);
+
+  my @profile = pathProfile($lat, $lon, $lat2, $lon2);
+
+  my $min = min(@profile);
+  my $max = max(@profile);
+  #print "min: $min\n";
+  #print "max: $max\n";
+
+  my @line = seriesToSparkLine(\@profile, $min, $max);
+
+  my ($dist, $bearing) = distBearing($lat, $lon, $lat2, $lon2);
+  my $dist_mi = nearest(0.1, $dist * 0.62137119);
+  $dist = nearest(0.1, $dist);
+  $bearing = round($bearing);
+
+  print "Path profile from $placename ($grid) to $placename2 ($grid2) path $dist km / $dist_mi mi, $bearing°:\n";
+  print join("", @line), "\n";
+
+} else {
+  # single point
+
+  my $elev = coordToElev($lat, $lon);
+
+  print "error: no elevation returned for $lat, $lon\n" if not defined $elev;
+  exit $exitnonzeroonerror if not defined $elev;
+
+  print bold($grid), ": $lat, $lon";
+  if (defined($placename)) {
+    print ": $placename";
+  }
+  my $elev_ft = nearest(0.1, $elev * 3.2808399);
+  my $elev_m = nearest(0.1, $elev);
+
+  print ": ", bold("$elev_m m")," ($elev_ft ft)\n";
 }
-my $elev_ft = nearest(0.1, $elev * 3.2808399);
-my $elev_m = nearest(0.1, $elev);
-print ": ", bold("$elev_m m")," ($elev_ft ft)\n";
 
+exit 0;
+
+sub seriesToSparkLine {
+  my $arrayref = shift;
+  my $min = shift;
+  my $max = shift;
+  my @series = @$arrayref;
+  my @result;
+
+  foreach my $v (@series) {
+    push @result, valToBlock($v, $min, $max);
+  }
+
+  return @result;
+}
+
+# relative to min/max
+sub valToBlock {
+  my $v = shift;
+  my $min = shift;
+  my $max = shift;
+  my $step = ($max - $min)/8;
+  my $chr = " ";
+  $min = 0 if $min < 0;
+
+  if ($v <= $min) {
+    $chr = "\xA0"; # NBSP
+  } elsif ($v <= ($min + ($step * 1))) {
+    $chr = "▁";
+  } elsif ($v <= ($min + ($step * 2))) {
+    $chr = "▂";
+  } elsif ($v <= ($min + ($step * 3))) {
+    $chr = "▃";
+  } elsif ($v <= ($min + ($step * 4))) {
+    $chr = "▄";
+  } elsif ($v <= ($min + ($step * 5))) {
+    $chr = "▅";
+  } elsif ($v <= ($min + ($step * 6))) {
+    $chr = "▆";
+  } elsif ($v <= ($min + ($step * 7))) {
+    $chr = "▇";
+  } elsif ($v <= ($min + ($step * 8))) {
+    $chr = "█";
+  } else {
+    $chr = "↑";
+  }
+  return $chr;
+}

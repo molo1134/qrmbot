@@ -8,13 +8,14 @@
 package Location;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ getGeocodingAPIKey coordToElev azToNEWS);
+@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ getGeocodingAPIKey coordToElev azToNEWS pathProfile);
 
 use utf8;
 use Math::Trig;
 use Math::Trig 'great_circle_distance';
 use Math::Trig 'great_circle_bearing';
 use URI::Escape;
+use JSON qw( decode_json );
 
 sub getGeocodingAPIKey {
   my $apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
@@ -134,6 +135,9 @@ sub geolocate {
   my $lon = shift;
   my $apikey = getGeocodingAPIKey();
   return undef if not defined $apikey;
+
+  $lat =~ s/\s//g;
+  $lon =~ s/\s//g;
 
   my $url = "https://maps.googleapis.com/maps/api/geocode/xml?latlng=$lat,$lon&sensor=false&key=$apikey";
 
@@ -335,6 +339,9 @@ sub coordToElev {
   my $apikey = getGeocodingAPIKey();
   return undef if not defined $apikey;
 
+  $lat =~ s/\s//g;
+  $lon =~ s/\s//g;
+
   my $url = "https://maps.googleapis.com/maps/api/elevation/json?locations=$lat,$lon&key=$apikey";
 
   my ($elev, $res);
@@ -368,6 +375,40 @@ sub coordToElev {
   close(HTTP);
 
   return $elev;
+}
+
+sub pathProfile {
+  my $lat1 = shift;
+  my $lon1 = shift;
+  my $lat2 = shift;
+  my $lon2 = shift;
+  my $samples = shift;
+
+  my $apikey = getGeocodingAPIKey();
+  return undef if not defined $apikey;
+
+  $lat1 =~ s/\s//g;
+  $lon1 =~ s/\s//g;
+  $lat2 =~ s/\s//g;
+  $lon2 =~ s/\s//g;
+  $samples = 70 if not defined $samples;
+
+  my $url = "https://maps.googleapis.com/maps/api/elevation/json?path=${lat1},${lon1}|${lat2},${lon2}&samples=${samples}&key=$apikey";
+
+  open (HTTP, '-|', "curl --stderr - -N -k -s -L --max-time 15 '$url'");
+  binmode(HTTP, ":utf8");
+  local $/; # read entire output -- potentially memory hungry
+  my $json = <HTTP>;
+  #print "$json\n";
+  my $j = decode_json($json);
+
+  my @r;
+  foreach my $e (@{$j->{results}}) {
+    #print $e->{elevation}, "\n";
+    push @r, $e->{elevation};
+  }
+
+  return @r;
 }
 
 sub azToNEWS {
