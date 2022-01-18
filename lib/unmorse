@@ -29,6 +29,7 @@ while ($i <= $#ARGV) {
   } elsif ($ARGV[$i] eq "--wabun" or $ARGV[$i] =~ /--japan(ese)?/) {
     $lang = "japanese";
   } else {
+    $ARGV[$i] =~ s/_/-/g;
     push @ARGS, $ARGV[$i];
   }
   $i++;
