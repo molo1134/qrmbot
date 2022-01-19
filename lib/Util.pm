@@ -320,18 +320,21 @@ sub shortenUrl {
   return undef if not defined($bitly_apikey);
 
   my $shortUrl = undef;
-  my $requestdoc = "{\n\"domain\":\"j.mp\",\n\"long_url\":\"$url\"\n}\n";
+  my $errmsg = undef;
+  my $requestdoc = "{\n\"domain\":\"bit.ly\",\n\"long_url\":\"$url\"\n}\n";
   my $rest = "https://api-ssl.bitly.com/v4/shorten";
 
   open(HTTP, '-|',
 	  "curl --max-time $timeout -L -k -s " .
 	  "-H 'Content-Type: application/json' " .
 	  "-H 'Authorization: Bearer $bitly_apikey' " .
-	  "--data '$requestdoc' ".
+	  "-X POST --data '$requestdoc' ".
 	  "'$rest'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     $shortUrl = $1 if /"link":\s*"(.*?)"/;
+    $errmsg = $1 if /"message":\s*"(.*?)"/;
+    $errmsg .= ": " . $1 if /"description":\s*"(.*?)"/;
   }
   close(HTTP);
 
@@ -339,7 +342,7 @@ sub shortenUrl {
   return $shortUrl if $shortUrl =~ /^http/;
 
   # failure case
-  print "error: $shortUrl\n";
+  print "error shortening url: $errmsg\n";
   return undef;
 }
 
