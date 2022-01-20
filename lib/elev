@@ -111,8 +111,10 @@ if (defined $de) {
 
   my $min = min(@profile);
   my $max = max(@profile);
-  #print "min: $min\n";
-  #print "max: $max\n";
+  my $min_m = nearest(0.1, $min);
+  my $min_ft = round($min * 3.2808399);
+  my $max_m = nearest(0.1, $max);
+  my $max_ft = round($max * 3.2808399);
 
   my @line = seriesToSparkLine(\@profile, $min, $max);
 
@@ -122,7 +124,7 @@ if (defined $de) {
   $bearing = round($bearing);
 
   print "Path profile from $placename ($grid) to $placename2 ($grid2) path $dist km / $dist_mi mi, $bearing°:\n";
-  print join("", @line), "\n";
+  print join("", @line), " ${min_m}m/${min_ft}ft to ${max_m}m/${max_ft}ft (sans curvature)\n";
 
 } else {
   # single point
