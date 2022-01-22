@@ -16,6 +16,7 @@ use Math::Trig 'great_circle_distance';
 use Math::Trig 'great_circle_bearing';
 use URI::Escape;
 use JSON qw( decode_json );
+use Time::HiRes qw(usleep);
 
 sub getGeocodingAPIKey {
   my $apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
@@ -100,28 +101,36 @@ sub qthToCoords {
 
   return undef if not defined $apikey;
 
-  open (HTTP, '-|', "curl --stderr - -N -k -s -L --max-time 5 '$url'");
-  binmode(HTTP, ":utf8");
-  GET: while (<HTTP>) {
-    #print;
-    chomp;
-    if (/OVER_QUERY_LIMIT/) {
-      my $msg = <HTTP>;
-      $msg =~ s/^\s*<error_message>(.*)<\/error_message>/$1/;
-      print "error: over query limit: $msg\n";
-      last GET;
+  my $tries = 0;
+  my $maxtries = 10;
+
+  while ($tries < $maxtries and (not defined $lat or not defined $lon)) {
+    open (HTTP, '-|', "curl --stderr - -N -k -s -L --max-time 5 '$url'");
+    binmode(HTTP, ":utf8");
+    GET: while (<HTTP>) {
+      #print;
+      chomp;
+      if (/OVER_QUERY_LIMIT/) {
+	my $msg = <HTTP>;
+	$msg =~ s/^\s*<error_message>(.*)<\/error_message>/$1/;
+	print "error: over query limit: $msg\n" if $tries + 1 == $maxtries;
+	usleep 1000 if $tries + 1 < $maxtries;
+	last GET;
+      }
+      if (/<lat>([+-]?\d+.\d+)<\/lat>/) {
+	$lat = $1;
+      }
+      if (/<lng>([+-]?\d+.\d+)<\/lng>/) {
+	$lon = $1;
+      }
+      if (defined($lat) and defined($lon)) {
+	last GET;
+      }
     }
-    if (/<lat>([+-]?\d+.\d+)<\/lat>/) {
-      $lat = $1;
-    }
-    if (/<lng>([+-]?\d+.\d+)<\/lng>/) {
-      $lon = $1;
-    }
-    if (defined($lat) and defined($lon)) {
-      last GET;
-    }
+    close HTTP;
+
+    $tries++;
   }
-  close HTTP;
 
   if (defined($lat) and defined($lon)) {
     return "$lat,$lon";
@@ -148,6 +157,7 @@ sub geolocate {
 
   my %results;
   my $tries = 0;
+  my $maxtries = 10;
 
   RESTART:
 
@@ -165,8 +175,9 @@ sub geolocate {
 
     if (/OVER_QUERY_LIMIT/) {
       #print "warning: over query limit\n" unless defined($raw) and $raw == 1;
-      print "error: over query limit\n" if $tries++ > 3;
-      return undef if $tries > 3;
+      print "error: over query limit\n" if $tries++ > $maxtries;
+      return undef if $tries > $maxtries;
+      usleep(1000);
       goto RESTART;
     }
 
