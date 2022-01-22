@@ -1022,13 +1022,14 @@ if ($#interest >= 0) {
   my %peopleFullVax;
   my %lastVax;
   my %lastFullVax;
+  my %lastBooster;
 
   open(CSV, '-|', "curl --max-time 10 -s -k '$url'");
   binmode(CSV, ":utf8");
   while (<CSV>) {
     chomp;
 
-    my (undef, $vax_iso_cc, $date, undef, $ppl_vax, $ppl_full_vax) = split /,/;
+    my (undef, $vax_iso_cc, $date, undef, $ppl_vax, $ppl_full_vax, $total_boosters) = split /,/;
 
     next if $vax_iso_cc eq "iso_code"; #header row
 
@@ -1040,6 +1041,7 @@ if ($#interest >= 0) {
 
     $lastVax{$vax_iso_cc} = $ppl_vax if $ppl_vax > 0;
     $lastFullVax{$vax_iso_cc} = $ppl_full_vax if $ppl_full_vax > 0;
+    $lastBooster{$vax_iso_cc} = $total_boosters if $total_boosters > 0;
 
     $peopleVax{"${vax_iso_cc}_${date}"} = $ppl_vax;
     $peopleFullVax{"${vax_iso_cc}_${date}"} = $ppl_full_vax;
@@ -1241,30 +1243,31 @@ if ($#interest >= 0) {
     printf("; %s total for last 7d (%s per 1mil over 7d)\n", commify($sevenDayTotal), colorByDeathRate(sprintf("%0.1f", $sevenDayPerCap), $sevenDayPerCap));
 
     #vaccinations
+    my $ptlvaxpct = "unknown";
     if ($#vax > 0) {
       # daily initial vaccinations - per country
-      my @last31vax;
-      if ($#vax > 31) {
-	@last31vax = @vax[$#vax-31 .. $#vax];
-      } else {
-	@last31vax = @vax[0 .. $#vax];
-      }
-      my @last30vaxDeltas;
-      for (my $i = 1; $i <= $#last31vax; $i++) {
-	$last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
-	$last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
-      }
+      #my @last31vax;
+      #if ($#vax > 31) {
+      #	@last31vax = @vax[$#vax-31 .. $#vax];
+      #} else {
+      #	@last31vax = @vax[0 .. $#vax];
+      #}
+      #my @last30vaxDeltas;
+      #for (my $i = 1; $i <= $#last31vax; $i++) {
+      #	$last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
+      #	$last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
+      #}
 
       #my $dailyVaxMin = min(@last30vaxDeltas);
       #my $dailyVaxMax = max(@last30vaxDeltas);
 
-      my $sum = 0;
-      for (my $i = 6; $i >= 0; $i--) {
-	$sum += $last30vaxDeltas[$#last30vaxDeltas-$i];
-      }
-      my $avg = round($sum / 7.0);
+      #my $sum = 0;
+      #for (my $i = 6; $i >= 0; $i--) {
+      #	$sum += $last30vaxDeltas[$#last30vaxDeltas-$i];
+      #}
+      #my $avg = round($sum / 7.0);
       #print "$sum - avg: $avg new vax/day\n";
-      my $percap = $sum / ($countryPop{$isocode} / 100000.0);
+      #my $percap = $sum / ($countryPop{$isocode} / 100000.0);
       my $popvax = ($vax[$#vax] / $countryPop{$isocode}) * 100.0;
 
       #@result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
@@ -1272,33 +1275,35 @@ if ($#interest >= 0) {
       #$max = $result[1];
       #@spark = @result[2 .. $#result];
       #printf "%s ppl newly vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly newly vaxxed per 100k pop; %s of pop. partially vaxxed\n", $isocode, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
-      printf "%s avg newly vaxxed %s/day in last 7d; %s weekly newly vaxxed per 100k pop; %s of pop. partially vaxxed\n", $isocode, commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+      #printf "%s avg newly vaxxed %s/day in last 7d; %s weekly newly vaxxed per 100k pop; %s of pop. partially vaxxed\n", $isocode, commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+      $ptlvaxpct = bold(sprintf("%0.1f%%", $popvax));
     }
 
+    my $fulvaxpct = "unknown";
     if ($#fullVax > 0) {
       # daily full vaccinations - per country
-      my @last31vax;
-      if ($#vax > 31) {
-	@last31vax = @fullVax[$#fullVax-31 .. $#fullVax];
-      } else {
-	@last31vax = @fullVax[0 .. $#fullVax];
-      }
-      my @last30vaxDeltas;
-      for (my $i = 1; $i <= $#last31vax; $i++) {
-	$last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
-	$last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
-      }
+      #my @last31vax;
+      #if ($#vax > 31) {
+      #	@last31vax = @fullVax[$#fullVax-31 .. $#fullVax];
+      #} else {
+      #	@last31vax = @fullVax[0 .. $#fullVax];
+      #}
+      #my @last30vaxDeltas;
+      #for (my $i = 1; $i <= $#last31vax; $i++) {
+      #	$last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
+      #	$last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
+      #}
 
       #my $dailyVaxMin = min(@last30vaxDeltas);
       #my $dailyVaxMax = max(@last30vaxDeltas);
 
-      $sum = 0;
-      for (my $i = 6; $i >= 0; $i--) {
-	$sum += $last30vaxDeltas[$#last30vaxDeltas-$i];
-      }
-      my $avg = round($sum / 7.0);
+      #$sum = 0;
+      #for (my $i = 6; $i >= 0; $i--) {
+      #	$sum += $last30vaxDeltas[$#last30vaxDeltas-$i];
+      #}
+      #my $avg = round($sum / 7.0);
       #print "$sum - avg: $avg new vax/day\n";
-      my $percap = $sum / ($countryPop{$isocode} / 100000.0);
+      #my $percap = $sum / ($countryPop{$isocode} / 100000.0);
       my $popvax = ($fullVax[$#fullVax] / $countryPop{$isocode}) * 100.0;
 
       #@result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
@@ -1306,9 +1311,17 @@ if ($#interest >= 0) {
       #$max = $result[1];
       #@spark = @result[2 .. $#result];
       #printf "%s ppl fully vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly fully vaxxed per 100k pop; %s of pop. fully vaxxed\n", $isocode, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
-      printf "%s avg fully vaxxed %s/day in last 7d; %s weekly fully vaxxed per 100k pop; %s of pop. fully vaxxed\n", $isocode, commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+      #printf "%s avg fully vaxxed %s/day in last 7d; %s weekly fully vaxxed per 100k pop; %s of pop. fully vaxxed\n", $isocode, commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
 
+      $fulvaxpct = bold(sprintf("%0.1f%%", $popvax));
     }
+    my $boostpct = "unknown";
+    if ($lastBooster{$isocode} > 0) {
+      my $popboost = ($lastBooster{$isocode} / $countryPop{$isocode}) * 100.0;
+      $boostpct = bold(sprintf("%0.1f%%", $popboost));
+    }
+    print("$isocode total population vaccinatated: $ptlvaxpct parial, $fulvaxpct full, $boostpct boosted\n")
+      if $ptlvaxpct ne "unknown" or $fulvaxpct ne "unknown" or $boostpct ne "unknown";
 
     my $key = $countryName{$isocode};
     $key = $economist_name{$isocode} if not defined $excess_deaths_per100k{$key};
@@ -1372,9 +1385,10 @@ if ($#states >= 0) {
   binmode(CSV, ":utf8");
   my %lastVax;
   my %lastFullVax;
+  my %lastBooster;
   while (<CSV>) {
     chomp;
-    my ($date, $place, undef, undef, $ppl_vax, undef, undef, $ppl_full_vax) = split /,/;
+    my ($date, $place, undef, undef, $ppl_vax, undef, undef, $ppl_full_vax, undef, undef, undef, undef, undef, undef, $total_boosters) = split /,/;
     $place =~ s/New York State/New York/;
 
     #normalize
@@ -1385,6 +1399,7 @@ if ($#states >= 0) {
 
     $lastVax{$place} = $ppl_vax if $ppl_vax > 0;
     $lastFullVax{$place} = $ppl_full_vax if $ppl_full_vax > 0;
+    $lastBooster{$place} = $total_boosters if $total_boosters > 0;
 
     if ($place ~~ @names) {
       $peopleVax{"${place}_${date}"} = $ppl_vax;
@@ -1570,22 +1585,22 @@ if ($#states >= 0) {
     my $sumPositives = 0;
     my $i = 0;
     my @weeklyPctPositives;
-    foreach my $d (sort {$b <=> $a} keys %dailyNewPositives) {  # descending
-      $sumTests += $dailyNewTests{$d};
-      $sumPositives += $dailyNewPositives{$d};
-      if (++$i == 7) {
-	my $weeklyPos = 0;
-	$weeklyPos = ($sumPositives / $sumTests) * 100;
-	#printf("$d: weekly positives: %0.1f%%\n", $weeklyPos);
-	unshift(@weeklyPctPositives, $weeklyPos);
-	$i = 0;
-      }
-    }
-    my @result = seriesToSparkLine(\@weeklyPctPositives, 2, 0);
-    my $min = $result[0];
-    my $max = $result[1];
-    my @spark = @result[2 .. $#result];
-    my $sparkline = optimizeIrcColor(join("", @spark));
+    #foreach my $d (sort {$b <=> $a} keys %dailyNewPositives) {  # descending
+    #  $sumTests += $dailyNewTests{$d};
+    #  $sumPositives += $dailyNewPositives{$d};
+    #  if (++$i == 7) {
+    #	my $weeklyPos = 0;
+    #	$weeklyPos = ($sumPositives / $sumTests) * 100;
+    #	#printf("$d: weekly positives: %0.1f%%\n", $weeklyPos);
+    #	unshift(@weeklyPctPositives, $weeklyPos);
+    #	$i = 0;
+    #  }
+    #}
+    #my @result = seriesToSparkLine(\@weeklyPctPositives, 2, 0);
+    #my $min = $result[0];
+    #my $max = $result[1];
+    #my @spark = @result[2 .. $#result];
+    #my $sparkline = optimizeIrcColor(join("", @spark));
 #    # dubious data? FIXME
 #    printf "%s weekly percent positive %s: max %s weekly; last %s weekly\n", $s, $sparkline,
 #      colorByPctPos(sprintf("%0.1f%%", $max), $max),
@@ -1593,23 +1608,24 @@ if ($#states >= 0) {
 
 
     # daily initial vaccinations
-    my @last31vax = @vax[$#vax-31 .. $#vax];
-    my @last30vaxDeltas;
-    for (my $i = 1; $i <= $#last31vax; $i++) {
-      $last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
-      $last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
-    }
+    my $ptlvaxpct = "unknown";
+    #my @last31vax = @vax[$#vax-31 .. $#vax];
+    #my @last30vaxDeltas;
+    #for (my $i = 1; $i <= $#last31vax; $i++) {
+    #  $last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
+    #  $last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
+    #}
 
     #my $dailyVaxMin = min(@last30vaxDeltas);
     #my $dailyVaxMax = max(@last30vaxDeltas);
 
-    my $sum = 0;
-    for (my $i = 6; $i >= 0; $i--) {
-      $sum += $last30vaxDeltas[$#last30vaxDeltas-$i];
-    }
-    my $avg = round($sum / 7.0);
+    #my $sum = 0;
+    #for (my $i = 6; $i >= 0; $i--) {
+    #  $sum += $last30vaxDeltas[$#last30vaxDeltas-$i];
+    #}
+    #my $avg = round($sum / 7.0);
     #print "$sum - avg: $avg new vax/day\n";
-    my $percap = $sum / ($statePop{$s} / 100000.0);
+    #my $percap = $sum / ($statePop{$s} / 100000.0);
     my $popvax = ($vax[$#vax] / $statePop{$s}) * 100.0;
 
     #@result = seriesToSparkLine(\@last30vaxDeltas, 0, 0);
@@ -1617,26 +1633,28 @@ if ($#states >= 0) {
     #$max = $result[1];
     #@spark = @result[2 .. $#result];
     #printf "%s ppl newly vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly newly vaxxed per 100k pop; %s of pop. partially vaxxed\n", $s, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
-    printf "%s avg newly vaxxed %s/day in last 7d; %s weekly newly vaxxed per 100k pop; %s of pop. partially vaxxed\n", $s, commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+    #printf "%s avg newly vaxxed %s/day in last 7d; %s weekly newly vaxxed per 100k pop; %s of pop. partially vaxxed\n", $s, commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+    $ptlvaxpct = bold(sprintf("%0.1f%%", $popvax));
 
     # daily full vaccinations
-    @last31vax = @fullVax[$#vax-31 .. $#vax];
-    @last30vaxDeltas;
-    for (my $i = 1; $i <= $#last31vax; $i++) {
-      $last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
-      $last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
-    }
+    my $fulvaxpct = "unknown";
+    #@last31vax = @fullVax[$#vax-31 .. $#vax];
+    #@last30vaxDeltas;
+    #for (my $i = 1; $i <= $#last31vax; $i++) {
+    #  $last30vaxDeltas[$i-1] = $last31vax[$i] - $last31vax[$i - 1];
+    #  $last30vaxDeltas[$i-1] = 0 if not defined $last31vax[$i] or not defined $last31vax[$i-1];
+    #}
 
     #$dailyVaxMin = min(@last30vaxDeltas);
     #$dailyVaxMax = max(@last30vaxDeltas);
 
-    $sum = 0;
-    for (my $i = 6; $i >= 0; $i--) {
-      $sum += $last30vaxDeltas[$#last30vaxDeltas-$i];
-    }
-    $avg = round($sum / 7.0);
+    #$sum = 0;
+    #for (my $i = 6; $i >= 0; $i--) {
+    #  $sum += $last30vaxDeltas[$#last30vaxDeltas-$i];
+    #}
+    #$avg = round($sum / 7.0);
     #print "$sum - avg: $avg new vax/day\n";
-    $percap = $sum / ($statePop{$s} / 100000.0);
+    #$percap = $sum / ($statePop{$s} / 100000.0);
     $popvax = ($fullVax[$#fullVax] / $statePop{$s}) * 100.0;
 
     #print "popvax: $popvax; fullvax: $fullVax[$#fullVax]; countrypop: $statePop{$s}\n";
@@ -1646,8 +1664,17 @@ if ($#states >= 0) {
     #$max = $result[1];
     #@spark = @result[2 .. $#result];
     #printf "%s ppl fully vaxxed last 30d: %s: %s-%s daily (avg %s/day in last 7d); %s weekly fully vaxxed per 100k pop; %s of pop. fully vaxxed\n", $s, join("", @spark), commify($dailyVaxMin), commify($dailyVaxMax), commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
-    printf "%s avg fully vaxxed %s/day in last 7d; %s weekly fully vaxxed per 100k pop; %s of pop. fully vaxxed\n", $s, commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+    #printf "%s avg fully vaxxed %s/day in last 7d; %s weekly fully vaxxed per 100k pop; %s of pop. fully vaxxed\n", $s, commify($avg), bold(commify(sprintf("%0.1f", $percap))), bold(sprintf("%0.1f%%", $popvax));
+    $fulvaxpct = bold(sprintf("%0.1f%%", $popvax));
 
+    my $boostpct = "unknown";
+    if ($lastBooster{$stateToName{$s}} > 0) {
+      my $popboost = ($lastBooster{$stateToName{$s}} / $statePop{$s}) * 100.0;
+      $boostpct = bold(sprintf("%0.1f%%", $popboost));
+    }
+
+    print("$s total population vaccinatated: $ptlvaxpct parial, $fulvaxpct full, $boostpct boosted\n")
+      if $ptlvaxpct ne "unknown" or $fulvaxpct ne "unknown" or $boostpct ne "unknown";
 
     #print "---\n";
   }
@@ -1697,6 +1724,8 @@ if ($#countyList >= 0) {
 
   $url = "https://covid.cdc.gov/covid-data-tracker/COVIDData/getAjaxData?id=vaccination_county_condensed_data";
   my %cty_vaxx;
+  my %cty_ptl;
+  my %cty_boost;
   open(HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $json = <HTTP>;
@@ -1716,6 +1745,8 @@ if ($#countyList >= 0) {
       my $num_full_vax = $rec->{Series_Complete_Yes};
       $cty_vaxx{"${st}_${cty}"} = $num_full_vax;
       #print "$st $cty => $num_full_vax\n";
+      $cty_ptl{"${st}_${cty}"} = $rec->{Administered_Dose1_Recip};
+      $cty_boost{"${st}_${cty}"} = $rec->{Booster_Doses};
     }
   }
 
@@ -1863,6 +1894,8 @@ if ($#countyList >= 0) {
 
     my $lcty = lc $cty;
     my $full_vaxxed = $cty_vaxx{"${st}_${lcty}"};
+    my $ptl_vaxxed =  $cty_ptl{"${st}_${lcty}"};
+    my $boost_vaxxed = $cty_boost{"${st}_${lcty}"};
     my $unknowncty_vaxxed = $cty_vaxx{"${st}_unknown county"};
 
     #print "$st $cty $full_vaxxed $pop\n";
@@ -1877,10 +1910,17 @@ if ($#countyList >= 0) {
     #print "$unknowncty_vaxxed; $st_pop;\n";
 
     if (defined $full_vaxxed) {
-      printf("%s, %s: %s%% of pop. fully vaccinated", $cty, $stAbbr, bold(nearest(0.1, $full_vaxxed * 100.0 / $pop)));
-      printf(" (vax for %s%% of state pop. unallocated to a county)",
-	nearest(0.1, $unknowncty_vaxxed * 100.0 / $st_pop)) if defined $st_pop and defined $unknowncty_vaxxed;
-      print "\n";
+      #printf("%s, %s: %s%% of pop. fully vaccinated", $cty, $stAbbr, bold(nearest(0.1, $full_vaxxed * 100.0 / $pop)));
+      #printf(" (vax for %s%% of state pop. unallocated to a county)",
+      #	nearest(0.1, $unknowncty_vaxxed * 100.0 / $st_pop)) if defined $st_pop and defined $unknowncty_vaxxed;
+      #print "\n";
+      printf("$cty, $stAbbr total population vaccinatated: %s parial, %s full, %s boosted\n",
+	bold(nearest(0.1,  $ptl_vaxxed * 100.0 / $pop)."%"),
+	bold(nearest(0.1, $full_vaxxed * 100.0 / $pop)."%"),
+	bold(nearest(0.1,$boost_vaxxed * 100.0 / $pop)."%"))
+	  if (defined   $ptl_vaxxed and   $ptl_vaxxed > 0) or
+	     (defined  $full_vaxxed and  $full_vaxxed > 0) or
+	     (defined $boost_vaxxed and $boost_vaxxed > 0);
     }
 
   }
