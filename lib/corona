@@ -1326,7 +1326,7 @@ if ($#interest >= 0) {
       my $popboost = ($lastBooster{$isocode} / $countryPop{$isocode}) * 100.0;
       $boostpct = bold(sprintf("%0.1f%%", $popboost));
     }
-    print("$isocode total population vaccinatated: $ptlvaxpct partial, $fulvaxpct full, $boostpct boosted\n")
+    print("$isocode total pop. vaxxed: $ptlvaxpct partial, $fulvaxpct full, $boostpct boosted\n")
       if $ptlvaxpct ne "unknown" or $fulvaxpct ne "unknown" or $boostpct ne "unknown";
 
     my $key = $countryName{$isocode};
@@ -1679,7 +1679,7 @@ if ($#states >= 0) {
       $boostpct = bold(sprintf("%0.1f%%", $popboost));
     }
 
-    print("$s total population vaccinatated: $ptlvaxpct partial, $fulvaxpct full, $boostpct boosted\n")
+    print("$s total pop. vaxxed: $ptlvaxpct partial, $fulvaxpct full, $boostpct boosted\n")
       if $ptlvaxpct ne "unknown" or $fulvaxpct ne "unknown" or $boostpct ne "unknown";
 
     #print "---\n";
@@ -1921,7 +1921,7 @@ if ($#countyList >= 0) {
       #printf(" (vax for %s%% of state pop. unallocated to a county)",
       #	nearest(0.1, $unknowncty_vaxxed * 100.0 / $st_pop)) if defined $st_pop and defined $unknowncty_vaxxed;
       #print "\n";
-      printf("$cty, $stAbbr total population vaccinatated: %s partial, %s full, %s boosted\n",
+      printf("$cty, $stAbbr total pop. vaxxed: %s partial, %s full, %s boosted\n",
 	bold(nearest(0.1,  $ptl_vaxxed * 100.0 / $pop)."%"),
 	bold(nearest(0.1, $full_vaxxed * 100.0 / $pop)."%"),
 	bold(nearest(0.1,$boost_vaxxed * 100.0 / $pop)."%"))
