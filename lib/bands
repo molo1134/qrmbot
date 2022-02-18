@@ -33,12 +33,14 @@ my ($esfi, $essn);
 
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $json = <HTTP>;
-  my $j = decode_json($json);
+  my $j = decode_json($json) if not ($json =~ /^<!DOCTYPE/i or $json =~ /^\s*$/);
   close(HTTP);
 
-  my $num = scalar @{$j->{'24h'}};
-  $esfi = nearest(0.1, $j->{'24h'}->[$num-1]->{'sfi'});
-  $essn = nearest(0.1, $j->{'24h'}->[$num-1]->{'ssn'});
+  if (defined $j) {
+    my $num = scalar @{$j->{'24h'}};
+    $esfi = nearest(0.1, $j->{'24h'}->[$num-1]->{'sfi'});
+    $essn = nearest(0.1, $j->{'24h'}->[$num-1]->{'ssn'});
+  }
 }
 
 my $url = "http://www.hamqsl.com/solarxml.php";
