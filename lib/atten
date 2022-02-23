@@ -116,7 +116,7 @@ while ($i <= $#ARGV) {
   $i++;
 }
 
-if (not defined $coax) {
+if (not defined $coax or not defined $freq or not defined $len or not defined $freq_units or not defined $len_units) {
   print "syntax : !atten <coax type> <freq> <freq units> <length> <length units>\n";
   print "example: !atten LMR-400 446.0 MHz 12.5 m\n";
   exit $exitnonzeroonerror;
