@@ -22,7 +22,7 @@ proc msg_calc {nick uhand handle arg} {
   set term [sanitize_string $arg]
   set expression [sanitize_bc $term]
   putlog "calc msg: $nick $uhand $handle $expression"
-  set fd [open "| /bin/sh -c 'ulimit -t 5 ; echo \"${expression}\" | /usr/bin/bc -l' 2>@1" r]
+  set fd [open "|/bin/sh -c \"ulimit -t 5 ; echo '${expression}' | /usr/bin/bc -l\" 2>@1" r ]
   fconfigure $fd -encoding utf-8
   while {[gets $fd line] >= 0} {
     putmsg "$nick" "$line"
@@ -37,7 +37,7 @@ proc pub_calc { nick host hand chan text } {
   set term [sanitize_string $text]
   set expression [sanitize_bc $term]
   putlog "calc pub: $nick $host $hand $chan $expression"
-  set fd [open "| /bin/sh -c 'ulimit -t 5 ; echo \"${expression}\" | /usr/bin/bc -l' 2>@1" r]
+  set fd [open "|/bin/sh -c \"ulimit -t 5 ; echo '${expression}' | /usr/bin/bc -l\" 2>@1" r ]
   fconfigure $fd -encoding utf-8
   while {[gets $fd line] >= 0} {
     putchan $chan "$line"
