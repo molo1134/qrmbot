@@ -27,6 +27,7 @@ proc msg_calc {nick uhand handle arg} {
   while {[gets $fd line] >= 0} {
     putmsg "$nick" "$line"
   }
+  close $fd
 }
 
 proc pub_calc { nick host hand chan text } {
@@ -42,4 +43,5 @@ proc pub_calc { nick host hand chan text } {
   while {[gets $fd line] >= 0} {
     putchan $chan "$line"
   }
+  close $fd
 }
