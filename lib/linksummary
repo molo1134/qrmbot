@@ -614,40 +614,41 @@ sub doHtml {
 
   if ($page =~ /<title.*?>\s*([^<]+?)\s*<\/title>/im) {
     $title = $1;
-    $title =~ s/\s\s+/ /g;
   }
   if ($page =~ /<meta\s+property="og:title"\s+content="([^"]+)"/im) {
     $title = $1;
-    $title =~ s/\s\s+/ /g;
   }
   if ($page =~ /<meta\s+content="([^"]+)"\s+property="og:title"/im) {
     $title = $1;
-    $title =~ s/\s\s+/ /g;
   }
   if ($page =~ /<meta\s+name="dcterms.title"\s+content="([^"]+)"/im) {
     $title = $1;
-    $title =~ s/\s\s+/ /g;
   }
   if (not defined($desc) and
 	  $page =~ /<meta\s+name="description"\s+content="([^"]+)"/im) {
     $desc = $1;
-    $desc =~ s/\s\s+/ /g;
   }
   if (not defined($desc) and
 	  $page =~ /<meta\s+content="([^"]+)"\s+name="description"/im) {
     $desc = $1;
-    $desc =~ s/\s\s+/ /g;
   }
   if ($page =~ /<meta\s+.*?property="og:description"\s+content="([^"]+)"/im) {
     $desc = $1;
-    $desc =~ s/\s\s+/ /g;
   }
   if ($page =~ /<meta\s+content="([^"]+)"\s+property="og:description"/im) {
     $desc = $1;
-    $desc =~ s/\s\s+/ /g;
   }
   if ($page =~ /<meta\s+name="DC.Description.Abstract"\s+content="([^"]+)"/im) {
     $desc = $1;
+  }
+  if (defined $title) {
+    $title =~ s/[\x00-\x09\x0B-\x1F]//g;
+    $title =~ s/\n/ /g;
+    $title =~ s/\s\s+/ /g;
+  }
+  if (defined $desc) {
+    $desc =~ s/[\x00-\x09\x0B-\x1F]//g;
+    $desc =~ s/\n/ /g;
     $desc =~ s/\s\s+/ /g;
   }
   if ($page =~ /<link\s+rel="shortlink"\s+href="([^"]+)"/im) {
