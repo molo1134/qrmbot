@@ -35,8 +35,7 @@ while ( my $line = <HTTP>) {
   #print $line;
   chomp $line;
   my $img = $1 if $line =~ m|.*/(.*?)"|s;
-  #print $data[7] . "\n";
-  print "$img\n";
+  #print "$img\n";
   if ($img =~ m/AmCON-5/i) {
     print green("AmRRON Communications Condition Level: 5");
     print " -- " if $username eq getEggdropUID();
