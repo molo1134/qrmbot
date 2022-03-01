@@ -68,7 +68,7 @@ while ($i <= $#ARGV) {
     doImdb($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(\w+)\.wikipedia\.org/wiki/([^/\s]+)|i) {
     doWiki($1, $2);
-  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?reddit\.com/r/\w+/comments/\w+/|i or
+  } elsif ($ARGV[$i] =~ m|^https?://((www\|old\|np\|new)\.)?reddit\.com/r/\w+/comments/\w+/|i or
 	  $ARGV[$i] =~ m|^https?://redd\.it/\w+|i) {
     doReddit($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://swap\.qth\.com/view_ad\.php\?counter=\d+|i) {
@@ -698,28 +698,98 @@ sub doReddit {
 
   # example url for particular comment: https://www.reddit.com/r/dayton/comments/5bntme/what_neighborhoods_in_dayton_would_you_tell/d9w9euj/
 
-  if ($url =~ m|https?://(www\.)?reddit\.com/r/\w+/comments/(\w+)/([^/]+/\w+/)?|) {
-    $id = $2;
-    $shortCommentUrl = shortenUrl($url) if defined($3);
+  my $jsonurl;
+  my $commentId;
+
+  if ($url =~ m|https?://((www\|old\|np\|new)\.)?reddit\.com/r/\w+/comments/(\w+)/([^/]+/\w+/)?|i) {
+    $id = $3;
+    $commentId = $4 if defined $4;
+    $shortCommentUrl = shortenUrl($url) if defined($4);
+    $jsonurl = "$url.json";
   } elsif ($url =~ /https?:\/\/redd\.it\/(\w+)/) {
     $id = $1;
+    $jsonurl = "https://www.reddit.com/comments/$id/.json";
   } else {
+    print ("nope\n");
     return;
   }
 
-  open(HTTP, '-|', "curl --max-time $timeout -A foo -L -k -s '$url'");
+  open(HTTP, '-|', "curl --max-time $timeout -A foo -L -k -s '$jsonurl'");
   binmode(HTTP, ":utf8");
-  while(<HTTP>) {
-    if (/<title.*?>([^<]+)<\/title>/im) {
-      $title = decodeEntities($1);
-    }
-  }
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $json = <HTTP>;
   close(HTTP);
+  my $j = decode_json($json);
 
-  print bold("\"$title\"") if defined ($title);
-  print " http://redd.it/$id " if defined($id);
-  print " $shortCommentUrl " if defined($shortCommentUrl);
-  #print " — $desc" if defined ($desc);
+  my $post = $j->[0]->{data}->{children}->[0]->{data};
+  my $comment = $j->[1]->{data}->{children}->[0]->{data};
+
+  my $sub = $post->{subreddit};
+  my $title = $post->{title};
+  my $p_score = $post->{score};
+  my $p_ratio = $post->{upvote_ratio};
+  my $p_gilds = $post->{gilded};
+  my $p_awards = $post->{total_awards_received};
+  my $p_created = $post->{created};
+  my $p_edited = $post->{edited};
+  my $p_author = $post->{author};
+  my $nsfw = $post->{over_18};
+  my $spoiler = $post->{spoiler};
+  my $numComments = $post->{num_comments};
+  my $link = $post->{url};
+  my $domain = $post->{domain};
+  my $selftext = $post->{selftext};
+  $selftext =~ s/[\r\n]/ /g;
+  $selftext =~ s/\s\s+/ /g;
+  $selftext =~ s/^\s+//;
+
+  my $c_score = $comment->{score};
+  my $c_author = $comment->{author};
+  my $c_gilds = $comment->{gilded};
+  my $c_awards = $comment->{total_awards_received};
+  my $c_created = $comment->{created};
+  my $c_edited = $comment->{edited};
+  my $body = $comment->{body};
+  $body =~ s/[\r\n]/ /g;
+  $body =~ s/\s\s+/ /g;
+  $body =~ s/^\s+//;
+
+  if (not defined($commentId)) {
+
+    print bold("\"$title\""), " by /u/$p_author (";
+    print green("${p_score}↑") if defined $p_score and $p_score > 0;
+    print red("${p_score}↓") if defined $p_score and $p_score <= 0;
+    print " ", round($p_ratio * 100.0), "%";
+    print(" ", $p_gilds, yellow("★")) if defined $p_gilds and $p_gilds > 0;
+    print(" ", $p_awards, lightGrey("★")) if defined $p_awards and $p_awards > 0;
+    print " ", red("[NSFW]") if defined $nsfw and $nsfw;
+    print " ", yellow("[SPOILER]") if defined $spoiler and $spoiler;
+    print ")";
+    print " at ", strftime("%Y-%m-%d %H:%Mz", gmtime($p_created));
+    print " (edited ", strftime("%Y-%m-%d %H:%Mz", gmtime($p_edited)), ")" if defined $p_edited and $p_edited > 0;
+    print " http://redd.it/$id" if defined($id);
+    if (not $post->{is_self} and not $post->{is_reddit_media_domain} and not $link =~ m/reddit.com/) {
+      my $shortLink = shortenUrl($link);
+      print " ", (defined($shortLink) ? $shortLink : $link), " ($domain)";
+    } elsif ($post->{is_self}) {
+      print " | \"", substr($selftext, 0, 160), "…\"";
+    }
+
+  } else {
+
+    print "comment by /u/$c_author (";
+    print green("${c_score}↑") if defined $c_score and $c_score > 0;
+    print red("${c_score}↓") if defined $c_score and $c_score <= 0;
+    print(" ", $c_gilds, yellow("★")) if defined $c_gilds and $c_gilds > 0;
+    print(" ", $c_awards, lightGrey("★")) if defined $c_awards and $c_awards > 0;
+    print ")";
+    print " at ", strftime("%Y-%m-%d %H:%Mz", gmtime($c_created));
+    print " (edited ", strftime("%Y-%m-%d %H:%Mz", gmtime($c_edited)), ")" if defined $c_edited and $c_edited > 0;
+    print " in \"$title\": $shortCommentUrl";
+    print " | \"", substr($body, 0, 160), "…\"";
+
+  }
+
   print "\n";
 }
 
