@@ -761,7 +761,7 @@ sub doReddit {
     print red("${p_score}↓") if defined $p_score and $p_score <= 0;
     print " ", round($p_ratio * 100.0), "%";
     print(" ", $p_gilds, yellow("★")) if defined $p_gilds and $p_gilds > 0;
-    print(" ", $p_awards, lightGrey("★")) if defined $p_awards and $p_awards > 0;
+    print(" ", $p_awards - $p_gilds, lightGrey("★")) if defined $p_awards and $p_awards > 0 and $p_awards > $p_gilds;
     print " ", red("[NSFW]") if defined $nsfw and $nsfw;
     print " ", yellow("[SPOILER]") if defined $spoiler and $spoiler;
     print ")";
@@ -781,7 +781,7 @@ sub doReddit {
     print green("${c_score}↑") if defined $c_score and $c_score > 0;
     print red("${c_score}↓") if defined $c_score and $c_score <= 0;
     print(" ", $c_gilds, yellow("★")) if defined $c_gilds and $c_gilds > 0;
-    print(" ", $c_awards, lightGrey("★")) if defined $c_awards and $c_awards > 0;
+    print(" ", $c_awards - $c_gilds, lightGrey("★")) if defined $c_awards and $c_awards > 0 and $c_awards > $c_gilds;
     print ")";
     print " at ", strftime("%Y-%m-%d %H:%Mz", gmtime($c_created));
     print " (edited ", strftime("%Y-%m-%d %H:%Mz", gmtime($c_edited)), ")" if defined $c_edited and $c_edited > 0;
