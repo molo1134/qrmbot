@@ -19,41 +19,49 @@ if (defined $ARGV[0] and $ARGV[0] =~ /about/i){
   exit 0;
 }
 
-#my $url = "https://amrron.com/current-amccon-level/";
+my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0";
+
+#my $url = "https://amrron.com/current-amccon-level/"; # defunct
 my $url = "https://amrron.com/net-resourcestools/amcon-amrron-communications-condition-level/";
+# archive.org snapshots for testing
+#$url = "https://web.archive.org/web/20210113160531/" . $url; # level 2
+#$url = "https://web.archive.org/web/20201116072537/" . $url; # level 3
+#$url = "https://web.archive.org/web/20211204203353/" . $url; # level 4
+#$url = "https://web.archive.org/web/20191223033133/" . $url; # level 5
 my $found = 0;
-open(HTTP, '-|', "curl --max-time 10 -s -L --insecure '$url' | grep og:image ");
+open(HTTP, '-|', "curl -A '$ua' --max-time 10 -s -L --insecure '$url' | grep og:image | head -1");
 binmode(HTTP, ":utf8");
 while ( my $line = <HTTP>) {
-  chomp $line;
   #print $line;
-  my @data = split(/\//,$line);
+  chomp $line;
+  my $img = $1 if $line =~ m|.*/(.*?)"|s;
   #print $data[7] . "\n";
-  if ($data[7] =~ m/AmCON-5/i) {
+  print "$img\n";
+  if ($img =~ m/AmCON-5/i) {
     print green("AmRRON Communications Condition Level: 5");
     print " -- " if $username eq getEggdropUID();
     print "\n" if $username ne getEggdropUID();
     print "No Incident (no known or anticipated threat to communications)\n";
     $found = 1;
-  } elsif ($data[7] =~ m/AmCON-4/i) {
+  } elsif ($img =~ m/AmCON-4/i) {
     print lightgreen("AmRRON Communications Condition Level: 4");
     print " -- " if $username eq getEggdropUID();
     print "\n" if $username ne getEggdropUID();
     print "Incident Possible (Possible near-future interruption of conventional comms)\n";
     $found = 1;
-  } elsif ($data[7] =~ m/Amcon-3/i) {
+  } elsif ($img =~ m/Amcon-3/i) {
     print yellow("AmRRON Communications Condition Level: 3");
     print " -- " if $username eq getEggdropUID();
     print "\n" if $username ne getEggdropUID();
     print "Incident Probable (Increased probability of interruption of conventional comms; not imminent)\n";
     $found = 1;
-  } elsif ($data[7] =~ m/AmCON-2/i) {
+  } elsif ($img =~ m/AmCON-2/i) {
     print darkRed("AmRRON Communications Condition Level: 2");
     print " -- " if $username eq getEggdropUID();
     print "\n" if $username ne getEggdropUID();
     print "Incident IMMINENT (Disruption of communications expected or highly likely)\n";
     $found = 1;
-  } elsif ($data[7] =~ m/AmCON-1/i) {
+  } elsif ($img =~ m/AmCON-1/i) {
     print red("AmRRON Communications Condition Level: 1");
     print " -- " if $username eq getEggdropUID();
     print "\n" if $username ne getEggdropUID();
