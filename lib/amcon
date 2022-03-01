@@ -29,31 +29,31 @@ while ( my $line = <HTTP>) {
   #print $line;
   my @data = split(/\//,$line);
   #print $data[7] . "\n";
-  if ($data[7] =~ m/5/) {
+  if ($data[7] =~ m/AmCON-5/i) {
     print green("AmRRON Communications Condition Level: 5");
     print " -- " if $username eq getEggdropUID();
     print "\n" if $username ne getEggdropUID();
     print "No Incident (no known or anticipated threat to communications)\n";
     $found = 1;
-  } elsif ($data[7] =~ m/4/) {
+  } elsif ($data[7] =~ m/AmCON-4/i) {
     print lightgreen("AmRRON Communications Condition Level: 4");
     print " -- " if $username eq getEggdropUID();
     print "\n" if $username ne getEggdropUID();
     print "Incident Possible (Possible near-future interruption of conventional comms)\n";
     $found = 1;
-  } elsif ($data[7] =~ m/3/) {
+  } elsif ($data[7] =~ m/Amcon-3/i) {
     print yellow("AmRRON Communications Condition Level: 3");
     print " -- " if $username eq getEggdropUID();
     print "\n" if $username ne getEggdropUID();
     print "Incident Probable (Increased probability of interruption of conventional comms; not imminent)\n";
     $found = 1;
-  } elsif ($data[7] =~ m/2/) {
-    print orange("AmRRON Communications Condition Level: 2");
+  } elsif ($data[7] =~ m/AmCON-2/i) {
+    print darkRed("AmRRON Communications Condition Level: 2");
     print " -- " if $username eq getEggdropUID();
     print "\n" if $username ne getEggdropUID();
     print "Incident IMMINENT (Disruption of communications expected or highly likely)\n";
     $found = 1;
-  } elsif ($data[7] =~ m/1/) {
+  } elsif ($data[7] =~ m/AmCON-1/i) {
     print red("AmRRON Communications Condition Level: 1");
     print " -- " if $username eq getEggdropUID();
     print "\n" if $username ne getEggdropUID();
