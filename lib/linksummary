@@ -705,7 +705,9 @@ sub doReddit {
     $id = $3;
     $commentId = $4 if defined $4;
     $shortCommentUrl = shortenUrl($url) if defined($4);
-    $jsonurl = "$url.json";
+    $jsonurl = $url;
+    $jsonurl =~ s/context=\d+//;
+    $jsonurl =~ s/(\?.*)?$/.json$1/;
   } elsif ($url =~ /https?:\/\/redd\.it\/(\w+)/) {
     $id = $1;
     $jsonurl = "https://www.reddit.com/comments/$id/.json";
@@ -714,6 +716,7 @@ sub doReddit {
     return;
   }
 
+  #print "$jsonurl\n";
   open(HTTP, '-|', "curl --max-time $timeout -A foo -L -k -s '$jsonurl'");
   binmode(HTTP, ":utf8");
   local $/;   # read entire file -- FIXME: potentially memory hungry
@@ -772,7 +775,9 @@ sub doReddit {
       my $shortLink = shortenUrl($link);
       print " ", (defined($shortLink) ? $shortLink : $link), " ($domain)";
     } elsif ($post->{is_self}) {
-      print " | \"", substr($selftext, 0, 160), "…\"";
+      print " | \"", substr($selftext, 0, 160);
+      print "…" if length($selftext) > 160;
+      print '"';
     }
 
   } else {
@@ -786,7 +791,9 @@ sub doReddit {
     print " at ", strftime("%Y-%m-%d %H:%Mz", gmtime($c_created));
     print " (edited ", strftime("%Y-%m-%d %H:%Mz", gmtime($c_edited)), ")" if defined $c_edited and $c_edited > 0;
     print " in \"$title\": $shortCommentUrl";
-    print " | \"", substr($body, 0, 160), "…\"";
+    print " | \"", substr($body, 0, 160);
+    print "…" if length($body) > 160;
+    print '"';
 
   }
 
