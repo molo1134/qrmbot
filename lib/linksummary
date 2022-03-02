@@ -763,7 +763,9 @@ sub doReddit {
     $author = green($author) if $post->{distinguished};
     $author = red("[deleted]") if $p_author eq "[deleted]";
 
-    print bold("\"$title\""), " by $author (";
+    $title = green($title) if $post->{stickied};
+    $title = bold($title) if not $post->{stickied};
+    print bold('"'), $title, bold('"'), " by $author (";
     print green("${p_score}↑") if defined $p_score and $p_score > 0;
     print red("${p_score}↓") if defined $p_score and $p_score <= 0;
     print " ", round($p_ratio * 100.0), "%";
@@ -772,6 +774,7 @@ sub doReddit {
     print " ", red("[NSFW]") if defined $nsfw and $nsfw;
     print " ", yellow("[SPOILER]") if defined $spoiler and $spoiler;
     print " ", yellow("🔒") if $post->{locked};
+    print " ", grey("🗄️") if $post->{archived};
     print ")";
     print " at ", strftime("%Y-%m-%d %H:%Mz", gmtime($p_created));
     print " (edited ", strftime("%Y-%m-%d %H:%Mz", gmtime($p_edited)), ")" if defined $p_edited and $p_edited > 0;
@@ -803,7 +806,12 @@ sub doReddit {
       print ")";
       print " at ", strftime("%Y-%m-%d %H:%Mz", gmtime($c_created));
       print " (edited ", strftime("%Y-%m-%d %H:%Mz", gmtime($c_edited)), ")" if defined $c_edited and $c_edited > 0;
-      print " in \"$title\": $shortCommentUrl";
+      print " in \"$title\"";
+      print " ", red("[NSFW]") if defined $nsfw and $nsfw;
+      print " ", yellow("[SPOILER]") if defined $spoiler and $spoiler;
+      print " ", yellow("🔒") if $post->{locked};
+      print " ", grey("🗄️") if $post->{archived};
+      print ": $shortCommentUrl";
       print " | ";
       print yellow("🔒 ") if $comment->{locked};
       print "\"", substr($body, 0, 160);
