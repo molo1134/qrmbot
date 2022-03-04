@@ -3,7 +3,7 @@
 # qrz.com callsign lookup.
 
 # 2-clause BSD license.
-# Copyright (c) 2017, 2018, 2019, 2020, 2021 molo1134@github. All rights reserved.
+# Copyright (c) 2017, 2018, 2019, 2020, 2021, 2022 molo1134@github. All rights reserved.
 
 # in order to retrieve info from qrz.com, you need to put these two lines in
 # $HOME/.qrzlogin:
@@ -189,9 +189,6 @@ if ($call =~ /^(grid:)? ?([A-R]{2}[0-9]{2}([a-x]{2})?$)/i) {
   $call =~ s/^\s*(.*\S)\s*$/$1/;
   $type = "name";
 }
-
-# 2022-03-04 - Russia blocked from html pages but listed in xml DB
-$usexml = 1 if ($type eq "callsign" and $call =~ /^(R|U[A-Q0-46-9])/i);
 
 #my @vals = split //,$call;
 #@vals = map(ord, @vals);
