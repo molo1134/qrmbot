@@ -603,5 +603,42 @@ proc imdb_msg {nick uhand handle input} {
 	close $fd
 }
 
+bind msg - !gas gas_msg
+bind pub - !gas gas_pub
+set gasbin "/home/eggdrop/bin/gasprice"
+proc gas_pub { nick host hand chan text } {
+	global gasbin
+	set loc [sanitize_string [string trim "${text}"]]
+	set geo [qrz_getgeo $hand]
+	putlog "gas pub: $nick $host $hand $chan $loc $geo"
+	if [string equal "" $geo] then {
+		set fd [open "|${gasbin} ${loc}" r]
+	} else {
+		set fd [open "|${gasbin} ${loc} --geo $geo" r]
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc gas_msg {nick uhand handle input} {
+	global gasbin
+	set loc [sanitize_string [string trim "${input}"]]
+	set geo [qrz_getgeo $handle]
+	putlog "gas msg: $nick $uhand $handle $loc $geo"
+	if [string equal "" $geo] then {
+		set fd [open "|${gasbin} ${loc}" r]
+	} else {
+		set fd [open "|${gasbin} ${loc} --geo $geo" r]
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
 putlog "fun.tcl loaded."
 

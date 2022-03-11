@@ -1,0 +1,210 @@
+#!/usr/bin/perl
+# find the nearest cheap fuel, using gasbuddy API
+
+# 2-clause BSD license.
+# Copyright (c) 2022 molo1134@github. All rights reserved.
+
+use strict;
+use warnings;
+
+use utf8;
+use Encode qw(decode);
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+use Util;
+
+use JSON qw( decode_json );
+use Math::Round;
+
+@ARGV = map { decode "utf-8", $_ } @ARGV;
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+my $geo = undef;
+my $query = undef;
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if (!defined($geo) and $ARGV[$i] =~ /^--geo$/i) {
+    $i++;
+    $geo = $ARGV[$i];
+    $i++;
+    next;
+  }
+  if (defined($query)) {
+    $query = $query ." ". $ARGV[$i];
+  } else {
+    $query = $ARGV[$i];
+  }
+  $i++;
+}
+
+if (not defined $query and not defined $geo) {
+  if ($username eq getEggdropUID()) {
+    print "usage: !gas <grid>|<lat>,<lon>|<qth>\n";
+  } else {
+    print "usage: $0 <grid>|<lat>,<lon>|<qth>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $result = argToCoords($query) if defined $query;
+
+if (defined $query and not defined $result) {
+  print "error: unable to find \"$query\"\n";
+  exit $exitnonzeroonerror;
+}
+
+my ($mylat, $mylon) = split(',', $geo) if defined $geo;
+($mylat, $mylon) = split(',', $result) if defined $result;
+
+my $fuelId = 1; # TODO
+my $dist = 10; # km TODO
+
+my ($maxlat, undef) = rangeAndBearing($mylat, $mylon, $dist, 0);
+my ($minlat, undef) = rangeAndBearing($mylat, $mylon, $dist, 180);
+my (undef, $maxlon) = rangeAndBearing($mylat, $mylon, $dist, 90);
+my (undef, $minlon) = rangeAndBearing($mylat, $mylon, $dist, 270);
+
+my $url = "https://www.gasbuddy.com/gaspricemap/map";
+my $ct = "Content-Type: application/json; charset=utf-8";
+my $req = "{\"fuelTypeId\":\"$fuelId\",\"minLat\":$minlat,\"maxLat\":$maxlat,\"minLng\":$minlon,\"maxLng\":$maxlon,\"width\":2000,\"height\":2000}";
+
+# curl 'https://www.gasbuddy.com/gaspricemap/map' --compressed -H 'Content-Type: application/json; charset=utf-8' --data-raw '{"fuelTypeId":"1","minLat":41.02367207781487,"maxLat":41.10133099662773,"minLng":-74.2389950182373,"maxLng":-74.0324863817627,"width":1203,"height":600}'
+#
+local $/;   # read entire file -- FIXME: potentially memory hungry
+open (JSON, '-|', "curl --max-time 10 -s -k -L -H '${ct}' --data-raw '${req}' $url");
+my $json = <JSON>;
+close(JSON);
+my $j = decode_json($json) or die "parse error: $json\n";
+#print $json, "\n";
+
+my $stationsref = [];
+my ($m, $n);
+
+# copy primary and secondary into a single structure
+for ($m = 0, $n = 0; $m < scalar (@{$j->{primaryStations}}); $m++, $n++) {
+  $stationsref->[$n] = $j->{primaryStations}->[$m];
+  #print "$m -> $n\n";
+}
+for ($m = 0; $m < scalar (@{$j->{secondaryStations}}); $m++, $n++) {
+  $stationsref->[$n] = $j->{primaryStations}->[$m];
+  #print "$m -> $n\n";
+}
+
+# find cheapest prices within returned data
+my ($cheapestCashPx, $cheapestCreditPx) = (9999.99, 9999.99);
+for ($n = 0; $n < scalar @{$stationsref}; $n++) {
+  next if $stationsref->[$n]->{price} eq "--";
+  if ($stationsref->[$n]->{iscash}) {
+    if ($stationsref->[$n]->{price} < $cheapestCashPx) {
+      $cheapestCashPx = $stationsref->[$n]->{price};
+    }
+  } else {
+    if ($stationsref->[$n]->{price} < $cheapestCreditPx) {
+      $cheapestCreditPx = $stationsref->[$n]->{price};
+    }
+  }
+}
+
+# find nearest station at that price
+my ($nearestCash, $nearestCredit);
+my ($distCash, $bearingCash) = (99999.9, undef);
+my ($distCredit, $bearingCredit) = (99999.9, undef);
+for ($n = 0; $n < scalar @{$stationsref}; $n++) {
+  next if $stationsref->[$n]->{price} eq "--";
+  if ($stationsref->[$n]->{iscash}) {
+    if ($stationsref->[$n]->{price} == $cheapestCashPx) {
+      my ($dist, $bearing) = distBearing($mylat, $mylon, $stationsref->[$n]->{lat}, $stationsref->[$n]->{lng});
+      if ($dist < $distCash) {
+	$nearestCash = $n;
+	$distCash = $dist;
+	$bearingCash = $bearing;
+      }
+    }
+  } else {
+    if ($stationsref->[$n]->{price} == $cheapestCreditPx) {
+      my ($dist, $bearing) = distBearing($mylat, $mylon, $stationsref->[$n]->{lat}, $stationsref->[$n]->{lng});
+      if ($dist < $distCredit) {
+	$nearestCredit = $n;
+	$distCredit = $dist;
+	$bearingCredit = $bearing;
+      }
+    }
+  }
+}
+
+
+# FIXME DEBUG
+#print "Cash:\t$cheapestCashPx @ $nearestCash #$stationsref->[$nearestCash]->{id} $distCash km $bearingCash°\n";
+#print "Credit:\t$cheapestCreditPx @ $nearestCredit #$stationsref->[$nearestCredit]->{id} $distCredit km $bearingCredit°\n";
+
+my $cloudflareError = 0;
+
+my $c;
+if (defined $nearestCash) {
+
+  my $id = $stationsref->[$nearestCash]->{id};
+  $url = "https://www.gasbuddy.com/gaspricemap/station";
+  $req = "{\"id\":$id,\"fuelTypeId\":\"$fuelId\"}";
+
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  open (JSON, '-|', "curl --max-time 10 -s -k -L -H '${ct}' --data-raw '${req}' $url");
+  $json = <JSON>;
+  close(JSON);
+  if ($json =~ /Cloudflare/) {
+    print "Error: unable to retrieve station details\n";
+    $cloudflareError = 1;
+  } else {
+    $c = decode_json($json) or die "parse error: $json\n";
+  }
+}
+
+#print "CASH: $c->{station}->{Name}, $c->{station}->{Address}, $c->{station}->{City} $c->{prices}->[0]->{Price} $c->{prices}->[0]->{Time}\n";
+
+my $d;
+if (defined $nearestCredit) {
+  my $id = $stationsref->[$nearestCredit]->{id};
+  $url = "https://www.gasbuddy.com/gaspricemap/station";
+  $req = "{\"id\":$id,\"fuelTypeId\":\"$fuelId\"}";
+
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  open (JSON, '-|', "curl --max-time 10 -s -k -L -H '${ct}' --data-raw '${req}' $url");
+  $json = <JSON>;
+  close(JSON);
+  #print $json, "\n";
+  if ($json =~ /Cloudflare/) {
+    print "Error: unable to retrieve station details\n" if $cloudflareError == 0;
+  } else {
+    $d = decode_json($json) or die "parse error: $json\n";
+  }
+}
+
+#print "CREDIT: $d->{station}->{Name}, $d->{station}->{Address}, $d->{station}->{City} $d->{prices}->[0]->{Price} $d->{prices}->[0]->{Time}\n";
+
+if (defined $nearestCash) {
+  print "cash  : ", nearest(0.1, $distCash), " km ", azToNEWS($bearingCash), ": ", bold($cheapestCashPx), " at ";
+  print "$c->{station}->{Name}, $c->{station}->{Address}, $c->{station}->{City} as of $c->{prices}->[0]->{Time}\n" if defined $c;
+  print nearest(0.00001, $stationsref->[$nearestCash]->{lat}), ",", nearest(0.00001, $stationsref->[$nearestCash]->{lng}), "\n" if not defined $c;
+}
+
+if (defined $nearestCredit) {
+  print "credit: ", nearest(0.1, $distCredit), " km ", azToNEWS($bearingCredit), ": ", bold($cheapestCreditPx), " at ";
+  print "$d->{station}->{Name}, $d->{station}->{Address}, $d->{station}->{City} as of $d->{prices}->[0]->{Time}\n" if defined $d;
+  print nearest(0.00001, $stationsref->[$nearestCredit]->{lat}), ",", nearest(0.00001, $stationsref->[$nearestCredit]->{lng}), "\n" if not defined $d;
+}
+
+if (not defined $nearestCash and not defined $nearestCredit) {
+  print "not found\n";
+}
