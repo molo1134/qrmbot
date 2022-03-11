@@ -8,12 +8,13 @@
 package Location;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ getGeocodingAPIKey coordToElev azToNEWS pathProfile);
+@EXPORT = qw(argToCoords qthToCoords coordToGrid geolocate gridToCoord distBearing coordToTZ getGeocodingAPIKey coordToElev azToNEWS pathProfile rangeAndBearing);
 
 use utf8;
 use Math::Trig;
 use Math::Trig 'great_circle_distance';
 use Math::Trig 'great_circle_bearing';
+use Math::Trig 'great_circle_destination';
 use URI::Escape;
 use JSON qw( decode_json );
 use Time::HiRes qw(usleep);
@@ -294,6 +295,26 @@ sub distBearing {
   }
 
   return ($dist, $bearing);
+}
+
+# given the origin coordates, find the coordinates at the given range (in km)
+# and bearing (in degrees)
+sub rangeAndBearing {
+  my $lat = shift;
+  my $lon = shift;
+  my $range = shift;
+  my $bearing = shift;
+
+  my @origin = NESW($lon, $lat);
+  my ($lat2, $lon2);
+
+  my $diro = deg2rad($bearing);
+  my $distance = $range / 6378.1; # in radians
+
+  ($thetad, $phid, $dird) = great_circle_destination(@origin, $diro, $distance);
+  my ($lon2, $lat2) = (rad2deg($thetad), rad2deg($phid));
+
+  return ($lat2, $lon2);
 }
 
 # Notice the 90 - latitude: phi zero is at the North Pole.
