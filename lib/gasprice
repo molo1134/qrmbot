@@ -84,7 +84,7 @@ my $req = "{\"fuelTypeId\":\"$fuelId\",\"minLat\":$minlat,\"maxLat\":$maxlat,\"m
 # curl 'https://www.gasbuddy.com/gaspricemap/map' --compressed -H 'Content-Type: application/json; charset=utf-8' --data-raw '{"fuelTypeId":"1","minLat":41.02367207781487,"maxLat":41.10133099662773,"minLng":-74.2389950182373,"maxLng":-74.0324863817627,"width":1203,"height":600}'
 #
 local $/;   # read entire file -- FIXME: potentially memory hungry
-open (JSON, '-|', "curl --max-time 10 -s -k -L -H '${ct}' --data-raw '${req}' $url");
+open (JSON, '-|', "curl --max-time 10 -s -k -L -H '${ct}' --data '${req}' $url");
 my $json = <JSON>;
 close(JSON);
 my $j = decode_json($json) or die "parse error: $json\n";
@@ -160,7 +160,7 @@ if (defined $nearestCash) {
   $req = "{\"id\":$id,\"fuelTypeId\":\"$fuelId\"}";
 
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  open (JSON, '-|', "curl --max-time 10 -s -k -L -H '${ct}' --data-raw '${req}' $url");
+  open (JSON, '-|', "curl --max-time 10 -s -k -L -H '${ct}' --data '${req}' $url");
   $json = <JSON>;
   close(JSON);
   if ($json =~ /Cloudflare/) {
@@ -180,7 +180,7 @@ if (defined $nearestCredit) {
   $req = "{\"id\":$id,\"fuelTypeId\":\"$fuelId\"}";
 
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  open (JSON, '-|', "curl --max-time 10 -s -k -L -H '${ct}' --data-raw '${req}' $url");
+  open (JSON, '-|', "curl --max-time 10 -s -k -L -H '${ct}' --data '${req}' $url");
   $json = <JSON>;
   close(JSON);
   #print $json, "\n";
