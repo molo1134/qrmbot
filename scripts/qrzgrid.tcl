@@ -1,12 +1,12 @@
 # An eggdrop TCL script to bind commands to callsign and grid lookup.
 
 # 2-clause BSD license.
-# Copyright (c) 2018, 2019, 2020 molo1134@github. All rights reserved.
+# Copyright (c) 2018, 2019, 2020, 2022 molo1134@github. All rights reserved.
 # Copyright (c) 2020 Andrew Rodland. All rights reserved.
 
 bind pub - !qrz qrz
 bind pub - !call qrz
-bind pub - !dox qrz
+bind pub - !dox dox_pub
 
 bind msg - !qrz msg_qrz
 bind msg - !call msg_qrz
@@ -223,10 +223,14 @@ proc qrz { nick host hand chan text } {
 	putlog "qrz pub: $nick $host $hand $chan $callsign $geo"
 
 	if [string equal "" $geo] then {
-		set fd [open "|${qrzbin} ${callsign} --compact" r]
+		set options "--compact"
 	} else {
-		set fd [open "|${qrzbin} ${callsign} --compact --geo $geo" r]
+		set options "--compact --geo $geo"
 	}
+	if [string equal "#amateurradio" $chan] then {
+		set options [string cat "$options" " --nodox"]
+	}
+	set fd [open "|${qrzbin} ${callsign} ${options}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
@@ -251,6 +255,14 @@ proc msg_qrz {nick uhand handle input} {
 		putmsg "$nick" "$line"
 	}
 	close $fd
+}
+
+proc dox_pub { nick host hand chan text } {
+  if [string equal "#amateurradio" $chan] then {
+    return
+  } else {
+    qrz "$nick" "$host" "$hand" "$chan" "$text"
+  }
 }
 
 proc qrz_setgeo_pub { nick host hand chan text } {

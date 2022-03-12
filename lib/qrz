@@ -96,6 +96,7 @@ my $compact = 0;
 my $csv = 0;
 my $xml = 0;
 my $doCount = 0;
+my $noDox = 0;
 my $dod = undef;
 
 while ($i <= $#ARGV) {
@@ -135,6 +136,11 @@ while ($i <= $#ARGV) {
   }
   if ($ARGV[$i] =~ /--count/) {
     $doCount = 1;
+    $i++;
+    next;
+  }
+  if ($ARGV[$i] =~ /--nodox/) {
+    $noDox = 1;
     $i++;
     next;
   }
@@ -178,6 +184,10 @@ if ($call =~ /^(grid:)? ?([A-R]{2}[0-9]{2}([a-x]{2})?$)/i) {
     $type = "callsign";
   }
 } elsif ($call =~ m|^/u/|i ) {
+  if ($noDox) {
+    print "no lookup by reddit ID\n";
+    exit $exitnonzeroonerror;
+  }
   my $r = getCallForRedditId($call);
   if (! defined($r)) {
     print "not found: ${call}\n";
@@ -443,9 +453,9 @@ if (defined($qsl) or defined($lotw) or defined($eqsl) or defined ($mailqsl)) {
   $qsltext .= "[$qslflags]" if length($qslflags) gt 0;
   print " -- QSL: $qsltext" if length($qsltext) gt 0;
 }
-print " -- IRC: $ircnick" if defined($ircnick) and length($ircnick) gt 0;
+print " -- IRC: $ircnick" if defined($ircnick) and length($ircnick) gt 0 and not $noDox;
 
-if (defined($redditid) and length($redditid) gt 0) {
+if (defined($redditid) and length($redditid) gt 0 and not $noDox) {
   if ($redditid =~ /^\/u\//) {
     print " -- $redditid";
   } else {
