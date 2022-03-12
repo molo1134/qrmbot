@@ -306,13 +306,12 @@ sub rangeAndBearing {
   my $bearing = shift;
 
   my @origin = NESW($lon, $lat);
-  my ($lat2, $lon2);
 
   my $diro = deg2rad($bearing);
   my $distance = $range / 6378.1; # in radians
 
   ($thetad, $phid, $dird) = great_circle_destination(@origin, $diro, $distance);
-  my ($lon2, $lat2) = (rad2deg($thetad), rad2deg($phid));
+  my ($lon2, $lat2) = (rad2deg($thetad), rad2deg($phid)); # note order
 
   return ($lat2, $lon2);
 }
