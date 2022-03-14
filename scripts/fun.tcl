@@ -668,6 +668,8 @@ proc imdb_msg {nick uhand handle input} {
 
 bind msg - !gas gas_msg
 bind pub - !gas gas_pub
+bind msg - !diesel diesel_msg
+bind pub - !diesel diesel_pub
 set gasbin "/home/eggdrop/bin/gasprice"
 proc gas_pub { nick host hand chan text } {
 	if [string equal "#amateurradio" $chan] then {
@@ -688,7 +690,6 @@ proc gas_pub { nick host hand chan text } {
 	}
 	close $fd
 }
-
 proc gas_msg {nick uhand handle input} {
 	global gasbin
 	set loc [sanitize_string [string trim "${input}"]]
@@ -704,6 +705,12 @@ proc gas_msg {nick uhand handle input} {
 		putmsg "$nick" "$line"
 	}
 	close $fd
+}
+proc diesel_pub { nick host hand chan text } {
+	gas_pub "$nick" "$host" "$hand" "$chan" "--diesel $text"
+}
+proc diesel_msg {nick uhand handle input} {
+	gas_msg "$nick" "$uhand" "$handle" "--diesel $input"
 }
 
 putlog "fun.tcl loaded."

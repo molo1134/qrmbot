@@ -34,11 +34,19 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 my $geo = undef;
 my $query = undef;
 
+my $fuelId = 1; # TODO
+my $dist = 10; # km TODO
+
 my $i = 0;
 while ($i <= $#ARGV) {
   if (!defined($geo) and $ARGV[$i] =~ /^--geo$/i) {
     $i++;
     $geo = $ARGV[$i];
+    $i++;
+    next;
+  }
+  if ($ARGV[$i] =~ /^--diesel$/i) {
+    $fuelId = 4;
     $i++;
     next;
   }
@@ -68,9 +76,6 @@ if (defined $query and not defined $result) {
 
 my ($mylat, $mylon) = split(',', $geo) if defined $geo;
 ($mylat, $mylon) = split(',', $result) if defined $result;
-
-my $fuelId = 1; # TODO
-my $dist = 10; # km TODO
 
 my ($maxlat, undef) = rangeAndBearing($mylat, $mylon, $dist, 0);
 my ($minlat, undef) = rangeAndBearing($mylat, $mylon, $dist, 180);
