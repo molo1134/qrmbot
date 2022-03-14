@@ -87,6 +87,9 @@ proc debt_msg {nick uhand handle input} {
 	close $fd
 }
 proc debt_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global debtbin
 	putlog "debt pub: $nick $host $hand $chan"
 	set fd [open "|${debtbin}" r]
@@ -171,6 +174,9 @@ bind pub - !stonk stock_pub
 bind msg - !stonk stock_msg
 set stockbin "/home/eggdrop/bin/stock"
 proc stock_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global stockbin
 	set param [sanitize_string [string trim "${text}"]]
 	putlog "stock pub: $nick $host $hand $chan $param"
@@ -240,14 +246,23 @@ proc do_wwv_beep_pub { chan } {
 }
 
 proc metard { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	putchan $chan "$nick you tard"
 }
 
 proc truck { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	putchan $chan "truck you, $nick"
 }
 
 proc brexit { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global brexitbin
 	putlog "brexit: $nick $host $hand $chan"
 	set fd [open "|${brexitbin}" r]
@@ -259,6 +274,9 @@ proc brexit { nick host hand chan text } {
 }
 
 proc christmas { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global christmasbin
 	putlog "christmas: $nick $host $hand $chan"
 	set fd [open "|${christmasbin}" r]
@@ -273,6 +291,9 @@ bind pub - !potus potus
 bind pub - !trumpectomy potus
 set potusbin "/home/eggdrop/bin/potus"
 proc potus { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global potusbin
 	putlog "potus: $nick $host $hand $chan"
 	set fd [open "|${potusbin}" r]
@@ -321,6 +342,9 @@ bind msg - !covid19 corona_msg
 bind msg - !c19 corona_msg
 set coronabin "/home/eggdrop/bin/corona"
 proc corona_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global coronabin
 	set cleantext [sanitize_string [string trim "${text}"]]
 	putlog "corona pub: $nick $host $hand $chan $cleantext"
@@ -344,6 +368,9 @@ proc corona_msg {nick uhand handle input} {
 }
 
 proc primaries { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global primariesbin
 	set cleantext [sanitize_string [string trim "${text}"]]
 	putlog "primaries: $nick $host $hand $chan $cleantext"
@@ -356,6 +383,9 @@ proc primaries { nick host hand chan text } {
 }
 
 proc fivethirtyeight_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global fivethirtyeightbin
 	set param [sanitize_string [string trim "${text}"]]
 	putlog "fivethirtyeight pub: $nick $host $hand $chan $param"
@@ -378,6 +408,9 @@ proc fivethirtyeight_msg {nick uhand handle input} {
 	close $fd
 }
 proc senate_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global fivethirtyeightbin
 	set param [sanitize_string [string trim "${text}"]]
 	putlog "senate pub: $nick $host $hand $chan $param"
@@ -400,6 +433,9 @@ proc senate_msg {nick uhand handle input} {
 	close $fd
 }
 proc house_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global fivethirtyeightbin
 	set param [sanitize_string [string trim "${text}"]]
 	putlog "house pub: $nick $host $hand $chan $param"
@@ -426,6 +462,9 @@ bind pub - !ammo ammo_pub
 bind msg - !ammo ammo_msg
 set ammobin "/home/eggdrop/bin/ammo"
 proc ammo_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global ammobin
 	set param [sanitize_string [string trim "${text}"]]
 	putlog "ammo pub: $nick $host $hand $chan $param"
@@ -476,26 +515,41 @@ proc coinflip_pub { nick host hand chan text } {
 }
 bind pub - !dice dice_pub
 proc dice_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	rando_pub "$nick" $host $hand $chan "--dice"
 }
 bind pub - !8ball eightball_pub
 bind pub - !magic8ball eightball_pub
 bind pub - !eightball eightball_pub
 proc eightball_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	rando_pub "$nick" $host $hand $chan "--8ball"
 }
 bind pub - !card card_pub
 proc card_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	rando_pub "$nick" $host $hand $chan "--card"
 }
 bind pub - !roulette roulette_pub
 bind pub - !wheel roulette_pub
 proc roulette_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	rando_pub "$nick" $host $hand $chan "--roulette"
 }
 bind pub - !draw draw_pub
 bind pub - !deal draw_pub
 proc draw_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global randobin
 	set param [sanitize_string [string trim "${text}"]]
 	putlog "draw pub: $nick $host $hand $chan $param"
@@ -509,6 +563,9 @@ proc draw_pub { nick host hand chan text } {
 
 bind pub - !cat cat_pub
 proc cat_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	set param [sanitize_string [string trim "${text}"]]
 	putlog "cat pub: $nick $host $hand $chan $param"
 	set msg(0) "cat"
@@ -544,6 +601,9 @@ bind msg - !amcon amcon_msg
 bind msg - !amccon amcon_msg
 bind msg - !amrron amcon_msg
 proc amcon_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global amconbin
 	set param [sanitize_string [string trim "${text}"]]
 	putlog "amcon pub: $nick $host $hand $chan $param"
@@ -581,6 +641,9 @@ bind pub - !imdb imdb_pub
 bind msg - !imdb imdb_msg
 set imdbbin "/home/eggdrop/bin/imdb"
 proc imdb_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global imdbbin
 	set cleantext [sanitize_string [string trim "${text}"]]
 	putlog "imdb pub: $nick $host $hand $chan $cleantext"
@@ -607,6 +670,9 @@ bind msg - !gas gas_msg
 bind pub - !gas gas_pub
 set gasbin "/home/eggdrop/bin/gasprice"
 proc gas_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 	global gasbin
 	set loc [sanitize_string [string trim "${text}"]]
 	set geo [qrz_getgeo $hand]
