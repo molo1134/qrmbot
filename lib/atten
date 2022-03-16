@@ -187,7 +187,11 @@ if ($len < 0.0) {
 $i = 0;
 my ($l, $h);
 while ($i <= $#lossMHz) {
-  if ($lossMHz[$i] <= $freq and $lossMHz[$i+1] >= $freq) {
+  if ($lossMHz[$i] == $freq) {
+    $l = $h = $i;
+    last;
+  }
+  if ($lossMHz[$i] <= $freq and $lossMHz[$i+1] > $freq) {
     $l = $i;
     $h = $i+1;
     last;
@@ -195,18 +199,21 @@ while ($i <= $#lossMHz) {
   $i++;
 }
 
-while (not defined $loss{$coax}[$l] and $l >= 0) {
-  $l--;
-}
-while (not defined $loss{$coax}[$h] and $h <= $#lossMHz) {
-  $h++;
+if ($l != $h or not defined $loss{$coax}[$l]) {
+  while (not defined $loss{$coax}[$l] and $l > 0) {
+    $l--;
+  }
+  while (not defined $loss{$coax}[$h] and $h <= $#lossMHz) {
+    $h++;
+  }
 }
 
 #print "$lossMHz[$l] ≤ $freq ≤ $lossMHz[$h]\n";
-#print "$loss{$coax}[$l] ≤ $freq ≤ $loss{$coax}[$h]\n";
+#print "$loss{$coax}[$l] ≤ $loss{$coax}[$h]\n";
 
 # linear interpolation
-my $freq_fraction = ($freq - $lossMHz[$l]) / ($lossMHz[$h] - $lossMHz[$l]);
+my $freq_fraction = 1.0;
+$freq_fraction = ($freq - $lossMHz[$l]) / ($lossMHz[$h] - $lossMHz[$l]) if $h != $l;
 my $atten = (($loss{$coax}[$h] - $loss{$coax}[$l]) * $freq_fraction) + $loss{$coax}[$l];
 
 open (UNITS, '-|', "units --compact '$len $len_units / 100 ft'");
@@ -218,7 +225,7 @@ if (not isNumeric($len_fraction)) {
 }
 
 my $atten_at_len = nearest(0.01, $len_fraction * $atten);
-my $atten_m = nearest (0.01, $atten * 3.2808399);
+my $atten_m = nearest (0.01, $atten * 3.2808399); # 3.28 ft/m
 $atten = nearest(0.01, $atten);
 
 print "$coax ($imp{$coax}Ω) attenuation estimated at $freq $freq_units: $atten dB/100 ft ($atten_m dB/100 m); loss \@length $len $len_units: ", bold("$atten_at_len dB"), "\n";
