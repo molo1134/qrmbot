@@ -116,9 +116,48 @@ while ($i <= $#ARGV) {
   $i++;
 }
 
+if (defined $coax and defined $freq and defined $freq_units and not defined $len and not defined $len_units) {
+  # default to 100 ft
+  $len = 100;
+  $len_units = "ft";
+}
+
+if (defined $coax and (not defined $freq or not defined $len or not defined $freq_units or not defined $len_units)) {
+  # display the attenuation table
+  my @types = keys %loss;
+  my $uc_coax = uc $coax;
+  if (not $coax ~~ @types and not $uc_coax ~~ @types) {
+    print "Unable to find coax type \"$coax\". Valid types: ", join(", ", sort keys %loss), "\n";
+    exit $exitnonzeroonerror;
+  }
+  $coax = $uc_coax if not defined $loss{$coax};
+
+  print bold($coax), ": ";
+  print "\n" if $username ne getEggdropUID();
+  for (my $i = 0; $i <= $#lossMHz; $i++) {
+    if (defined $loss{$coax}[$i]) {
+      print "$lossMHz[$i] MHz => $loss{$coax}[$i] dB/100ft";
+      if ($username ne getEggdropUID()) {
+	print "\n";
+      } else {
+	print "; ";
+      }
+    }
+  }
+  print "\n" if $username eq getEggdropUID();
+  exit 0;
+}
+
 if (not defined $coax or not defined $freq or not defined $len or not defined $freq_units or not defined $len_units) {
   print "syntax : !atten <coax type> <freq> <freq units> <length> <length units>\n";
   print "example: !atten LMR-400 446.0 MHz 12.5 m\n";
+  exit $exitnonzeroonerror;
+}
+
+my @types = keys %loss;
+my $uc_coax = uc $coax;
+if (not $coax ~~ @types and not $uc_coax ~~ @types) {
+  print "Unable to find coax type \"$coax\". Valid types: ", join(", ", sort keys %loss), "\n";
   exit $exitnonzeroonerror;
 }
 
@@ -141,13 +180,6 @@ if ($freq_units eq "kHz") {
 }
 if ($freq_units ne "MHz") {
   print "unsupported frequency units: $freq_units\n";
-  exit $exitnonzeroonerror;
-}
-
-my @types = keys %loss;
-my $uc_coax = uc $coax;
-if (not $coax ~~ @types and not $uc_coax ~~ @types) {
-  print "Unable to find coax type \"$coax\". Valid types: ", join(", ", sort keys %loss), "\n";
   exit $exitnonzeroonerror;
 }
 
