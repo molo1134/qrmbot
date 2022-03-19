@@ -1,0 +1,127 @@
+#!/usr/bin/perl -w
+
+# Find current POTA activity
+# Borrowing some code from "spots" program
+
+# 2-clause BSD license.
+# Copyright (c) 2018,2022 molo1134@github. All rights reserved.
+
+use strict;
+use DateTime::Format::Strptime;
+use JSON qw( decode_json );
+use v5.10;
+
+use POSIX qw(strftime);
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Location;
+use Util;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# configuration
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+my $defaultSpots = 20;
+my $defaultSpotsForEggdrop = 3;
+
+my $limit;
+if ($username eq getEggdropUID()) {
+  $limit = $defaultSpotsForEggdrop;
+} else {
+  $limit = $defaultSpots;
+}
+
+############################
+
+# when calling from eggdrop, parameters may be packed into first parameter.
+if ($#ARGV == 0 && $ARGV[0] =~ m/ /) {
+  @ARGV = split / /, $ARGV[0];
+}
+
+my ($phone, $cw, $digi, $all) = (0, 0, 0, 1);
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /--(ssb|phone)/i) {
+    $phone = 1;
+    $all = 0;
+    $i++; next;
+  }
+  if ($ARGV[$i] =~ /--cw/i) {
+    $cw = 1;
+    $all = 0;
+    $i++; next;
+  }
+  if ($ARGV[$i] =~ /--digi/i) {
+    $digi = 1;
+    $all = 0;
+    $i++; next;
+  }
+
+  if ($ARGV[$i] =~ /^\d+$/) {
+    $limit = $ARGV[$i];
+    $limit = 8 if $limit > 8 and $username eq getEggdropUID();
+  }
+  $i++;
+}
+
+my $url = "https://api.pota.app/spot/activator";
+local $/;   # read entire file -- FIXME: potentially memory hungry
+open (HTTP, '-|', "curl -L -4 -k --max-time 4 --retry 1 -s '$url'");
+my $json = <HTTP>;
+close(HTTP);
+
+my $j = decode_json($json) or die "parse error: $json\n";
+
+my $dtparser = DateTime::Format::Strptime->new(
+  #see strftime
+  pattern => '%Y-%m-%dT%H:%M:%S',
+  time_zone => 'UTC',
+  on_error => 'undef');
+
+my @spots;
+
+foreach my $s (@{$j}) {
+  next if not $all and $cw and uc $s->{mode} ne "CW";
+  next if not $all and $phone and not $s->{mode} =~ m/(SSB|USB|LSB|FM|AM)/i;
+  next if not $all and $digi and not $s->{mode} =~ m/(RTTY|FT8|FT4|JT9|JT65|PSK|JS8)/i;
+
+  my $dt = $dtparser->parse_datetime($s->{spotTime});
+  my $ts = $dt->epoch();
+  my $cmt = $s->{comments};
+  $cmt =~ s/RBN //;
+  my $desc = "$s->{reference} $s->{locationDesc} $s->{mode} $cmt";
+  my $de = $s->{spotter};
+  $de =~ s/-#//;
+  push (@spots, {ts => $ts,
+		  src => "P",
+		  de => $de,
+		  dx => $s->{activator},
+		  f => $s->{frequency},
+		  msg => substr($desc, 0 , 28)}
+	      );
+}
+
+my @sortedspots = sort { $b->{ts} <=> $a->{ts} } @spots;  # descending
+
+show(\@sortedspots);
+
+sub show
+{
+  my ($array) = @_;
+  my $i = 0;
+  if ((scalar @$array) == 0) {
+    say "no spots found";
+  }
+  foreach my $spotref (@$array) {
+    my %spot = %$spotref;
+    printf "%-7s %-7s %5d %-28s %s %s\n", $spot{de}, $spot{dx}, $spot{f}, $spot{msg}, strftime("%H%Mz %d %b", gmtime($spot{ts})), $spot{src};
+    if (++$i >= $limit) {
+      last;
+    }
+  }
+}

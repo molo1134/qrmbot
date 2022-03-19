@@ -165,6 +165,13 @@ bind pub - !coax atten_pub
 bind msg - !pota pota_msg
 bind pub - !pota pota_pub
 
+bind msg - !potaspots potaspots_msg
+bind pub - !potaspots potaspots_pub
+bind msg - !pspots potaspots_msg
+bind pub - !pspots potaspots_pub
+bind msg - !pspot potaspots_msg
+bind pub - !pspot potaspots_pub
+
 bind msg - !sota sota_msg
 bind pub - !sota sota_pub
 
@@ -204,6 +211,7 @@ set qcodebin "/home/eggdrop/bin/qcode"
 set dxpedbin "/home/eggdrop/bin/dxpeditions"
 set blitzbin "/home/eggdrop/bin/blitz"
 set attenbin "/home/eggdrop/bin/atten"
+set potaspotsbin "/home/eggdrop/bin/potaspots"
 set potabin "/home/eggdrop/bin/pota"
 set sotabin "/home/eggdrop/bin/sota"
 set iotabin "/home/eggdrop/bin/iota"
@@ -1813,6 +1821,29 @@ proc pota_msg {nick uhand handle input} {
 	set params [sanitize_string [string trim "${input}"]]
 	putlog "pota msg: $nick $uhand $handle $params"
 	set fd [open "|${potabin} ${params}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
+proc potaspots_pub { nick host hand chan text } {
+	global potaspotsbin
+	set params [sanitize_string [string trim "${text}"]]
+	putlog "potaspots pub: $nick $host $hand $chan $params"
+	set fd [open "|${potaspotsbin} ${params}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc potaspots_msg {nick uhand handle input} {
+	global potaspotsbin
+	set params [sanitize_string [string trim "${input}"]]
+	putlog "potaspots msg: $nick $uhand $handle $params"
+	set fd [open "|${potaspotsbin} ${params}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg "$nick" "$line"
