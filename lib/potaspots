@@ -94,9 +94,9 @@ foreach my $s (@{$j}) {
   my $ts = $dt->epoch();
   my $cmt = $s->{comments};
   $cmt =~ s/RBN //;
-  my $desc = "$s->{reference} $s->{locationDesc} $s->{mode} $cmt";
   my $de = $s->{spotter};
   $de =~ s/-#//;
+  my $desc = "$s->{reference} $s->{locationDesc} $s->{mode} $cmt";
   push (@spots, {ts => $ts,
 		  src => "P",
 		  de => $de,

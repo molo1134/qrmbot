@@ -670,10 +670,14 @@ sub doPotaspot
     next if $callsign ne $s->{activator};
     my $dt = $dtparser->parse_datetime($s->{spotTime});
     my $ts = $dt->epoch();
-    my $desc = "$s->{reference} $s->{locationDesc} $s->{comments}";
+    my $cmt = $s->{comments};
+    $cmt =~ s/RBN //;
+    my $de = $s->{spotter};
+    $de =~ s/-#//;
+    my $desc = "$s->{reference} $s->{locationDesc} $s->{mode} $cmt";
     push (@spots, {ts => $ts,
 		    src => "P",
-		    de => $s->{spotter},
+		    de => $de,
 		    dx => $s->{activator},
 		    f => $s->{frequency},
 		    msg => substr($desc, 0 , 28)}
