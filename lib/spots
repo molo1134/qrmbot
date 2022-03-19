@@ -44,9 +44,9 @@ my $defaultSpotsForEggdrop = 3;
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq getEggdropUID()) {
-    print "usage: !spots [--dxw] [--rbn] [--psk] [--ham] <callsign> [limit]\n";
+    print "usage: !spots [--dxw] [--rbn] [--psk] [--ham] [--pota] <callsign> [limit]\n";
   } else {
-    print "usage: $0 [--dxw] [--rbn] [--psk] [--ham] <callsign> [limit]\n";
+    print "usage: $0 [--dxw] [--rbn] [--psk] [--ham] [--pota] <callsign> [limit]\n";
   }
   exit $exitnonzeroonerror;
 }
@@ -66,6 +66,7 @@ my $psk = 0;
 my $dxw = 0;
 my $rbn = 0;
 my $ham = 0;
+my $pota = 0;
 
 # when calling from eggdrop, parameters may be packed into first parameter.
 if ($#ARGV == 0 && $ARGV[0] =~ m/ /) {
@@ -96,10 +97,14 @@ while ($i <= $#ARGV) {
     $ham = 1;
     $i++; next;
   }
+  if ($ARGV[$i] =~ /--pota/) {
+    $pota = 1;
+    $i++; next;
+  }
   if (!defined($callsign) and $ARGV[$i] =~ /^\d{3,}$/) {
     # callsign is frequency in khz -- search for matching spot
     $callsign = $ARGV[$i];
-    $psk = $ham = 0;
+    $psk = $ham = $pota = 0;
     $dxw = $rbn = 1;
   }
   if (!defined($callsign)) {
@@ -113,11 +118,12 @@ while ($i <= $#ARGV) {
   $i++;
 }
 
-if ($dxw == 0 && $rbn == 0 && $psk == 0 && $ham == 0) {
+if ($dxw == 0 && $rbn == 0 && $psk == 0 && $ham == 0 && $pota == 0) {
   $dxw = 1;
   $rbn = 1;
   $psk = 1;
   $ham = 1;
+  $pota = 1;
 }
 
 $callsign = "" unless defined $callsign;
@@ -151,6 +157,7 @@ doPSKreporter() unless $psk == 0;
 doDXWatch(0) unless $dxw == 0;	  # dx watch
 doDXWatch(1) unless $rbn == 0;	  # reverse beacon network
 doHamspots() unless $ham == 0;
+doPotaspot() unless $pota == 0;
 
 my @sortedspots = sort { $b->{ts} <=> $a->{ts} } @spots;  # descending
 
@@ -641,5 +648,37 @@ sub gridDist {
   return $dist;
 }
 
+
+sub doPotaspot
+{
+  my $url = "https://api.pota.app/spot/activator";
+
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  open (HTTP, '-|', "curl -L -4 -k --max-time 4 --retry 1 -s '$url'");
+  my $json = <HTTP>;
+  close(HTTP);
+
+  my $j = decode_json($json) or die "parse error: $json\n";
+
+  my $dtparser = DateTime::Format::Strptime->new(
+    #see strftime
+    pattern => '%Y-%m-%dT%H:%M:%S',
+    time_zone => 'UTC',
+    on_error => 'undef');
+
+  foreach my $s (@{$j}) {
+    next if $callsign ne $s->{activator};
+    my $dt = $dtparser->parse_datetime($s->{spotTime});
+    my $ts = $dt->epoch();
+    my $desc = "$s->{reference} $s->{locationDesc} $s->{comments}";
+    push (@spots, {ts => $ts,
+		    src => "P",
+		    de => $s->{spotter},
+		    dx => $s->{activator},
+		    f => $s->{frequency},
+		    msg => substr($desc, 0 , 28)}
+		);
+  }
+}
 
 # vim: set ts=8 sw=2 sts=2
