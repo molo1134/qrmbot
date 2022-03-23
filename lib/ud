@@ -68,5 +68,9 @@ $ex =~ s/\\"/"/g;
 my $shortUrl = shortenUrl($d->{permalink});
 $shortUrl = $d->{permalink} if not defined $shortUrl;
 
-print bold($d->{word}), " --", green(" $d->{thumbs_up}↑"), red(" $d->{thumbs_down}↓"), "; ", $shortUrl, " -- ", $def, " -- ", $ex, "\n";
+my $output = bold($d->{word}). " --". green(" $d->{thumbs_up}↑"). red(" $d->{thumbs_down}↓"). "; ". $shortUrl. " -- ". $def. " -- ". $ex;
+
+$output = substr($output, 0, 425) if $username eq getEggdropUID();
+$output .= "…" if length($output) == 425 and $username eq getEggdropUID();
+print $output, "\n";
 
