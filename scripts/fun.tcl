@@ -713,5 +713,34 @@ proc diesel_msg {nick uhand handle input} {
 	gas_msg "$nick" "$uhand" "$handle" "--diesel $input"
 }
 
+bind pub - !ud ud_pub
+bind msg - !ud ud_msg
+set udbin "/home/eggdrop/bin/ud"
+proc ud_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	global udbin
+	set cleantext [sanitize_string [string trim "${text}"]]
+	putlog "ud pub: $nick $host $hand $chan $cleantext"
+	set fd [open "|${udbin} ${cleantext}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc ud_msg {nick uhand handle input} {
+	global udbin
+	set param [sanitize_string [string trim "${input}"]]
+	putlog "ud msg: $nick $uhand $handle $param"
+	set fd [open "|${udbin} ${param} " r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
 putlog "fun.tcl loaded."
 

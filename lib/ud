@@ -1,0 +1,72 @@
+#!/usr/bin/perl
+
+# 2-clause BSD license.
+# Copyright (c) 2022 molo1134@github. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+use Encode qw(decode);
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Util;
+use Colors;
+
+use URI::Escape;
+use JSON qw( decode_json );
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+my $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+@ARGV = map { decode "utf-8", $_ } @ARGV;
+my $term = join(" ", @ARGV);
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq getEggdropUID()) {
+    print "usage: !ud <term>\n";
+  } else {
+    print "usage: $0 <term>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $urlbase = "https://api.urbandictionary.com/v0/define?term=";
+my $search_url = $urlbase . uri_escape("$term");
+
+local $/;   # read entire file -- FIXME: potentially memory hungry
+open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$search_url'");
+my $json = <JSON>;
+close(JSON);
+
+#print $json, "\n";
+my $j = decode_json($json);
+
+if (not defined $j->{list}->[0]) {
+  print "not found: $term\n";
+  exit 0;
+}
+
+my $d = $j->{list}->[0];
+
+my $def = $d->{definition};
+$def =~ s/[\n\r]/ /g if $username eq getEggdropUID();
+$def =~ s/\\[nr]/ /g if $username eq getEggdropUID();
+$def =~ s/ \s+/ /g if $username eq getEggdropUID();
+$def =~ s/\\"/"/g;
+my $ex = $d->{example};
+$ex =~ s/[\n\r]/ /g if $username eq getEggdropUID();
+$ex =~ s/\\[nr]/ /g if $username eq getEggdropUID();
+$ex =~ s/ \s+/ /g if $username eq getEggdropUID();
+$ex =~ s/\\"/"/g;
+
+my $shortUrl = shortenUrl($d->{permalink});
+$shortUrl = $d->{permalink} if not defined $shortUrl;
+
+print bold($d->{word}), " --", green(" $d->{thumbs_up}↑"), red(" $d->{thumbs_down}↓"), "; ", $shortUrl, " -- ", $def, " -- ", $ex, "\n";
+
