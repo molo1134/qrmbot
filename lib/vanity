@@ -105,16 +105,18 @@ sub doRegion {
   my @upcoming;
   my @unavail;
   my %regionPreds;
+  my %regionComp;
   open(HTTP, '-|', "curl --max-time $httpTimeout -L -k -s '$url'");
   while(<HTTP>) {
     chomp;
     next if /^#/;
-    my ($call, $status, $odds) = split /,/;
+    my ($call, $status, $odds, $comp) = split /,/;
     push @avail, $call if $status eq "available";
     push @unavail, $call if $status eq "blocked";
     push @upcoming, $call if $status eq "upcoming";
     push @pending, $call if $status eq "pending";
     $regionPreds{$call} = $odds if $status eq "pending";
+    $regionComp{$call} = $comp if defined $comp and $comp ne "";
   }
   close(HTTP);
 
@@ -143,8 +145,15 @@ sub doRegion {
     print ": ";
     foreach my $c (@pending) {
       print lightblue($c);
-      print yellow(" ($regionPreds{$c}%)") # \
-	if defined $regionPreds{$c} and $regionPreds{$c} < 99.5; # allow for rounding
+      my $dopct = (defined $regionPreds{$c} and $regionPreds{$c} < 99.5); # allow for rounding
+      my $docomp = (defined $regionComp{$c} and $regionComp{$c} > 1);
+      if ($dopct or $docomp) {
+	  print " (";
+	  print yellow("$regionPreds{$c}%") if $dopct;
+	  print " " if $dopct and $docomp;
+	  print "$regionComp{$c}x" if $docomp;
+	  print ")";
+      }
       print ", " unless ++$num == scalar @pending;
     }
     #print ": ", lightblue(join(", ", @pending)) if scalar @pending > 0;
