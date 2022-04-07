@@ -190,21 +190,21 @@ sub sfiToColorBlocks {
     } elsif ($index < 5) {
       $_ = darkYellow($chars[int($index)]);
     } elsif ($index < 6) {
-      $_ = green($chars[int($index)]);
+      $_ = yellow($chars[int($index)]);
     } elsif ($index < 7) {
-      $_ = green($chars[int($index)]);
+      $_ = yellow($chars[int($index)]);
     } elsif ($index < 8) {
-      $_ = lightgreen($chars[int($index)]);
+      $_ = green($chars[int($index)]);
     } elsif ($index < 9) {
-      $_ = lightgreen($chars[int($index)]);
+      $_ = green($chars[int($index)]);
     } elsif ($index < 10) {
-      $_ = lightblue($chars[int($index)]);
+      $_ = lightgreen($chars[int($index)]);
     } elsif ($index < 11) {
-      $_ = lightblue($chars[int($index)]);
+      $_ = lightgreen($chars[int($index)]);
     } elsif ($index < 12) {
-      $_ = blue($chars[int($index)]);
+      $_ = lightblue($chars[int($index)]);
     } elsif ($index < 13) {
-      $_ = blue($chars[int($index)]);
+      $_ = lightblue($chars[int($index)]);
     } elsif ($index < 14) {
       $_ = cyan($chars[int($index)]);
     } elsif ($index < 15) {

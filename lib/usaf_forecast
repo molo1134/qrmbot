@@ -148,30 +148,57 @@ sub aIndexToColorBlocks {
   return @_;
 }
 
-# SFI   < 80: dark red
-# SFI  81-94: red
-# SFI 95-119: yellow
-# SFI  > 120: green
 sub sfiToColorBlocks {
+  # linear scale from 75 to 235, with 16 steps
+  my $minscale = 75;
+  my $maxscale = 235;
+  my $steps = 16;
+  my @chars = split(//, "▁▁▂▂▃▃▄▄▅▅▆▆▇▇██↑↑");
+
   map {
-    if ($_ < 81) {
-      $_ = darkRed("▁");
-    } elsif ($_ < 88) {
-      $_ = red("▂");
-    } elsif ($_ < 95) {
-      $_ = red("▃");
-    } elsif ($_ < 103) {
-      $_ = yellow("▄");
-    } elsif ($_ < 111) {
-      $_ = yellow("▅");
-    } elsif ($_ < 120) {
-      $_ = yellow("▆");
-    } elsif ($_ < 130) {
-      $_ = green("▇");
-    } elsif ($_ < 140) {
-      $_ = green("█");
+    my $rescale = $_ - $minscale;
+    my $index;
+    if ($_ < $minscale) {
+      $index = 0;
     } else {
-      $_ = green("↑");
+      $index = int($rescale / (($maxscale-$minscale)/$steps));
+    }
+    #print "sfi: $_; index: $index; $chars[$index]\n";
+
+    if ($index < 1) {
+      $_ = darkRed($chars[int($index)]);
+    } elsif ($index < 2) {
+      $_ = red($chars[int($index)]);
+    } elsif ($index < 3) {
+      $_ = red($chars[int($index)]);
+    } elsif ($index < 4) {
+      $_ = darkYellow($chars[int($index)]);
+    } elsif ($index < 5) {
+      $_ = darkYellow($chars[int($index)]);
+    } elsif ($index < 6) {
+      $_ = yellow($chars[int($index)]);
+    } elsif ($index < 7) {
+      $_ = yellow($chars[int($index)]);
+    } elsif ($index < 8) {
+      $_ = green($chars[int($index)]);
+    } elsif ($index < 9) {
+      $_ = green($chars[int($index)]);
+    } elsif ($index < 10) {
+      $_ = lightgreen($chars[int($index)]);
+    } elsif ($index < 11) {
+      $_ = lightgreen($chars[int($index)]);
+    } elsif ($index < 12) {
+      $_ = lightblue($chars[int($index)]);
+    } elsif ($index < 13) {
+      $_ = lightblue($chars[int($index)]);
+    } elsif ($index < 14) {
+      $_ = cyan($chars[int($index)]);
+    } elsif ($index < 15) {
+      $_ = cyan($chars[int($index)]);
+    } elsif ($index < 16) {
+      $_ = lightcyan($chars[int($index)]);
+    } else {
+      $_ = magenta("↑");
     }
   } @_;
   return @_;

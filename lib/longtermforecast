@@ -112,37 +112,74 @@ printf "NASA:%s\n", yearMarkers(sort keys %sfi);
 printf "SFI: %s : $minsfi-$maxsfi\n", join("", sfiToColorBlocks($minsfi, $maxsfi, \%sfi));
 printf "AP:  %s : $minap-$maxap\n", join("", apToColorBlocks($minap, $maxap, \%ap));
 
-# SFI   < 80: dark red
-# SFI  81-94: red
-# SFI 95-119: yellow
-# SFI  > 120: green
 sub sfiToColorBlocks {
-
   my $minsfi = shift;
   my $maxsfi = shift;
   my $hashref = shift;
   my %sfi = %$hashref;
 
-  my $chr = undef;
   my @result;
+
+  # linear scale from 75 to 235, with 16 steps
+  my $minscale = 75;
+  my $maxscale = 235;
+  my $steps = 16;
+  my @chars = split(//, "▁▁▂▂▃▃▄▄▅▅▆▆▇▇██↑↑");
 
   foreach my $k (sort(keys(%sfi))) {
     my $v = $sfi{$k};
 
-    $chr = valToBlock($v, $minsfi, $maxsfi);
+    #print "$k => $v\n";
 
     # year boundary
     push @result,"|" if ($k =~ /-01$/);
 
-    if ($v < 81.0) {
-      push @result, darkRed($chr);
-    } elsif ($v < 95.0) {
-      push @result, red($chr);
-    } elsif ($v < 120.0) {
-      push @result, yellow($chr);
+    my $chr;
+
+    my $rescale = $v - $minscale;
+    my $index;
+    if ($v < $minscale) {
+      $index = 0;
     } else {
-      push @result, green($chr);
+      $index = int($rescale / (($maxscale-$minscale)/$steps));
     }
+
+    if ($index < 1) {
+      $chr = darkRed($chars[int($index)]);
+    } elsif ($index < 2) {
+      $chr = red($chars[int($index)]);
+    } elsif ($index < 3) {
+      $chr = red($chars[int($index)]);
+    } elsif ($index < 4) {
+      $chr = darkYellow($chars[int($index)]);
+    } elsif ($index < 5) {
+      $chr = darkYellow($chars[int($index)]);
+    } elsif ($index < 6) {
+      $chr = yellow($chars[int($index)]);
+    } elsif ($index < 7) {
+      $chr = yellow($chars[int($index)]);
+    } elsif ($index < 8) {
+      $chr = green($chars[int($index)]);
+    } elsif ($index < 9) {
+      $chr = green($chars[int($index)]);
+    } elsif ($index < 10) {
+      $chr = lightgreen($chars[int($index)]);
+    } elsif ($index < 11) {
+      $chr = lightgreen($chars[int($index)]);
+    } elsif ($index < 12) {
+      $chr = lightblue($chars[int($index)]);
+    } elsif ($index < 13) {
+      $chr = lightblue($chars[int($index)]);
+    } elsif ($index < 14) {
+      $chr = cyan($chars[int($index)]);
+    } elsif ($index < 15) {
+      $chr = cyan($chars[int($index)]);
+    } elsif ($index < 16) {
+      $chr = lightcyan($chars[int($index)]);
+    } else {
+      $chr = magenta("↑");
+    }
+    push @result,$chr;
   }
   return @result;
 }

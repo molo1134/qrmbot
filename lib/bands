@@ -119,21 +119,43 @@ sub colorCondx {
 }
 
 
-# SFI   < 80: dark red
-# SFI  81-94: red
-# SFI 95-119: yellow
-# SFI  > 120: green
 sub colorSfi {
+  # linear scale from 75 to 235, with 16 steps
   $_ = shift;
-  if ($_ < 81) {
-    $_ = darkRed($_);
-  } elsif ($_ < 95) {
-    $_ = red($_);
-  } elsif ($_ < 120) {
-    $_ = yellow($_);
+  my $minscale = 75;
+  my $maxscale = 235;
+  my $steps = 16;
+
+  my $rescale = $_ - $minscale;
+  my $index;
+  if ($_ < $minscale) {
+    $index = 0;
   } else {
-    $_ = green($_);
+    $index = int($rescale / (($maxscale-$minscale)/$steps));
   }
+
+  if ($index < 1) {
+    $_ = darkRed($_);
+  } elsif ($index < 3) {
+    $_ = red($_);
+  } elsif ($index < 5) {
+    $_ = darkYellow($_);
+  } elsif ($index < 7) {
+    $_ = yellow($_);
+  } elsif ($index < 9) {
+    $_ = green($_);
+  } elsif ($index < 11) {
+    $_ = lightgreen($_);
+  } elsif ($index < 13) {
+    $_ = lightblue($_);
+  } elsif ($index < 15) {
+    $_ = cyan($_);
+  } elsif ($index < 16) {
+    $_ = lightcyan($_);
+  } else {
+    $_ = magenta($_);
+  }
+
   return $_;
 }
 
