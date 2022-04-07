@@ -8,7 +8,7 @@
 package Colors;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(darkRed red redOnWhite blackOnWhite yellow green lightgreen lightblue darkYellow lightGrey grey cyan lightcyan magenta bold underline inverse italic strikethrough blink monospace optimizeIrcColor);
+@EXPORT = qw(darkRed red redOnWhite blackOnWhite yellow green lightgreen lightblue blue darkYellow lightGrey grey cyan lightcyan magenta bold underline inverse italic strikethrough blink monospace optimizeIrcColor);
 
 BEGIN {
   our $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
@@ -86,6 +86,11 @@ sub lightblue {
   my $s = shift;
   return undef if not defined($s);
   return colorIrcVt220("12", "1;34", $s);
+}
+sub blue {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("2", "34", $s);
 }
 sub darkYellow {
   my $s = shift;
