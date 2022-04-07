@@ -108,7 +108,7 @@ indicateEvent($lastday, "NA CW QSOP", getFullWeekendInMonth(1, "Aug"), 2);			# 1
 indicateEvent($lastday, "WAE DX CW", getFullWeekendInMonth(2, "Aug"), 2);			# 2nd full weekend in August
 indicateEvent($lastday, "NA SSB QSOP", getFullWeekendInMonth(3, "Aug"), 2);			# 3rd full weekend in August
 indicateEvent($lastday, "ARRL Rookie Roundup, RTTY", getIterDayInMonth(3, "Sunday", "Aug"), 1);	# 3rd Sunday in August
-indicateEvent($lastday, "WW Digi DX", getYearForDate("Aug", 31), 2);				# August 31, 2 days -- every year?? https://ww-digi.com FIXME
+indicateEvent($lastday, "WW Digi DX", getFullWeekendInMonth(5, "Aug"), 2);			# last full weekend in August https://ww-digi.com
 indicateEvent($lastday, "All Asian DX Phone", getFullWeekendInMonth(1, "Sep"), 2);		# 1st Saturday in Sept
 indicateEvent($lastday, "WAE DX SSB", getFullWeekendInMonth(2, "Sep"), 2);			# 2nd full weekend in September
 indicateEvent($lastday, "CQ WW RTTY DX", getFullWeekendInMonth(5, "Sep"), 2);			# last full weekend of september
