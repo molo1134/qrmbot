@@ -11,6 +11,7 @@ bind pub - !phoneticise phoneticise
 bind pub - !phoneticize phoneticise
 bind pub - !metard metard
 bind pub - !truck truck
+bind pub - !ooo ooooooo
 bind pub - !brexit brexit
 bind pub - !christmas christmas
 bind pub - !translate translate
@@ -257,6 +258,13 @@ proc truck { nick host hand chan text} {
 		return
 	}
 	putchan $chan "truck you, $nick"
+}
+
+proc ooooooo { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	putchan $chan "(⊙_⊙)  🔔🔔🔔 (^O^) OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
 }
 
 proc brexit { nick host hand chan text } {
