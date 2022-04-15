@@ -17,7 +17,7 @@ use Colors;
 use Math::Round;
 use JSON qw( decode_json );
 
-my ($updated, $aindex, $kindex, $solarflux, $sunspots);
+my ($updated, $aindex, $kindex, $rawkindex, $solarflux, $sunspots);
 my @bands;
 my @phenom;
 
@@ -43,7 +43,22 @@ my ($esfi, $essn);
   }
 }
 
-my $url = "http://www.hamqsl.com/solarxml.php";
+my $url = "https://www-app3.gfz-potsdam.de/kp_index/Kp_ap_nowcast.txt";
+open (HTTP, '-|', "curl --max-time 15 -s -k -L $url");
+while (<HTTP>) {
+  chomp;
+  next if m/^#/;
+  my @vals = split(/\s+/, $_);
+  next if $vals[7] == 1.000 or $vals[8] == -1;
+  #print "$vals[7] $vals[8]\n";
+  $aindex = $vals[8];
+  $rawkindex = $vals[7];
+  $kindex = int($vals[7]) if $vals[7] =~ /\.000/;
+  $kindex = int($vals[7]) . "+" if $vals[7] =~ /\.333/;
+  $kindex = int($vals[7]) + 1 . "-" if $vals[7] =~ /\.667/;
+}
+
+$url = "http://www.hamqsl.com/solarxml.php";
 open (HTTP, '-|', "curl --max-time 10 -s -k -L $url");
 while (<HTTP>) {
   chomp;
@@ -54,12 +69,12 @@ while (<HTTP>) {
   if (/<updated>\s*([^<]+)<\/updated>/) {
     $updated = $1;
   }
-  if (/<aindex>\s*([^<]+)<\/aindex>/) {
-    $aindex = $1;
-  }
-  if (/<kindex>\s*([^<]+)<\/kindex>/) {
-    $kindex = $1;
-  }
+  #if (/<aindex>\s*([^<]+)<\/aindex>/) {
+  #  $aindex = $1;
+  #}
+  #if (/<kindex>\s*([^<]+)<\/kindex>/) {
+  #  $kindex = $1;
+  #}
   if (/<solarflux>\s*([^<]+)<\/solarflux>/) {
     $solarflux = $1;
   }
@@ -75,13 +90,13 @@ while (<HTTP>) {
 }
 close(HTTP);
 
-if ($kindex > 4) {
+if ($rawkindex > 4.5) {
   s/Poor/Shit/ for @bands;
 }
 
 $solarflux = colorSfi($solarflux);
 $aindex = colorAIndex($aindex);
-$kindex = colorKIndex($kindex);
+$kindex = colorKIndex($kindex, $rawkindex);
 
 if (defined($ARGV[0]) and $ARGV[0] eq "-q") {
   print "Conditions as of $updated: SFI=$solarflux SN=$sunspots A=$aindex K=$kindex";
@@ -108,7 +123,7 @@ foreach my $p (@phenom) {
   my ($n, $l, $c) = split(/,/, $p);
   print " $n: $l $c;" if ! $c =~ /Closed/i;
 }
-print "\n";
+#print "\n";
 
 sub colorCondx {
   $_ = shift;
@@ -166,11 +181,12 @@ sub colorSfi {
 # Kindex > 7: light blue
 sub colorKIndex {
   $_ = shift;
-  if ($_ < 4) {
+  my $raw = shift;
+  if ($raw < 4) {
     $_ = green($_);
-  } elsif ($_ < 5) {
+  } elsif ($raw < 5) {
     $_ = yellow($_);
-  } elsif ($_ < 8) {
+  } elsif ($raw < 8) {
     $_ = red($_);
   } else {
     $_ = lightblue($_);
