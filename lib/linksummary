@@ -68,7 +68,7 @@ while ($i <= $#ARGV) {
     doImdb($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(\w+)\.wikipedia\.org/wiki/([^/\s]+)|i) {
     doWiki($1, $2);
-  } elsif ($ARGV[$i] =~ m|^https?://((www\|old\|np\|new)\.)?reddit\.com/r/\w+/comments/\w+/|i or
+  } elsif ($ARGV[$i] =~ m|^https?://((www\|old\|np\|new)\.)?reddit\.com/(r/\w+/)?comments/\w+/?|i or
 	  $ARGV[$i] =~ m|^https?://redd\.it/\w+|i) {
     doReddit($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://swap\.qth\.com/view_ad\.php\?counter=\d+|i) {
@@ -701,10 +701,10 @@ sub doReddit {
   my $jsonurl;
   my $commentId;
 
-  if ($url =~ m|https?://((www\|old\|np\|new)\.)?reddit\.com/r/\w+/comments/(\w+)/([^/]+/\w+/)?|i) {
-    $id = $3;
-    $commentId = $4 if defined $4;
-    $shortCommentUrl = shortenUrl($url) if defined($4);
+  if ($url =~ m|https?://((www\|old\|np\|new)\.)?reddit\.com/(r/\w+/comments/)?(\w+)/([^/]+/\w+/)?|i) {
+    $id = $4;
+    $commentId = $5 if defined $5;
+    $shortCommentUrl = shortenUrl($url) if defined($5);
     $jsonurl = $url;
     $jsonurl =~ s/context=\d+//;
     $jsonurl =~ s/(\?.*)?$/.json$1/;
