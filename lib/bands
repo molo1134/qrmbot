@@ -49,7 +49,7 @@ while (<HTTP>) {
   chomp;
   next if m/^#/;
   my @vals = split(/\s+/, $_);
-  next if $vals[7] == 1.000 or $vals[8] == -1;
+  next if $vals[7] == -1.000 or $vals[8] == -1;
   #print "$vals[7] $vals[8]\n";
   $aindex = $vals[8];
   $rawkindex = $vals[7];
