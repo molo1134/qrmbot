@@ -26,6 +26,9 @@ if (defined($ARGV[0]) and $ARGV[0] eq "about") {
   exit 0;
 }
 
+my $quick = 0;
+$quick = 1 if defined($ARGV[0]) and $ARGV[0] eq "-q";
+
 my ($esfi, $essn);
 {
   my $url = "http://beta.kc2g.com/api/essn.json";
@@ -43,22 +46,24 @@ my ($esfi, $essn);
   }
 }
 
-my $url = "https://www-app3.gfz-potsdam.de/kp_index/Kp_ap_nowcast.txt";
-open (HTTP, '-|', "curl --max-time 15 -s -k -L $url");
-while (<HTTP>) {
-  chomp;
-  next if m/^#/;
-  my @vals = split(/\s+/, $_);
-  next if $vals[7] == -1.000 or $vals[8] == -1;
-  #print "$vals[7] $vals[8]\n";
-  $aindex = $vals[8];
-  $rawkindex = $vals[7];
-  $kindex = int($vals[7]) if $vals[7] =~ /\.000/;
-  $kindex = int($vals[7]) . "+" if $vals[7] =~ /\.333/;
-  $kindex = int($vals[7]) + 1 . "-" if $vals[7] =~ /\.667/;
+if ($quick) {
+  my $url = "https://www-app3.gfz-potsdam.de/kp_index/Kp_ap_nowcast.txt";
+  open (HTTP, '-|', "curl --max-time 15 -s -k -L $url");
+  while (<HTTP>) {
+    chomp;
+    next if m/^#/;
+    my @vals = split(/\s+/, $_);
+    next if $vals[7] == -1.000 or $vals[8] == -1;
+    #print "$vals[7] $vals[8]\n";
+    $aindex = $vals[8];
+    $rawkindex = $vals[7];
+    $kindex = int($vals[7]) if $vals[7] =~ /\.000/;
+    $kindex = int($vals[7]) . "+" if $vals[7] =~ /\.333/;
+    $kindex = int($vals[7]) + 1 . "-" if $vals[7] =~ /\.667/;
+  }
 }
 
-$url = "http://www.hamqsl.com/solarxml.php";
+my $url = "http://www.hamqsl.com/solarxml.php";
 open (HTTP, '-|', "curl --max-time 10 -s -k -L $url");
 while (<HTTP>) {
   chomp;
@@ -69,12 +74,13 @@ while (<HTTP>) {
   if (/<updated>\s*([^<]+)<\/updated>/) {
     $updated = $1;
   }
-  #if (/<aindex>\s*([^<]+)<\/aindex>/) {
-  #  $aindex = $1;
-  #}
-  #if (/<kindex>\s*([^<]+)<\/kindex>/) {
-  #  $kindex = $1;
-  #}
+  if (not $quick and /<aindex>\s*([^<]+)<\/aindex>/) {
+    $aindex = $1;
+  }
+  if (not $quick and /<kindex>\s*([^<]+)<\/kindex>/) {
+    $kindex = $1;
+    $rawkindex = $kindex;
+  }
   if (/<solarflux>\s*([^<]+)<\/solarflux>/) {
     $solarflux = $1;
   }
@@ -98,7 +104,7 @@ $solarflux = colorSfi($solarflux);
 $aindex = colorAIndex($aindex);
 $kindex = colorKIndex($kindex, $rawkindex);
 
-if (defined($ARGV[0]) and $ARGV[0] eq "-q") {
+if ($quick) {
   print "Conditions as of $updated: SFI=$solarflux SN=$sunspots A=$aindex K=$kindex";
   print " eSFI=" . colorSfi($esfi) ." eSSN=$essn" if defined $esfi;
   print "\n";
