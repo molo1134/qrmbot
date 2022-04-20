@@ -1,13 +1,14 @@
 #!/usr/bin/perl
 #
 # 2-clause BSD license.
-# Copyright (c) 2021 molo1134@github. All rights reserved.
+# Copyright (c) 2021,2022 molo1134@github. All rights reserved.
 
 # https://api.pota.app/park/K-1619
 # https://api.pota.app/park/stats/K-1619
 # https://api.pota.app/park/leaderboard/K-1619?count=5
 # https://api.pota.app/park/activations/K-1619?count=10
 # https://api.pota.app/stats/user/N2CX
+# https://api.pota.app/profile/N2CX
 # https://api.pota.app/locations/US-NJ
 # https://api.pota.app/locations
 # https://api.pota.app/lookup?search=nockamixon&size=10
@@ -146,7 +147,7 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
 
   } elsif (@{$j}[0]->{type} eq "user") {
     #print "user\n";
-    my $url = "https://api.pota.app/stats/user/" . $srec->{value};
+    my $url = "https://api.pota.app/profile/" . $srec->{value};
 
     local $/;   # read entire file -- FIXME: potentially memory hungry
     open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
@@ -154,22 +155,33 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
     close(JSON);
     #print $json, "\n";
     if ($json =~ /not found/i) {
-      print "error: seemed that we had a user, but no stats\n";
+      print "error: seemed that we had a user, but no profile\n";
       exit $exitnonzeroonerror;
     }
 
     my $j = decode_json($json);
 
-    printf "%s - %s: %s activations (%s parks, %s QSOs); hunter: %s parks (%s QSOs); %s awards (%s endorsements)\n",
+    printf "%s - %s (%s): %s activations (%s parks, %s QSOs); hunter: %s parks (%s QSOs); %s awards (%s endorsements)",
       bold($j->{callsign}),
       $j->{name},
-      $j->{activator}->{activations},
-      $j->{activator}->{parks},
-      commify($j->{activator}->{qsos}),
-      $j->{hunter}->{parks},
-      commify($j->{hunter}->{qsos}),
-      $j->{awards},
-      $j->{endorsements};
+      $j->{qth},
+      $j->{stats}->{activator}->{activations},
+      $j->{stats}->{activator}->{parks},
+      commify($j->{stats}->{activator}->{qsos}),
+      $j->{stats}->{hunter}->{parks},
+      commify($j->{stats}->{hunter}->{qsos}),
+      $j->{stats}->{awards},
+      $j->{stats}->{endorsements};
+
+    my $act = $j->{recent_activity}->{activations}->[0];
+    printf "; last activation: %s: %s \"%s\" (%s) %s QSOs",
+      $act->{date},
+      $act->{reference},
+      $act->{park},
+      $act->{location},
+      $act->{total}
+      if defined $act;
+    print "\n";
 
   } else {
     print "error: unexpected type: ", @{$j}[0]->{type}, "\n";
