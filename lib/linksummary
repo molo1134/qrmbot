@@ -1187,7 +1187,7 @@ sub doImgur {
 
 sub doFccApp {
   my $url = shift;
-  my ($appId, $call, $status, $receipt, $action, $systematic, $relative, $req);
+  my ($appId, $call, $status, $receipt, $action, $systematic, $relative, $req, $paid);
   my $purpose;
   if ($url =~ m|https?://wireless2.fcc.gov/UlsApp/ApplicationSearch/.*\?applID=(\d+)|) {
     $appId = $1;
@@ -1225,6 +1225,13 @@ sub doFccApp {
       #print "action: $action\n";
       $inAction = 0;
     }
+  }
+  close(HTTP);
+
+  $url = "https://wireless2.fcc.gov/UlsApp/ApplicationSearch/applAdmin.jsp?applID=$appId";
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  while(<HTTP>) {
+    $paid = 1 if /Payment Confirmed/;
   }
   close(HTTP);
 
@@ -1267,6 +1274,7 @@ sub doFccApp {
     $status = yellow($status) if $status eq "Inactive";
     print "$status -- ";
     print "$purpose; " if defined $purpose;
+    print green("PAID"), "; " if $paid;
     print "systematic; " if defined $systematic and $systematic ne "N";
     print "received $receipt, last action $action; " if defined $receipt;
     print "vanity list: ", join(", ", @vanities) if defined $vanities[0];
