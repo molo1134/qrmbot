@@ -273,7 +273,7 @@ sub formatPred {
   $pred = green($pred) if $pred eq "Assignment";
   $pred = lightblue($pred) if $pred =~ /^(Competition|Available)/;
   $pred = italic($pred) if $pred =~ /^Unneeded/;
-  $pred = yellow($pred) if $pred =~ /^Offlined/;
+  $pred = yellow($pred) if $pred =~ /^(Offlined|Await)/;
   $pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv|Inactive|Block)/;
   return $pred;
 }
