@@ -49,6 +49,11 @@ $fiat = "USD" unless defined($fiat);
 $crypto =~ s/[^A-Z]//g;
 $fiat =~ s/[^A-Z]//g;
 
+if ($crypto =~ /CUMMIES/i) {
+  print "nope\n";
+  exit 0;
+}
+
 # example: https://api.coinmarketcap.com/v1/ticker/bitcoin/?convert=USD
 #my $url = "https://api.coinmarketcap.com/v1/ticker/$id/?convert=$fiat";
 #my $url = "http://35.194.32.186:8018/phpproxy/coinmarketcap-proxy.php?id=$id&fiat=$fiat";
