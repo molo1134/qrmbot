@@ -132,11 +132,11 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
 	$i++;
 	print "; " if $i > 1;
 	if ($i == 1) {
-	  print yellow("#1"), ": ", yellow($r->{callsign});
+	  print yellow("#1 🥇"), ": ", yellow($r->{callsign});
 	} elsif ($i == 2) {
-	  print lightGrey("#2"), ": ", lightGrey($r->{callsign});
+	  print lightGrey("#2 🥈"), ": ", lightGrey($r->{callsign});
 	} elsif ($i == 3) {
-	  print darkRed("#3"), ": ", darkRed($r->{callsign});
+	  print darkRed("#3 🥉"), ": ", darkRed($r->{callsign});
 	} else {
 	  print "#$i: $r->{callsign}";
 	}
