@@ -43,7 +43,9 @@ $call =~ s/[^A-Z0-9\/]//g;
 my $found = undef;
 my $ag = 0;
 my $inloggedin = 0;
+my $inlastact = 0;
 my $lastlogin = undef;
+my $lastact = undef;
 my $grid = undef;
 my $member = undef;
 
@@ -80,6 +82,16 @@ while (<HTTP>) {
   }
   if (/I have not used this account yet/) {
     $lastlogin = "never";
+  }
+  if (/Last Activity/) {
+    $inlastact = 1;
+  }
+  if ($inlastact and m/([0-9]{1,2} [A-Za-z]{3} [0-9]{4} [0-9]{2}:[0-9]{2}Z)/) {
+    $lastact = $1;
+    $inlastact = 0;
+  }
+  if ($inlastact and m/<BR>/i) {
+    $inlastact = 0;
   }
   if (/Grid Square ([A-R]{2}[0-9]{2}([a-z]{2})?)/i) {
     $grid = $1;
@@ -127,6 +139,7 @@ print grey("✪") . " "	    if defined($member) and $member eq "Pt";
 print darkYellow("✪") . " " if defined($member) and $member eq "bronze";
 print "$grid" if defined $grid;
 print "; last login: $lastlogin" if defined $lastlogin;
+print "; last activity: $lastact" if defined $lastact;
 print "\n";
 
 exit 0;
