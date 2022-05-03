@@ -1,0 +1,38 @@
+#!/usr/bin/perl
+# check LoTW queue status
+#
+# 2-clause BSD license.
+# Copyright (c) 2022 molo1134@github. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+my $url = "http://www.arrl.org/logbook-queue-status";
+
+my $delay = undef;
+my $epoch = undef;
+
+open (HTTP, '-|', "curl --max-time 10 -L -k -s $url");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+  chomp;
+  if (not defined $epoch and
+	m|<TD class='_left'>([0-9: -]+)</TD>|) {
+    $epoch = $1;
+  }
+  if (not defined $delay and
+	m|<TD class='_right'>[0-9: -]+<br />\(([0-9a-z ]+) ago\)</TD>|) {
+    $delay = $1;
+  }
+}
+close HTTP;
+print "LoTW Queue Delay as of $epoch UTC: ", bold($delay), "\n";
+exit 0;

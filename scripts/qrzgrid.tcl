@@ -55,6 +55,10 @@ bind msg - !xray msg_xray
 
 bind pub - !lotw lotw
 bind msg - !lotw msg_lotw
+bind pub - !lotwstatus lotwstatus_pub
+bind msg - !lotwstatus lotwstatus_msg
+bind pub - !lotwqueue lotwstatus_pub
+bind msg - !lotwqueue lotwstatus_msg
 
 bind pub - !eqsl eqsl
 bind msg - !eqsl msg_eqsl
@@ -191,6 +195,7 @@ set xraybin "/home/eggdrop/bin/xray"
 set forecastbin "/home/eggdrop/bin/solarforecast"
 set longtermforecastbin "/home/eggdrop/bin/longtermforecast"
 set lotwbin "/home/eggdrop/bin/lotwcheck"
+set lotwstatusbin "/home/eggdrop/bin/lotwstatus"
 set eqslbin "/home/eggdrop/bin/eqslcheck"
 set clublogbin "/home/eggdrop/bin/checkclublog"
 set leaguebin "/home/eggdrop/bin/league"
@@ -757,6 +762,27 @@ proc msg_lotw {nick uhand handle input} {
 	}
 	close $fd
 }
+proc lotwstatus_pub { nick host hand chan text } {
+	global lotwstatusbin
+	putlog "lotwstatus pub: $nick $host $hand $chan $text"
+	set fd [open "|${lotwstatusbin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc lotwstatus_msg {nick uhand handle input} {
+	global lotwstatusbin
+	putlog "lotwstatus msg: $nick $uhand $handle $input"
+	set fd [open "|${lotwstatusbin} -q" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
 
 proc eqsl { nick host hand chan text } {
 	global eqslbin
