@@ -591,7 +591,7 @@ proc cat_pub { nick host hand chan text } {
 	set msg(12) "you're obsessed"
 	set msg(13) "seriously, wtf"
 	set index [expr {int(rand()*[array size msg])}]
-	set command "curl -s -k -L -A foo https://www.reddit.com/r/CatsAreAssholes/random.json | jq . | grep \\\"url\\\": | grep -E -v \\(preview.redd.it\\|redditstatic.com\\) | head -1 | sed -e s\\|^.*\"\\\\\\(https\\\\?://\[^\"]*\\\\\\)\".*$\\|\\\\1\\|"
+	set command "curl -s -k -L -A foo https://www.reddit.com/r/WhatsWrongWithYourCat/random.json | jq . | grep \\\"url\\\": | grep -E -v \\(preview.redd.it\\|redditstatic.com\\) | head -1 | sed -e s\\|^.*\"\\\\\\(https\\\\?://\[^\"]*\\\\\\)\".*$\\|\\\\1\\|"
 	set fd [open "|${command}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
