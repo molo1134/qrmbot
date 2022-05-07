@@ -1228,7 +1228,7 @@ sub doFccApp {
   }
   close(HTTP);
 
-  $url = "https://wireless2.fcc.gov/UlsApp/ApplicationSearch/applAdmin.jsp?applID=$appId";
+  $url = "https://wireless2.fcc.gov/UlsApp/ApplicationSearch/applAdminHistory.jsp?applID=$appId";
   open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   while(<HTTP>) {
     $paid = 1 if /Payment Confirmed/;
