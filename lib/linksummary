@@ -23,7 +23,6 @@ use List::Util qw[min max];
 use POSIX qw(strftime);
 use JSON qw( decode_json from_json );
 use Math::Round;
-use HTML::Entities;
 
 our $imgur_key=undef;
 my $imgurfile = $ENV{'HOME'} . "/.imgurkey";
@@ -1432,6 +1431,6 @@ sub strip_html {
   $t =~ s|<br/?>|\n|ig;
   $t =~ s|<.*?>||g;
   $t =~ s| +| |g;
-  $t = decode_entities($t);
+  $t = decodeEntities($t);
   return $t;
 }
