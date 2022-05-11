@@ -21,8 +21,9 @@ use Time::Local;
 use Time::Piece ();
 use List::Util qw[min max];
 use POSIX qw(strftime);
-use JSON qw( decode_json );
+use JSON qw( decode_json from_json );
 use Math::Round;
+use HTML::Entities;
 
 our $imgur_key=undef;
 my $imgurfile = $ENV{'HOME'} . "/.imgurkey";
@@ -98,6 +99,8 @@ while ($i <= $#ARGV) {
     doAe7qCall($2);
   } elsif ($ARGV[$i] =~ m|^https?://.*zoom\.us/j/[0-9]+|) {
     # noop
+  } elsif ($ARGV[$i] =~ m|^https?://mastodon.*?/@[a-z0-9_-]+/[0-9]+|i) {
+    doMastodon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://| and
 	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
     doHtml($ARGV[$i]);
@@ -475,6 +478,97 @@ sub getTwitterAuthTokens {
 
   return ($auth, $token);
 }
+
+sub doMastodon {
+  my $url = shift;
+  my $statusid = undef;
+  my $instance_base = undef;
+  my $userid = undef;
+
+  if ($url =~ m|^(.*)/@([a-z0-9_-]+)/([0-9]+)(\?.*)?$|i) {
+    ($instance_base, $userid, $statusid) = ($1, $2, $3);
+  }
+  return if not defined $statusid;
+
+
+  my $instanceapi = "${instance_base}/api/v1/instance";
+  open(JSON, '-|', "curl --max-time $timeout -L -k -s '$instanceapi' | jq . | grep uri");
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $uri = <JSON>;
+  close(JSON);
+  $uri =~ s/^.*?"uri":\s*"([^"]*)".*?$/$1/si;
+  $uri =~ s/[\n\r]//sg;
+
+  my $apiurl = "${instance_base}/api/v1/statuses/$statusid";
+  open(JSON, '-|', "curl --max-time $timeout -L -k -s '$apiurl'");
+  binmode(JSON, ":utf8");
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $json = <JSON>;
+  close(JSON);
+  my $j = from_json($json);
+
+  if (defined $j->{error}) {
+    print "error: $j->{error}\n";
+    return;
+  }
+
+  my $origUsername = undef;
+
+  if (defined $j->{reblog}) {
+    $origUsername = "@" . $j->{account}->{username} . "@" . $uri;
+    $j = $j->{reblog};
+  }
+
+  my $username = "@" . $j->{account}->{username} . "@" . $uri;
+  my $fullname = $j->{account}->{display_name};
+  $fullname = undef if defined $fullname and length($fullname) == 0;
+
+  my $text = strip_html($j->{content});
+  $text =~ s/^\s*$//g;
+  $text =~ s/\n\s*\n/\n/sg;
+  $text =~ s/\n/ /sg;
+  $text =~ s/(\S)\n(\S)/$1 $2/sg;
+  $text =~ s/\n//sg;
+
+  my $datestr = $j->{created_at};
+  my $date = undef;
+  if (defined $datestr) {
+    # "created_at": "2022-05-10T22:48:10.240Z"
+    my ($y, $mon, $d, $h, $m, $s, undef) = split /[-T:.Z]/, $datestr;
+    my $time = timegm($s, $m, $h, $d, $mon - 1, $y);
+    $date = scalar(gmtime($time)) . " UTC";
+  }
+
+  my @mediaTypes;
+  my @mediaUrls;
+  my @mediaAttachments;
+  if (defined $j->{media_attachments}) {
+    for (my $i = 0; $i < scalar @{$j->{media_attachments}}; $i++) {
+      $mediaTypes[$i] = $j->{media_attachments}->[$i]->{type};
+      $mediaUrls[$i] = shortenUrl($j->{media_attachments}->[$i]->{url});
+      my $char = chr(0x2460 + $i); # 0x2460 = ①
+      $mediaAttachments[$i] = "$char $mediaTypes[$i]: $mediaUrls[$i]";
+    }
+  }
+
+  my $reblog_count = $j->{reblogs_count};
+  my $favorite_count = $j->{favourites_count};
+  my $reply_count = $j->{replies_count};
+  
+  print "$origUsername reblogged: " if defined $origUsername;
+  print "\"$text\" ";
+  if (@mediaAttachments and scalar @mediaAttachments > 0) {
+    for (my $i = 0; $i < scalar @mediaAttachments; $i++) {
+      print $mediaAttachments[$i], " ";
+    }
+  }
+  print "— $username";
+  print " ($fullname)" if defined $fullname;
+  print ", $date";
+  print " (↩ ", toHumanReadableNum($reply_count), "; ↺ ", toHumanReadableNum($reblog_count), "; ★ ", toHumanReadableNum($favorite_count), ")";
+  print "\n";
+}
+
 
 
 sub doImdb {
@@ -1331,4 +1425,13 @@ sub deamp {
   }
   close(HTTP);
   return $deamped;
+}
+
+sub strip_html {
+  my $t = shift;
+  $t =~ s|<br/?>|\n|ig;
+  $t =~ s|<.*?>||g;
+  $t =~ s| +| |g;
+  $t = decode_entities($t);
+  return $t;
 }
