@@ -75,7 +75,7 @@ while ($i <= $#ARGV) {
   $i++;
 }
 
-if (lc $word ne "to") {
+if (defined $word and lc $word ne "to") {
   my $tmp = $query;
   $query = $de;
   $de = $tmp;
