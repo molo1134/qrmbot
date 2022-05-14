@@ -30,11 +30,14 @@ our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 my $club = 187; # reddit club
+my $target = undef;
 
 my $i = 0;
 while ($i <= $#ARGV) {
   if (isNumeric($ARGV[$i])) {
     $club = $ARGV[$i];
+  } else {
+    $target = $ARGV[$i] if not defined $target;
   }
   $i++;
 }
@@ -52,13 +55,27 @@ $limit = 10 if $username eq getEggdropUID();
 my $year = strftime("%Y", gmtime(time()));
 print "Clublog standings for $year: ";
 print "\n" if $username ne getEggdropUID();
-foreach my $standing (@{$j}) {
-  my ($rank, $call, $dxcc, $sluts) = @{$standing};
-  print "$rank: $call $dxcc/$sluts" if $rank != 1;
-  print "$rank: " . bold($call). " " . bold($dxcc) . "/$sluts" if $rank == 1;
-  $limit--;
-  print "\n" if $username ne getEggdropUID();
-  print "; " if $username eq getEggdropUID() and $limit >= 1;
-  last if $limit < 1;
+my $found = 0;
+if (not defined $target) {
+  foreach my $standing (@{$j}) {
+    my ($rank, $call, $dxcc, $sluts) = @{$standing};
+    print "$rank: $call $dxcc/$sluts" if $rank != 1;
+    print "$rank: " . bold($call). " " . bold($dxcc) . "/$sluts" if $rank == 1;
+    $limit--;
+    print "\n" if $username ne getEggdropUID();
+    print "; " if $username eq getEggdropUID() and $limit >= 1;
+    last if $limit < 1;
+  }
+} else {
+  foreach my $standing (@{$j}) {
+    my ($rank, $call, $dxcc, $sluts) = @{$standing};
+    if (uc $call eq uc $target) {
+      print "$rank: ". bold($call) . " $dxcc/$sluts";
+      print "\n" if $username ne getEggdropUID();
+      $found = 1;
+      last;
+    }
+  }
+  print "not found" if $found == 0;
 }
 print " -- https://clublog.org/league.php?club=$club\n";
