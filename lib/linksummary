@@ -98,8 +98,9 @@ while ($i <= $#ARGV) {
     doAe7qCall($2);
   } elsif ($ARGV[$i] =~ m|^https?://.*zoom\.us/j/[0-9]+|) {
     # noop
-  } elsif ($ARGV[$i] =~ m|^https?://(mastodon.*?\|.*?\.social)/@[a-z0-9_-]+/[0-9]+|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://(.*?)/@[a-z0-9_-]+/[0-9]+|i) {
     doMastodon($ARGV[$i]);
+    # falls back to doHtml if the API check fails
   } elsif ($ARGV[$i] =~ m|^https?://| and
 	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
     doHtml($ARGV[$i]);
@@ -487,14 +488,20 @@ sub doMastodon {
   if ($url =~ m|^(.*)/@([a-z0-9_-]+)/([0-9]+)(\?.*)?$|i) {
     ($instance_base, $userid, $statusid) = ($1, $2, $3);
   }
-  return if not defined $statusid;
-
+  if (not defined $statusid) {
+    # does not seem to be a mastodon URL
+    return doHtml($url);
+  }
 
   my $instanceapi = "${instance_base}/api/v1/instance";
-  open(JSON, '-|', "curl --max-time $timeout -L -k -s '$instanceapi' | jq . | grep uri");
+  open(JSON, '-|', "curl --max-time $timeout -L -k -s '$instanceapi' ");
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $uri = <JSON>;
   close(JSON);
+  if (length $uri == 0 or not $uri =~ /^\s*{/s) {
+    # does not seem to be a mastodon URL
+    return doHtml($url);
+  }
   $uri =~ s/^.*?"uri":\s*"([^"]*)".*?$/$1/si;
   $uri =~ s/[\n\r]//sg;
 
