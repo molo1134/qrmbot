@@ -498,22 +498,28 @@ getHistory:
 
   my $inSpottedBy = 0;
   my $now = time();
-  while (<HTTP>) {
-    #chomp;
-    #print;
-    if (/Spotted by/) {
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $html = <HTTP>;
+  close(HTTP);
+  $html =~ s|</tr>\s*<tr>|</tr>\n</tr>|g;
+  $html =~ s|<br\s*/?>|<br/>\n|g;
+  $html =~ s|<div|\n<div|g;
+  my @rows = split(/\n/, $html);
+  foreach my $r (@rows) {
+    if ($r =~ /Spotted by/) {
       $inSpottedBy = 1;
+      next;
     }
-    if ( $inSpottedBy == 1 && /tr class="(odd|evn)"/ ) {
-      #print;
-      my ($src, $age, $de, $st, $ctry, $band, $mode, $sig, $delta) =
-        m/<td>(.*?)<\/td><td>(\+?.*?[mshd])<\/td><td.*?>(.*?)<\/td><td>(.*?)<\/td><td class="l">(.*?)<\/td><td>(\d*)<\/td><td>(.*?)<\/td><td>([-+0-9]*)<\/td><td>(.*?)<\/td><\/tr>/;
-      #print "src:$src age:$age de:$de ctry:$ctry st:$st band:$band sig:$sig mode:$mode delta:$delta\n" if defined($src);
-      #print "$_\n" unless defined($src);
+    if ( $inSpottedBy == 1 and $r =~ m/tr class="(odd|evn)"/ ) {
+      #print $r, "\n";
+      my ($src, $age, $de, $st, $ctry, $freq, $mode, $sig, $delta) =
+        $r =~ m|<td>(.*?)</td><td>(\+?.*?[mshd])</td><td.*?>(.*?)</td><td>(.*?)</td><td class="l">(.*?)</td><td class="r">([0-9.]*)</td><td>(.*?)</td><td>([-+0-9]*)</td><td>(.*?)</td></tr>|;
+      #print "src:$src age:$age de:$de ctry:$ctry st:$st freq:$freq sig:$sig mode:$mode delta:$delta\n" if defined($src);
+      #print "$r\n" unless defined($src);
 
-      $st = ""	  if defined($st)     && $st    =~ /nbsp/;
-      $delta = "" if defined($delta)  && $delta =~ /nbsp/;
-      $sig = ""   if defined($sig)    && $sig   =~ /nbsp/;
+      $st = ""	  if defined($st)     and $st    =~ /nbsp/;
+      $delta = "" if defined($delta)  and $delta =~ /nbsp/;
+      $sig = ""   if defined($sig)    and $sig   =~ /nbsp/;
 
       my $ts;
       if (defined($age)) {
@@ -533,22 +539,20 @@ getHistory:
 	$lastspot = $ts unless ($ts < $lastspot);
       }
 
-      if (defined ($sig) && $sig eq "&nbsp;") {
-	$sig = undef;
-      }
+      $sig = undef if defined ($sig) and $sig eq "&nbsp;";
+
       my $msg = "";
+      $msg .= "$mode" if defined($mode);
+      $msg .= " $sig dB" if (defined($sig) and length($sig) > 0);
+      $msg .= " DT $delta" if (defined($delta) and length($delta) > 0);
+      $msg .= " ($st)" if (defined($st) and length($st) > 0);
 
-      $msg .= "$mode" unless !defined($mode);
-      $msg .= " $sig dB" if (defined($sig) && length($sig) > 0);
-      $msg .= " DT $delta" if (defined($delta) && length($delta) > 0);
-      $msg .= " ($st)" if (defined($st) && length($st) > 0);
-
-      if (defined($de) && defined($ts) && defined($band)) {
+      if (defined($de) and defined($ts) and defined($freq)) {
 	push (@spots, {ts => $ts,
 		      src => "h",
 		      de => $de,
 		      dx => $callsign,
-		      f => $freqs{$band},
+		      f => $freq,
 		      msg => $msg }
 		  );
       }
