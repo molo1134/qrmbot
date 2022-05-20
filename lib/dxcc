@@ -55,6 +55,7 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 }
 
 my ($term, $de);
+my $csv = 0;
 
 my $i = 0;
 
@@ -74,10 +75,13 @@ while ($i <= $#ARGV) {
     $i++;
     next;
   }
-  if (defined($term)) {
-    $term = $term ." ". $ARGV[$i];
-  } else {
-    $term = $ARGV[$i];
+  $csv = 1 if $ARGV[$i] =~ /^--csv$/;
+  if (not $ARGV[$i] =~ /^--/) {
+    if (defined($term)) {
+      $term = $term ." ". $ARGV[$i];
+    } else {
+      $term = $ARGV[$i];
+    }
   }
   $i++;
 }
@@ -312,17 +316,22 @@ foreach my $rec (@records) {
 
     my $match = $term;
     $match =~ s/$pattern/bold($&)/e;
-
-    print "$match: " . bold($name);
-    print " ($dxcc)" unless $term eq $dxcc;
-    print ": $cont CQ:$cq ITU:$itu";
     my $mw = $mostwantedByPrefix{uc($dxcc)} || $mostwantedByName{uc($name)};
-    print " MW:" . $mw unless (!defined $mw);
-    if (defined($mylat)) {
-      my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
-      printf(" -- %.1f km, %.0f° from %s", $dist, $bearing, $localgrid);
+
+    if (not $csv) {
+      print "$match: " . bold($name);
+      print " ($dxcc)" unless $term eq $dxcc;
+      print ": $cont CQ:$cq ITU:$itu";
+      print " MW:" . $mw unless (!defined $mw);
+      if (defined($mylat)) {
+	my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
+	printf(" -- %.1f km, %.0f° from %s", $dist, $bearing, $localgrid);
+      }
+      print "\n";
+    } else {
+      print "#call,country,dxcc_pfx,continent,cqzone,ituzone,mw\n";
+      print "$term,$name,$dxcc,$cont,$cq,$itu,$mw\n";
     }
-    print "\n";
     exit 0;
   }
 
