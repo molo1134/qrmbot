@@ -12,12 +12,13 @@ use feature 'unicode_strings';
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum shortenUrl isNumeric getEggdropUID);
+@EXPORT = qw(decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum shortenUrl isNumeric getEggdropUID getDxccDataRef updateCty checkCtyDat checkMW scrapeMW);
 
 use URI::Escape;
 use Date::Manip;
 use Switch;
 use Math::Round;
+use File::Temp qw(tempfile);
 
 sub decodeEntities {
   my $s = shift;
@@ -358,3 +359,270 @@ sub isNumeric {
 sub getEggdropUID {
   return "eggdrop";  # edit this to customize the UID of the eggdrop bot
 }
+
+
+# Retrieve from here: http://www.country-files.com/big-cty/
+our $_ctydat=$ENV{'HOME'} . "/.cty.dat";
+our $_cty_maxage=604800; # 1 week
+our $_cty_handle = undef;
+
+# load mostwanted summary from $HOME/.mostwanted.txt, which will be populated
+# by the scrapeMW() subroutine.
+our $_mostwantedfile=$ENV{'HOME'} . "/.mostwanted.txt";
+our $_mw_maxage=604800; # 1 week
+
+sub getDxccDataRef {
+  our $_cty_handle;
+
+  return $_cty_handle if defined $_cty_handle;
+
+  my @lastentity = undef;
+  my @records;
+  my %dxccmap;
+  our $_ctydat;
+  our $_mostwantedfile;
+
+  open(CTYDAT, "<", $_ctydat) or die "unable to find cty.dat file: $_ctydat ";
+  while (<CTYDAT>) {
+    chomp;
+    s/\x0D$//; #CRLF terminators
+
+    if (/^[a-z]/i) {
+      # entity
+      my @entity = split(/:\s*/);
+
+      if ($entity[7] =~ /^\*/) {
+	$entity[7] =~ s/^\*//;
+	$entity[0] .= " (not DXCC)";
+      }
+
+      #print "$entity[7]: $entity[0]\n";
+      @lastentity = @entity;
+
+    } elsif (/^\s/) {
+      # prefixes/calls
+      die "cty.dat formatting error" unless @lastentity;
+
+      s/^\s+//;
+      s/;\s*$//;
+      my @prefixes = split(/,/);
+
+      for (@prefixes) {
+	my $length;
+	my $prefix;
+	my $pattern;
+	my ($itu, $cq, $dxcc, $name, $cont, $lat, $lon, $tz);
+
+	if (/\[(\d+)\]/) {
+	  $itu = $1;
+	} else {
+	  $itu = $lastentity[2];
+	  $itu =~ s/^0*//;
+	}
+	if (/\((\d+)\)/) {
+	  $cq = $1;
+	} else {
+	  $cq = $lastentity[1];
+	  $cq =~ s/^0*//;
+	}
+
+	$prefix = $_;
+	$prefix =~ s/=?([^\(\[]*)(\(\d+\))?(\[\d+\])?/$1/;
+	$length = length $prefix;
+
+	if (/^=/) {
+	  $pattern = "^$prefix\$";
+	} else {
+	  $pattern = "^$prefix";
+	}
+
+	# hack to deal with Gitmo; KG4xx = gitmo; KG4xxx = W4
+	$pattern = '^KG4[A-Z][A-Z]$' if $pattern eq "^KG4";
+
+	$dxcc = $lastentity[7];
+	$name = $lastentity[0];
+	$cont = $lastentity[3];
+	$lat = $lastentity[4];
+	$lon = -$lastentity[5]; # sign is reversed
+	$tz = -$lastentity[6];  # sign is reversed
+
+	$dxccmap{uc $dxcc} = join('|', $length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz);
+	push @records, join('|', $length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz);
+	#print "$prefix: $dxcc $cq $itu $pattern $length\n";
+      }
+
+    } else {
+      print "unexpected input: $_\n";
+    }
+  }
+  close(CTYDAT);
+
+  # Sort descending by length of matching prefix/callsign.
+  # So we try by the most specific match first.
+  @records = sort { (split /\|/,$b)[0] <=> (split /\|/,$a)[0] } @records;
+
+  # ----------------
+
+  # load mostwanted summary from $HOME/.mostwanted.txt, if present
+  my %mostwantedByPrefix;
+  my %mostwantedByName;
+  open(MW, "<", $_mostwantedfile) or goto SKIPMW;
+  while (<MW>) {
+    chomp;
+    if (/^\d/) {
+      my ($rank, $prefix, $name) = split /,/;
+      #print "$prefix => $rank\n";
+      $mostwantedByPrefix{$prefix} = $rank;
+      $mostwantedByName{$name} = $rank;
+
+      # hack. this place is called 'San Andres & Providencia' in cty.dat, but
+      # 'SAN ANDRES ISLAND' by clublog and LoTW.
+      if ($name eq "SAN ANDRES ISLAND") {
+	$mostwantedByName{"SAN ANDRES & PROVIDENCIA"} = $rank;
+      }
+      # hack. this place is 3B6 in cty.dat but 3B7 in clublog.
+      if ($name eq "AGALEGA & ST BRANDON ISLANDS") {
+	$mostwantedByPrefix{"3B6"} = $rank;
+	$mostwantedByName{"AGALEGA & ST. BRANDON"} = $rank;
+      }
+      if ($name eq "VIET NAM") {
+	$mostwantedByName{"VIETNAM"} = $rank;
+      }
+    }
+  }
+  close(MW);
+  SKIPMW:
+
+  my %handle;
+  $handle{map} = \%dxccmap;
+  $handle{rec} = \@records;
+  $handle{mwPfx} = \%mostwantedByPrefix;
+  $handle{mwNm} = \%mostwantedByName;
+
+  $_cty_handle = \%handle;
+
+  return $_cty_handle;
+}
+
+sub checkCtyDat {
+  my $now = time;
+  my $needCTY = 0;
+  our $_ctydat;
+  if ( ! -e $_ctydat ) {
+    $needCTY = 1;
+  } else {
+    my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $_ctydat;
+    if (defined $mtime) {
+      my $age = $now - $mtime;
+      if ($age > $_cty_maxage or $size == 0) {
+	$needCTY = 1;
+      }
+    } else {
+      $needCTY = 1;
+    }
+  }
+  return $needCTY;
+}
+
+sub updateCty {
+  my $rssURL = "http://www.country-files.com/category/big-cty/feed/";
+  my $done = 0;
+  my $inItem = 0;
+  my $updateUrl = undef;
+
+  #print "$rssURL\n";
+  open (RSS, '-|', "curl -s -k -L --max-time 4 --retry 1 '$rssURL'");
+  binmode(RSS, ":utf8");
+  while(<RSS>) {
+    chomp;
+    next if $done == 1;
+    $inItem = 1 if /<item>/;
+    if ($inItem == 1 and /<link>(.*)<\/link>/) {
+      $updateUrl = $1;
+      $done = 1;
+    }
+  }
+  close(RSS);
+  print "warning: unable to retrieve cty.dat feed" if !defined $updateUrl;
+
+  my $zipurl = undef;
+  $done = 0;
+  if (defined $updateUrl) {
+    #print "$updateUrl\n";
+    open (UPD, '-|', "curl -s -k -L --max-time 4 --retry 1 '$updateUrl'");
+    binmode (UPD, ":utf8");
+    while (<UPD>) {
+      chomp;
+      if ($done == 0 and /(https?:\/\/www\.country-files\.com\/bigcty\/download\/.*\.zip)/) {
+	$zipurl = $1;
+	$done = 1;
+      }
+    }
+    close(UPD);
+    #http://www.country-files.com/bigcty/download/bigcty-20180123.zip
+  }
+
+  if (defined $zipurl) {
+    #print "$zipurl\n";
+    my (undef, $tmpfile) = tempfile();
+    #print "$tmpfile\n";
+    system "curl --max-time 20 -s -f -k -L -o $tmpfile '$zipurl'";
+    my (undef, undef, undef, undef, undef, undef, undef, $size, undef, undef, undef, undef, undef) = stat $tmpfile;
+    if ($size == 0) {
+      print "warning: unable to retrieve $zipurl\n"
+    } else {
+      system "unzip -p $tmpfile cty.dat > $_ctydat";
+    }
+    unlink $tmpfile
+  } else {
+    print "warning: unable to retrieve cty.dat zip";
+  }
+}
+
+sub checkMW {
+  my $needMW = 0;
+  if ( ! -e $_mostwantedfile ) {
+    $needMW = 1;
+  } else {
+    my $now = time;
+    my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $_mostwantedfile;
+    if (defined $mtime) {
+      my $age = $now - $mtime;
+      if ($age > $_mw_maxage or $size == 0) {
+	$needMW = 1;
+      }
+    } else {
+      $needMW = 1;
+    }
+  }
+  return $needMW;
+}
+
+sub scrapeMW {
+  my $mwurl = "https://secure.clublog.org/mostwanted.php";
+
+  open(MWFILE, ">", $_mostwantedfile) or die "Can't open for writing: $!";
+
+  #print "$mwurl\n";
+  open (HTTP, '-|', "curl -s -k -L --max-time 4 --retry 1 '$mwurl'");
+  binmode(HTTP, ":utf8");
+  while(<HTTP>) {
+    chomp;
+    if ( /<p><table>/ ) {
+      my @rows = split /<tr>/i;
+      foreach my $row (@rows) {
+	#print "$row\n";
+	if ($row =~ /<td>([0-9]+)\.<\/td><td>([^<]+)<\/td><td><a href='mostwanted2.php\?dxcc=[0-9]+'>([^<]+)<\/a>.*?<\/tr>/i) {
+	  my ($rank, $prefix, $name) = ($1, $2, $3);
+	  print MWFILE "$rank,$prefix,$name\n";
+	}
+      }
+
+    }
+  }
+  close(HTTP);
+  close(MWFILE);
+}
+
+# always return true
+return 1;
