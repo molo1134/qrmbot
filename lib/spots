@@ -25,6 +25,7 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Location;
 use Util;
+use Colors;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
@@ -607,11 +608,75 @@ sub show
       next;
     }
     #printf "debug: %d, %d: %s\n", $lasttimestamp, $spot{ts}, strftime("%H%Mz %d %b", gmtime($spot{ts}));
-    printf "%-7s %-7s %5d %-28s %s %s\n", $spot{de}, $spot{dx}, $spot{f}, $spot{msg}, strftime("%H%Mz %d %b", gmtime($spot{ts})), $spot{src};
+    printf "%s %-7s %5d %-28s %s %s\n", colorizeDe($spot{de}, $spot{dx}), $spot{dx}, $spot{f}, $spot{msg}, strftime("%H%Mz %d %b", gmtime($spot{ts})), $spot{src};
     if (++$i >= $limit) {
       last;
     }
   }
+}
+
+sub colorizeDe {
+  my $de = shift;
+  my $dx = shift;
+
+  my $formattedDe = sprintf("%-7s", $de);
+
+  our %dxccCache;
+
+  return $formattedDe; #XXX FIXME -- deactivate this feature, it's too slow.
+
+  return $formattedDe if not defined $de or not defined $dx;
+
+  my ($dxpfx,$dxcont,$dxzone);
+  my ($depfx,$decont,$dezone);
+
+  if (not defined $dxccCache{$dx}) {
+    open(DX, '-|', "$ENV{HOME}/bin/dxcc --csv $dx");
+    while(<DX>) {
+      next if /^#/;
+      (undef,undef,$dxpfx,$dxcont,$dxzone) = split(/,/, $_);
+    }
+    close(DX);
+
+    $dxccCache{$dx} = join(",", ($dxpfx,$dxcont, $dxzone));
+  } else {
+    ($dxpfx,$dxcont,$dxzone) = split(/,/, $dxccCache{$dx});
+  }
+
+  if (not defined $dxccCache{$de}) {
+    open(DE, '-|', "$ENV{HOME}/bin/dxcc --csv $de");
+    while(<DE>) {
+      next if /^#/;
+      (undef,undef,$depfx,$decont,$dezone) = split(/,/, $_);
+    }
+    close(DE);
+
+    $dxccCache{$de} = join(",", ($depfx,$decont, $dezone));
+  } else {
+    ($depfx,$decont,$dezone) = split(/,/, $dxccCache{$de});
+  }
+
+  return $formattedDe if not defined $dxpfx or not defined $dxcont or not defined $dxzone;
+  return $formattedDe if not defined $depfx or not defined $decont or not defined $dezone;
+
+  if (($dxpfx eq $depfx) and ($dxzone == $dezone) and ($dxcont eq $decont)) {
+    # same everything
+    return $formattedDe;
+  }
+  if (($dxzone != $dezone) and ($dxcont eq $decont)) {
+    # different zone, same continent
+    return cyan($formattedDe);
+  }
+  if (($dxpfx ne $depfx) and ($dxcont eq $decont)) {
+    # different country, same continent
+    return lightblue($formattedDe);
+  }
+  if (($dxpfx ne $depfx) and ($dxzone != $dezone) and ($dxcont ne $decont)) {
+    # different everything
+    return lightgreen($formattedDe);
+  }
+  # fallthrough
+  return $formattedDe;
 }
 
 sub updatelast
