@@ -151,6 +151,10 @@ if (-e $timestampfile) {
   close TIMESTAMPS;
 }
 
+# for dxcc
+updateCty() if (checkCtyDat() == 1);
+my $dxccref = getDxccDataRef(); # load data and then ignore handle
+
 my $lastspot = 0;
 my @spots;
 
@@ -623,34 +627,20 @@ sub colorizeDe {
 
   our %dxccCache;
 
-  return $formattedDe; #XXX FIXME -- deactivate this feature, it's too slow.
-
   return $formattedDe if not defined $de or not defined $dx;
 
   my ($dxpfx,$dxcont,$dxzone);
   my ($depfx,$decont,$dezone);
 
   if (not defined $dxccCache{$dx}) {
-    open(DX, '-|', "$ENV{HOME}/bin/dxcc --csv $dx");
-    while(<DX>) {
-      next if /^#/;
-      (undef,undef,$dxpfx,$dxcont,$dxzone) = split(/,/, $_);
-    }
-    close(DX);
-
+    ($dxpfx, $dxcont, $dxzone) = getInfoForCall($dx);
     $dxccCache{$dx} = join(",", ($dxpfx,$dxcont, $dxzone));
   } else {
     ($dxpfx,$dxcont,$dxzone) = split(/,/, $dxccCache{$dx});
   }
 
   if (not defined $dxccCache{$de}) {
-    open(DE, '-|', "$ENV{HOME}/bin/dxcc --csv $de");
-    while(<DE>) {
-      next if /^#/;
-      (undef,undef,$depfx,$decont,$dezone) = split(/,/, $_);
-    }
-    close(DE);
-
+    ($depfx, $decont, $dezone) = getInfoForCall($de);
     $dxccCache{$de} = join(",", ($depfx,$decont, $dezone));
   } else {
     ($depfx,$decont,$dezone) = split(/,/, $dxccCache{$de});
@@ -677,6 +667,20 @@ sub colorizeDe {
   }
   # fallthrough
   return $formattedDe;
+}
+
+sub getInfoForCall {
+  my $call = shift;
+
+  my $ref = getDxccDataRef(); # data should already be loaded
+
+  foreach my $rec (@{$ref->{rec}}) {
+    my ($length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz) = split /\|/,$rec;
+
+    if ($call =~ m/$pattern/i) {
+      return ($dxcc, $cont, $cq);
+    }
+  }
 }
 
 sub updatelast
