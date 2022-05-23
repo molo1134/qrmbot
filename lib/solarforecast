@@ -97,6 +97,7 @@ indicateEvent($lastday, "POTA Spring", getFullWeekendInMonth(3, "Apr"), 2);			# 
 indicateEvent($lastday, "ARRL Rookie Roundup, SSB", getIterDayInMonth(3, "Sunday", "Apr"), 1);	# 3rd Sunday in Apr
 indicateEvent($lastday, "CQ WPX CW", getFullWeekendInMonth(5, "May"), 2);			# last full weekend May
 indicateEvent($lastday, "CQ Pride", getFullWeekendInMonth(1, "Jun"), 2);			# 1st weekend in June
+indicateEvent($lastday, "ARRL Intl Digi", getFullWeekendInMonth(1, "Jun"), 2);			# 1st weekend in June
 indicateEvent($lastday, "All Asian DX CW", getFullWeekendInMonth(3, "Jun"), 2);			# 3rd Saturday in June
 indicateEvent($lastday, "ARRL Field Day", getFullWeekendInMonth(4, "Jun"), 2);			# 4th full weekend in June
 indicateEvent($lastday, "RAC Canada Day", getYearForDate("Jul", 1), 1);				# July 1, 1 day
