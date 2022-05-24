@@ -50,7 +50,13 @@ proc seen_pub { nick host hand chan text } {
 			set stamp [clock format $laston -gmt 1 -format "%Y-%m-%d %H:%M:%S %Z"]
 			putchan $chan "${origQuery} last seen at $stamp"
 		} else {
-			putchan $chan "${origQuery} not found"
+			set laston [lindex [getuser ${target} LASTON] 0]
+			if {$laston != 0} {
+				set stamp [clock format $laston -gmt 1 -format "%Y-%m-%d %H:%M:%S %Z"]
+				putchan $chan "${origQuery} last seen at $stamp"
+			} else {
+				putchan $chan "${origQuery} not found"
+			}
 		}
 
 	} else {
