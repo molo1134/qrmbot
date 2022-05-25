@@ -2,7 +2,7 @@
 # get clublog DXCC league status
 #
 # 2-clause BSD license.
-# Copyright (c) 2021 molo1134@github. All rights reserved.
+# Copyright (c) 2021,2022 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;
@@ -30,19 +30,26 @@ our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 my $club = 187; # reddit club
+my $mode = 0;   # no mode filter
 my $target = undef;
 
 my $i = 0;
 while ($i <= $#ARGV) {
   if (isNumeric($ARGV[$i])) {
     $club = $ARGV[$i];
+  } elsif ($ARGV[$i] =~ /--(cw|morse)/) {
+    $mode = 1;
+  } elsif ($ARGV[$i] =~ /--(ssb|phone)/) {
+    $mode = 2;
+  } elsif ($ARGV[$i] =~ /--(digi|data)/) {
+    $mode = 3;
   } else {
     $target = $ARGV[$i] if not defined $target;
   }
   $i++;
 }
 
-my $url = "https://secure.clublog.org/league_api.php?date=3&club=${club}";
+my $url = "https://secure.clublog.org/league_api.php?date=3&mode=${mode}&club=${club}";
 
 local $/;   # read entire file -- FIXME: potentially memory hungry
 open (JSON, '-|', "curl --max-time 60 -s -k -L '$url'");
