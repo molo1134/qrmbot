@@ -560,7 +560,7 @@ sub doMastodon {
   my $reblog_count = $j->{reblogs_count};
   my $favorite_count = $j->{favourites_count};
   my $reply_count = $j->{replies_count};
-  
+
   print "$origUsername reblogged: " if defined $origUsername;
   print "\"$text\" ";
   if (@mediaAttachments and scalar @mediaAttachments > 0) {
@@ -880,8 +880,13 @@ sub doReddit {
     print " (edited ", strftime("%Y-%m-%d %H:%Mz", gmtime($p_edited)), ")" if defined $p_edited and $p_edited > 0;
     print " http://redd.it/$id" if defined($id);
     if (not $post->{is_self} and not $post->{is_reddit_media_domain} and not $link =~ m/reddit.com/) {
-      my $shortLink = shortenUrl($link);
-      print " ", (defined($shortLink) ? $shortLink : $link), " ($domain)";
+      if ($link =~ m|^/r/[a-z0-9_-]+/(comments/)?([a-z0-9_-]+)/?|i) { # crosspost
+	my $shortLink = "http://redd.it/$2";
+	print " $shortLink ($domain)";
+      } else {
+	my $shortLink = shortenUrl($link);
+	print " ", (defined($shortLink) ? $shortLink : $link), " ($domain)";
+      }
     } elsif ($post->{is_self}) {
       print " | \"", substr($selftext, 0, 160);
       print "…" if length($selftext) > 160;
