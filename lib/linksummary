@@ -493,6 +493,7 @@ sub doMastodon {
     return doHtml($url);
   }
 
+  INSTANCE_CHECK:
   my $instanceapi = "${instance_base}/api/v1/instance";
   open(JSON, '-|', "curl --max-time $timeout -L -k -s '$instanceapi' ");
   local $/;   # read entire file -- FIXME: potentially memory hungry
@@ -500,6 +501,11 @@ sub doMastodon {
   close(JSON);
   if (length $uri == 0 or not $uri =~ /^\s*{/s) {
     # does not seem to be a mastodon URL
+    if ($instance_base =~ m|/web/?$|i) {
+      # sometimes advertises /web when we want /api
+      $instance_base =~ s|/web/?$|/|i;
+      goto INSTANCE_CHECK;
+    }
     return doHtml($url);
   }
   $uri =~ s/^.*?"uri":\s*"([^"]*)".*?$/$1/si;
