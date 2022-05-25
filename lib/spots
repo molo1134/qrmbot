@@ -349,6 +349,7 @@ sub doDXWatch
       if ($rb == 0) {
 	# AA4U,7047.5,KB1EFS,FT4 +02dB from FN42 514Hz,0230z 23 Dec,2726,12,1
 	($de, $freq, $dx, $cmt, $datetime) = @{$j->{s}->{$s}};
+	$cmt = decodeEntities($cmt);
       }
       if ($rb == 1) {
 	# W3UA,7011.9,E79Q,5,34,0319z 23 Dec,38,12,1,1,0
