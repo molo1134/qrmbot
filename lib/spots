@@ -186,6 +186,10 @@ sub doPSKreporter
   my $json = <HTTP>;
   close(HTTP);
 
+  if ($json eq "") {
+    print "warning: pskreporter returned no data\n";
+    return;
+  }
   if ($json =~ /The storm clouds are gathering/) {
     print "warning: pskreporter error\n";
     return;
