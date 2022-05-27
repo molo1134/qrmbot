@@ -540,7 +540,7 @@ sub doMastodon {
   $text =~ s/\n\s*\n/\n/sg;
   $text =~ s/\n/ /sg;
   $text =~ s/(\S)\n(\S)/$1 $2/sg;
-  $text =~ s/\n//sg;
+  $text =~ s/\n/ /sg;
 
   my $datestr = $j->{created_at};
   my $date = undef;
@@ -1447,6 +1447,7 @@ sub deamp {
 sub strip_html {
   my $t = shift;
   $t =~ s|<br/?>|\n|ig;
+  $t =~ s|</p><p[^>]*>|\n|ig;
   $t =~ s|<.*?>||g;
   $t =~ s| +| |g;
   $t = decodeEntities($t);
