@@ -26,6 +26,7 @@ use Colors;
 use Math::Round;
 use List::Util qw(sum min max);
 use Clone qw(clone);
+use POSIX qw(strftime);
 
 # disable "experimental" warning on smart match operator use
 no if $] >= 5.018, warnings => "experimental::smartmatch";
@@ -1706,28 +1707,33 @@ if ($#countyList >= 0) {
   }
   close(CTYPOP);
 
-  my $url = "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv";
   my %caseTotals;
   my %deathTotals;
   my $last = 0; #debug
+  my $url;
+  # need to get separate URLs for last 2 years -- no longer combined
+  my $curryear = strftime("%Y", gmtime time);
 
-  open(HTTP, '-|', "curl --max-time 30 -s -k -L '$url'");
-  while (<HTTP>) {
-    my ($date,$county,$state,$fips,$cases,$deaths) = split /,/;
-    $county =~ s/\s*\<(County|City|Parish|Borough|Census Area|City and Borough|Municipality)\>\s*$//i unless $county eq "New York City";
-    for my $c (@countyList) {
-      my ($cty, $st) = split(";", $c);
-      $cty = "New York City" if lc $cty eq "new york";
-      #print "$state $county :: ${st}_${cty}_${date} = $cases\n" if $county =~ m/bergen/i;
-      #print "$state $county :: ${st}_${cty}_${date} = ", $cases - $last, "\n" if $county =~ m/bergen/i;
-      #$last = $cases if $county =~ m/bergen/i;
-      if ((lc $cty eq lc $county) and (lc $st eq lc $state)) {
-	$caseTotals{"${st}_${cty}_${date}"} = $cases;
-	$deathTotals{"${st}_${cty}_${date}"} = $deaths;
+  for (my $y = $curryear - 1; $y <= $curryear; $y++) {
+    $url = "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties-$y.csv";
+    open(HTTP, '-|', "curl --max-time 30 -s -k -L '$url'");
+    while (<HTTP>) {
+      my ($date,$county,$state,$fips,$cases,$deaths) = split /,/;
+      $county =~ s/\s*\<(County|City|Parish|Borough|Census Area|City and Borough|Municipality)\>\s*$//i unless $county eq "New York City";
+      for my $c (@countyList) {
+	my ($cty, $st) = split(";", $c);
+	$cty = "New York City" if lc $cty eq "new york";
+	#print "$state $county :: ${st}_${cty}_${date} = $cases\n" if $county =~ m/bergen/i;
+	#print "$state $county :: ${st}_${cty}_${date} = ", $cases - $last, "\n" if $county =~ m/bergen/i;
+	#$last = $cases if $county =~ m/bergen/i;
+	if ((lc $cty eq lc $county) and (lc $st eq lc $state)) {
+	  $caseTotals{"${st}_${cty}_${date}"} = $cases;
+	  $deathTotals{"${st}_${cty}_${date}"} = $deaths;
+	}
       }
     }
+    close(HTTP);
   }
-  close(HTTP);
 
   $url = "https://covid.cdc.gov/covid-data-tracker/COVIDData/getAjaxData?id=vaccination_county_condensed_data";
   my %cty_vaxx;
