@@ -314,7 +314,7 @@ if ($csv == 1) {
   $expiration = "" if not defined $expiration;
   $qsl = "" if not defined $qsl;
   $qsl =~ s/,//g;
-  print "$call,$retcall,$name,$mail,$born,$expiration,$sk,$qsl\n";
+  print "$call,$retcall,$name,$mail,$grid,$born,$expiration,$sk,$qsl\n";
   #$mail =~ s/^.*\b([A-Z][A-Z])\b.*$/$1/;
   #print "$call,$mail\n";
   exit 0;
@@ -616,7 +616,7 @@ sub scrapeXML {
       print uc($call), " not found\n";
       exit $exitnonzeroonerror;
     }
-    if ((/A subscription is required to access the complete record./ or /Invalid session key/) and $autoxml > 0) {
+    if ((/A subscription is required to access the complete record./ or /Invalid session key/ or /Session Timeout/) and $autoxml > 0) {
       close(XML);
       $xmltries++;
       scrapeXML(); # try again
