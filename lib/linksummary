@@ -2,7 +2,7 @@
 # Create a description of a link.
 #
 # 2-clause BSD license.
-# Copyright (c) 2018, 2019, 2020, 2021 molo1134@github. All rights reserved.
+# Copyright (c) 2018, 2019, 2020, 2021, 2022 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;
@@ -98,7 +98,7 @@ while ($i <= $#ARGV) {
     doAe7qCall($2);
   } elsif ($ARGV[$i] =~ m|^https?://.*zoom\.us/j/[0-9]+|) {
     # noop
-  } elsif ($ARGV[$i] =~ m|^https?://(.*?)/@[a-z0-9_-]+/[0-9]+|i) {
+  } elsif ($ARGV[$i] =~ m|^https?://(.*?)(/web)?/@[a-z0-9_.-]+(@[a-z0-9_.-]+)?/[0-9]+|i) {
     doMastodon($ARGV[$i]);
     # falls back to doHtml if the API check fails
   } elsif ($ARGV[$i] =~ m|^https?://| and
@@ -485,9 +485,12 @@ sub doMastodon {
   my $instance_base = undef;
   my $userid = undef;
 
-  if ($url =~ m|^(.*)/@([a-z0-9_-]+)/([0-9]+)(\?.*)?$|i) {
-    ($instance_base, $userid, $statusid) = ($1, $2, $3);
+  if ($url =~ m|^(.*?)/(web/)?@([a-z0-9_.-]+)(@[a-z0-9_.-]+)?/([0-9]+)(\?.*)?$|i) {
+    ($instance_base, $userid, $statusid) = ($1, $3, $5);
   }
+  #print "statusid: $statusid\n";
+  #print "instance_base: $instance_base\n";
+  #print "userid: $userid\n";
   if (not defined $statusid) {
     # does not seem to be a mastodon URL
     return doHtml($url);
@@ -659,6 +662,7 @@ sub doHtml {
   # -H Accept => should cut down on images and the like, but check headers
   #print "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" '$url'";
   my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0";
+  #print("curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=1.9\" -A \"$useragent\" '$url'");
   open (HTTP, '-|', "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=1.9\" -A \"$useragent\" '$url'");
   while (<HTTP>) {
     #print;
