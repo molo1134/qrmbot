@@ -24,7 +24,7 @@ my $url = "https://markets.businessinsider.com/commodities/corn-price?op=1";
 open(HTTP, '-|', "curl -A '$ua' --max-time 10 -s -L --insecure '$url' | grep -A4 'price-section__current-value' | head -1");
 binmode(HTTP, ":utf8");
 while ( my $line = <HTTP>) {
-  if ($line =~ /.+([0-9.]+).+?$/) {
+  if ($line =~ /.+?([0-9.]+).+?$/) {
     my $price = "AmCORN 🌽 $1";
     print $price, "\n";
   }
