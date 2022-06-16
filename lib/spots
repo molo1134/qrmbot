@@ -120,8 +120,9 @@ while ($i <= $#ARGV) {
 }
 
 if ($dxw == 0 && $rbn == 0 && $psk == 0 && $ham == 0 && $pota == 0) {
-  $dxw = 1;
-  $rbn = 1;
+  $dxw = 0; # XXX temporarily disabled - site malfunctioning 2022-06-16
+  $rbn = 0; # XXX
+  print "warning: dxwatch and rbn disabled\n";
   $psk = 1;
   $ham = 1;
   $pota = 1;
