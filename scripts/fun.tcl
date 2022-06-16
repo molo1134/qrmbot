@@ -575,6 +575,7 @@ proc draw_pub { nick host hand chan text } {
 }
 
 bind pub - !cat cat_pub
+bind pub - !zach cat_pub
 proc cat_pub { nick host hand chan text } {
 	if [string equal "#amateurradio" $chan] then {
 		return
