@@ -19,6 +19,7 @@ use DateTime::Format::Strptime;
 use Switch;
 use v5.10;
 use JSON qw( decode_json );
+use Math::Round;
 
 use File::Basename;
 use Cwd 'realpath';
@@ -120,8 +121,7 @@ while ($i <= $#ARGV) {
 }
 
 if ($dxw == 0 && $rbn == 0 && $psk == 0 && $ham == 0 && $pota == 0) {
-  $rbn = 0; # XXX temporarily disabled - need to change scrape 2022 June
-  print "warning: rbn disabled\n";
+  $rbn = 1;
   $dxw = 1;
   $psk = 1;
   $ham = 1;
@@ -156,8 +156,8 @@ my $lastspot = 0;
 my @spots;
 
 doPSKreporter() unless $psk == 0;
-doDXWatch(0) unless $dxw == 0;	  # dx watch
-doDXWatch(1) unless $rbn == 0;	  # reverse beacon network
+doDXWatch() unless $dxw == 0;	  # dx watch
+doRBN() unless $rbn == 0;	  # reverse beacon network
 doHamspots() unless $ham == 0;
 doPotaspot() unless $pota == 0;
 
@@ -250,11 +250,6 @@ sub doPSKreporter
 
 sub doDXWatch
 {
-  my $rb = shift;
-  if (!defined($rb)) {
-    $rb = 0;
-  }
-
   my $freqmode = 0;
   $freqmode = 1 if $callsign =~ m/^\d+$/;
   my @seencalls;
@@ -262,22 +257,12 @@ sub doDXWatch
   my $url;
   my $referer;
   if ($freqmode == 0) {
-    if ($rb == 0) {
-      $url = 'https://www.dxwatch.com/dxsd1/s.php?s=0&r=50&cdx=' . $callsign;
-      $referer = "https://dxwatch.com/dxsd1/dxsd1.php?f=0&c=$callsign&t=dx";
-    } else {
-      $url = 'http://www.reversebeacon.net/dxsd1/sk.php?s=0&r=15&cdx=' . $callsign;
-      $referer = "http://reversebeacon.net/dxsd1/dxsd1.php?f=0&c=$callsign&t=dx";
-    }
+    $url = 'https://www.dxwatch.com/dxsd1/s.php?s=0&r=50&cdx=' . $callsign;
+    $referer = "https://dxwatch.com/dxsd1/dxsd1.php?f=0&c=$callsign&t=dx";
   } else {
     # frequency mode
-    if ($rb == 0) {
-      $url = "https://dxwatch.com/dxsd1/s.php?s=0&r=100&d=1&fid=0";
-      $referer = "https://dxwatch.com/";
-    } else {
-      $url = "http://reversebeacon.net/dxsd1/sk.php?s=0&r=100&d=1&fid=0";
-      $referer = "http://reversebeacon.net/main.php";
-    }
+    $url = "https://dxwatch.com/dxsd1/s.php?s=0&r=100&d=1&fid=0";
+    $referer = "https://dxwatch.com/";
   }
 
   my $modes_ref = {
@@ -332,7 +317,7 @@ sub doDXWatch
 
   if ($json =~ /<title>(\d\d\d .*?)<\/title>/) {
     my $error = $1;
-    print "warning: ", $rb == 1 ? "RBN" : "DXW", ": $error\n";
+    print "warning: DXW: $error\n";
     return;
   }
   return if $json eq "";
@@ -342,28 +327,13 @@ sub doDXWatch
     #print join(",", @{$j->{s}->{$s}}), "\n";
     my ($de, $freq, $dx, $snr, $wpm, $datetime, $age, $cmt, $mode);
     if ($freqmode == 0) {
-      if ($rb == 1) {
-	($de, $freq, $dx, $snr, $wpm, $datetime, $age, undef, undef, $mode) = @{$j->{s}->{$s}};
-	$cmt = "$snr dB, $wpm wpm";
-	#print "$mode\n";
-	$cmt = "$modes{$mode} $cmt" if defined $mode;
-      } else {
-	($de, $freq, $dx, $cmt, $datetime, $age) = @{$j->{s}->{$s}};
-	$cmt = decodeEntities($cmt);
-      }
+      ($de, $freq, $dx, $cmt, $datetime, $age) = @{$j->{s}->{$s}};
+      $cmt = decodeEntities($cmt);
     } else {
       $cmt = "";
-      if ($rb == 0) {
-	# AA4U,7047.5,KB1EFS,FT4 +02dB from FN42 514Hz,0230z 23 Dec,2726,12,1
-	($de, $freq, $dx, $cmt, $datetime) = @{$j->{s}->{$s}};
-	$cmt = decodeEntities($cmt);
-      }
-      if ($rb == 1) {
-	# W3UA,7011.9,E79Q,5,34,0319z 23 Dec,38,12,1,1,0
-	($de, $freq, $dx, $snr, $wpm, $datetime, undef, undef, $mode) = @{$j->{s}->{$s}};
-	$cmt = "$snr dB, $wpm wpm";
-	$cmt = "$modes{$mode} $cmt" if defined $mode;
-      }
+      # AA4U,7047.5,KB1EFS,FT4 +02dB from FN42 514Hz,0230z 23 Dec,2726,12,1
+      ($de, $freq, $dx, $cmt, $datetime) = @{$j->{s}->{$s}};
+      $cmt = decodeEntities($cmt);
     }
 
     my ($ts, $dt);
@@ -393,7 +363,7 @@ sub doDXWatch
 	  $seen == 0))
     {
       push (@spots, {ts => $ts,
-		      src => (($rb == 1) ? "r" : "d"),
+		      src => "d",
 		      de => $de,
 		      dx => $dx,
 		      f => $freq,
@@ -405,6 +375,110 @@ sub doDXWatch
     #printf "%-7s %-7s %5d %-28s %s\n", $de, $dx, $freq, substr($cmt, 0, 28), $datetime;
   }
   close HTTP;
+}
+
+sub doRBN {
+
+  my $freqmode = 0;
+  $freqmode = 1 if $callsign =~ m/^\d+$/;
+
+  my $url;
+  if ($freqmode == 0) {
+    $url = "https://www.reversebeacon.net/spots.php?cdx=${callsign}&s=0&r=20";
+  } else {
+    $url = "https://www.reversebeacon.net/spots.php?cdx=&s=0&r=100";
+  }
+  my $referer;
+  my @seencalls;
+
+  my $modes_ref = {
+    1 => "cw",
+    2 => "phone",
+    3 => "cw bcn",
+    4 => "cw bcn",
+    5 => "cw ncdxf bcn",
+    10 => "psk31",
+    11 => "rtty",
+    12 => "bpsk",
+    13 => "gmsk",
+    14 => "fsk",
+    15 => "sstv",
+    16 => "mfsk",
+    17 => "qpsk",
+    21 => "jt65",
+    22 => "hell",
+    23 => "dominoex",
+    24 => "mt63",
+    25 => "rttym",
+    26 => "thor",
+    27 => "throb",
+    28 => "olivia",
+    29 => "contestia",
+    30 => "psk63",
+    31 => "psk125",
+    32 => "jt9",
+    33 => "opera",
+    34 => "ft8",
+    35 => "?",
+    };
+  my %modes = %$modes_ref;
+
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $curl = "curl -L -k --max-time 4 --retry 1 -s '$url'";
+  $curl .= " -H 'Referer: $referer'" if defined $referer;
+  open (HTTP, '-|', $curl);
+  my $json = <HTTP>;
+  close(HTTP);
+
+  if ($json =~ /<title>(\d\d\d .*?)<\/title>/) {
+    my $error = $1;
+    print "warning: RBN: $error\n";
+    return;
+  }
+  return if $json eq "";
+
+  my $j = decode_json($json) or die "parse error: $json\n";
+
+  my %geomap;
+  foreach my $c (keys %{$j->{call_info}}) {
+    my ($lat, $lng) = ($j->{call_info}->{$c}->[6], $j->{call_info}->{$c}->[7]);
+    $geomap{$c} = "$lat,$lng";
+  }
+
+  foreach my $s (keys %{$j->{spots}}) {
+    my ($de, $freq, $dx, $snr, $wpm, $datetime, $age, undef, undef, $mode, undef, $ts) = @{$j->{spots}->{$s}};
+    my $cmt = "$snr dB, $wpm wpm";
+    $cmt = "$modes{$mode} $cmt" if defined $mode;
+
+    if (defined $geomap{$de} and defined $geomap{$dx}) {
+      my ($dist, $bearing) = distBearing(split(/,/, $geomap{$de}), split(/,/, $geomap{$dx}));
+      $dist = round($dist);
+      $cmt .= "; $dist km";
+    }
+
+    if (defined($ts)) {
+      #say "timestamp: $ts";
+      $lastspot = $ts unless ($ts < $lastspot);
+    }
+
+    my $seen = scalar(grep { /^$dx$/ } @seencalls);
+
+    if ($freqmode == 0 or
+	($freqmode == 1 and
+	  ($freq > $callsign - 5) and
+	  ($freq < $callsign + 5) and
+	  $seen == 0))
+    {
+      push (@spots, {ts => $ts,
+		      src => "r",
+		      de => $de,
+		      dx => $dx,
+		      f => $freq,
+		      msg => substr($cmt, 0, 28)}
+		    );
+      push (@seencalls, $dx);
+    }
+  }
 }
 
 sub getyearformonthday
