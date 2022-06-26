@@ -152,10 +152,6 @@ if (-e $timestampfile) {
   close TIMESTAMPS;
 }
 
-# for dxcc
-updateCty() if (checkCtyDat() == 1);
-my $dxccref = getDxccDataRef(); # load data and then ignore handle
-
 my $lastspot = 0;
 my @spots;
 
@@ -164,6 +160,12 @@ doDXWatch(0) unless $dxw == 0;	  # dx watch
 doDXWatch(1) unless $rbn == 0;	  # reverse beacon network
 doHamspots() unless $ham == 0;
 doPotaspot() unless $pota == 0;
+
+if (scalar @spots > 0) {
+  # for dxcc
+  updateCty() if (checkCtyDat() == 1);
+  my $dxccref = getDxccDataRef(); # pre-load data for later calls to getInfoForCall()
+}
 
 my @sortedspots = sort { $b->{ts} <=> $a->{ts} } @spots;  # descending
 
