@@ -610,6 +610,7 @@ sub show
   if ((scalar @$array) == 0 and $monitor == 0) {
     say "no spots found for $callsign";
   }
+  my $now = time();
   foreach my $spotref (@$array) {
     my %spot = %$spotref;
     if ($monitor == 1 and $spot{ts} <= $lasttimestamp) {
@@ -618,7 +619,13 @@ sub show
       next;
     }
     #printf "debug: %d, %d: %s\n", $lasttimestamp, $spot{ts}, strftime("%H%Mz %d %b", gmtime($spot{ts}));
-    printf "%s %-7s %5d %-28s %s %s\n", colorizeDe($spot{de}, $spot{dx}), $spot{dx}, $spot{f}, $spot{msg}, strftime("%H%Mz %d %b", gmtime($spot{ts})), $spot{src};
+    my $timedesc;
+    if ($now - $spot{ts} > (365*24*60*60)) {
+      $timedesc = strftime("%d %b %Y ", gmtime($spot{ts}));
+    } else {
+      $timedesc = strftime("%H%Mz %d %b", gmtime($spot{ts}));
+    }
+    printf "%s %-7s %5d %-28s %s %s\n", colorizeDe($spot{de}, $spot{dx}), $spot{dx}, $spot{f}, $spot{msg}, $timedesc, $spot{src};
     if (++$i >= $limit) {
       last;
     }
