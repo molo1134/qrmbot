@@ -62,6 +62,10 @@ while ($i <= $#ARGV) {
     # in case we have "de XXX --geo abc,xyz"
     last;
   }
+  if (not defined $query and not defined $de and $ARGV[$i] =~ /^--geo$/) {
+    $query = $ARGV[$i+1];
+    last;
+  }
   if (defined($de)) {
     $de = $de . " " . $ARGV[$i];
     $i++;
