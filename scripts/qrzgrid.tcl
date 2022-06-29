@@ -185,6 +185,9 @@ bind pub - !iota iota_pub
 bind msg - !1x1 onebyone_msg
 bind pub - !1x1 onebyone_pub
 
+bind msg - !wrtc wrtc_msg
+bind pub - !wrtc wrtc_pub
+
 set qrzbin "/home/eggdrop/bin/qrz"
 set gridbin "/home/eggdrop/bin/grid"
 set drivebin "/home/eggdrop/bin/drivetime"
@@ -221,6 +224,7 @@ set potabin "/home/eggdrop/bin/pota"
 set sotabin "/home/eggdrop/bin/sota"
 set iotabin "/home/eggdrop/bin/iota"
 set onebyonebin "/home/eggdrop/bin/1x1"
+set wrtcbin "/home/eggdrop/bin/wrtc"
 
 set spotfile spotlist
 
@@ -1939,6 +1943,29 @@ proc onebyone_msg {nick uhand handle input} {
 	set params [sanitize_string [string trim "${input}"]]
 	putlog "1x1 msg: $nick $uhand $handle $params"
 	set fd [open "|${onebyonebin} ${params}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
+proc wrtc_pub { nick host hand chan text } {
+	global wrtcbin
+	set params [sanitize_string [string trim "${text}"]]
+	putlog "wrtc pub: $nick $host $hand $chan $params"
+	set fd [open "|${wrtcbin} ${params}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc wrtc_msg {nick uhand handle input} {
+	global wrtcbin
+	set params [sanitize_string [string trim "${input}"]]
+	putlog "wrtc msg: $nick $uhand $handle $params"
+	set fd [open "|${wrtcbin} ${params}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg "$nick" "$line"

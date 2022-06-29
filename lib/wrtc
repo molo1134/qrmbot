@@ -1,0 +1,107 @@
+#!/usr/bin/perl -w
+#
+# scrape WRTC standings for a callsign
+#
+# 2-clause BSD license.
+# Copyright (c) 2022 molo1134@github. All rights reserved.
+
+use strict;
+use utf8;
+use Encode qw(decode);
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+
+@ARGV = map { decode "utf-8", $_ } @ARGV;
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my @calls;
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /^([a-z0-9]+\/)?\d?[a-z]{1,2}[0-9Øø]{1,4}[a-z]+(\/[a-z0-9]+)?$/i) {
+    push @calls, uc $ARGV[$i];
+  }
+  $i++;
+}
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+my $urlbase = "https://www.wrtc2022.it/en/qualification-standings-9.asp?CallsignEntries=1&callsign=";
+
+if (scalar @calls == 0) {
+  if ($username eq getEggdropUID()) {
+    print "usage: !wrtc <callsign> [callsign 2] ... [callsign N]\n";
+  } else {
+    print "usage: $0 <callsign> [callsign 2] ... [callsign N]\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+foreach my $c (@calls) {
+  doWRTC($c);
+}
+
+
+sub doWRTC {
+  my $call = shift;
+
+  my ($name, $pts, $claimed, $area_rank, $area, $cty_rank, $cty, $num_multi, $num_outside, $num_entries);
+  my $lead = 0;
+  my $member = 0;
+
+  open (HTTP, '-|', "curl --max-time 60 -s -k -L '${urlbase}${call}'");
+  while(<HTTP>) {
+    if (m|<img src="/public1/dps/flags/([A-Z]+).png" id="score_callsign_flag"|i) {
+      $cty = $1;
+    }
+    if (m|<div style="padding-top:20px;float:left;font-size:16px;font-weight:300;margin-right:10px;">(.*?)</div>|i) {
+      $name = $1;
+    }
+    $lead = 1 if m/Eligible Team Leader/i;
+    $member = 1 if m/Eligible Team Mate/i;
+    if (m|Total WRTC qualification points:</span>\s*(\d+)\s*$|i) {
+      $pts = $1;
+    }
+    if (m|Total WRTC qualification points (with claimed scores):</span>\s*(\d+)\s*$|i) {
+      $claimed = $1;
+    }
+    if (m|Area rank:</span>\s*(\d+)\s*in <.*?>([A-Z0-9]+)</a>|) {
+      ($area_rank, $area) = ($1, $2);
+    }
+    if (m|Country rank:</span>\s*(\d+)\s*in <.*?>.*? - (.*?)</a>|) {
+      ($cty_rank, $cty) = ($1, $2);
+    }
+    if (m|Multi operator entries:</span>\s*(\d+)|i) {
+      $num_multi = $1;
+    }
+    if (m|Outside own area entries:</span>\s*(\d+)|i) {
+      $num_outside = $1;
+    }
+    if (m|Total contest entries:</span>\s*(\d+)|i) {
+      $num_entries = $1;
+    }
+  }
+  close(HTTP);
+
+  if (not defined $name) {
+    print "not found $call\n";
+    return;
+  }
+
+  print bold($call), ": $name: $cty #$cty_rank; $area #$area_rank; Points: $pts";
+  print "; ($claimed claimed)" if defined $claimed and $claimed != $pts;
+  print "; ",  yellow("[Eligible Teammate]") if $member;
+  print "; ", lightgreen("[Eligible Team Leader]") if $lead;
+  print "\n";
+}
+
