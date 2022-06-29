@@ -64,6 +64,7 @@ proc send_help {nick} {
   putmsg "$nick" "  !iota -- search IOTA islands"
   putmsg "$nick" "  !1x1 -- search 1x1 special event stations"
   putmsg "$nick" "  !contests -- list current and upcoming contests"
+  putmsg "$nick" "  !wrtc -- show WRTC standings for a callsign"
   putmsg "$nick" "  !wx !wxfull -- show current weather conditions"
   putmsg "$nick" "  !wxf !wxflong -- weather forecast"
   putmsg "$nick" "  !metar -- show METAR weather data"
