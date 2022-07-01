@@ -3,7 +3,7 @@
 # lookup fivethrityeight.com election prediction data
 
 # 2-clause BSD license.
-# Copyright (c) 2020, 2021 molo1134@github. All rights reserved.
+# Copyright (c) 2020, 2021, 2022 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;
@@ -30,6 +30,7 @@ my $senate = 0;
 my $house = 0;
 my $generic = 0;
 my $housepoll = 0;
+my $year = 2022;
 my $i = 0;
 while ($i <= $#ARGV) {
   if ($ARGV[$i] =~ /--senate/) {
@@ -40,6 +41,11 @@ while ($i <= $#ARGV) {
     $generic = 1;
   } elsif ($ARGV[$i] =~ /--housepoll/) {
     $housepoll = 1;
+  } elsif ($ARGV[$i] =~ /--2020/) {
+    $year = 2020;
+  } elsif ($ARGV[$i] =~ /--year/) {
+    $year = $ARGV[$i+1];
+    $i++;
   } else {
     $state = uc $ARGV[$i];
   }
@@ -174,7 +180,11 @@ if ($senate == 0 and $house == 0 and $housepoll == 0 and $generic == 0) {
     exit 0;
   }
 
-  my $url = "https://projects.fivethirtyeight.com/2020-election-forecast/$stateToUrlFrag{$state}_timeseries.json";
+  while ($year % 4 != 0) {
+    --$year;
+  }
+
+  my $url = "https://projects.fivethirtyeight.com/${year}-election-forecast/$stateToUrlFrag{$state}_timeseries.json";
 
   #print "$url\n";
   local $/;   # read entire file -- FIXME: potentially memory hungry
@@ -199,7 +209,7 @@ if ($senate == 0 and $house == 0 and $housepoll == 0 and $generic == 0) {
 	$name = red($name) if $name eq "Trump";
 	$name = lightblue($name) if $name eq "Biden";
 
-	print "FiveThirtyEight 2020 ", bold(italic($stateToName{$state})), " election prediction as of $date:\n" if $didtop++ == 0;
+	print "FiveThirtyEight ${year} ", bold(italic($stateToName{$state})), " election prediction as of $date:\n" if $didtop++ == 0;
 	printf("  ${name}'s odds %0.1f%% with mean %0.1f%% of popular vote%s\n", $winprob, $voteshare, $evtext) if $winprob < 50.0;
 	printf("  ${name}'s odds %s with mean %s of popular vote%s\n", bold(sprintf("%0.1f%%", $winprob)), bold(sprintf("%0.1f%%", $voteshare)), $evtext) if $winprob >= 50.0;
       }
@@ -209,7 +219,7 @@ if ($senate == 0 and $house == 0 and $housepoll == 0 and $generic == 0) {
 
 if ($senate == 1) {
   if ($state eq "US") {
-    my $url = "https://projects.fivethirtyeight.com/2020-election-forecast/senate_us_latest.json";
+    my $url = "https://projects.fivethirtyeight.com/${year}-election-forecast/senate_us_latest.json";
 
     local $/;   # read entire file -- FIXME: potentially memory hungry
     open (JSON, '-|', "curl --max-time 10 -s -k -L $url");
@@ -227,13 +237,13 @@ if ($senate == 1) {
 	my $seats = $cand->{seats}->{mean};
 	$name = red($name) if $name eq "Republicans";
 	$name = lightblue($name) if $name eq "Democrats";
-	print "FiveThirtyEight 2020 ", bold(italic("Senate")), " election prediction as of $date:\n" if $didtop++ == 0;
+	print "FiveThirtyEight ${year} ", bold(italic("Senate")), " election prediction as of $date:\n" if $didtop++ == 0;
 	printf("  ${name} control odds %0.1f%% with mean %0.1f seats\n", $winprob, $seats) if $winprob < 50.0;
 	printf("  ${name} control odds %s with mean %s seats\n", bold(sprintf("%0.1f%%", $winprob)), bold(sprintf("%0.1f", $seats))) if $winprob >= 50.0;
       }
     }
   } else {
-    my $url = "https://projects.fivethirtyeight.com/2020-election-forecast/senate_race_summary.json";
+    my $url = "https://projects.fivethirtyeight.com/${year}-election-forecast/senate_race_summary.json";
     local $/;   # read entire file -- FIXME: potentially memory hungry
     open (JSON, '-|', "curl --max-time 10 -s -k -L $url");
     my $json = <JSON>;
@@ -259,7 +269,7 @@ if ($senate == 1) {
 	  $name = green($name) if defined $party and $party eq "G";
 	  $name = yellow($name) if defined $party and $party eq "L";
 	  $name = "$name ℹ" if $incumb;
-	  print "FiveThirtyEight 2020 ", bold(italic("Senate $race->{race}")), " election prediction:\n" if $didtop++ == 0;
+	  print "FiveThirtyEight ${year} ", bold(italic("Senate $race->{race}")), " election prediction:\n" if $didtop++ == 0;
 	  printf("  ${name} odds %0.1f%% with mean %0.1f%% vote share\n", $winprob, $votesh) if $winprob < 50.0;
 	  printf("  ${name} odds %s with mean %s vote share\n", bold(sprintf("%0.1f%%", $winprob)), bold(sprintf("%0.1f%%", $votesh))) if $winprob >= 50.0;
 	  $found = 1;
@@ -272,27 +282,34 @@ if ($senate == 1) {
 
 if ($generic == 1) {
   # generic ballot
-  my $url = "https://projects.fivethirtyeight.com/congress-generic-ballot-polls/generic-2020.json";
+  my $url = "https://projects.fivethirtyeight.com/polls/generic-ballot/${year}/polling-average.json";
   local $/;   # read entire file -- FIXME: potentially memory hungry
   open (JSON, '-|', "curl --max-time 10 --fail -s -k -L $url");
   my $json = <JSON>;
   close(JSON);
   my $j = decode_json($json) or die "parse error: $json\n";
   my $last = @{$j}[scalar @{$j} - 1];
+  my $pent = @{$j}[scalar @{$j} - 2];  #penulitmate
 
-  my $dem_dev = min($last->{revised}->{dem_hi} - $last->{revised}->{dem_estimate},
-		    $last->{revised}->{dem_estimate} -$last->{revised}->{dem_lo});
-  my $rep_dev = min($last->{revised}->{rep_hi} - $last->{revised}->{rep_estimate},
-		    $last->{revised}->{rep_estimate} -$last->{revised}->{rep_lo});
+  my ($rep, $dem);
+  $rep = $last if $last->{party} eq "rep";
+  $dem = $last if $last->{party} eq "dem";
+  $rep = $pent if $pent->{party} eq "rep";
+  $dem = $pent if $pent->{party} eq "dem";
 
-  my $dem = nearest(0.1, $last->{revised}->{dem_estimate});
-  my $rep = nearest(0.1, $last->{revised}->{rep_estimate});
+  my $dem_dev = min($dem->{hi} - $dem->{pct_estimate},
+		    $dem->{pct_estimate} - $dem->{lo});
+  my $rep_dev = min($rep->{hi} - $rep->{pct_estimate},
+		    $rep->{pct_estimate} - $rep->{lo});
+
+  my $dem_pct = nearest(0.1, $dem->{pct_estimate});
+  my $rep_pct = nearest(0.1, $rep->{pct_estimate});
   $dem_dev = nearest(0.1, $dem_dev);
   $rep_dev = nearest(0.1, $rep_dev);
 
-  print "FiveThirtyEight ", bold("Generic Ballot"), " polling estimate:  ",
-      lightblue("Democrats"), ": $dem% ±$dem_dev;  ",
-      red("Republicans"), ": $rep% ±$rep_dev\n";
+  print "FiveThirtyEight $year ", bold("Generic Ballot"), " polling estimate as of $last->{date}:  ",
+      lightblue("Democrats"), ": $dem_pct% ±$dem_dev;  ",
+      red("Republicans"), ": $rep_pct% ±$rep_dev\n";
 }
 
 
@@ -328,10 +345,12 @@ if ($housepoll == 1) {
 
     $i = 0;
     my $currcycle = strftime("%Y", gmtime(time()));
+    my $found = 0;
     foreach my $poll (@{$j}) {
       next if $username eq getEggdropUID() and ++$i < scalar @{$j}; # only show latest
       next if $poll->{cycle} ne $currcycle;
 
+      $found = 1;
       my $grade = $poll->{grade};
       $grade = undef if $grade eq "";
       my $pollUrl = shortenUrl($poll->{url});
@@ -352,6 +371,9 @@ if ($housepoll == 1) {
 	print "  $name: $a->{pct}\%\n" if $a->{pct} < 50.0;
       }
     }
+    if (not $found) {
+      print "no polls found for $currcycle\n";
+    }
 
   } else {
     print "error: misformated race\n";
@@ -361,7 +383,7 @@ if ($housepoll == 1) {
 
 if ($house == 1) {
   if ($state eq "US") {
-    my $url = "https://projects.fivethirtyeight.com/2020-election-forecast/house_us_latest.json";
+    my $url = "https://projects.fivethirtyeight.com/${year}-election-forecast/house_us_latest.json";
     local $/;   # read entire file -- FIXME: potentially memory hungry
     open (JSON, '-|', "curl --max-time 10 --fail -s -k -L $url");
     my $json = <JSON>;
@@ -369,7 +391,7 @@ if ($house == 1) {
     my $j = decode_json($json) or die "parse error: $json\n";
     for my $pred (@{$j}) {
       next if $pred->{type} ne "deluxe";
-      print "FiveThirtyEight ", bold(italic("House Control")), " election prediction:\n";
+      print "FiveThirtyEight $year ", bold(italic("House Control")), " election prediction:\n";
       for my $c (@{$pred->{candidates}}) {
 	my $name = $c->{candidate};
 	$name = lightblue($name) if $name =~ /^Dem/;
@@ -396,7 +418,7 @@ if ($house == 1) {
 
     my $found = 0;
 
-    my $url = "https://projects.fivethirtyeight.com/2020-election-forecast/house_race_summary.json";
+    my $url = "https://projects.fivethirtyeight.com/${year}-election-forecast/house_race_summary.json";
 
     local $/;   # read entire file -- FIXME: potentially memory hungry
     open (JSON, '-|', "curl --max-time 10 --fail -s -k -L $url");
@@ -413,7 +435,7 @@ if ($house == 1) {
       foreach my $r (@{$pred->{races}}) {
 	if ((defined $dist and $r->{race} eq "$state-$dist") or
 	    (not defined $dist and substr($r->{race}, 0, 2) eq $state)) {
-	  print "FiveThirtyEight ", italic(bold("House $r->{race}")), " election prediction:\n";
+	  print "FiveThirtyEight $year ", italic(bold("House $r->{race}")), " election prediction:\n";
 	  foreach my $cand (@{$r->{candidates}}) {
 	    my $votesh = $cand->{voteshare}->{mean};
 	    next if $votesh == 0;
