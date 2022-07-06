@@ -870,7 +870,8 @@ sub doReddit {
   if (not defined($commentId)) {
 
     my $author = "/u/$p_author";
-    $author = green($author) if $post->{distinguished};
+    $author = green($author) if $post->{distinguished} eq "moderator";
+    $author = red($author) if $post->{distinguished} eq "admin";
     $author = red("[deleted]") if $p_author eq "[deleted]";
 
     $title = green($title) if $post->{stickied};
@@ -911,7 +912,8 @@ sub doReddit {
 
       my $author = "/u/$c_author";
       $author = lightblue($author) if $c_author eq $p_author;
-      $author = green($author) if $comment->{distinguished};
+      $author = green("/u/$c_author") if $comment->{distinguished} eq "moderator";
+      $author = red("/u/$c_author") if $comment->{distinguished} eq "admin";
       $author = red("[deleted]") if $c_author eq "[deleted]";
       print "comment by $author (";
       print green("${c_score}↑") if defined $c_score and $c_score > 0;
