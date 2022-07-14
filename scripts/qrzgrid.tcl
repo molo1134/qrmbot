@@ -1838,8 +1838,13 @@ proc atten_msg {nick uhand handle input} {
 proc pota_pub { nick host hand chan text } {
 	global potabin
 	set params [sanitize_string [string trim "${text}"]]
-	putlog "pota pub: $nick $host $hand $chan $params"
-	set fd [open "|${potabin} ${params}" r]
+	set geo [qrz_getgeo $hand]
+	putlog "pota pub: $nick $host $hand $chan $params $geo"
+	if [string equal "" $geo] then {
+	  set fd [open "|${potabin} ${params}" r]
+	} else {
+	  set fd [open "|${potabin} ${params} --geo $geo" r]
+	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
@@ -1849,8 +1854,13 @@ proc pota_pub { nick host hand chan text } {
 proc pota_msg {nick uhand handle input} {
 	global potabin
 	set params [sanitize_string [string trim "${input}"]]
-	putlog "pota msg: $nick $uhand $handle $params"
-	set fd [open "|${potabin} ${params}" r]
+	set geo [qrz_getgeo $hand]
+	putlog "pota msg: $nick $uhand $handle $params $geo"
+	if [string equal "" $geo] then {
+	  set fd [open "|${potabin} ${params}" r]
+	} else {
+	  set fd [open "|${potabin} ${params} --geo $geo" r]
+	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg "$nick" "$line"

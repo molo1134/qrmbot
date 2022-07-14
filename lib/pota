@@ -27,6 +27,7 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Util;
 use Colors;
+use Location;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
@@ -35,8 +36,6 @@ my $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 @ARGV = map { decode "utf-8", $_ } @ARGV;
-my $term = join(" ", @ARGV);
-$term =~ s/[øØ]/0/g;
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq getEggdropUID()) {
@@ -47,6 +46,39 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   exit $exitnonzeroonerror;
 }
 
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+our $mylat = undef;
+our $mylon = undef;
+my $de = undef;
+my $term;
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if (!defined($de) and $ARGV[$i] =~ /^(--geo|de|from)$/i) {
+    $i++;
+    $de = $ARGV[$i];
+    $i++;
+    next;
+  }
+  if (defined($de)) {
+    $de = $de . " " . $ARGV[$i];
+    $i++;
+    next;
+  }
+
+  $term .= " " if defined $term;
+  $term .= $ARGV[$i];
+  $i++;
+}
+
+$term =~ s/[øØ]/0/g;
+
+if (defined($de)) {
+  my $degeo = argToCoords($de);
+  ($mylat, $mylon) = split(',', $degeo) if defined $degeo;
+}
 
 my $search_url = "https://api.pota.app/lookup?size=3&search=" . uri_escape("$term");
 
@@ -142,6 +174,12 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
 	}
 	print ": ", commify($r->{count}), " QSOs";
       }
+    }
+
+    if (defined($mylat)) {
+      my ($dist, $bearing) = distBearing($mylat, $mylon, $j->{latitude}, $j->{longitude});
+      my $localgrid = coordToGrid($mylat, $mylon);
+      printf(" -- %.1f km, %.0f° from %s", $dist, $bearing, $localgrid);
     }
     print "\n";
 
