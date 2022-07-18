@@ -1854,7 +1854,7 @@ proc pota_pub { nick host hand chan text } {
 proc pota_msg {nick uhand handle input} {
 	global potabin
 	set params [sanitize_string [string trim "${input}"]]
-	set geo [qrz_getgeo $hand]
+	set geo [qrz_getgeo $handle]
 	putlog "pota msg: $nick $uhand $handle $params $geo"
 	if [string equal "" $geo] then {
 	  set fd [open "|${potabin} ${params}" r]
