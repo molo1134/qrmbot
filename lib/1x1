@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # 2-clause BSD license.
-# Copyright (c) 2021 molo1134@github. All rights reserved.
+# Copyright (c) 2021, 2022 molo1134@github. All rights reserved.
 
 use File::Basename;
 use Cwd 'realpath';
@@ -45,8 +45,6 @@ my $call = uc $ARGV[0];
 $call =~ s/^\s*//;
 $call =~ s/\s*$//;
 
-my $rec = undef;
-
 if ($call =~ /^[WNK][0-9][A-Z]$/) {
   open(INDEX, '-|', "curl -k -L --max-time 10 --retry 1 -s '$callsearch_url' --data '${callsearch_params}${call}'");
 } else {
@@ -55,62 +53,78 @@ if ($call =~ /^[WNK][0-9][A-Z]$/) {
   open(INDEX, '-|', "curl -k -L --max-time 10 --retry 1 -s '$eventsearch_url' --data '${eventsearch_params}${encodedquery}'");
 }
 
+my @rec;
 while (<INDEX>) {
-  if (not defined $rec and m|<a href=index.php\?option=com_jumi&fileid=4&action=recDetail&recid=(\d+)>details</a>|) {
-    $rec = $1;
-    #print "rec: $rec\n";
+  if (m|<a href=index.php\?option=com_jumi&fileid=4&action=recDetail&recid=(\d+)>details</a>|) {
+    push @rec, $1;
   }
   next;
 }
 close(INDEX);
 
-if (not defined $rec) {
+if (0 == scalar @rec) {
   print "not found\n";
   exit $exitnonzeroonerror;
 }
 
+my $now = time();
+my %details;
+my $found = 0;
+foreach my $r (@rec) {
 
-my ($rcall, $event, $sdate, $edate, $by, $orig_call, $addr, $email, $phone);
+  my ($rcall, $event, $sepoch, $eepoch, $sdate, $edate, $by, $orig_call, $addr, $email, $phone);
 
-open(DETAIL, '-|', "curl -k -L --max-time 10 --retry 1 -s '${detail_url}${rec}'");
-while (<DETAIL>) {
-  if (m|<td nowrap colspan="2"><font face="Verdana, Arial, Helvetica, sans-serif" size="2" color="#7F6E4E"><b><font color="#252525">([WNK][0-9][A-Z])</font> : (.*?)</b></font></td>|) {
-    $rcall = $1;
-    $event = $2;
-  }
-  if (m|<td valign="top" width="99%" nowrap><font face="Verdana, Arial, Helvetica, sans-serif" size="-2" color="#3D536A"><b>(.*?)</b></font></td>|) {
-    $sdate = $1;
-    $sdate = Time::Piece->strptime($sdate, "%B %d, %Y")->epoch;
-    $sdate = strftime("%Y-%m-%d", gmtime($sdate));
-  }
-  if (m|<td valign="top" height="21" width="99%" nowrap><font face="Verdana, Arial, Helvetica, sans-serif" size="-2" color="#3D536A"><b>(.*?)</b></font></td>|) {
-    $edate = $1;
-    $edate = Time::Piece->strptime($edate, "%B %d, %Y")->epoch;
-    $edate = strftime("%Y-%m-%d", gmtime($edate));
-  }
-  if (m|<td valign="top" width="99%" height="18" nowrap><font face="Verdana, Arial, Helvetica, sans-serif" size="1" color="#535353"><b>(.*?)</b></font></td>|) {
-    $by = $1;
-  }
-  if (m|<td valign="top" width="99%" nowrap><font color="#212121" face="Courier New, Courier, mono" size="2">(.*?)</font></td>|) {
-    $orig_call = $1;
-  }
+  open(DETAIL, '-|', "curl -k -L --max-time 10 --retry 1 -s '${detail_url}${r}'");
+  while (<DETAIL>) {
+    if (m|<td nowrap colspan="2"><font face="Verdana, Arial, Helvetica, sans-serif" size="2" color="#7F6E4E"><b><font color="#252525">([WNK][0-9][A-Z])</font> : (.*?)</b></font></td>|) {
+      $rcall = $1;
+      $event = $2;
+    }
+    if (m|<td valign="top" width="99%" nowrap><font face="Verdana, Arial, Helvetica, sans-serif" size="-2" color="#3D536A"><b>(.*?)</b></font></td>|) {
+      $sdate = $1;
+      $sepoch = Time::Piece->strptime($sdate, "%B %d, %Y")->epoch;
+      $sdate = strftime("%Y-%m-%d", gmtime($sepoch));
+      # ARRL: Assignments are made by calendar date, for the full day at
+      # Coordinated Universal Time (UTC) or Zulu Time (Z):  0000Z to 2359Z
+    }
+    if (m|<td valign="top" height="21" width="99%" nowrap><font face="Verdana, Arial, Helvetica, sans-serif" size="-2" color="#3D536A"><b>(.*?)</b></font></td>|) {
+      $edate = $1;
+      $eepoch = Time::Piece->strptime($edate, "%B %d, %Y")->epoch + 86399;  # 23:59:59
+      $edate = strftime("%Y-%m-%d", gmtime($eepoch));
+      # ARRL: Assignments are made by calendar date, for the full day at
+      # Coordinated Universal Time (UTC) or Zulu Time (Z):  0000Z to 2359Z
+    }
+    if (m|<td valign="top" width="99%" height="18" nowrap><font face="Verdana, Arial, Helvetica, sans-serif" size="1" color="#535353"><b>(.*?)</b></font></td>|) {
+      $by = $1;
+    }
+    if (m|<td valign="top" width="99%" nowrap><font color="#212121" face="Courier New, Courier, mono" size="2">(.*?)</font></td>|) {
+      $orig_call = $1;
+    }
 
-  if (m|<td valign="top" width="99%" nowrap> <font color="#535353" face="Verdana, Arial, Helvetica, sans-serif" size="-2">(.*?)</font></td>|) {
-    $email = $1;
+    if (m|<td valign="top" width="99%" nowrap> <font color="#535353" face="Verdana, Arial, Helvetica, sans-serif" size="-2">(.*?)</font></td>|) {
+      $email = $1;
+    }
+    if (m|<td valign="top" width="99%" nowrap><font color="#535353" face="Verdana, Arial, Helvetica, sans-serif" size="-2">(.*?)</font></td>|) {
+      $phone = $1;
+    }
   }
-  if (m|<td valign="top" width="99%" nowrap><font color="#535353" face="Verdana, Arial, Helvetica, sans-serif" size="-2">(.*?)</font></td>|) {
-    $phone = $1;
+  close(DETAIL);
+
+  my $rel = undef;
+  $rel = "past" if $eepoch < $now;
+  $rel = "now" if $sepoch < $now and $eepoch > $now;
+  $rel = "future" if $sepoch > $now;
+
+  if (defined $rcall and $event) {
+    print bold($rcall), ": $rel: ",  bold($event),
+      " from $sdate to $edate by $orig_call ($by; $email)\n";
+    $found = 1;
   }
+  last if defined $rel and $rel eq "past";
 }
-close(DETAIL);
 
-
-if (defined $rcall and $event) {
-  print bold($rcall), ": ",  bold($event),
-    " from $sdate to $edate by $orig_call ($by; $email)\n";
-  exit 0;
+if ($found == 0) {
+  print "error, not found\n";
+  exit $exitnonzeroonerror;
 }
-
-print "error, not found\n";
-exit $exitnonzeroonerror;
 
