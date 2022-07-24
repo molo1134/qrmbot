@@ -14,12 +14,30 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 
+use JSON qw( decode_json );
+
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
-my $url = "http://www.arrl.org/logbook-queue-status";
 
 my $delay = undef;
 my $epoch = undef;
+my $uptime = undef;
+my $isup = undef;
 
+my $url = "https://status.lotw.arrl.org/api/getMonitorList/GMOlwIV5k?page=1";
+open (HTTP, '-|', "curl --max-time 10 -L -k -s $url");
+binmode(HTTP, ":utf8");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+my $json = <HTTP>;
+close HTTP;
+my $j = decode_json($json);
+$isup = $j->{status} eq "ok";
+$uptime = $j->{statistics}->{uptime}->{l1}->{ratio};
+print "LoTW up? ",$isup?green("yes"):red("no"), "; ";
+print red($uptime) if $uptime < 100.0;
+print green($uptime) if $uptime >= 99.9;
+print "% of last 24h;";
+
+$url = "http://www.arrl.org/logbook-queue-status";
 open (HTTP, '-|', "curl --max-time 10 -L -k -s $url");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
@@ -34,5 +52,5 @@ while (<HTTP>) {
   }
 }
 close HTTP;
-print "LoTW Queue Delay as of $epoch UTC: ", bold($delay), "\n";
+print " Queue Delay as of $epoch UTC: ", bold($delay), "\n";
 exit 0;
