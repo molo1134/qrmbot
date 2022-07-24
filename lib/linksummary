@@ -1024,6 +1024,7 @@ sub doAmazon {
     }
     if (/discuss automated access/) {
       #print "Amazon anti-scraper filter encountered; $shortUrl\n";
+      print "$shortUrl\n";
       return;
     }
     if (/Something Went Wrong/i) {
