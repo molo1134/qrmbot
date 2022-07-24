@@ -103,6 +103,7 @@ foreach my $r (@rec) {
 
     if (m|<td valign="top" width="99%" nowrap> <font color="#535353" face="Verdana, Arial, Helvetica, sans-serif" size="-2">(.*?)</font></td>|) {
       $email = $1;
+      $email = lc $email if defined $email;
     }
     if (m|<td valign="top" width="99%" nowrap><font color="#535353" face="Verdana, Arial, Helvetica, sans-serif" size="-2">(.*?)</font></td>|) {
       $phone = $1;
@@ -117,7 +118,9 @@ foreach my $r (@rec) {
 
   if (defined $rcall and $event) {
     print bold($rcall), ": $rel: ",  bold($event),
-      " from $sdate to $edate by $orig_call ($by; $email)\n";
+      " from $sdate to $edate by $orig_call ($by";
+    print "; $email" if defined $email and $email ne "";
+    print ")\n";
     $found = 1;
   }
   last if defined $rel and $rel eq "past";
