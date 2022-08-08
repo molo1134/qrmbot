@@ -5,7 +5,7 @@
 # A portion is derived from the WSJT/WSJT-X project.
 #
 # Copyright (C) 2001 - 2017 by Joe Taylor, K1JT.
-# Copyright (c) 2018, 2019, 2020 molo1134@github
+# Copyright (c) 2018, 2019, 2020, 2022 molo1134@github
 
 use strict;
 use utf8;
@@ -49,6 +49,7 @@ my $now = time();
 #$now = 1488053200; ## new moon
 #$now = 1515572994; ## GRAVES illuminated
 
+my ($lat, $lon) = (undef, undef);
 
 # eggdrop doesn't split args on spaces
 @ARGV=split(' ', join(' ',@ARGV));
@@ -76,45 +77,50 @@ while ($i <= $#ARGV) {
   } elsif ($ARGV[$i] =~ /^--date$/) {
     # undocumented -- unix timestamp
     $now = $ARGV[++$i];
+  } elsif ($ARGV[$i] =~ /^--geo$/) {
+    ($lat, $lon) = split(/,/, $ARGV[++$i]);
   } else {
-    $query .= " " unless $i == 0;
+    $query .= " " unless $query eq "";
     $query .= $ARGV[$i];
   }
   $i++;
 }
-#print "$query\n";
-#print "$elev_m\n";
+#print "query: $query\n";
+#print "elev_m: $elev_m\n";
 
-if ($doMoon == 0 && $doSun == 0 && $doGraves == 0) {
+if ($doMoon == 0 && $doSun == 0 && $doGraves == 0 && $doQuarter == 0) {
   # no data was selected, so do all.
   $doMoon = 1;
   $doEme = 1;
   $doSun = 1;
   $doGraves = 1;
+  $doQuarter = 1;
 }
 
-my ($lat, $lon) = (0, 0);
+if ($query ne "") {
+  my $result;
+  $result = argToCoords($query) unless $query eq "" and $doGraves == 1;
 
-if ($query eq "" && ($doMoon == 1 || $doSun == 1)) {
-  print "usage: !eme <qth>|<grid>" if $username eq getEggdropUID() && $doEme == 1;
-  print "usage: !sun <qth>|<grid>" if $username eq getEggdropUID() && $doSun == 1;
-  print "usage: !moon <qth>|<grid>" if $username eq getEggdropUID() && $doMoon == 1 && $doEme == 0;
-  exit $exitnonzeroonerror;
+  if (!defined $result and $query ne "") {
+    print "error: \"$query\" not found\n";
+    exit $exitnonzeroonerror;
+  }
+  ($lat, $lon) = split(',', $result) if defined $result;
 }
 
-my $highlight="vt220";
-$highlight = "none" if ! -t STDOUT;
-$highlight = "irc" if $username eq getEggdropUID();
-
-my $result;
-$result = argToCoords($query) unless $query eq "" and $doGraves == 1;
-
-if (!defined $result and $query ne "") {
-  print "error: \"$query\" not found\n";
-  exit $exitnonzeroonerror;
-}
-($lat, $lon) = split(',', $result) if defined $result;
 #print "$lat, $lon\n";
+
+if ($username eq getEggdropUID() and not defined $lat and not defined $lon and ($doMoon == 1 || $doSun == 1)) {
+  print "usage: !eme <qth>|<grid>\n" if $doEme == 1;
+  print "usage: !sun <qth>|<grid>\n" if $doSun == 1;
+  print "usage: !moon <qth>|<grid>\n" if $doMoon == 1 && $doEme == 0;
+  exit $exitnonzeroonerror;
+}
+
+if ((not defined $lat or not defined $lon) and ($doEme == 1 or $doSun == 1 or $doMoon == 1)) {
+  print "error: no position specified\n";
+  exit $exitnonzeroonerror;
+}
 
 # 1600 Pennsylvania Ave, Washington DC USA
 # latitude 38.899 N, longitude 77.038 W,
@@ -126,77 +132,80 @@ if (!defined $result and $query ne "") {
 my $moon = Astro::Coord::ECI::Moon->new();
 my $sun = Astro::Coord::ECI::Sun->new();
 my $sta = Astro::Coord::ECI->universal($now)->
-  geodetic(deg2rad($lat), deg2rad($lon), $elev_m / 1000);  #kilometers
-$sta->set(refraction => 0);
+  geodetic(deg2rad($lat), deg2rad($lon), $elev_m / 1000) if defined $lat and defined $lon;  #kilometers
+$sta->set(refraction => 0) if defined $sta;
 $moon->set(refraction => 0);
 $sun->set(refraction => 0);
-$sta->universal($now);
+$sta->universal($now) if defined $sta;
 $moon->universal($now);
 $sun->universal($now);
 
-my ($moon_az, $moon_el, $moon_range) = getAzElRng($sta, $moon);
+if ($doMoon) {
 
-my $earthradius = 6371;
-my ($minrange, $maxrange) = (356375 - $earthradius, 406720 - $earthradius); # perigee, apogee
-my $loss2m = emePathLoss($moon_range, 144.1);
-my $minloss2m = emePathLoss($minrange, 144.1); # loss at minimum perigee
-#my $maxloss2m = emePathLoss($maxrange - $earthradius, 144.1); # loss at maximum apogee
-my $percentRange = round(($moon_range - $minrange) / ($maxrange - $minrange) * 100);
-my $lossdiff = nearest(0.1, $loss2m - $minloss2m);
+  my ($moon_az, $moon_el, $moon_range) = getAzElRng($sta, $moon);
 
-my ($phase, $illum) = $moon->phase($now);
-$phase = rad2deg($phase);
-my ($phasetext, $phaseunicode) = phaseText($phase);
-$phasetext = red($phasetext)
-    if ($doEme == 1 && $phasetext eq "new moon");
+  my $earthradius = 6371;
+  my ($minrange, $maxrange) = (356375 - $earthradius, 406720 - $earthradius); # perigee, apogee
+  my $loss2m = emePathLoss($moon_range, 144.1);
+  my $minloss2m = emePathLoss($minrange, 144.1); # loss at minimum perigee
+  #my $maxloss2m = emePathLoss($maxrange - $earthradius, 144.1); # loss at maximum apogee
+  my $percentRange = round(($moon_range - $minrange) / ($maxrange - $minrange) * 100);
+  my $lossdiff = nearest(0.1, $loss2m - $minloss2m);
 
-$illum = round($illum * 100);
+  my ($phase, $illum) = $moon->phase($now);
+  $phase = rad2deg($phase);
+  my ($phasetext, $phaseunicode) = phaseText($phase);
+  $phasetext = red($phasetext)
+      if ($doEme == 1 && $phasetext eq "new moon");
 
-if ($doMoon == 1) {
-  if ($moon_el < 0) {
-    print bold("Moon"), " is ", red("set"), ";";
-  } else {
-    print bold("Moon"), " az/el ", bold("$moon_az°/$moon_el°"), "; dist $moon_range km;";
+  $illum = round($illum * 100);
+
+  if ($doMoon == 1) {
+    if ($moon_el < 0) {
+      print bold("Moon"), " is ", red("set"), ";";
+    } else {
+      print bold("Moon"), " az/el ", bold("$moon_az°/$moon_el°"), "; dist $moon_range km;";
+    }
+    print " phase: $phasetext $phaseunicode, $illum% illum.;";
   }
-  print " phase: $phasetext $phaseunicode, $illum% illum.;";
+
+  # rise/set
+  my ($eventtime, $rise) = $sta->next_elevation ($moon);
+  my ($h, $m) = getTimeRemaining($now, $eventtime);
+  print " Moon will @{[$rise ? 'rise' : 'set']} at ",
+	strftime("%Y-%m-%d %H:%Mz", gmtime($eventtime)), " (in ${h}h${m}m);"
+	if $doMoon == 1;
+
+  my ($moon_ra, $moon_dec, $moon_ra_range) = $moon->equatorial();
+  $moon_ra = rad2deg($moon_ra);
+  my $moon_h = ($moon_ra / 360) * 24;
+  my $moon_m = ($moon_h - floor($moon_h)) * 60;
+  my $moon_s = ($moon_m - floor($moon_m)) * 60;
+  $moon_h = floor($moon_h);
+  $moon_m = floor($moon_m);
+  $moon_s = round($moon_s);
+  $moon_dec = rad2deg($moon_dec);
+  my $moon_dd = $moon_dec;
+  my $moon_dm = ($moon_dd - floor($moon_dd)) * 60;
+  my $moon_ds = ($moon_dm - floor($moon_dm)) * 60;
+  $moon_dd = floor($moon_dd);
+  $moon_dm = floor($moon_dm);
+  $moon_ds = round($moon_ds);
+  $moon_ra_range = round($moon_ra_range);
+
+  #print "\nMoon ra, dec, range: $moon_ra, $moon_dec, $moon_ra_range\n";
+  #print "\nMoon ra/dec: ${moon_h}h${moon_m}m${moon_s}s  $moon_dd°$moon_dm'$moon_ds\"  range $moon_ra_range km\n";
+
+  my $degd = degredation($moon_ra, $moon_dec, 144.100);
+  print " EME degrd(2m): $degd dB (" . degredationQuality($degd) . ");"
+    if $doEme == 1;
+    print " EME path loss(2m): $loss2m dB (", lossDiffColor($lossdiff), ", $percentRange%);" if $doEme == 1 and $moon_el >= 0;
+  print "\n" if $doMoon == 1;
 }
 
-# rise/set
-my ($eventtime, $rise) = $sta->next_elevation ($moon);
-my ($h, $m) = getTimeRemaining($now, $eventtime);
-print " Moon will @{[$rise ? 'rise' : 'set']} at ",
-      strftime("%Y-%m-%d %H:%Mz", gmtime($eventtime)), " (in ${h}h${m}m);"
-      if $doMoon == 1;
-
-my ($moon_ra, $moon_dec, $moon_ra_range) = $moon->equatorial();
-$moon_ra = rad2deg($moon_ra);
-my $moon_h = ($moon_ra / 360) * 24;
-my $moon_m = ($moon_h - floor($moon_h)) * 60;
-my $moon_s = ($moon_m - floor($moon_m)) * 60;
-$moon_h = floor($moon_h);
-$moon_m = floor($moon_m);
-$moon_s = round($moon_s);
-$moon_dec = rad2deg($moon_dec);
-my $moon_dd = $moon_dec;
-my $moon_dm = ($moon_dd - floor($moon_dd)) * 60;
-my $moon_ds = ($moon_dm - floor($moon_dm)) * 60;
-$moon_dd = floor($moon_dd);
-$moon_dm = floor($moon_dm);
-$moon_ds = round($moon_ds);
-$moon_ra_range = round($moon_ra_range);
-
-#print "\nMoon ra, dec, range: $moon_ra, $moon_dec, $moon_ra_range\n";
-#print "\nMoon ra/dec: ${moon_h}h${moon_m}m${moon_s}s  $moon_dd°$moon_dm'$moon_ds\"  range $moon_ra_range km\n";
-
-my $degd = degredation($moon_ra, $moon_dec, 144.100);
-print " EME degrd(2m): $degd dB (" . degredationQuality($degd) . ");"
-  if $doEme == 1;
-  print " EME path loss(2m): $loss2m dB (", lossDiffColor($lossdiff), ", $percentRange%);" if $doEme == 1 and $moon_el >= 0;
-print "\n" if $doMoon == 1;
-
-#my ($az, $el, $range) = $sta->azel($sun);
-my ($sun_az, $sun_el, $sun_range) = getAzElRng($sta, $sun);
 if ($doSun == 1) {
+  my ($sun_az, $sun_el, $sun_range) = getAzElRng($sta, $sun);
+  #my ($az, $el, $range) = $sta->azel($sun);
   if ($sun_el < 0) {
     print bold("Sun"), " is set;";
   } else {
@@ -207,31 +216,31 @@ if ($doSun == 1) {
   my $m = floor(((($time - $now) / 3600) - $h) * 60);
   print " Sun will @{[$rise ? 'rise' : 'set']} at ",
 	strftime("%Y-%m-%d %H:%Mz", gmtime($time)), " (in ${h}h${m}m)\n";
+}
 
-  if ($doQuarter == 1) {
-    my %qtrDesc = (
-      0 => "March equinox",
-      1 => "June solstice",
-      2 => "September equinox",
-      3 => "December solstice" );
+if ($doQuarter == 1) {
+  my %qtrDesc = (
+    0 => "March equinox",
+    1 => "June solstice",
+    2 => "September equinox",
+    3 => "December solstice" );
 
-    my ($time, $qtr, $desc) = $sun->next_quarter();
-    $desc = $qtrDesc{$qtr};
+  my ($time, $qtr, $desc) = $sun->next_quarter();
+  $desc = $qtrDesc{$qtr};
 
-    my $dur = int($time) - $now;
-    my $m = floor($dur / (30 * 24 * 60 * 60));
-    my $d = floor($dur % (30 * 24 * 60 * 60) / (24 * 60 * 60));
-    my $h = floor($dur % (24 * 60 * 60) / (60 * 60));
-    my $min = ($dur / 60) % 60;
-    my $sec = $dur % 60;
+  my $dur = int($time) - $now;
+  my $m = floor($dur / (30 * 24 * 60 * 60));
+  my $d = floor($dur % (30 * 24 * 60 * 60) / (24 * 60 * 60));
+  my $h = floor($dur % (24 * 60 * 60) / (60 * 60));
+  my $min = ($dur / 60) % 60;
+  my $sec = $dur % 60;
 
-    print "Time until $desc: ";
-    print "$m month, " if $m == 1;
-    print "$m months, " if $m > 1;
-    print "$d day, " if $d == 1;
-    print "$d days, " if $d > 1;
-    print "$h hours, $min min, $sec sec\n";
-  }
+  print "Time until $desc: ";
+  print "$m month, " if $m == 1;
+  print "$m months, " if $m > 1;
+  print "$d day, " if $d == 1;
+  print "$d days, " if $d > 1;
+  print "$h hours, $min min, $sec sec\n";
 }
 
 # GRAVES radar -- see https://en.wikipedia.org/wiki/Graves_(system)
@@ -490,8 +499,8 @@ sub getAzElRng {
 sub getTimeRemaining {
   my $now = shift;
   my $event = shift;
-  my $h = floor(($eventtime - $now) / (3600));
-  my $m = floor(((($eventtime - $now) / 3600) - $h) * 60);
+  my $h = floor(($event - $now) / (3600));
+  my $m = floor(((($event - $now) / 3600) - $h) * 60);
   return ($h, $m);
 }
 

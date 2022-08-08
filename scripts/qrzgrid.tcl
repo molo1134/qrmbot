@@ -142,6 +142,12 @@ bind msg - !sun sun_msg
 bind pub - !sun sun_pub
 bind msg - !graves graves_msg
 bind pub - !graves graves_pub
+bind msg - !solarquarter solarquarter_msg
+bind pub - !solarquarter solarquarter_pub
+bind msg - !equinox solarquarter_msg
+bind pub - !equinox solarquarter_pub
+bind msg - !solstice solarquarter_msg
+bind pub - !solstice solarquarter_pub
 
 bind msg - !sat sat_msg
 bind pub - !sat sat_pub
@@ -1459,7 +1465,7 @@ proc eme_pub { nick host hand chan text } {
 	if {(( [string equal "" $geo] ) || !( [string equal "" $params] ) || ( $params != {} ))} then {
 		set fd [open "|${astrobin} --eme ${params}" r]
 	} else {
-		set fd [open "|${astrobin} --eme ${geo} ${params}" r]
+		set fd [open "|${astrobin} --eme ${params} --geo ${geo}" r]
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
@@ -1475,7 +1481,7 @@ proc eme_msg {nick uhand handle input} {
 	if {(( [string equal "" $geo] ) || !( [string equal "" $params] ) || ( $params != {} ))} then {
 		set fd [open "|${astrobin} --eme ${params}" r]
 	} else {
-		set fd [open "|${astrobin} --eme ${geo} ${params}" r]
+		set fd [open "|${astrobin} --eme ${params} --geo ${geo}" r]
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
@@ -1492,7 +1498,7 @@ proc moon_pub { nick host hand chan text } {
 	if {(( [string equal "" $geo] ) || !( [string equal "" $params] ) || ( $params != {} ))} then {
 		set fd [open "|${astrobin} --moon ${params}" r]
 	} else {
-		set fd [open "|${astrobin} --moon ${geo} ${params}" r]
+		set fd [open "|${astrobin} --moon ${params} --geo ${geo}" r]
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
@@ -1508,7 +1514,7 @@ proc moon_msg {nick uhand handle input} {
 	if {(( [string equal "" $geo] ) || !( [string equal "" $params] ) || ( $params != {} ))} then {
 		set fd [open "|${astrobin} --moon ${params}" r]
 	} else {
-		set fd [open "|${astrobin} --moon ${geo} ${params}" r]
+		set fd [open "|${astrobin} --moon ${params} --geo ${geo}" r]
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
@@ -1525,7 +1531,7 @@ proc sun_pub { nick host hand chan text } {
 	if {(( [string equal "" $geo] ) || !( [string equal "" $params] ) || ( $params != {} ))} then {
 		set fd [open "|${astrobin} --sun ${params}" r]
 	} else {
-		set fd [open "|${astrobin} --sun ${geo} ${params}" r]
+		set fd [open "|${astrobin} --sun ${params} --geo ${geo}" r]
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
@@ -1541,7 +1547,7 @@ proc sun_msg {nick uhand handle input} {
 	if {(( [string equal "" $geo] ) || !( [string equal "" $params] ) || ( $params != {} ))} then {
 		set fd [open "|${astrobin} --sun ${params}" r]
 	} else {
-		set fd [open "|${astrobin} --sun ${geo} ${params}" r]
+		set fd [open "|${astrobin} --sun ${params} --geo ${geo}" r]
 	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
@@ -1566,6 +1572,29 @@ proc graves_msg {nick uhand handle input} {
 	set params [sanitize_string [string trim "${input}"]]
 	putlog "graves msg: $nick $uhand $handle $params"
 	set fd [open "|${astrobin} --graves ${params}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
+proc solarquarter_pub { nick host hand chan text } {
+	global astrobin
+	set params [sanitize_string [string trim "${text}"]]
+	putlog "solarquarter pub: $nick $host $hand $chan $params"
+	set fd [open "|${astrobin} --quarter" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc solarquarter_msg {nick uhand handle input} {
+	global astrobin
+	set params [sanitize_string [string trim "${input}"]]
+	putlog "solarquarter msg: $nick $uhand $handle $params"
+	set fd [open "|${astrobin} --quarter" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg "$nick" "$line"
