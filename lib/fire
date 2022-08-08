@@ -143,7 +143,7 @@ printf " area burned: $r->{areaKM} km² ($r->{areaMI} mi², %s acres)", commify(
 print "\n" if $username ne getEggdropUID();
 print " --" if $username eq getEggdropUID();
 
-print " $r->{perContained}% contained";
+print " $r->{perContained}% contained" if defined $r->{perContained};
 print " (expected containment ",
   strftime("%b %d", localtime($r->{expContainedTimestamp})), ")"
 	if defined($r->{expContainedTimestamp});
