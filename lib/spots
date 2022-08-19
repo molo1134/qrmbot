@@ -50,6 +50,7 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   } else {
     print "usage: $0 [--dxw] [--rbn] [--psk] [--ham] [--pota] <callsign> [limit]\n";
   }
+  print "  highlight: ", cyan("different zone"), ", ", lightblue("different country"), ", ", lightgreen("different continent"), "\n";
   exit $exitnonzeroonerror;
 }
 
