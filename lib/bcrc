@@ -1,0 +1,75 @@
+#!/usr/bin/bc -l
+
+scale = 10;
+pi = 3.14159265358979323846264338327950288419716939937510;
+c = 299792458;
+h = 6.6260689633;
+hbar = 1.05457162853;
+e = 2.71828182845904523536;
+
+define sin(x) {
+  return s(x)
+}
+
+define cos(x) {
+  return c(x)
+}
+
+define tan(x) {
+  return s(x)/c(x)
+}
+
+define sec(x) {
+  return 1/cos(x)
+}
+
+define csc(x) {
+  return 1/sin(x)
+}
+
+define cot(x) {
+  return 1/tan(x)
+}
+
+define atan(x) {
+  return a(x)
+}
+
+define asin(x) {
+  return a(x / sqrt(1 - x^2))
+}
+
+define acos(x) {
+  return a(sqrt(1 - x^2) / x)
+}
+
+define acot(x) {
+  return 2*a(1) - a(x)
+}
+
+define asec(x) {
+  return a(sqrt(x^2 - 1))
+}
+
+define acsc(x) {
+  return a(1/sqrt(x^2 - 1))
+}
+
+define f(x) {
+  f = 1;
+  while (x > 1) {
+    f = f * x;
+    x--;
+  }
+  return f;
+}
+
+define log10(x) {
+  return l(x)/l(10);
+}
+define log2(x) {
+  return l(x)/l(2);
+}
+define ln(x) {
+  return l(x);
+}
