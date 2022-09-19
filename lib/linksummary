@@ -61,7 +61,8 @@ while ($i <= $#ARGV) {
   } elsif ($ARGV[$i] =~ m|^https?://youtu\.be/([\w-]+)|i) {
     printYouTubeMetaData($1);
   } elsif ($ARGV[$i] =~ m|^https?://t\.co/\w+|i or
-	  $ARGV[$i] =~ m|^https?://(mobile\.)?twitter\.com/|i) {
+	  $ARGV[$i] =~ m|^https?://(mobile\.)?twitter\.com/|i or
+	  $ARGV[$i] =~ m|^https?://nitter\.net/|i) {
     doTwitter($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?imdb\.com/title/tt\d+|i or
 	  $ARGV[$i] =~ m|^https?://imdb\.to/\w+|i) {
@@ -279,9 +280,9 @@ sub doTwitter {
   }
   #  'curl --max-time $timeout -Ls -o /dev/null -w "%{url_effective}" "https://t.co/aoVVgKEfqC"'
 
-  if ($url =~ /https?:\/\/(mobile\.)?twitter\.com\/(\w+)\/status(es)?\/(\d+)/) {
-    $username = $2;
-    $id = $4;
+  if ($url =~ /https?:\/\/(mobile\.)?(twitter\.com|nitter\.net)\/(\w+)\/status(es)?\/(\d+)/) {
+    $username = $3;
+    $id = $5;
   }
 
   if (not defined $username and $url =~ /https?:\/\/(mobile\.)?twitter\.com\/(\w+)\/?$/) {
@@ -315,6 +316,10 @@ sub doTwitter {
   if (not defined $id or not defined $username) {
     return;
   }
+
+  my $alturl = undef;
+  $alturl = "https://nitter.net/$username/status/$id" if $url =~ /twitter\.com/;
+  $alturl = "https://twitter.com/$username/status/$id" if $url =~ /nitter\.net/;
 
   my @tokens = getTwitterAuthTokens();
   my $jsonurl = "https://twitter.com/i/api/2/timeline/conversation/$id.json" .
@@ -395,6 +400,7 @@ sub doTwitter {
   print "$tco " if defined $tco and not defined $media and not defined $rt;
   print "— \@$username ($fullname)$verifiedText, $date";
   print " (↩ ", toHumanReadableNum($reply_count), "; ↺ ", toHumanReadableNum($retweet_count), "; ♡ ", toHumanReadableNum($favorite_count), ")";
+  print " alt: ", shortenUrl($alturl) if defined $alturl;
   print "\n";
 
   if (defined $rt) {
