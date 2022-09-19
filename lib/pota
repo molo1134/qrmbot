@@ -199,10 +199,10 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
 
     my $j = decode_json($json);
 
-    printf "%s - %s (%s): %s activations (%s parks, %s QSOs); hunter: %s parks (%s QSOs); %s awards (%s endorsements)",
+    printf "%s - %s%s: %s activations (%s parks, %s QSOs); hunter: %s parks (%s QSOs); %s awards (%s endorsements)",
       bold($j->{callsign}),
       $j->{name},
-      $j->{qth},
+      (defined $j->{qth} and $j->{qth} ne "" ? (" (" . $j->{qth} . ")") : ""),
       $j->{stats}->{activator}->{activations},
       $j->{stats}->{activator}->{parks},
       commify($j->{stats}->{activator}->{qsos}),
