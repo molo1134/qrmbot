@@ -268,7 +268,7 @@ proc ooooooo { nick host hand chan text} {
 	if [ expr (rand()*10) <= 1 ] then {
 		putchan $chan "https://i.imgur.com/W1a476E.mp4"
 	} else {
-		putchan $chan "(⊙_⊙)  🔔🔔🔔 (^O^) OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
+		putchan $chan "(⊙_⊙)  🔔🔔🔔 (^O^) OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
 	}
 }
 
