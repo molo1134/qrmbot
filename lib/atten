@@ -17,64 +17,131 @@ use Math::Round;
 
 my %loss; # dB per 100 ft
 
-my @lossMHz       = (    1,    10,   30,    50,   100,   146,   150,   200,    220,   400,   440,   450,   700,   900,  1000,  1500,  2400);
+my @lossMHz       = (    1,    10,   30,    50,   100,   146,   150,   200,    220,   400,   440,   450,   700,   900,  1000,  1500,  2400,  2500);
 #-------------------------------------------------------------------------------------------------------
 # from universal-radio.com
-$loss{"LMR-100A"} = [undef, undef,   3.9,   5.1, undef,   8.8,   8.9, undef, undef, undef,  15.6,  15.8, undef, undef, undef, undef, undef];
-$loss{"RG-59"}    = [undef, undef, undef,   2.4,   3.5, undef, undef, undef, undef, undef,   7.6, undef, undef, undef,  12.0, undef, undef];
-$loss{"RG-8"}     = [undef, undef, undef,   1.2,   1.8, undef, undef, undef, undef, undef, undef, undef, undef, undef,   7.1, undef, undef];
-$loss{"RG-214"}   = [undef, undef,   1.2,   1.6,   1.9,   2.8,   2.8, undef, undef, undef,   5.1,   5.1, undef, undef,   8.0, undef,  13.7];
-$loss{"DRF-400"}  = [undef, undef,   0.7,   0.9, undef,   1.5, undef, undef, undef, undef, undef,   2.7, undef, undef, undef, undef,   6.7];
-$loss{"Bury-FLEX"}= [undef, undef, undef,   1.1,   1.5, undef, undef, undef, undef, undef, undef, undef, undef, undef,   4.8, undef, undef];
-$loss{"9086"}     = [undef, undef, undef, undef,   1.4, undef, undef, undef, undef, undef,   2.8,   2.8, undef, undef, undef, undef, undef];
+$loss{"LMR-100A"} = [undef, undef,   3.9,   5.1, undef,   8.8,   8.9, undef, undef, undef,  15.6,  15.8, undef, undef, undef, undef, undef, undef];
+$loss{"RG-59"}    = [undef, undef, undef,   2.4,   3.5, undef, undef, undef, undef, undef,   7.6, undef, undef, undef,  12.0, undef, undef, undef];
+$loss{"RG-8"}     = [undef, undef, undef,   1.2,   1.8, undef, undef, undef, undef, undef, undef, undef, undef, undef,   7.1, undef, undef, undef];
+$loss{"RG-214"}   = [undef, undef,   1.2,   1.6,   1.9,   2.8,   2.8, undef, undef, undef,   5.1,   5.1, undef, undef,   8.0, undef,  13.7, undef];
+$loss{"DRF-400"}  = [undef, undef,   0.7,   0.9, undef,   1.5, undef, undef, undef, undef, undef,   2.7, undef, undef, undef, undef,   6.7, undef];
+$loss{"Bury-FLEX"}= [undef, undef, undef,   1.1,   1.5, undef, undef, undef, undef, undef, undef, undef, undef, undef,   4.8, undef, undef, undef];
 
 # from w4rp.com
-$loss{"LMR-1200"} = [undef, undef,  0.21,  0.27, undef, undef,  0.48, undef,  0.59, undef, undef,  0.86, undef,  1.27, undef,  1.69, undef];
-$loss{"LMR-900"}  = [undef, undef,  0.29,  0.37, undef, undef,  0.66, undef,  0.80, undef, undef,  1.17, undef,  1.70, undef,  2.24, undef];
-$loss{"LMR-600"}  = [undef, undef,  0.42,  0.55, undef, undef,  0.96, undef,  1.18, undef, undef,  1.72, undef,  2.50, undef,  3.31, undef];
-$loss{"Superflex"}= [undef, undef,  0.56,  0.73, undef, undef,  1.29, undef,  1.58, undef, undef,  2.32, undef,  3.41, undef,  4.57, undef]; # half inch
-$loss{"LMR-195"}  = [undef, undef,   1.8,   2.3, undef, undef,   4.0, undef,   4.8, undef, undef,   7.0, undef,   9.9, undef,  12.9, undef];
+$loss{"LMR-1200"} = [undef, undef,  0.21,  0.27, undef, undef,  0.48, undef,  0.59, undef, undef,  0.86, undef,  1.27, undef,  1.69, undef, undef];
+$loss{"LMR-900"}  = [undef, undef,  0.29,  0.37, undef, undef,  0.66, undef,  0.80, undef, undef,  1.17, undef,  1.70, undef,  2.24, undef, undef];
+$loss{"LMR-600"}  = [undef, undef,  0.42,  0.55, undef, undef,  0.96, undef,  1.18, undef, undef,  1.72, undef,  2.50, undef,  3.31, undef, undef];
+$loss{"LMR-195"}  = [undef, undef,   1.8,   2.3, undef, undef,   4.0, undef,   4.8, undef, undef,   7.0, undef,   9.9, undef,  12.9, undef, undef];
 
-$loss{"RG-6"}     = [  0.2,   0.6, undef,   1.4,   2.0, undef, undef,   2.8, undef,   4.3, undef, undef,   5.6,   6.0,   6.1, undef, undef];
-$loss{"RG-11"}    = [  0.2,   0.4, undef,   1.0,   1.6, undef, undef,   2.3, undef,   3.5, undef, undef,   4.7,   5.4,   5.6, undef, undef];
+$loss{"RG-6"}     = [  0.2,   0.6, undef,   1.4,   2.0, undef, undef,   2.8, undef,   4.3, undef, undef,   5.6,   6.0,   6.1, undef, undef, undef];
+$loss{"RG-11"}    = [  0.2,   0.4, undef,   1.0,   1.6, undef, undef,   2.3, undef,   3.5, undef, undef,   4.7,   5.4,   5.6, undef, undef, undef];
 
 # considated between w4rp.com and universal-radio.com
-$loss{"LMR-200"}  = [undef, undef,   1.8,   2.3, undef,   3.0,   4.0, undef,   4.8, undef,   6.0,   7.0, undef,   9.9, undef,  12.7,  16.5];
-$loss{"LMR-240"}  = [undef, undef,   1.3,   1.7, undef,   3.0,   3.0, undef,   3.7, undef,   5.2,   5.3, undef,   7.6, undef,   9.9,  12.7];
-$loss{"LMR-400"}  = [undef, undef,   0.7,   0.9, undef,   1.5,   1.5, undef,   1.8, undef,   2.7,   2.7, undef,   3.9, undef,   5.1,   6.6];
+$loss{"LMR-200"}  = [undef, undef,   1.8,   2.3, undef,   3.0,   4.0, undef,   4.8, undef,   6.0,   7.0, undef,   9.9, undef,  12.7,  16.5, undef];
+$loss{"LMR-240"}  = [undef, undef,   1.3,   1.7, undef,   3.0,   3.0, undef,   3.7, undef,   5.2,   5.3, undef,   7.6, undef,   9.9,  12.7, undef];
+$loss{"LMR-400"}  = [undef, undef,   0.7,   0.9, undef,   1.5,   1.5, undef,   1.8, undef,   2.7,   2.7, undef,   3.9, undef,   5.1,   6.6, undef];
 
-$loss{"RG-174"}   = [  1.9,   3.3,   5.5,   6.6,   8.9,  13.0, undef,  11.9, undef,  17.3,  25.0, undef,  26.0,  27.9,  32.0, undef,  75.0];
-$loss{"RG-58/U"}  = [  0.4,   1.4,   2.5,   4.1,   5.3,   6.1,   6.2,   7.3,   7.4,  11.2,  10.4,  10.6,  16.9,  20.1,  24.0, undef,  38.9]; # sources disagree
-$loss{"RG-8X"}    = [  0.5,   1.0,   2.0,   2.5,   3.6,   4.5,   4.7,   5.4,   6.0,   7.9,   8.1,   8.6,  11.0,  12.8,  13.5, undef,  21.6];
-$loss{"RG-213"}   = [  0.2,   0.6, undef,   1.6,   2.2,   2.8,   2.8, undef, undef,   4.8,   5.1,   5.1,   6.6,   7.7,   8.3, undef, undef];
-$loss{"9914"}     = [  0.3,   0.5,   0.8,   1.1,   1.5, undef,   1.7,   1.8,   2.1,   2.9, undef,   3.1,   3.8,   4.9,   5.3, undef, undef];
-$loss{"9913"}     = [  0.2,   0.4,   0.8,   1.1,   1.4,   1.5,   1.7, undef,   2.1,   2.6,   2.8,   3.1,   3.6,   4.4,   4.5,   6.0,   7.5];
+$loss{"RG-174"}   = [  1.9,   3.3,   5.5,   6.6,   8.9,  13.0, undef,  11.9, undef,  17.3,  25.0, undef,  26.0,  27.9,  32.0, undef,  75.0, undef];
+$loss{"RG-58/U"}  = [  0.4,   1.4,   2.5,   4.1,   5.3,   6.1,   6.2,   7.3,   7.4,  11.2,  10.4,  10.6,  16.9,  20.1,  24.0, undef,  38.9, undef]; # sources disagree
+$loss{"RG-8X"}    = [  0.5,   1.0,   2.0,   2.5,   3.6,   4.5,   4.7,   5.4,   6.0,   7.9,   8.1,   8.6,  11.0,  12.8,  13.5, undef,  21.6, undef];
+$loss{"RG-213"}   = [  0.2,   0.6, undef,   1.6,   2.2,   2.8,   2.8, undef, undef,   4.8,   5.1,   5.1,   6.6,   7.7,   8.3, undef, undef, undef];
+$loss{"9914"}     = [  0.3,   0.5,   0.8,   1.1,   1.5, undef,   1.7,   1.8,   2.1,   2.9, undef,   3.1,   3.8,   4.9,   5.3, undef, undef, undef];
+$loss{"9913"}     = [  0.2,   0.4,   0.8,   1.1,   1.4,   1.5,   1.7, undef,   2.1,   2.6,   2.8,   3.1,   3.6,   4.4,   4.5,   6.0,   7.5, undef];
+
+# https://www.commscope.com/ -- types of heliax
+$loss{"LDF4-50A"} = [0.064, 0.205, 0.357, 0.463, 0.661, undef, 0.815, 0.946, undef, 1.360, undef, 1.447, 1.831, undef, 2.220, 2.771, undef, 3.685]; # 1/2 inch
+$loss{"FSJ4-50B"} = [0.100, 0.318, 0.557, 0.724, 1.038, undef, 1.285, 1.496, undef, 2.170, undef, 2.314, 2.951, undef, 3.604, 4.543, undef, 6.129]; # 1/2 inch "superflex"
+$loss{"LDF5-50A"} = [0.035, 0.112, 0.195, 0.254, 0.364, undef, 0.449, 0.523, undef, 0.758, undef, 0.808, 1.029, undef, 1.254, 1.578, undef, 2.124]; # 7/8 inch
+$loss{"AVA5-50"}  = [0.034, 0.110, 0.191, 0.248, 0.354, undef, 0.437, 0.507, undef, 0.731, undef, 0.778, 0.986, undef, 1.197, 1.497, undef, 1.996]; # 7/8 inch
+$loss{"AVA6-50"}  = [0.024, 0.077, 0.135, 0.176, 0.251, undef, 0.311, 0.361, undef, 0.523, undef, 0.558, 0.710, undef, 0.865, 1.088, undef, 1.462]; # 1.25 inch
+$loss{"AVA7-50"}  = [0.019, 0.060, 0.105, 0.137, 0.197, undef, 0.243, 0.284, undef, 0.412, undef, 0.439, 0.561, undef, 0.685, 0.865, undef, 1.169]; # 1.625 inch
 
 my %imp;
 $imp{"RG-6"}      = 75;
 $imp{"RG-11"}     = 75;
 $imp{"RG-59"}     = 75;
-
-$imp{"9086"}      = 50;
 $imp{"9913"}      = 50;
 $imp{"9914"}      = 50;
 $imp{"Bury-FLEX"} = 50;
 $imp{"DRF-400"}   = 50;
 $imp{"LMR-100A"}  = 50;
-$imp{"LMR-1200"}  = 50;
 $imp{"LMR-195"}   = 50;
 $imp{"LMR-200"}   = 50;
 $imp{"LMR-240"}   = 50;
 $imp{"LMR-400"}   = 50;
 $imp{"LMR-600"}   = 50;
 $imp{"LMR-900"}   = 50;
+$imp{"LMR-1200"}  = 50;
 $imp{"RG-174"}    = 50;
 $imp{"RG-213"}    = 50;
 $imp{"RG-214"}    = 50;
 $imp{"RG-58/U"}   = 50;
 $imp{"RG-8"}      = 50;
 $imp{"RG-8X"}     = 50;
-$imp{"Superflex"} = 50;
+$imp{"LDF4-50A"}  = 50;
+$imp{"FSJ4-50B"}  = 50;
+$imp{"LDF5-50A"}  = 50;
+$imp{"AVA5-50"}   = 50;
+$imp{"AVA6-50"}   = 50;
+$imp{"AVA7-50"}   = 50;
+
+my %size; #outer diameter, inches
+$size{"RG-6"}      = 0.275;
+$size{"RG-11"}     = 0.405;
+$size{"RG-59"}     = 0.242;
+$size{"9913"}      = 0.405;
+$size{"9914"}      = 0.403;
+$size{"Bury-FLEX"} = 0.405;
+$size{"DRF-400"}   = 0.405;
+$size{"LMR-100A"}  = 0.105;
+$size{"LMR-195"}   = 0.195;
+$size{"LMR-200"}   = 0.195;
+$size{"LMR-240"}   = 0.240;
+$size{"LMR-400"}   = 0.405;
+$size{"LMR-600"}   = 0.590;
+$size{"LMR-900"}   = 0.870;
+$size{"LMR-1200"}  = 1.200;
+$size{"RG-174"}    = 0.11;
+$size{"RG-213"}    = 0.405;
+$size{"RG-214"}    = 0.425;
+$size{"RG-58/U"}   = 0.195;
+$size{"RG-8"}      = 0.405;
+$size{"RG-8X"}     = 0.242;
+$size{"LDF4-50A"}  = 0.5;
+$size{"FSJ4-50B"}  = 0.5;
+$size{"LDF5-50A"}  = 0.875;
+$size{"AVA5-50"}   = 0.875;
+$size{"AVA6-50"}   = 1.25;
+$size{"AVA7-50"}   = 1.625;
+
+my %url; #data spec
+$url{"RG-6"}      = undef;
+$url{"RG-11"}     = undef;
+$url{"RG-59"}     = undef;
+$url{"9913"}      = "https://catalog.belden.com/techdata/EN/9913_techdata.pdf";
+$url{"9914"}      = "https://catalog.belden.com/techdata/EN/9914_techdata.pdf";
+$url{"Bury-FLEX"} = "https://www.davisrf.com/buryflex.php";
+$url{"DRF-400"}   = "https://www.davisrf.com/drf400.php";
+$url{"LMR-100A"}  = "https://www.timesmicrowave.com/DataSheets/CableProducts/LMR-100A.pdf";
+$url{"LMR-195"}   = "https://www.timesmicrowave.com/DataSheets/CableProducts/LMR-195.pdf";
+$url{"LMR-200"}   = "https://www.timesmicrowave.com/DataSheets/CableProducts/LMR-200.pdf";
+$url{"LMR-240"}   = "https://www.timesmicrowave.com/DataSheets/CableProducts/LMR-240.pdf";
+$url{"LMR-400"}   = "https://www.timesmicrowave.com/DataSheets/CableProducts/LMR-400.pdf";
+$url{"LMR-600"}   = "https://www.timesmicrowave.com/DataSheets/CableProducts/LMR-600.pdf";
+$url{"LMR-900"}   = "https://www.timesmicrowave.com/DataSheets/CableProducts/LMR-900.pdf";
+$url{"LMR-1200"}  = "https://www.timesmicrowave.com/DataSheets/CableProducts/LMR-1200.pdf";
+$url{"RG-174"}    = undef;
+$url{"RG-213"}    = undef;
+$url{"RG-214"}    = undef;
+$url{"RG-58/U"}   = undef;
+$url{"RG-8"}      = undef;
+$url{"RG-8X"}     = undef;
+$url{"LDF4-50A"}  = "https://www.commscope.com/globalassets/digizuite/115611-p360-ldf4-50a-external.pdf";
+$url{"FSJ4-50B"}  = "https://www.commscope.com/globalassets/digizuite/178000-p360-fsj4-50b-external.pdf";
+$url{"LDF5-50A"}  = "https://www.commscope.com/globalassets/digizuite/115696-p360-ldf5-50a-external.pdf";
+$url{"AVA5-50"}   = "https://www.commscope.com/globalassets/digizuite/115359-p360-ava5-50-external.pdf";
+$url{"AVA6-50"}   = "https://www.commscope.com/globalassets/digizuite/115393-p360-ava6-50-external.pdf";
+$url{"AVA7-50"}   = "https://www.commscope.com/globalassets/digizuite/115405-p360-ava7-50-external.pdf";
 
 # disable "experimental" warning on smart match operator use
 no if $] >= 5.018, warnings => "experimental::smartmatch";
@@ -260,4 +327,12 @@ my $atten_at_len = nearest(0.01, $len_fraction * $atten);
 my $atten_m = nearest (0.01, $atten * 3.2808399); # 3.28 ft/m
 $atten = nearest(0.01, $atten);
 
-print "$coax ($imp{$coax}Ω) attenuation estimated at $freq $freq_units: $atten dB/100 ft ($atten_m dB/100 m); loss \@length $len $len_units: ", bold("$atten_at_len dB"), "\n";
+my $od_in = $size{$coax};
+my $od_mm = nearest(0.1, $od_in * 25.4); # 25.4 mm/in
+
+my $u = $url{$coax};
+$u = shortenUrl($u) if defined $u;
+$u = "" if not defined $u;
+$u = " $u " if defined $u and $u ne "";
+
+print "$coax ($imp{$coax}Ω O.D. $od_in\"/${od_mm}mm$u) attenuation estimated at $freq $freq_units: $atten dB/100 ft ($atten_m dB/100 m); loss \@length $len $len_units: ", bold("$atten_at_len dB"), "\n";
