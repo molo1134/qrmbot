@@ -66,6 +66,9 @@ while ($i <= $#ARGV) {
     $query = $ARGV[$i+1];
     last;
   }
+  if (defined $query and $ARGV[$i] =~ /^--geo$/) {
+    last;
+  }
   if (defined($de)) {
     $de = $de . " " . $ARGV[$i];
     $i++;
@@ -111,21 +114,19 @@ if (defined $de) {
   $placename2 = "$lat2,$lon2" if not defined $placename2;
   my $grid2 = coordToGrid($lat2, $lon2);
 
-  my @profile = pathProfile($lat, $lon, $lat2, $lon2);
+  my ($dist, $bearing) = distBearing($lat, $lon, $lat2, $lon2);
+  my $dist_mi = nearest(0.1, $dist * 0.62137119);
+  $dist = nearest(0.1, $dist);
+  $bearing = round($bearing);
 
+  my @profile = pathProfile($lat, $lon, $lat2, $lon2);
   my $min = min(@profile);
   my $max = max(@profile);
   my $min_m = nearest(0.1, $min);
   my $min_ft = round($min * 3.2808399);
   my $max_m = nearest(0.1, $max);
   my $max_ft = round($max * 3.2808399);
-
   my @line = seriesToSparkLine(\@profile, $min, $max);
-
-  my ($dist, $bearing) = distBearing($lat, $lon, $lat2, $lon2);
-  my $dist_mi = nearest(0.1, $dist * 0.62137119);
-  $dist = nearest(0.1, $dist);
-  $bearing = round($bearing);
 
   print "Path profile from $placename ($grid) to $placename2 ($grid2) path $dist km / $dist_mi mi, $bearing°:\n";
   print join("", @line), " ${min_m}m/${min_ft}ft to ${max_m}m/${max_ft}ft (sans curvature)\n";
