@@ -123,4 +123,4 @@ needed.
 * Oliver M6WRF
 * Andrew KC2G
 * Asara WX0R
-* KN6RAP
+* Jack WA6CR
