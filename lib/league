@@ -32,6 +32,7 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 my $club = 187; # reddit club
 my $mode = 0;   # no mode filter
 my $target = undef;
+my $sort = undef;
 
 my $i = 0;
 while ($i <= $#ARGV) {
@@ -43,6 +44,8 @@ while ($i <= $#ARGV) {
     $mode = 2;
   } elsif ($ARGV[$i] =~ /--(digi|data)/) {
     $mode = 3;
+  } elsif ($ARGV[$i] =~ /--slots/) {
+    $sort = "s";
   } else {
     $target = $ARGV[$i] if not defined $target;
   }
@@ -57,6 +60,13 @@ my $json = <JSON>;
 close(JSON);
 my $j = decode_json($json) or die "parse error: $json\n";
 
+my @standings = @{$j};
+
+if (defined $sort and $sort eq "s") {
+  # sort by slots
+  @standings = sort { $b->[3] <=> $a->[3] } ( @{$j} )
+}
+
 my $limit = 20;
 $limit = 10 if $username eq getEggdropUID();
 my $year = strftime("%Y", gmtime(time()));
@@ -64,8 +74,10 @@ print "Clublog standings for $year: ";
 print "\n" if $username ne getEggdropUID();
 my $found = 0;
 if (not defined $target) {
-  foreach my $standing (@{$j}) {
-    my ($rank, $call, $dxcc, $sluts) = @{$standing};
+  my $i = 0;
+  foreach my $standing (@standings) {
+    my (undef, $call, $dxcc, $sluts) = @{$standing};
+    my $rank = ++$i;
     print "$rank: $call $dxcc/$sluts" if $rank != 1;
     print "$rank: " . bold($call). " " . bold($dxcc) . "/$sluts" if $rank == 1;
     $limit--;
@@ -74,8 +86,10 @@ if (not defined $target) {
     last if $limit < 1;
   }
 } else {
-  foreach my $standing (@{$j}) {
-    my ($rank, $call, $dxcc, $sluts) = @{$standing};
+  my $i = 0;
+  foreach my $standing (@standings) {
+    my (undef, $call, $dxcc, $sluts) = @{$standing};
+    my $rank = ++$i;
     if (uc $call eq uc $target) {
       print "$rank: ". bold($call) . " $dxcc/$sluts";
       print "\n" if $username ne getEggdropUID();
