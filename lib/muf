@@ -189,7 +189,7 @@ if (!defined $ursiCode or $place eq "list") {
   }
   close STATIONS;
 
-  my $stationMap = "Map: http://giro.uml.edu/img/giro-map.gif";
+  my $stationMap = "Map: https://giro.uml.edu/common/img/giro-map.gif";
 
   if (lc($place) eq "list") {
     print "$list-- $stationMap\n" if $username eq getEggdropUID();
