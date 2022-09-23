@@ -79,9 +79,11 @@ if (not defined $target) {
     my (undef, $call, $dxcc, $sluts) = @{$standing};
     my $rank = ++$i;
     print "$rank: $call $dxcc/$sluts" if $rank != 1;
-    print "$rank: " . bold($call). " " if $rank == 1;
-    print bold($dxcc) . "/$sluts" if $rank == 1 and not defined $sort;
-    print "$dxcc/" . bold($sluts) if $rank == 1 and $sort eq "s";
+    if ($rank == 1) { # highlight #1 position
+      print "$rank: " . bold($call). " ";
+      print bold($dxcc) . "/$sluts" if not defined $sort;
+      print "$dxcc/" . bold($sluts) if $sort eq "s";
+    }
     $limit--;
     print "\n" if $username ne getEggdropUID();
     print "; " if $username eq getEggdropUID() and $limit >= 1;

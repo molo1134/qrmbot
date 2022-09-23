@@ -60,6 +60,8 @@ while ($i <= $#ARGV) {
     printYouTubeMetaData($2);
   } elsif ($ARGV[$i] =~ m|^https?://youtu\.be/([\w-]+)|i) {
     printYouTubeMetaData($1);
+  } elsif ($ARGV[$i] =~ m|^https?://youtube.com/shorts/([\w-]+)|i) {
+    printYouTubeMetaData($1);
   } elsif ($ARGV[$i] =~ m|^https?://t\.co/\w+|i or
 	  $ARGV[$i] =~ m|^https?://(mobile\.)?twitter\.com/|i or
 	  $ARGV[$i] =~ m|^https?://nitter\.net/|i) {
