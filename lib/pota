@@ -37,15 +37,6 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 @ARGV = map { decode "utf-8", $_ } @ARGV;
 
-if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  if ($username eq getEggdropUID()) {
-    print "usage: !pota <search term>\n";
-  } else {
-    print "usage: $0 <search term>\n";
-  }
-  exit $exitnonzeroonerror;
-}
-
 # eggdrop doesn't split args on spaces
 @ARGV=split(' ', join(' ',@ARGV));
 
@@ -73,7 +64,19 @@ while ($i <= $#ARGV) {
   $i++;
 }
 
-$term =~ s/[øØ]/0/g;
+$term =~ s/[øØ]/0/g if defined $term;
+$term =~ s/^\s*//g if defined $term;
+$term =~ s/\s$//g if defined $term;
+
+if (not defined $term or length($term) == 0) {
+  if ($username eq getEggdropUID()) {
+    print "usage: !pota <search term>\n";
+  } else {
+    print "usage: $0 <search term>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
 
 if (defined($de)) {
   my $degeo = argToCoords($de);
