@@ -484,7 +484,7 @@ if ($governor == 1) {
 
   if ($state eq "US") {
     my $didtop = 0;
-    my %partyCount;
+    my %partyWinCount;
 
     foreach my $pred (@{$j}) {
       next if $pred->{type} ne "deluxe";
@@ -492,15 +492,42 @@ if ($governor == 1) {
       foreach my $race (@{$pred->{races}}) {
 	foreach my $cand (@{$race->{candidates}}) {
 	  if ($cand->{winprob} > 50.0) {
-	    $partyCount{$cand->{party}}++;
+	    $partyWinCount{$cand->{party}}++;
 	  }
 	}
       }
     }
 
-    foreach my $p (keys %partyCount) {
-      print "$p => $partyCount{$p}\n";
+    $url = "https://projects.fivethirtyeight.com/${year}-election-forecast/governor_incumbents.json";
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    open (JSON, '-|', "curl --max-time 10 -s -k -L $url");
+    my $json = <JSON>;
+    close(JSON);
+    if ($json eq "" or $json =~ /<h1>(.*?)</) {
+      print "error $1: $url\n";
+      exit 0;
     }
+    my $i = decode_json($json) or die "parse error: $json\n";
+    my %partyIncumbUpCount;
+    my %partyIncumbTotalCount;
+
+    foreach my $r (@{$i}) {
+      $partyIncumbUpCount{$r->{party}}++ if $r->{up};
+      $partyIncumbTotalCount{$r->{party}}++;
+    }
+    my %pred;
+    $pred{D} = ($partyIncumbTotalCount{D} - $partyIncumbUpCount{D}) + $partyWinCount{D};
+    $pred{R} = ($partyIncumbTotalCount{R} - $partyIncumbUpCount{R}) + $partyWinCount{R};
+
+    print "FiveThirtyEight ${year} ", bold(italic("Governor")), " election prediction:\n";
+    print "curr: ", lightblue("D: $partyIncumbTotalCount{D}"),
+	  " | ", red("R: $partyIncumbTotalCount{R}"), "\n";
+    print "pred: ", lightblue("D: $pred{D}"), " | ", red("R: $pred{R}"), " | ";
+	
+    print lightblue("[D +" . ($pred{D} - $partyIncumbTotalCount{D}) . "]") if $pred{D} > $partyIncumbTotalCount{D};
+    print red("[R +" . ($pred{R} - $partyIncumbTotalCount{R}) . "]") if $pred{R} > $partyIncumbTotalCount{R};
+    print "\n";
+
   } else {
     my $found = 0;
 
