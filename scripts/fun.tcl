@@ -24,6 +24,10 @@ bind pub - !senate senate_pub
 bind msg - !senate senate_msg
 bind pub - !house house_pub
 bind msg - !house house_msg
+bind pub - !gov gov_pub
+bind msg - !gov gov_msg
+bind pub - !governor gov_pub
+bind msg - !governor gov_msg
 bind pub - !github github
 bind msg - !github msg_github
 
@@ -464,6 +468,31 @@ proc house_msg {nick uhand handle input} {
 	set param [sanitize_string [string trim "${input}"]]
 	putlog "house msg: $nick $uhand $handle $param"
 	set fd [open "|${fivethirtyeightbin} --house ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+proc gov_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	global fivethirtyeightbin
+	set param [sanitize_string [string trim "${text}"]]
+	putlog "gov pub: $nick $host $hand $chan $param"
+	set fd [open "|${fivethirtyeightbin} --gov ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc gov_msg {nick uhand handle input} {
+	global fivethirtyeightbin
+	set param [sanitize_string [string trim "${input}"]]
+	putlog "gov msg: $nick $uhand $handle $param"
+	set fd [open "|${fivethirtyeightbin} --gov ${param}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg "$nick" "$line"
