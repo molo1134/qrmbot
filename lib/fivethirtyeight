@@ -520,8 +520,8 @@ if ($governor == 1) {
     $pred{R} = ($partyIncumbTotalCount{R} - $partyIncumbUpCount{R}) + $partyWinCount{R};
 
     print "FiveThirtyEight ${year} ", bold(italic("Governor")), " election prediction:\n";
-    #print "curr: ", lightblue("D: $partyIncumbTotalCount{D}"),
-	  " | ", red("R: $partyIncumbTotalCount{R}"), "\n";
+#    print "curr: ", lightblue("D: $partyIncumbTotalCount{D}"),
+#	  " | ", red("R: $partyIncumbTotalCount{R}"), "\n";
     print "Predicted governorships by party: ", lightblue("D: $pred{D}"), " | ", red("R: $pred{R}"), " | ";
 	
     print lightblue("[D +" . ($pred{D} - $partyIncumbTotalCount{D}) . "]") if $pred{D} > $partyIncumbTotalCount{D};
