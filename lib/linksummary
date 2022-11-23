@@ -1313,7 +1313,7 @@ sub doImgur {
 
 sub doFccApp {
   my $url = shift;
-  my ($appId, $call, $status, $receipt, $action, $systematic, $relative, $req, $paid);
+  my ($appId, $fileno, $call, $status, $receipt, $action, $systematic, $relative, $req, $paid);
   my $purpose;
   if ($url =~ m|https?://wireless2.fcc.gov/UlsApp/ApplicationSearch/.*\?applID=(\d+)|) {
     $appId = $1;
@@ -1333,6 +1333,12 @@ sub doFccApp {
     $purpose = "Administrative Update" if /Administrative Update/;
     $purpose = "Renewal" if /Renewal Only/;
     $purpose = "New License" if /NE - New/;
+    if (/>File Number</) {
+      $_ = <HTTP>;
+      if (/>(\d+)\s*&nbsp;/) {
+	$fileno = $1;
+      }
+    }
     $inStatus = 1 if />Application Status</;
     if ($inStatus and /-\s*(\w+)\s*$/) {
       $status = $1;
@@ -1392,8 +1398,9 @@ sub doFccApp {
   }
   close(HTTP);
 
-  if (defined $call) {
-    print bold($call), ": ";
+  if (defined $fileno) {
+    print bold($fileno), ": ";
+    print bold($call), ": " if defined $call;
     $status = lightblue($status) if $status eq "Pending";
     $status = green($status) if $status eq "Granted";
     $status = red($status) if $status eq "Dismissed";
