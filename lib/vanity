@@ -171,8 +171,7 @@ sub doCall {
   my $call = uc shift;
   my $saved = $_;
 
-  my ($frn, $name, $class, $status, $state, $grant, $eff, $cxl, $expire);
-  my $availdate;
+  my ($frn, $name, $grant, $eff, $cxl, $expire);
   my ($receipt, $process, $appl, $filenum, $type, $seq, $pred);
   my $callStatus;
   my $found = 0;
@@ -182,10 +181,26 @@ sub doCall {
   my @tooearly;
   my @toolate;
 
+  my ($status, $avail, $availdate, $class, $region, $restricted);
   my $url = "${predictionBaseUrl}/vanity-$call.csv";
   open(CSV, '-|', "curl --fail --max-time $httpTimeout -L -k -s '$url'");
   while(<CSV>) {
     chomp;
+    $status = $1 if /^# status: (.*)$/;
+    $avail = $1 if /^# avail: (.*)$/;
+    $availdate = $1 if /^# availdate: (.*)$/;
+    $class = $1 if /^# class: (.*)$/;
+    $region = $1 if /^# region: (.*)$/;
+    $restricted = $1 if /^# restricted: (.*)$/;
+    if (/^#metadata_end/) {
+      print bold($call), ": ", formatStatus($status);
+      print green(" (available)") if $avail;
+      print red(" (not available)") if not $avail;
+      print ": Req'd class: $class -- Avail: $availdate -- $region";
+      print bold(" (restricted)") if $restricted;
+      print "\n";
+      ($status, $class) = (undef, undef);
+    }
     next if /^#/;
     my ($appid, $rdate, $pdate, $appcall, $state, $seq, $vanity, $pred, $odds) = split /,/;
     if ($pred =~ /^Too Early/i) {
@@ -210,9 +225,23 @@ sub doCall {
   }
 
   $url = "${predictionBaseUrl}/call-$call.csv";
+  my ($grantdate, $expdate, $cxldate, $state, $district);
   open(CSV, '-|', "curl --fail --max-time $httpTimeout -L -k -s '$url'");
   while(<CSV>) {
     chomp;
+    $status = $1 if /^# status: (.*)$/;
+    $grantdate = $1 if /^# grantdate: (.*)$/;
+    $expdate = $1 if /^# expdate: (.*)$/;
+    $cxldate = $1 if /^# cxldate: (.*)$/;
+    $class = $1 if /^# class: (.*)$/;
+    $state = $1 if /^# state: (.*)$/;
+    $district = $1 if /^# district: (.*)$/;
+    if (/^#metadata_end/) {
+      print bold($call), ": ", formatStatus($status);
+      print ": class: $class -- grant: $grantdate -- exp: $expdate ";
+      print "-- cxl: $cxldate " if defined $cxldate and $cxldate ne "";
+      print "-- $state ($district)\n"
+    }
     next if /^#/;
     my ($appid, $rdate, $pdate, $call, $state, $seq, $vanity, $pred, $odds) = split /,/;
     $pdate = " ?        " if $pdate eq "";
@@ -236,7 +265,7 @@ sub doApp {
   while(<CSV>) {
     chomp;
     next if /^#/;
-    my ($appid, $rdate, $pdate, $call, $state, $seq, $vanity, $pred, $odds) = split /,/;
+    my ($appid, $rdate, $pdate, $call, undef, $seq, $vanity, $pred, $odds) = split /,/;
     $pdate = " ?        " if $pdate eq "";
     my $type = "type?";		# TODO FIXME
     $odds = formatOdds($odds);
@@ -279,3 +308,19 @@ sub formatPred {
 }
 
 
+sub formatStatus {
+  my $status = shift;
+  my $ret = undef;
+
+  my %h_status;
+  $h_status{"A"} = "Active";
+  $h_status{"C"} = "Canceled";
+  $h_status{"E"} = "Expired";
+  $h_status{"T"} = "Terminated";
+
+  $ret = green($h_status{$status} || $status) if $status =~ /^A/;
+  $ret = yellow($h_status{$status} || $status) if $status =~ /^C/ or $status =~ /^E/;
+  $ret = red($h_status{$status} || $status) if $status =~ /^T/;
+  $ret = bold($status) if not defined $ret;
+  return $ret;
+}
