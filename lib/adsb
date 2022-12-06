@@ -3,6 +3,8 @@
 # 2-clause BSD license.
 # Copyright (c) 2019, 2020 molo1134@github. All rights reserved.
 
+exit 0; # because ADSBX sucks
+
 use strict;
 use utf8;
 use feature 'unicode_strings';
