@@ -282,14 +282,13 @@ proc russianroulette {nick host hand chan text} {
     if [string equal "#amateurradio" $chan] then {
     	return
     }
-    set rand [expr {int(rand() * 7) + 1}]
 
     set msg(0) "bang!"
     set msg(1) "boom!"
     set msg(2) "gottem!"
     set index [expr {int(rand()*[array size msg])}]
 
-    if {$rand == 1} {
+    if [ expr (rand()*6) <= 1 ] then {
         putkick $chan "$nick" "$msg($index)"
     } else {
         putchan $chan "https://i.imgur.com/W1a476E.mp4"
