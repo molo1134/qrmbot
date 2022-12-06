@@ -1390,10 +1390,10 @@ sub doFccApp {
       $inReq = 0;
     }
     $inPreflist = 1 if /Reference Copy Displays Call Sign Preference Information Out Of Order/;
-    if ($inPreflist and /(&nbsp;)*(\d+)\.(&nbsp;)*([A-Z0-9]+)\s*</) {
+    if ($inPreflist and /(&nbsp;)*(\d+)\.(&nbsp;)+(.+?)\s*</) {
       my ($n, $c) = ($2, $4);
       #print "$n: $c\n";
-      $vanities[$n-1] = $c;
+      $vanities[$n-1] = decodeEntities($c);
     }
   }
   close(HTTP);
