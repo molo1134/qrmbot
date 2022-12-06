@@ -12,6 +12,7 @@ bind pub - !phoneticize phoneticise
 bind pub - !metard metard
 bind pub - !truck truck
 bind pub - !ooo ooooooo
+bind pub - !russianroulette russianroulette
 bind pub - !brexit brexit
 bind pub - !christmas christmas
 bind pub - !translate translate
@@ -274,6 +275,20 @@ proc ooooooo { nick host hand chan text} {
 	} else {
 		putchan $chan "(⊙_⊙)  🔔🔔🔔 (^O^) OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
 	}
+}
+
+
+proc russianroulette {nick host hand chan text} {
+    if [string equal "#amateurradio" $chan] then {
+    	return
+    }
+    set rand [expr {int(rand() * 7) + 1}]
+
+    if {$rand == 1} {
+        putchan $chan "/kick $nick"
+    } else {
+        putchan $chan "https://i.imgur.com/W1a476E.mp4"
+    }
 }
 
 proc brexit { nick host hand chan text } {
