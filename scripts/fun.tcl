@@ -280,6 +280,7 @@ proc ooooooo { nick host hand chan text} {
 
 
 proc russianroulette {nick host hand chan text} {
+    global botnick
     if [string equal "#amateurradio" $chan] then {
     	return
     }
