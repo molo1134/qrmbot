@@ -291,6 +291,7 @@ proc russianroulette {nick host hand chan text} {
 
     if [ expr (rand()*6) <= 1 ] then {
         putkick $chan "$nick" "$msg($index)"
+        newban "*!*@$host" $botnick $msg($index) 5
     } else {
         putchan $chan "<click>"
     }
