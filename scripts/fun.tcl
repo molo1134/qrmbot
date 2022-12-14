@@ -13,6 +13,7 @@ bind pub - !metard metard
 bind pub - !truck truck
 bind pub - !ooo ooooooo
 bind pub - !russianroulette russianroulette
+bind pub - !rr russianroulette
 bind pub - !brexit brexit
 bind pub - !christmas christmas
 bind pub - !translate translate
@@ -291,7 +292,7 @@ proc russianroulette {nick host hand chan text} {
     if [ expr (rand()*6) <= 1 ] then {
         putkick $chan "$nick" "$msg($index)"
     } else {
-        putchan $chan "https://i.imgur.com/W1a476E.mp4"
+        putchan $chan "<click>"
     }
 }
 
