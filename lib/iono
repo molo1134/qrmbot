@@ -78,6 +78,7 @@ my ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs);
 my %result;
 
 open (JSON, '-|', "curl -s -k -L --max-time $timeout --retry 1 \"${url}\" | jq -M .");
+binmode(JSON, ":utf8");
 while (<JSON>) {
   if (/^\s*{$/) {
     if (defined $code) {
