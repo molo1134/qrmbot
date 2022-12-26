@@ -11,6 +11,8 @@ bind pub - !quotesearch q_pubquotesearch
 proc q_addquote { nick uhost hand chan arg } {
   set quotefile "quotelist-$chan"
 
+  putlog "addquote pub: $nick $uhost $hand $chan"
+
   set newarg [string trim "$arg"]
   if { [string length "$newarg"] == 0 } {
     putchan $chan "usage: !addquote <msg>"
@@ -36,6 +38,8 @@ proc q_addquote { nick uhost hand chan arg } {
 
 proc q_pubquote { nick uhost hand chan arg } {
   set quotefile "quotelist-$chan"
+
+  putlog "quote pub: $nick $uhost $hand $chan"
 
   if { [file exists $quotefile] } {
 
@@ -88,6 +92,8 @@ proc q_pubquotesearch { nick uhost hand chan arg } {
     set quotefile "quotelist-$chan"
 
     set newarg [string trim "$arg"]
+
+    putlog "quotesearch pub: $nick $uhost $hand $chan $arg"
 
     if { [string length "$newarg"] < 3 } {
 	putmsg "$nick" "error, search string too short"

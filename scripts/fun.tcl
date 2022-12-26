@@ -285,15 +285,19 @@ proc russianroulette {nick host hand chan text} {
     	return
     }
 
+    putlog "rr pub: $nick $host $hand $chan"
+
     set msg(0) "bang!"
     set msg(1) "boom!"
     set msg(2) "gottem!"
     set index [expr {int(rand()*[array size msg])}]
 
     if [ expr (rand()*6) <= 1 ] then {
+	putlog "rr HIT: $nick"
         newban "*!$host" $botnick $msg($index) 5
         putkick $chan "$nick" "$msg($index)"
     } else {
+	putlog "rr MISS: $nick"
         putchan $chan "<click>"
     }
 }
