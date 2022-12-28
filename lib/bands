@@ -21,13 +21,26 @@ my ($updated, $aindex, $kindex, $rawkindex, $solarflux, $sunspots);
 my @bands;
 my @phenom;
 
-if (defined($ARGV[0]) and $ARGV[0] eq "about") {
-  print "via hamqsl.com\n";
-  exit 0;
-}
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
 
 my $quick = 0;
-$quick = 1 if defined($ARGV[0]) and $ARGV[0] eq "-q";
+my $i = 0;
+while ($i <= $#ARGV) {
+  $quick = 1 if $ARGV[$i] eq "-q";
+
+  if (lc($ARGV[$i]) eq "about" and not $quick) {
+    print "via hamqsl.com; eSSN and eSFI via prop.kc2g.com\n";
+    exit 0;
+  }
+
+  if (lc($ARGV[$i]) eq "about" and $quick) {
+    print "Kp and Ap via gfz-potsdam.de; SFI via NOAA; SSN via sidc.be; eSSN and eSFI via prop.kc2g.com\n";
+    exit 0;
+  }
+  $i++;
+}
+
 
 my ($esfi, $essn);
 {
