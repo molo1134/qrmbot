@@ -63,6 +63,16 @@ if ($quick) {
   }
 }
 
+if ($quick) {
+  # this is slow, ~1MB of data and we only want the last row
+  my $url = "https://lasp.colorado.edu/lisird/latis/dap/penticton_radio_flux.csv";
+  open (CSV, '-|', "curl --max-time 15 -s -k -L $url | tail -1 ");
+  $_ = <CSV>;
+  chomp;
+  my ($jdate, $obs_flux, $adj_flux) = split /,/;
+  $solarflux = round($adj_flux);
+}
+
 my $url = "http://www.hamqsl.com/solarxml.php";
 open (HTTP, '-|', "curl --max-time 10 -s -k -L $url");
 while (<HTTP>) {
@@ -81,7 +91,7 @@ while (<HTTP>) {
     $kindex = $1;
     $rawkindex = $kindex;
   }
-  if (/<solarflux>\s*([^<]+)<\/solarflux>/) {
+  if (not $quick and /<solarflux>\s*([^<]+)<\/solarflux>/) {
     $solarflux = $1;
   }
   if (/<sunspots>\s*([^<]+)<\/sunspots>/) {
