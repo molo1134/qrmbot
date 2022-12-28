@@ -64,47 +64,56 @@ if ($quick) {
 }
 
 if ($quick) {
-  # this is slow, ~1MB of data and we only want the last row
-  my $url = "https://lasp.colorado.edu/lisird/latis/dap/penticton_radio_flux.csv";
-  open (CSV, '-|', "curl --max-time 15 -s -k -L $url | tail -1 ");
-  $_ = <CSV>;
-  chomp;
-  my ($jdate, $obs_flux, $adj_flux) = split /,/;
-  $solarflux = round($adj_flux);
+  # alternative: my $url = "https://lasp.colorado.edu/lisird/latis/dap/penticton_radio_flux.csv"; # this is slow, ~1MB of data and we only want the last row
+  my $url = "https://services.swpc.noaa.gov/products/summary/10cm-flux.json";
+  open (JSON, '-|', "curl --max-time 15 -s -k -L $url | tail -1 ");
+  $_ = <JSON>;
+  $solarflux = $1 if m/"Flux":"(\d+)"/;
+  close(JSON);
 }
 
-my $url = "http://www.hamqsl.com/solarxml.php";
-open (HTTP, '-|', "curl --max-time 10 -s -k -L $url");
-while (<HTTP>) {
-  chomp;
-  if (/Warning/) {
-    print "error in source data";
-    exit 0;
-  }
-  if (/<updated>\s*([^<]+)<\/updated>/) {
-    $updated = $1;
-  }
-  if (not $quick and /<aindex>\s*([^<]+)<\/aindex>/) {
-    $aindex = $1;
-  }
-  if (not $quick and /<kindex>\s*([^<]+)<\/kindex>/) {
-    $kindex = $1;
-    $rawkindex = $kindex;
-  }
-  if (not $quick and /<solarflux>\s*([^<]+)<\/solarflux>/) {
-    $solarflux = $1;
-  }
-  if (/<sunspots>\s*([^<]+)<\/sunspots>/) {
-    $sunspots = $1;
-  }
-  if (/<band name="([^"]*)" time="([^"]*)".*>([^<]*)<.*$/) {
-    push(@bands, join(',', $1,$2,$3));
-  }
-  if (/<phenomenon name="([^"]*)" location="([^"]*)".*>([^<]*)<.*$/) {
-    push(@phenom, join(',', $1,$2,$3));
-  }
+if ($quick) {
+  my $url = "https://www.sidc.be/silso/DATA/EISN/EISN_current.txt";
+  open (TXT, '-|', "curl --max-time 15 -s -k -L $url | tail -1 ");
+  $_ = <TXT>;
+  (undef, undef, undef, undef, $sunspots) = split /\s+/;
+  close(TXT);
 }
-close(HTTP);
+
+if (not $quick) {
+  my $url = "http://www.hamqsl.com/solarxml.php";
+  open (HTTP, '-|', "curl --max-time 10 -s -k -L $url");
+  while (<HTTP>) {
+    chomp;
+    if (/Warning/) {
+      print "error in source data";
+      exit 0;
+    }
+    if (/<updated>\s*([^<]+)<\/updated>/) {
+      $updated = $1;
+    }
+    if (/<aindex>\s*([^<]+)<\/aindex>/) {
+      $aindex = $1;
+    }
+    if (/<kindex>\s*([^<]+)<\/kindex>/) {
+      $kindex = $1;
+      $rawkindex = $kindex;
+    }
+    if (/<solarflux>\s*([^<]+)<\/solarflux>/) {
+      $solarflux = $1;
+    }
+    if (/<sunspots>\s*([^<]+)<\/sunspots>/) {
+      $sunspots = $1;
+    }
+    if (/<band name="([^"]*)" time="([^"]*)".*>([^<]*)<.*$/) {
+      push(@bands, join(',', $1,$2,$3));
+    }
+    if (/<phenomenon name="([^"]*)" location="([^"]*)".*>([^<]*)<.*$/) {
+      push(@phenom, join(',', $1,$2,$3));
+    }
+  }
+  close(HTTP);
+}
 
 if ($rawkindex > 4.5) {
   s/Poor/Shit/ for @bands;
@@ -115,7 +124,7 @@ $aindex = colorAIndex($aindex);
 $kindex = colorKIndex($kindex, $rawkindex);
 
 if ($quick) {
-  print "Conditions as of $updated: SFI=$solarflux SN=$sunspots A=$aindex K=$kindex";
+  print "Conditions: SFI=$solarflux SN=$sunspots A=$aindex K=$kindex";
   print " eSFI=" . colorSfi($esfi) ." eSSN=$essn" if defined $esfi;
   print "\n";
   exit 0;
