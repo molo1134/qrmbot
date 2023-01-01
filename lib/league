@@ -33,6 +33,14 @@ my $club = 187; # reddit club
 my $mode = 0;   # no mode filter
 my $target = undef;
 my $sort = undef;
+my $date = 3;
+
+# date = Filter by QSO date
+# 0 = No date filter
+# 1 = The last 12 months (eg. if today is 12 June 2016, then the range is 12 June 2015 to 12 June 2016)
+# 2 = Not used
+# 3 = This year (e.g. if today is between 1 January and 31 December 2016, then the year is 2016)
+# 4 = Last year (e.g. if today is between 1 January and 31 December 2016, then last year is 2015)
 
 my $i = 0;
 while ($i <= $#ARGV) {
@@ -46,14 +54,21 @@ while ($i <= $#ARGV) {
     $mode = 3;
   } elsif ($ARGV[$i] =~ /--slots/) {
     $sort = "s";
+  } elsif ($ARGV[$i] =~ /--lastyear/) {
+    $date = 4;
+  } elsif ($ARGV[$i] =~ /--12mo/) {
+    $date = 1;
+  } elsif ($ARGV[$i] =~ /--alltime/) {
+    $date = 0;
   } else {
     $target = $ARGV[$i] if not defined $target;
   }
   $i++;
 }
 
-my $url = "https://clublog.org/league_api.php?date=3&mode=${mode}&club=${club}";
+my $url = "https://clublog.org/league_api.php?date=${date}&mode=${mode}&club=${club}";
 
+#print "$url\n";
 local $/;   # read entire file -- FIXME: potentially memory hungry
 open (JSON, '-|', "curl --max-time 60 -s -k -L '$url'");
 my $json = <JSON>;
@@ -69,8 +84,12 @@ if (defined $sort and $sort eq "s") {
 
 my $limit = 20;
 $limit = 10 if $username eq getEggdropUID();
-my $year = strftime("%Y", gmtime(time()));
-print "Clublog standings for $year: ";
+my $timeperiod;
+$timeperiod = "all time" if $date == 0;
+$timeperiod = "last 12 months" if $date == 1;
+$timeperiod = strftime("%Y", gmtime(time())) if $date == 3;
+$timeperiod = strftime("%Y", gmtime(time() - 31536000)) if $date == 4;
+print "Clublog standings for $timeperiod ";
 print "\n" if $username ne getEggdropUID();
 my $found = 0;
 if (not defined $target) {
