@@ -844,6 +844,9 @@ proc pub_league { nick host hand chan text } {
 	global leaguebin
 	set param [sanitize_string [string trim "${text}"]]
 	putlog "league pub: $nick $host $hand $chan $param"
+	if { [string equal -nocase "#redditnet" "$chan" ] || [string equal -nocase "#fakehams" "$chan" ] } then {
+		set param "305 $param"
+	}
 	set fd [open "|${leaguebin} ${param}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
