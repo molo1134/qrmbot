@@ -47,6 +47,9 @@ my $i = 0;
 while ($i <= $#ARGV) {
   if (isNumeric($ARGV[$i])) {
     $club = $ARGV[$i];
+  } elsif ($ARGV[$i] =~ /--help/) {
+    print "options: --cw --ssb --digi --slots --lastyear --12mo --alltime --qsl [club#]\n";
+    exit 0;
   } elsif ($ARGV[$i] =~ /--(cw|morse)/) {
     $mode = 1;
   } elsif ($ARGV[$i] =~ /--(ssb|phone)/) {
