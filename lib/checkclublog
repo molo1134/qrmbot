@@ -17,7 +17,7 @@ use JSON qw( decode_json );
 use File::Temp qw(tempfile);
 use strict;
 
-my $url = 'https://secure.clublog.org/clublog-users.json.zip';
+my $url = 'https://clublog.org/clublog-users.json.zip';
 my $userfile=$ENV{'HOME'} . "/.clublogusers.gz";
 my $maxage=604800; # 1 week
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);

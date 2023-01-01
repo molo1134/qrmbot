@@ -599,7 +599,7 @@ sub checkMW {
 }
 
 sub scrapeMW {
-  my $mwurl = "https://secure.clublog.org/mostwanted.php";
+  my $mwurl = "https://clublog.org/mostwanted.php";
 
   open(MWFILE, ">", $_mostwantedfile) or die "Can't open for writing: $!";
 

@@ -52,7 +52,7 @@ while ($i <= $#ARGV) {
   $i++;
 }
 
-my $url = "https://secure.clublog.org/league_api.php?date=3&mode=${mode}&club=${club}";
+my $url = "https://clublog.org/league_api.php?date=3&mode=${mode}&club=${club}";
 
 local $/;   # read entire file -- FIXME: potentially memory hungry
 open (JSON, '-|', "curl --max-time 60 -s -k -L '$url'");
