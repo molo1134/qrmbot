@@ -61,7 +61,7 @@ while ($i <= $#ARGV) {
     $date = 1;
   } elsif ($ARGV[$i] =~ /--alltime/) {
     $date = 0;
-  } elsif ($ARGV[$i] =~ /--qsl/) {
+  } elsif ($ARGV[$i] =~ /--(qsl|confirm)/) {
     $qsl = 1; # confirmed only
   } else {
     $target = $ARGV[$i] if not defined $target;
