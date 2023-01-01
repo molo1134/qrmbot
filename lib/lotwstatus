@@ -33,8 +33,7 @@ my $j = decode_json($json);
 $isup = $j->{statistics}->{counts}->{up} > 0;
 $uptime = $j->{statistics}->{uptime}->{l1}->{ratio};
 print "LoTW up? ",$isup?green("yes"):red("no"), "; up ";
-print red($uptime) if $uptime < 100.0;
-print green($uptime) if $uptime >= 99.9;
+print (($uptime < 100.0)?red($uptime):green($uptime));
 print "% of last 24h;";
 
 $url = "http://www.arrl.org/logbook-queue-status";
