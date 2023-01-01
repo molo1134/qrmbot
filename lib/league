@@ -34,6 +34,7 @@ my $mode = 0;   # no mode filter
 my $target = undef;
 my $sort = undef;
 my $date = 3;
+my $qsl = 0;
 
 # date = Filter by QSO date
 # 0 = No date filter
@@ -60,13 +61,15 @@ while ($i <= $#ARGV) {
     $date = 1;
   } elsif ($ARGV[$i] =~ /--alltime/) {
     $date = 0;
+  } elsif ($ARGV[$i] =~ /--qsl/) {
+    $qsl = 1; # confirmed only
   } else {
     $target = $ARGV[$i] if not defined $target;
   }
   $i++;
 }
 
-my $url = "https://clublog.org/league_api.php?date=${date}&mode=${mode}&club=${club}";
+my $url = "https://clublog.org/league_api.php?date=${date}&mode=${mode}&club=${club}&qsl=${qsl}";
 
 #print "$url\n";
 local $/;   # read entire file -- FIXME: potentially memory hungry
