@@ -11,6 +11,7 @@ bind pub - !phoneticise phoneticise
 bind pub - !phoneticize phoneticise
 bind pub - !metard metard
 bind pub - !truck truck
+bind pub - !aaa aaaaaaa
 bind pub - !ooo ooooooo
 bind pub - !russianroulette russianroulette
 bind pub - !rr russianroulette
@@ -278,7 +279,13 @@ proc ooooooo { nick host hand chan text} {
 	}
 }
 
+proc aaaaaaa { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
 
+	putchan $chan "https://i.imgur.com/TtgYcS6.mp4"
+}
 proc russianroulette {nick host hand chan text} {
     global botnick
     if [string equal "#amateurradio" $chan] then {
