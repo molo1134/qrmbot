@@ -91,7 +91,7 @@ while ($i <= $#ARGV) {
   } elsif ($ARGV[$i] =~ m|^https?://goo\.gl/maps/|i or
 	  $ARGV[$i] =~ m|^https?://(www\.)?google\.com/maps/|i) {
     # noop
-  } elsif ($ARGV[$i] =~ m|^https?://(\w+\.)?imgur\.com/|) {
+  } elsif ($ARGV[$i] =~ m|^https?://(\w+\.)?imgur\.(com\|io)/|) {
     doImgur($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://wireless2\.fcc\.gov/UlsApp/ApplicationSearch/.*\?applID=|) {
     doFccApp($ARGV[$i]);
@@ -1228,16 +1228,16 @@ sub doImgur {
     $hash = $1;
     $isalb = 1;
   }
-  if ($url =~ m!imgur.com/+([0-9A-Za-z_]+)(\.(png|gifv?|jpe?g|mp4|webp))?(\?.*)?$!i) {
-    $hash = $1;
+  if ($url =~ m!imgur\.(com|io)/+([0-9A-Za-z_]+)(\.(png|gifv?|jpe?g|mp4|webp))?(\?.*)?$!i) {
+    $hash = $2;
     $isimg = 1;
   }
-  if ($url =~ m!imgur.com/r/\w+/([0-9A-Za-z_]+)/?$!) {
-    $hash = $1;
+  if ($url =~ m!imgur\.(com|io)/r/\w+/([0-9A-Za-z_]+)/?$!) {
+    $hash = $2;
     $isimg = 1;
   }
-  if ($url =~ m!imgur.com/t/\w+/([0-9A-Za-z_]+)/?$!) {
-    $hash = $1;
+  if ($url =~ m!imgur\.(com|io)/t/\w+/([0-9A-Za-z_]+)/?$!) {
+    $hash = $2;
     $isgal = 1;
   }
 
@@ -1285,8 +1285,12 @@ sub doImgur {
     }
   }
 
+  if ($url =~ /imgur\.io/) {
+    $url = s/imgur\.io/imgur.com/;
+    print "$url — ";
+  }
+
   use integer;
-  #print "$url";
   print bold(" \"$title\"") if defined $title;
   print " by \@$data{account_url}" if defined $data{account_url};
 #  print " on ", scalar(gmtime($data{datetime})), " UTC;"
