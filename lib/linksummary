@@ -1286,7 +1286,7 @@ sub doImgur {
   }
 
   if ($url =~ /imgur\.io/) {
-    $url = s/imgur\.io/imgur.com/;
+    $url =~ s/imgur\.io/imgur.com/;
     print "$url — ";
   }
 
