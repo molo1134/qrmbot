@@ -13,8 +13,6 @@ bind pub - !metard metard
 bind pub - !truck truck
 bind pub - !aaa aaaaaaa
 bind pub - !ooo ooooooo
-bind pub - !russianroulette russianroulette
-bind pub - !rr russianroulette
 bind pub - !brexit brexit
 bind pub - !christmas christmas
 bind pub - !translate translate
@@ -285,9 +283,6 @@ proc aaaaaaa { nick host hand chan text} {
 	}
 
 	putchan $chan "https://i.imgur.com/TtgYcS6.mp4"
-}
-proc russianroulette {nick host hand chan text} {
-    return
 }
 
 proc brexit { nick host hand chan text } {
