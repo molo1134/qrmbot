@@ -59,11 +59,11 @@ my $term1 = undef;
 my $term2 = undef;
 my $to = 0;		# to/from notation
 my $transit = 0;
+my $rail = 0;
 
 while ($i <= $#ARGV) {
-  if ($ARGV[$i] =~ /--transit/) {
-    $transit = 1;
-  }
+  $transit = 1 if $ARGV[$i] =~ /--transit/;
+  $rail = 1 if $ARGV[$i] =~ /--rail/;
   if (!defined($term2) and $ARGV[$i] =~ /^(--geo|de|from|to)$/i) {
     $to = 1 if $1 eq "to";
     $i++;
@@ -121,6 +121,7 @@ my $apikey = getGeocodingAPIKey();
 my $url = "https://maps.googleapis.com/maps/api/directions/json?origin=${encodedOrigin}&destination=${encodedDest}&key=${apikey}";
 
 $url .= "&mode=transit" if $transit == 1;
+$url .= "&transit_mode=rail" if $rail == 1;
 
 my ($inDist, $inDur, $inLine, $inAgency, $inDep, $inArr) = (0,0,0,0,0,0);
 
