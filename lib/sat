@@ -346,6 +346,8 @@ if (defined $sta2) {
 #	$grid1, rad2deg($elev1), rad2deg($azim1),
 #	$grid2, rad2deg($elev2), rad2deg($azim2);
     }
+    $sparkline1 = optimizeIrcColor($sparkline1);
+    $sparkline2 = optimizeIrcColor($sparkline2);
     printf "%s %s: %3s %s %-3s :%s; max el ~%.0f°\n", $grid1,
       strftime("%Y-%m-%d %H:%Mz", gmtime $start),
       azToNEWS($saz1), $sparkline1, azToNEWS($eaz1),
