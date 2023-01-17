@@ -596,21 +596,21 @@ sub getStartEnd {
 sub elToSpark {
   my $el = shift;
   if ($el > 70.0) {
-    return green("█");
+    return lightgreen("█");
   } elsif ($el > 60.0) {
-    return green("▇");
+    return lightgreen("▇");
   } elsif ($el > 50.0) {
-    return green("▆");
+    return      green("▆");
   } elsif ($el > 40.0) {
-    return green("▅");
+    return      green("▅");
   } elsif ($el > 30.0) {
-    return yellow("▄");
+    return     yellow("▄");
   } elsif ($el > 20.0) {
-    return yellow("▃");
+    return darkYellow("▃");
   } elsif ($el > 10.0) {
-    return red("▂");
+    return        red("▂");
   } else {
-    return red("▁");
+    return    darkRed("▁");
   }
 }
 
