@@ -68,7 +68,7 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 my $passThreshold = 5;       # degress above horizon
 my $goodPassThreshold = 45;  # degress above horizon
 
-my $usageParams = "<sat> <qth>|<grid> [--commonpass <qth2>|<grid2>]";
+my $usageParams = "<sat>[,sat2,..,satN] [--pass|--info] <qth>|<grid> [--commonpass <qth2>|<grid2>]";
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   #print "usage: $0 <sat> <grid>|<qth> [<elev>ft|<elev>m]\n";
@@ -214,64 +214,77 @@ my $timewindow = 1 * 86400; # seconds
 my $finish = $now + $timewindow;
 
 my $found = 0;
+my @satlist;
+my $longestname = 0;
 
-if (defined($aliases{$sat})) {
-  $sat = $aliases{lc($sat)};
+if ($sat =~ m/,/) {
+  @satlist = split /,/, $sat;
+} else {
+  @satlist[0] = $sat;
 }
 
-if (lc($sat) eq "list") {
-  my @sats;
-  foreach my $tle (@elements) {
-    my $name = $tle->get('name');
-    $name =~ s/ /-/g;
-    push(@sats, $name);
-  }
-
-  my $list = join(" ", @sats);
-  my $frag = undef;
-  my $limit = 67;
-  $limit = 400 if $username eq getEggdropUID();
-  do {
-    # line wrap
-    $frag = undef;
-    if (length $list > $limit) {
-      $list =~ s/^(.{$limit}.*?)\s(.*)$/$1/;
-      $frag = $2;
-      print $list, "\n";
-      $list = $frag;
-    }
-  } while defined ($frag);
-  print $list, "\n";
-  exit 0;
-}
-
-my ($id, $name);
 my @passes;
 my @passes2;
-foreach my $tle (@elements) {
-  my $tlename = $tle->get('name');
-  my $tleid = $tle->get('id');
-  $tlename =~ s/ /-/g;
-  if (lc($tlename) eq lc($sat) or (isNumeric($sat) and $tleid == $sat)) {
-    #print "$tlename\n";
-    $tle->validate($now, $finish) or next;
-    $found = 1;
-    #print $tle->tle_verbose(), "\n";
-    #print $tlename = $tle->get('tle'), "\n";
-    #print "doing passes..\n";
-    $id = $tleid;
-    $name = $tlename;
-    $tle->set('pass_threshold', deg2rad($passThreshold)); # minimum peak elevation
-    $tle->set('visible', 0);
-    $tle->set('horizon', 0);
-    push(@passes, $tle->pass($sta, $now, $finish));
-    push(@passes2, $tle->pass($sta2, $now, $finish)) if defined $sta2;
-  }
-}
+my ($id, $name);
 
-if ($found == 0) {
-  print "satellite not found: $sat\n";
-  exit $exitnonzeroonerror;
+foreach my $sat (@satlist) {
+
+  if (defined($aliases{$sat})) {
+    $sat = $aliases{lc($sat)};
+  }
+
+  if (lc($sat) eq "list") {
+    my @sats;
+    foreach my $tle (@elements) {
+      my $name = $tle->get('name');
+      $name =~ s/ /-/g;
+      push(@sats, $name);
+    }
+
+    my $list = join(" ", @sats);
+    my $frag = undef;
+    my $limit = 67;
+    $limit = 400 if $username eq getEggdropUID();
+    do {
+      # line wrap
+      $frag = undef;
+      if (length $list > $limit) {
+	$list =~ s/^(.{$limit}.*?)\s(.*)$/$1/;
+	$frag = $2;
+	print $list, "\n";
+	$list = $frag;
+      }
+    } while defined ($frag);
+    print $list, "\n";
+    exit 0;
+  }
+
+  foreach my $tle (@elements) {
+    my $tlename = $tle->get('name');
+    my $tleid = $tle->get('id');
+    $tlename =~ s/ /-/g;
+    if (lc($tlename) eq lc($sat) or (isNumeric($sat) and $tleid == $sat)) {
+      #print "$tlename\n";
+      $tle->validate($now, $finish) or next;
+      $found = 1;
+      #print $tle->tle_verbose(), "\n";
+      #print $tlename = $tle->get('tle'), "\n";
+      #print "doing passes..\n";
+      $id = $tleid;
+      $name = $tlename;
+      $tle->set('pass_threshold', deg2rad($passThreshold)); # minimum peak elevation
+      $tle->set('visible', 0);
+      $tle->set('horizon', 0);
+      push(@passes, $tle->pass($sta, $now, $finish));
+      push(@passes2, $tle->pass($sta2, $now, $finish)) if defined $sta2;
+      $longestname = length($name) if length $name > $longestname;
+    }
+  }
+
+  if ($found == 0) {
+    print "satellite not found: $sat\n";
+    exit $exitnonzeroonerror;
+  }
 }
 
 #print("passes: $#passes\n");
@@ -381,27 +394,31 @@ foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
 
     if ($event->{event} eq "rise") {
       if ($first == 1) {
-	printf("%s (#%d) @%s: ",
-	  bold($name = $event->{body}->get('name')),
-	  $id = $event->{body}->get('id'),
-	  coordToGrid($lat, $lon));
+	if ((scalar @satlist) == 1) {
+	  printf("%s (#%d) ",
+	    bold($name = $event->{body}->get('name')),
+	    $id = $event->{body}->get('id'));
+	}
+	printf("@%s: ", coordToGrid($lat, $lon));
 	$first = 0;
       }
       print "\n  " if $username ne getEggdropUID();
-      print green("AOS"),
+      print $event->{body}->get('name'), ": ",
+	    ' ' x ($longestname - length($event->{body}->get('name'))),
+	    green("AOS"),
 	    strftime(" %Y-%m-%d ", gmtime($event->{time})),
 	    bold(strftime("%H:%Mz", gmtime($event->{time}))),
-	    sprintf(" az %d°; ", rad2deg($event->{azimuth}));
+	    sprintf(" az %3d°; ", rad2deg($event->{azimuth}));
     }
 
     if ($event->{event} eq "max") {
-      print "max el ", bold(sprintf("%d°", rad2deg($event->{elevation})));
-      printf(" az %d°; ", rad2deg($event->{azimuth}));
+      print "max el ", bold(sprintf("%2d°", rad2deg($event->{elevation})));
+      printf(" az %3d°; ", rad2deg($event->{azimuth}));
     }
 
     if ($event->{event} eq "set") {
       print red("LOS");
-      printf(" %s az %d°",
+      printf(" %s az %3d°",
 	bold(strftime("%H:%Mz", gmtime($event->{time}))),
 	rad2deg($event->{azimuth}));
 
@@ -423,7 +440,9 @@ foreach my $pass (sort {$a->{time} <=> $b->{time}} @passes) {
     #  exit 0;
     #}
   }
+
 }
+
 print "\n";
 done:
 
