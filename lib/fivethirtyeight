@@ -355,7 +355,7 @@ if ($housepoll == 1) {
     my $found = 0;
     foreach my $poll (@{$j}) {
       next if $username eq getEggdropUID() and ++$i < scalar @{$j}; # only show latest
-      next if $poll->{cycle} ne $currcycle;
+      next if $poll->{cycle} ne $currcycle and $poll->{cycle} ne $year;
 
       $found = 1;
       my $grade = $poll->{grade};
