@@ -107,12 +107,12 @@ while ($i <= $#ARGV) {
       print("error: --elev must be followed by a numeric value representing pass elevation angle threshold\n");
       exit $exitnonzeroonerror;
     }
-  } elsif (!defined($sat)) {
-    $sat = $ARGV[$i];
   } elsif ($ARGV[$i] eq "--commonpass") {
     $station2 = 1;
   } elsif ($ARGV[$i] eq "--geo") {
     $station2 = 0;
+  } elsif (!defined($sat)) {
+    $sat = $ARGV[$i];
   } else {
     if ($station2 == 0) {
       $query .= " " unless $i == 1;
