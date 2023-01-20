@@ -281,8 +281,12 @@ proc aaaaaaa { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
 	}
-
-	putchan $chan "https://i.imgur.com/TtgYcS6.mp4"
+	
+	if [ expr (rand()*10) <= 3 ] then {
+		putchan $chan "https://i.imgur.com/TtgYcS6.mp4"
+	} else {
+		putchan $chan "⛰🤠⛰ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+	}
 }
 
 proc brexit { nick host hand chan text } {
