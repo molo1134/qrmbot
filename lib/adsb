@@ -3,14 +3,13 @@
 # 2-clause BSD license.
 # Copyright (c) 2019, 2020 molo1134@github. All rights reserved.
 
-exit 0; # because ADSBX sucks
-
 use strict;
 use utf8;
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 use Encode qw(decode);
 use I18N::Langinfo qw(langinfo CODESET);
+use JSON qw( decode_json );
 use URI::Escape;
 use Math::Round;
 use POSIX qw(floor);
@@ -33,15 +32,8 @@ our $apikey = undef;
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
-my $apikeyfile = $ENV{'HOME'} . "/.adsbx";
-if (-e ($apikeyfile)) {
-  require($apikeyfile);
-} else {
-  die "error: unable to read file $apikeyfile"
-}
-die "error: no API key set" unless defined($apikey);
-
 my $callOrReg;
+my $icaoQuery;
 my $loc;
 
 my $i = 0;
@@ -50,7 +42,10 @@ while ($i <= $#ARGV) {
     $i++;
     next;
   }
-  if ($ARGV[$i] =~ /^[A-Z0-9-]+$/) {
+  if ($ARGV[$i] =~ /^0x([A-F0-9]{6})$/i) {
+    $icaoQuery = $1;
+    print "icaoQuery: $icaoQuery\n";
+  } elsif ($ARGV[$i] =~ /^[A-Z0-9-]+$/) {
     $callOrReg = $ARGV[$i];
   } else {
     if (defined($loc)) {
@@ -68,98 +63,60 @@ my $geo;
 my ($lat, $lon);
 my $url;
 #print "loc: $loc\n";
-if (defined($loc) and $loc =~ /^-?\d+(.\d+)?,-?\d+(.\d+)?$/) {
+if (defined($icaoQuery)) {
+  $url = "https://globe.adsb.fi/re-api/?find_hex=" . uri_escape($icaoQuery);
+} elsif (defined($callOrReg)) {
+  $url = "https://globe.adsb.fi/re-api/?find_reg=" . uri_escape($callOrReg);
+} elsif (defined($loc) and $loc =~ /^-?\d+(.\d+)?,-?\d+(.\d+)?$/) {
   ($lat, $lon) = split /,/, $loc;
-  $url = "https://adsbexchange.com/api/aircraft/json/lat/" .
-    uri_escape($lat) . "/lon/" . uri_escape($lon) . "/dist/10/";
+  $url = "https://globe.adsb.fi/re-api/?closest=" . uri_escape($lat) . "," .
+    uri_escape($lon) . ",10";
 } elsif (defined($loc)) {
   $loc =~ s/^\s*//;
   $loc =~ s/\s*$//;
   $geo = argToCoords($loc);
   ($lat, $lon) = split /,/, $geo;
-  $url = "https://adsbexchange.com/api/aircraft/json/lat/" .
-    uri_escape($lat) . "/lon/" . uri_escape($lon) . "/dist/10/";
-} elsif (defined($callOrReg)) {
-  $url = "https://adsbexchange.com/api/aircraft/callsign/$callOrReg";
+  $url = "https://globe.adsb.fi/re-api/?closest=" . uri_escape($lat) . "," .
+    uri_escape($lon) . ",10";
+} else {
+  print "usage: adsb <location>|<0xHEXCODE>|<callsign>|<registration>\n";
+  exit $exitnonzeroonerror;
 }
 
 my $localgrid;
 $localgrid = coordToGrid($lat, $lon) if defined($lat);
 
 my $total = 0;
-my @planes;	# array of hashrefs
 
 DOHTTP:
 
 #print "$url\n";
-open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L -H 'api-auth: $apikey' '$url'");
-while(<HTTP>) {
-  s/\},\{/\},\n\{/g;
-  s/\}]/\}\n]/g;
-  #print;
-  if (/"total":(\d+),/) {
-    $total = $1;
-  }
-  last if /503 Service Unavailable/;
-  last if /ERR/;
-  my @lines = split /\n/, $_;
-  foreach my $l (@lines) {
-    #print "$l\n";
-    next if $l =~ /total/;
-    $l =~ s/","/",\n"/g;
-    my @kv = split /\n/, $l;
-    my %rec;
-    foreach my $p (@kv) {
-      #print "$p\n";
-      if ($p =~ m/"(\w+)":"([^"]*)",/) {
-	$rec{$1} = $2;
-	#print "$1 => $2\n";
-      }
-    }
-
-    #print "keys: ", join (", ", keys(%rec)) , "\n";
-    $rec{time} = strftime("%H:%M:%Sz", gmtime($rec{postime}/1000));
-    $rec{grid} = coordToGrid($rec{lat}, $rec{lon});
-    $rec{place} = geolocate($rec{lat}, $rec{lon});
-    ($rec{dist}, $rec{bearing}) = distBearing($lat, $lon, $rec{lat}, $rec{lon});
-
-    #print "pushing...\n";
-    push (@planes, \%rec);
-
-#    if (defined($rec{call}) and length($rec{call}) > 0 and
-#	$rec{call} ne $rec{reg}) {
-#      print bold("$rec{call}/$rec{reg}");
-#    } else {
-#      print bold($rec{reg});
-#    }
-#    print " ($rec{type}) 0x$rec{icao}; ";
-#    print "squawk $rec{sqk} " if defined $rec{sqk} and length($rec{sqk}) > 0;
-#    print "alt $rec{alt} ft;";
-#    printf (" track %.0f° speed %.0f knots", $rec{trak}, $rec{spd});
-#    print yellow(" MLAT") if $rec{mlat} != 0;
-#    print green(" GND") if $rec{gnd} != 0;
-#    print " over $rec{place} ($rec{grid})";
-#    print " at $rec{time}";
-#    printf (" -- %.1f km, %.0f°", $rec{dist}, $rec{bearing});
-#    print "\n";
-  }
-}
+open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+my $json = <HTTP>;
 close(HTTP);
+if (not $json =~ /^\s*{/) {
+  print "error1 while retrieving data: from $url: $json\n";
+  exit $exitnonzeroonerror;
+}
+my $j = decode_json($json);
 
-if ($total == 0 and defined($callOrReg) and $url =~ /callsign/) {
-  $url = "https://adsbexchange.com/api/aircraft/registration/$callOrReg";
+$total = $j->{resultCount};
+
+if ($total == 0 and defined($callOrReg) and $url =~ /find_reg/) {
+  $url = "https://globe.adsb.fi/re-api/?find_callsign=" . uri_escape($callOrReg);
   goto DOHTTP;
 }
 
-#print "planes: ", join (",", @planes);
 print "no callsign/registration found: $callOrReg\n"
-	if scalar @planes == 0 and $url =~ /registration/;
-print "no planes found near $lat,$lon\n"
-	if scalar @planes == 0 and $url =~ /lat/;
-exit $exitnonzeroonerror if scalar @planes == 0;
+	if $total == 0 and $url =~ /find_callsign/;
+print "icao code not found: $icaoQuery\n"
+	if $total == 0 and $url =~ /find_hex/;
+print "no planes found near $localgrid\n"
+	if $total == 0 and $url =~ /closest/;
+exit $exitnonzeroonerror if $total == 0;
 
-my @sortedplanes = sort { $a->{dist} <=> $b->{dist} } @planes;  # ascending
-show(\@sortedplanes);
+show($j->{aircraft}->[0], $j->{now});
 
 sub updateICAOtypes {
   my $url = "https://www4.icao.int/doc8643/External/AircraftTypes";
@@ -188,96 +145,112 @@ sub updateICAOtypes {
 
 sub show
 {
-  my ($array) = @_;
-  my $i = 0;
-  my $limit = 1;
-  if ((scalar @$array) == 0) {
-    print "no planes found\n";
+  my %rec = %{ (shift) };
+  my $timestamp = shift;
+
+  $rec{lat} = $rec{lastPosition}->{lat} if not defined $rec{lat} and defined $rec{lastPosition}->{lat};
+  $rec{lon} = $rec{lastPosition}->{lon} if not defined $rec{lon} and defined $rec{lastPosition}->{lon};
+  $rec{seen_pos} = $rec{lastPosition}->{seen_pos} if not defined $rec{seen_pos} and defined $rec{lastPosition}->{seen_pos};
+
+  my $grid = coordToGrid($rec{lat}, $rec{lon});
+  my $place = geolocate($rec{lat}, $rec{lon});
+  my ($dist, $bearing) = distBearing($lat, $lon, $rec{lat}, $rec{lon});
+  my $time = strftime("%H:%M:%Sz", gmtime(int($timestamp - $rec{seen_pos})));
+  $time = strftime("%Y-%m-%d %H:%M:%Sz", gmtime(int($timestamp - $rec{seen_pos}))) if $rec{seen_pos} > 86400;
+
+  my ($manuf, $model, $type, $etype, $icao, $owner);
+  if ($rec{r} =~ m/^N/) {
+    ($manuf, $model, $type, $etype, $icao, $owner) = getFaaReg($rec{r});
+    #print("FAA reg: $manuf, $model, $type, $etype, $icao, $owner\n");
   }
-  foreach my $planeref (@$array) {
-    my %rec = %$planeref;
-
-    my ($manuf, $model, $type, $etype, $icao, $owner);
-    if ($rec{reg} =~ m/^N/) {
-      ($manuf, $model, $type, $etype, $icao, $owner) = getFaaReg($rec{reg});
-    }
-    my ($airline, $orig, $dest, $fnum, $eta);
-    if (defined($rec{call}) and length($rec{call}) > 0) {
-      ($airline, $orig, $dest, $fnum, $eta) = getFlightTrack($rec{call});
-    } else {
-      ($airline, $orig, $dest, $fnum, $eta) = getFlightTrack($rec{reg});
-    }
-    #print join(",", ($airline, $orig, $dest)), "\n";
-    #print join(",", ($manuf, $model, $type, $etype, $icao, $owner)), "\n";
-
-    if (defined($rec{call}) and length($rec{call}) > 0 and
-	$rec{call} ne $rec{reg}) {
-      print bold("$rec{call}/$rec{reg}");
-    } else {
-      print bold($rec{reg});
-    }
-    if (not defined($model)) {
-      print " ($rec{type})";
-    } else {
-      print " ($manuf $model)";
-    }
-    print " ($airline $fnum ", bold("$orig->$dest") if defined $airline;
-    print " eta $eta" if defined $eta;
-    print ")" if defined $airline;
-    print " 0x$rec{icao}; ";
-    print "squawk $rec{sqk} " if defined $rec{sqk} and length($rec{sqk}) > 0;
-    print "alt $rec{alt} ft;";
-    printf (" track %.0f° speed %.0f knots", $rec{trak}, $rec{spd});
-    print yellow(" MLAT") if $rec{mlat} != 0;
-    print green(" GND") if $rec{gnd} != 0;
-    print " over $rec{place} ($rec{grid})";
-    print " at $rec{time}";
-    print "; owner: $owner" if defined $owner;
-    printf (" -- %.1f km, %.0f°", $rec{dist}, $rec{bearing}) if defined($lat);
-    print " from $localgrid" if defined($localgrid);
-
-    if (defined($icao) and defined($rec{icao}) and $icao ne $rec{icao}) {
-      print(" -- ", yellow("warning"));
-      print(": observed ICAO mode S code $rec{icao} differs from registered code $icao");
-    }
-
-    print "\n";
-
-    if (++$i >= $limit) {
-      last;
-    }
+  my ($airline, $orig, $dest, $fnum, $eta);
+  if (defined($rec{flight}) and length($rec{flight}) > 0) {
+    $rec{flight} =~ s/\s*$//;
+    ($airline, $orig, $dest, $fnum, $eta) = getFlightTrack($rec{flight});
+    #print("flight1: $airline, $orig, $dest, $fnum, $eta\n");
+  } else {
+    ($airline, $orig, $dest, $fnum, $eta) = getFlightTrack($rec{r});
+    #print("flight2: $airline, $orig, $dest, $fnum, $eta\n");
   }
+  #print join(",", ($airline, $orig, $dest)), "\n";
+  #print join(",", ($manuf, $model, $type, $etype, $icao, $owner)), "\n";
+
+  ################### formatted output
+
+  if (defined($rec{flight}) and length($rec{flight}) > 0 and
+      $rec{flight} ne $rec{r}) {
+    print bold("$rec{flight}/$rec{r}");
+  } else {
+    print bold($rec{r});
+  }
+  if (not defined($model)) {
+    print " ($rec{t})";
+  } else {
+    print " ($manuf $model)";
+  }
+  print " ($airline $fnum ", bold("$orig->$dest") if defined $airline;
+  print " eta $eta" if defined $eta;
+  print ")" if defined $airline;
+  print " 0x$rec{hex}; ";
+  print "squawk $rec{squawk} " if defined $rec{squawk} and length($rec{squawk}) > 0;
+  print "alt $rec{alt_geom} ft;" if defined $rec{alt_geom};
+  print "alt ~$rec{alt_baro} ft;" if defined $rec{alt_baro} and not defined $rec{alt_geom};
+  printf (" track %.0f° gnd speed %.0f knots", $rec{track}, $rec{gs});
+  print yellow(" MODE-S") if $rec{type} eq "mode_s";
+  print yellow(" MLAT") if $rec{type} eq "mlat";
+  print yellow(" TISB") if $rec{type} eq "tisb_icao";
+  print green(" GND") if $rec{alt_baro} eq "ground" or $rec{alt_geom} eq "ground";
+  if ($rec{alt_baro} eq "ground" or $rec{alt_geom} eq "ground" or $rec{alt_geom} <= 0 or $rec{gs} == 0) {
+    print " at ";
+  } else {
+    print " over "
+  }
+  print "$place ($grid)";
+  print " at $time";
+  print "; owner: $owner" if defined $owner;
+  printf (" -- %.1f km, %.0f°", $dist, $bearing) if defined($lat);
+  print " from $localgrid" if defined($localgrid);
+
+  if (defined($icao) and defined($rec{hex}) and lc $icao ne lc $rec{hex}) {
+    print(" -- ", yellow("warning"));
+    print(": observed ICAO mode S code $rec{hex} differs from registered code $icao");
+  }
+
+  print " -- https://globe.adsb.fi/?icao=$rec{hex}\n";
 }
 
 sub getFaaReg
 {
   my $reg = shift;
-  my ($manuf, $model, $type, $etype, $icao, $owner);
-  my $url = "https://registry.faa.gov/aircraftinquiry/NNum_Results.aspx?nNumberTxt=$reg";
+  my ($manuf, $model, $type, $etype, $icao, $owner, $frac);
+  $frac = 0;
+  my $url = "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=$reg";
   #print "$url\n";
   open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
   while(<HTTP>) {
     #print;
-    if (/<span id="content_lbMfrName" class="Results_DataText">([^<]+?)\s*<\/span>/) {
-      $manuf = $1;
+    if (m|<td data-label="Manufacturer Name">([^<]+?)\s*</td>|) {
+      $manuf = decodeEntities($1);
     }
-    if (/<span id="content_Label7" class="Results_DataText">([^<]+?)\s*<\/span>/) {
-      $model = $1;
+    if (m|<td data-label="Model">([^<]+?)\s*</td>|) {
+      $model = decodeEntities($1);
     }
-    if (/<span id="content_Label11" class="Results_DataText">([^<]+?)\s*<\/span>/) {
-      $type = $1;
+    if (m|<td data-label="Aircraft Type">([^<]+?)\s*</td>|) {
+      $type = decodeEntities($1);
     }
-    if (/<span id="content_lbTypeEng" class="Results_DataText">([^<]+?)\s*<\/span>/) {
-      $etype = $1;
+    if (m|<td data-label="Engine Type">([^<]+?)\s*</td>|) {
+      $etype = decodeEntities($1);
     }
-    if (/<span id="content_lbOwnerName" class="Results_DataText"[^>]*>([^<]+?)\s*<\/span>/) {
-      $owner = $1;
+    if (m|<td data-label="Name" colspan="3">([^<]+?)\s*</td>|) {
+      $owner = decodeEntities($1);
     }
-    if (m|<td>([0-9A-F]{6})</td>|) {
+    if (m|<td data-label="Mode S Code \(Base 16 / Hex\)">([0-9A-F]{6})</td>|) {
       $icao = $1;
     }
+    $frac = 1 if m|<td data-label="Fractional Owner">YES</td>|;
   }
   close(HTTP);
+  $owner .= " (fractional)" if $frac;
   return ($manuf, $model, $type, $etype, $icao, $owner);
 }
 

@@ -58,7 +58,6 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 
 ## Configuration files
 
-* `$HOME/.adsbx` -- API key for adsbexchange.com
 * `$HOME/.aerisweather` -- API key for aerisweather.com
 * `$HOME/.aprs.fi` -- required [aprs.fi](http://aprs.fi/) API key for `aprs` tool
 * `$HOME/.bitlyapikey` -- key for bit.ly API
