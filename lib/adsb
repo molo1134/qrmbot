@@ -195,7 +195,7 @@ sub show
   print "squawk $rec{squawk} " if defined $rec{squawk} and length($rec{squawk}) > 0;
   print "alt $rec{alt_geom} ft;" if defined $rec{alt_geom};
   print "alt ~$rec{alt_baro} ft;" if defined $rec{alt_baro} and not defined $rec{alt_geom};
-  printf (" track %.0f° gnd speed %.0f knots", $rec{track}, $rec{gs});
+  printf (" track %.0f° %s; gnd speed %.0f knots", $rec{track}, azToNEWS($rec{track}), $rec{gs});
   print yellow(" MODE-S") if $rec{type} eq "mode_s";
   print yellow(" MLAT") if $rec{type} eq "mlat";
   print yellow(" TISB") if $rec{type} eq "tisb_icao";
@@ -208,7 +208,7 @@ sub show
   print "$place ($grid)";
   print " at $time";
   print "; owner: $owner" if defined $owner;
-  printf (" -- %.1f km, %.0f°", $dist, $bearing) if defined($lat);
+  printf (" -- %.1f km, %.0f° %s", $dist, $bearing, azToNEWS($bearing)) if defined($lat);
   print " from $localgrid" if defined($localgrid);
 
   if (defined($icao) and defined($rec{hex}) and lc $icao ne lc $rec{hex}) {
