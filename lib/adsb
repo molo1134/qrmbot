@@ -70,14 +70,14 @@ if (defined($icaoQuery)) {
 } elsif (defined($loc) and $loc =~ /^-?\d+(.\d+)?,-?\d+(.\d+)?$/) {
   ($lat, $lon) = split /,/, $loc;
   $url = "https://globe.adsb.fi/re-api/?closest=" . uri_escape($lat) . "," .
-    uri_escape($lon) . ",10";
+    uri_escape($lon) . ",25"; # 25 nmi
 } elsif (defined($loc)) {
   $loc =~ s/^\s*//;
   $loc =~ s/\s*$//;
   $geo = argToCoords($loc);
   ($lat, $lon) = split /,/, $geo;
   $url = "https://globe.adsb.fi/re-api/?closest=" . uri_escape($lat) . "," .
-    uri_escape($lon) . ",10";
+    uri_escape($lon) . ",25"; # 25 nmi
 } else {
   print "usage: adsb <location>|<0xHEXCODE>|<callsign>|<registration>\n";
   exit $exitnonzeroonerror;
