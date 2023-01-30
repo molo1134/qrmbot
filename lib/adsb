@@ -44,7 +44,7 @@ while ($i <= $#ARGV) {
   }
   if ($ARGV[$i] =~ /^0x([A-F0-9]{6})$/i) {
     $icaoQuery = $1;
-    print "icaoQuery: $icaoQuery\n";
+    #print "icaoQuery: $icaoQuery\n";
   } elsif ($ARGV[$i] =~ /^[A-Z0-9-]+$/) {
     $callOrReg = $ARGV[$i];
   } else {
