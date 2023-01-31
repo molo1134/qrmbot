@@ -310,7 +310,7 @@ sub humanNum {
 
 sub shortenUrl {
   my $url = shift;
-  return undef if length($url) < 50;
+  return undef if length($url) < 30;
   my $timeout = 4;	# max 4 seconds
 
   our $bitly_apikey=undef;
