@@ -104,8 +104,14 @@ while ($i <= $#ARGV) {
   } elsif ($ARGV[$i] =~ m|^https?://(.*?)(/web)?/@[a-z0-9_.-]+(@[a-z0-9_.-]+)?/[0-9]+|i) {
     doMastodon($ARGV[$i]);
     # falls back to doHtml if the API check fails
+  } elsif ($ARGV[$i] =~ m|https?://(www\.)?instagram\.com/|) {
+    my $url = $ARGV[$i];
+    $url =~ s/(www\.)?instagram\.com/imginn.com/;
+    print "$url -- ";
+    doHtml($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://| and
 	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
+    # TODO: HTTP HEAD for these file types ^^ -- get size and last modified date
     doHtml($ARGV[$i]);
   }
 
