@@ -1,5 +1,8 @@
 #!/usr/bin/bc -l
 
+# 2-clause BSD license.
+# Copyright (c) 2022 molo1134@github. All rights reserved.
+
 scale = 10;
 pi = 3.14159265358979323846264338327950288419716939937510;
 c = 299792458;
@@ -55,6 +58,7 @@ define acsc(x) {
   return a(1/sqrt(x^2 - 1))
 }
 
+# factorial
 define f(x) {
   f = 1;
   while (x > 1) {
@@ -72,4 +76,19 @@ define log2(x) {
 }
 define ln(x) {
   return l(x);
+}
+
+define abs(x) {
+  if (x < 0) {
+    return -x;
+  }
+  return x;
+}
+
+# standard bc doesn't allow exponents with a fractional part
+define pow(a, b) {
+  if (scale(b) == 0) {
+    return a ^ b;
+  }
+  return e(b*l(a));
 }
