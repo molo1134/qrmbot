@@ -314,6 +314,7 @@ if ($csv == 1) {
   $expiration = "" if not defined $expiration;
   $qsl = "" if not defined $qsl;
   $qsl =~ s/,//g;
+  $grid = "" if not defined $grid;
   print "$call,$retcall,$name,$mail,$grid,$born,$expiration,$sk,$qsl\n";
   #$mail =~ s/^.*\b([A-Z][A-Z])\b.*$/$1/;
   #print "$call,$mail\n";
