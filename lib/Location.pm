@@ -332,12 +332,6 @@ sub coordToTZ {
   my $now = time();
   my $url = "https://maps.googleapis.com/maps/api/timezone/json?location=$lat,$lon&timestamp=$now&key=$apikey";
 
-  my ($dstoffset, $rawoffset, $zoneid, $zonename);
-
-  open (HTTP, '-|', "curl --stderr - -N -k -s -L --max-time 5 '$url'");
-  binmode(HTTP, ":utf8");
-  while (<HTTP>) {
-
     # {
     #    "dstOffset" : 3600,
     #    "rawOffset" : -18000,
@@ -346,22 +340,17 @@ sub coordToTZ {
     #    "timeZoneName" : "Eastern Daylight Time"
     # }
 
-    if (/"(\w+)" : (-?\d+|"[^"]*")/) {
-      my ($k, $v) = ($1, $2);
-      $v =~ s/^"(.*)"$/$1/;
-      #print "$k ==> $v\n";
-      if ($k eq "status" and $v ne "OK") {
-	return undef;
-      }
-      $dstOffset = $v if $k eq "dstOffset";
-      $rawOffset = $v if $k eq "rawOffset";
-      $zoneid = $v if $k eq "timeZoneId";
-      $zonename = $v if $k eq "timeZoneName";
-    }
-  }
-  close(HTTP);
+  my ($dstoffset, $rawoffset, $zoneid, $zonename);
 
-  return $zoneid;
+  open (HTTP, '-|', "curl --stderr - -N -k -s -L --max-time 5 '$url'");
+  binmode(HTTP, ":utf8");
+  local $/; # read entire output -- potentially memory hungry
+  $json = <HTTP>;
+  close(HTTP);
+  my $j = decode_json($json);
+
+  return undef if (defined $j->{status} and $j->{status} ne "OK");
+  return $j->{timeZoneId};
 }
 
 sub coordToElev {
