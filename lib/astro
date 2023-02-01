@@ -257,9 +257,10 @@ if ($doGraves == 1) {
   $graves->universal($now);
   $moon->universal($now);
   my ($graves_az, $graves_el, $graves_range) = getAzElRng($graves, $moon);
+  my $loss = emePathLoss($graves_range, 143.05);
   print bold("GRAVES"), " Radar: Moon ";
   if ($graves_az >= 90 && $graves_az <= 270 && $graves_el >= 15 && $graves_el <= 40) {
-    print green("Illuminated"), ", 143.050 MHz: az/el $graves_az°/$graves_el°\n";
+    print green("Illuminated"), ", 143.050 MHz: az/el $graves_az°/$graves_el°; path loss $loss dB\n";
   } else {
     if ($graves_el < 0) {
       print "is ", red("set"), "\n";
