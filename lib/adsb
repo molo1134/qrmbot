@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # 2-clause BSD license.
-# Copyright (c) 2019, 2020 molo1134@github. All rights reserved.
+# Copyright (c) 2019, 2020, 2023 molo1134@github. All rights reserved.
 
 use strict;
 use utf8;
@@ -26,15 +26,24 @@ use Util;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
-#my $baseUrl = "https://globe.adsb.fi/";
-my $baseUrl = "https://globe.theairtraffic.com/";
-my $reapiUrl = "${baseUrl}re-api/";
-
-our $apikey = undef;
-
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+my $baseUrl = "https://globe.adsb.fi/";
+my $reapiUrl = "${baseUrl}re-api/";
+
+our $apikey_adsb_fi;
+my $apikeyfile = $ENV{'HOME'} . "/.adsb-api-keys";
+if ( -e ($apikeyfile)) {
+  require ($apikeyfile);
+} else {
+  print "warning: unable to read file $apikeyfile\n"
+}
+
+my $apikey = $apikey_adsb_fi if $baseUrl =~ /adsb\.fi/;
+my $apiheaderOpt = "";
+$apiheaderOpt = "-H 'access-key: $apikey'" if $baseUrl =~ /adsb\.fi/;
 
 my $callOrReg;
 my $icaoQuery;
@@ -95,7 +104,7 @@ my $total = 0;
 DOHTTP:
 
 #print "$url\n";
-open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
+open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L $apiheaderOpt '$url'");
 local $/;   # read entire file -- FIXME: potentially memory hungry
 my $json = <HTTP>;
 close(HTTP);
