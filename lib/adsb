@@ -26,7 +26,8 @@ use Util;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
-my $baseUrl = "https://globe.adsb.fi/";
+#my $baseUrl = "https://globe.adsb.fi/";
+my $baseUrl = "https://globe.theairtraffic.com/";
 my $reapiUrl = "${baseUrl}re-api/";
 
 our $apikey = undef;
