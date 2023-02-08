@@ -26,6 +26,9 @@ use Util;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
+my $baseUrl = "https://globe.adsb.fi/";
+my $reapiUrl = "${baseUrl}re-api/";
+
 our $apikey = undef;
 
 # change this to 0 to always exit with success
@@ -64,19 +67,19 @@ my ($lat, $lon);
 my $url;
 #print "loc: $loc\n";
 if (defined($icaoQuery)) {
-  $url = "https://globe.adsb.fi/re-api/?find_hex=" . uri_escape($icaoQuery);
+  $url = "${reapiUrl}?find_hex=" . uri_escape($icaoQuery);
 } elsif (defined($callOrReg)) {
-  $url = "https://globe.adsb.fi/re-api/?find_reg=" . uri_escape($callOrReg);
+  $url = "${reapiUrl}?find_reg=" . uri_escape($callOrReg);
 } elsif (defined($loc) and $loc =~ /^-?\d+(.\d+)?,-?\d+(.\d+)?$/) {
   ($lat, $lon) = split /,/, $loc;
-  $url = "https://globe.adsb.fi/re-api/?closest=" . uri_escape($lat) . "," .
+  $url = "${reapiUrl}?closest=" . uri_escape($lat) . "," .
     uri_escape($lon) . ",25"; # 25 nmi
 } elsif (defined($loc)) {
   $loc =~ s/^\s*//;
   $loc =~ s/\s*$//;
   $geo = argToCoords($loc);
   ($lat, $lon) = split /,/, $geo;
-  $url = "https://globe.adsb.fi/re-api/?closest=" . uri_escape($lat) . "," .
+  $url = "${reapiUrl}?closest=" . uri_escape($lat) . "," .
     uri_escape($lon) . ",25"; # 25 nmi
 } else {
   print "usage: adsb <location>|<0xHEXCODE>|<callsign>|<registration>\n";
@@ -104,7 +107,7 @@ my $j = decode_json($json);
 $total = $j->{resultCount};
 
 if ($total == 0 and defined($callOrReg) and $url =~ /find_reg/) {
-  $url = "https://globe.adsb.fi/re-api/?find_callsign=" . uri_escape($callOrReg);
+  $url = "${reapiUrl}?find_callsign=" . uri_escape($callOrReg);
   goto DOHTTP;
 }
 
@@ -216,7 +219,7 @@ sub show
     print(": observed ICAO mode S code $rec{hex} differs from registered code $icao");
   }
 
-  print " -- https://globe.adsb.fi/?icao=$rec{hex}\n";
+  print " -- ${baseUrl}?icao=$rec{hex}\n";
 }
 
 sub getFaaReg
