@@ -188,6 +188,17 @@ sub show
   #print join(",", ($airline, $orig, $dest)), "\n";
   #print join(",", ($manuf, $model, $type, $etype, $icao, $owner)), "\n";
 
+  my $squawknote = "";
+  if ($rec{squawk} == 1200 or $rec{squawk} == 7000) {
+    $squawknote = green(" [VFR]");
+  } elsif ($rec{squawk} == 7500) {
+    $squawknote = red(" [Hijack]");
+  } elsif ($rec{squawk} == 7600) {
+    $squawknote = red(" [RadioFailure]");
+  } elsif ($rec{squawk} == 7700) {
+    $squawknote = red(" [Emergency]");
+  }
+
   ################### formatted output
 
   if (defined($rec{flight}) and length($rec{flight}) > 0 and
@@ -205,7 +216,7 @@ sub show
   print " eta $eta" if defined $eta;
   print ")" if defined $airline;
   print " 0x$rec{hex}; ";
-  print "squawk $rec{squawk} " if defined $rec{squawk} and length($rec{squawk}) > 0;
+  print "squawk $rec{squawk}$squawknote " if defined $rec{squawk} and length($rec{squawk}) > 0;
   print "alt $rec{alt_geom} ft;" if defined $rec{alt_geom};
   print "alt ~$rec{alt_baro} ft;" if defined $rec{alt_baro} and not defined $rec{alt_geom};
   printf (" track %.0f° %s; gnd speed %.0f knots", $rec{track}, azToNEWS($rec{track}), $rec{gs});
