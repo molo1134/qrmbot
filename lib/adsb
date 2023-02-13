@@ -202,6 +202,7 @@ sub show
   #print join(",", ($airline, $orig, $dest)), "\n";
   #print join(",", ($manuf, $model, $type, $etype, $icao, $owner)), "\n";
 
+  # see: https://en.wikipedia.org/wiki/List_of_transponder_codes
   my $squawknote = "";
   if ($rec{squawk} == 1200 or $rec{squawk} == 7000) {
     $squawknote = green(" [VFR]");
@@ -211,6 +212,56 @@ sub show
     $squawknote = red(" [RadioFailure]");
   } elsif ($rec{squawk} == 7700) {
     $squawknote = red(" [Emergency]");
+  } elsif ($rec{squawk} == 0) {
+    $squawknote = red(" [Mil Intercept]");
+  } elsif ($rec{squawk} == 25 or $rec{squawk} == 33) {
+    $squawknote = green(" [Parachute dropping]");
+  } elsif ($rec{squawk} >= 41 and $rec{squawk} <= 57) {
+    $squawknote = green(" [VFR]");
+#  } elsif ($rec{squawk} == 1000) {
+#    $squawknote = yellow(" [IFR]");
+  } elsif ($rec{squawk} == 1201) {
+    $squawknote = green(" [VFR]");
+  } elsif ($rec{squawk} == 1202) {
+    $squawknote = green(" [VFR glider]");
+  } elsif ($rec{squawk} == 1255) {
+    $squawknote = yellow(" [Fire]");
+  } elsif ($rec{squawk} >= 1203 and $rec{squawk} <= 1272) {
+    $squawknote = green(" [Defense VFR]");
+  } elsif ($rec{squawk} >= 1273 and $rec{squawk} <= 1275) {
+    $squawknote = yellow(" [CPME Parrot]");
+  } elsif ($rec{squawk} == 1276) {
+    $squawknote = yellow(" [ADIZ w/o ATC]");
+  } elsif ($rec{squawk} == 1277) {
+    $squawknote = yellow(" [VFR SAR]");
+  } elsif ($rec{squawk} == 1400) {
+    $squawknote = green(" [VFR]");
+  } elsif ($rec{squawk} == 2000) {
+    $squawknote = yellow(" [IFR/SSR]");
+  } elsif ($rec{squawk} == 4000) {
+    $squawknote = green(" [VFR Mil Training]");
+  } elsif ($rec{squawk} == 4453) {
+    $squawknote = yellow(" [High balloon ops]");
+  } elsif ($rec{squawk} >= 4434 and $rec{squawk} <= 4437) {
+    $squawknote = yellow(" [WX Recon]");
+  } elsif ($rec{squawk} == 4453) {
+    $squawknote = yellow(" [High balloon ops]");
+  } elsif ($rec{squawk} >= 4400 and $rec{squawk} <= 4477) {
+    $squawknote = yellow(" [Reserved High Altitude Mil]");
+  } elsif ($rec{squawk} == 5000 or $rec{squawk} == 5400 or $rec{squawk} == 6100 or $rec{squawk} == 6400) {
+    $squawknote = yellow(" [NORAD]");
+  } elsif ($rec{squawk} == 5061 or $rec{squawk} == 5062 or $rec{squawk} == 5100 or $rec{squawk} == 5200) {
+    $squawknote = yellow(" [TRACON]");
+  } elsif ($rec{squawk} == 7400) {
+    $squawknote = yellow(" [UAV lost link]");
+  } elsif ($rec{squawk} >= 7501 and $rec{squawk} <= 7577) {
+    $squawknote = yellow(" [NORAD]");
+  } elsif ($rec{squawk} >= 7601 and $rec{squawk} <= 7607) {
+    $squawknote = red(" [FAA Reserved]");
+  } elsif ($rec{squawk} >= 7701 and $rec{squawk} <= 7707) {
+    $squawknote = red(" [FAA Reserved]");
+  } elsif ($rec{squawk} == 7777) {
+    $squawknote = red(" [RABM BITE]") . "/" . red("[DOD Intercept]");
   }
 
   ################### formatted output
