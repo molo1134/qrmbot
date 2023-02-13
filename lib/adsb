@@ -30,8 +30,8 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
-my $baseUrl = "https://globe.adsb.fi/";
-my $reapiUrl = "${baseUrl}re-api/";
+#my $baseUrl = "https://globe.adsb.fi/";
+my $baseUrl = "https://globe.theairtraffic.com/";
 
 our $apikey_adsb_fi;
 my $apikeyfile = $ENV{'HOME'} . "/.adsb-api-keys";
@@ -40,10 +40,6 @@ if ( -e ($apikeyfile)) {
 } else {
   print "warning: unable to read file $apikeyfile\n"
 }
-
-my $apikey = $apikey_adsb_fi if $baseUrl =~ /adsb\.fi/;
-my $apiheaderOpt = "";
-$apiheaderOpt = "-H 'access-key: $apikey'" if $baseUrl =~ /adsb\.fi/;
 
 my $callOrReg;
 my $icaoQuery;
@@ -54,6 +50,15 @@ while ($i <= $#ARGV) {
   if ($ARGV[$i] =~ /--geo/) {
     $i++;
     next;
+  }
+  if ($ARGV[$i] =~ /--fi/) {
+    $baseUrl = "https://globe.adsb.fi/";
+  }
+  if ($ARGV[$i] =~ /--lol/) {
+    $baseUrl = "https://globe.adsb.lol/";
+  }
+  if ($ARGV[$i] =~ /--(tac|atc|theairtraffic)/) {
+    $baseUrl = "https://globe.theairtraffic.com/";
   }
   if ($ARGV[$i] =~ /^0x([A-F0-9]{6})$/i) {
     $icaoQuery = $1;
@@ -71,6 +76,12 @@ while ($i <= $#ARGV) {
 }
 
 updateICAOtypes();
+
+my $apikey = $apikey_adsb_fi if $baseUrl =~ /adsb\.fi/;
+my $apiheaderOpt = "";
+$apiheaderOpt = "-H 'access-key: $apikey'" if $baseUrl =~ /adsb\.fi/;
+
+my $reapiUrl = "${baseUrl}re-api/";
 
 my $geo;
 my ($lat, $lon);
@@ -92,7 +103,7 @@ if (defined($icaoQuery)) {
   $url = "${reapiUrl}?closest=" . uri_escape($lat) . "," .
     uri_escape($lon) . ",25"; # 25 nmi
 } else {
-  print "usage: adsb <location>|<0xHEXCODE>|<callsign>|<registration>\n";
+  print "usage: adsb [--fi|--lol|--tac] <location>|<0xHEXCODE>|<callsign>|<registration>\n";
   exit $exitnonzeroonerror;
 }
 
@@ -132,6 +143,7 @@ exit $exitnonzeroonerror if $total == 0;
 show($j->{aircraft}->[0], $j->{now});
 
 sub updateICAOtypes {
+  # https://web.archive.org/web/20230101013553/https://www4.icao.int/doc8643/External/AircraftTypes
   my $url = "https://www4.icao.int/doc8643/External/AircraftTypes";
   my $typesfile = $ENV{'HOME'} . "/.icao-types";
   my $needICAO = 0;
