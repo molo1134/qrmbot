@@ -644,6 +644,10 @@ proc cat_pub { nick host hand chan text } {
 	set fd [open "|${command}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
+		set jd [clock format [clock seconds] -gmt 1 -format "%j"]
+		if { [string equal $jd "045"] } {
+			set line "https://i.imgur.com/v0790At.jpg"
+		}
 		putchan $chan "$msg($index): $line"
 	}
 	close $fd
