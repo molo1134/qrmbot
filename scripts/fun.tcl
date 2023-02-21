@@ -640,7 +640,7 @@ proc cat_pub { nick host hand chan text } {
 	set msg(13) "you're obsessed"
 	set msg(14) "seriously, wtf"
 	set index [expr {int(rand()*[array size msg])}]
-	set command "curl -s -k -L -A foo https://www.reddit.com/r/WhatsWrongWithYourCat/random.json | jq -r first(.\[\].data.children\[\].data.url) "
+	set command "curl -s -k -L -A foo https://www.reddit.com/r/WhatsWrongWithYourCat/random.json | jq -r first\(.\[\].data.children\[\].data.url\) "
 	set fd [open "|${command}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
@@ -663,7 +663,7 @@ proc dog_pub { nick host hand chan text } {
 	set msg(0) "bark"
 	set msg(1) "woof"
 	set index [expr {int(rand()*[array size msg])}]
-	set command "curl -s -k -L -A foo https://www.reddit.com/r/WhatsWrongWithYourDog/random.json | jq -r first(.\[\].data.children\[\].data.url) "
+	set command "curl -s -k -L -A foo https://www.reddit.com/r/WhatsWrongWithYourDog/random.json | jq -r first\(.\[\].data.children\[\].data.url\) "
 	set fd [open "|${command}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
