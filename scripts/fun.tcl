@@ -663,7 +663,7 @@ proc dog_pub { nick host hand chan text } {
 	set msg(0) "bark"
 	set msg(1) "woof"
 	set index [expr {int(rand()*[array size msg])}]
-	set command "curl -s -k -L -A foo https://www.reddit.com/r/WhatsWrongWithYourDog/random.json | jq . | grep \\\"url\\\": | tail -1 | cut -d'\\\"' -f4"
+	set command "curl -s -k -L -A foo https://www.reddit.com/r/WhatsWrongWithYourDog/random.json | jq . | grep \\\"url\\\": | tail -1 | cut -d\\\" -f4"
 	set fd [open "|${command}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
