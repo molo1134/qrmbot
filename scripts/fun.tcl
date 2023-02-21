@@ -653,6 +653,28 @@ proc cat_pub { nick host hand chan text } {
 	close $fd
 }
 
+bind pub - !dog dog_pub
+proc dog_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	set param [sanitize_string [string trim "${text}"]]
+	putlog "dog pub: $nick $host $hand $chan $param"
+	set msg(0) "bark"
+	set msg(1) "woof"
+	set index [expr {int(rand()*[array size msg])}]
+	set command "curl -s -k -L -A foo https://www.reddit.com/r/WhatsWrongWithYourDog/random.json | jq | grep url | tail -1 | cut -d'\\\"' -f4"
+	set fd [open "|${command}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		set jd [clock format [clock seconds] -gmt 1 -format "%j"]
+		if { [string equal $jd "045"] } {
+			set line "https://i.imgur.com/usMFstp.png"
+		}
+		putchan $chan "$msg($index): $line"
+	}
+	close $fd
+}
 
 set amconbin "/home/eggdrop/bin/amcon"
 bind pub - !amcon amcon_pub
