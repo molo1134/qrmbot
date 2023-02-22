@@ -161,6 +161,9 @@ die "no callsign." unless defined $call;
 if ($call =~ /^(grid:)? ?([A-R]{2}[0-9]{2}([a-x]{2})?$)/i) {
   $call = $2;
   $type = "grid";
+} elsif ($call =~ /^call:\s*(.*?)\s*$/i) {
+  $call = $1;
+  $type = "callsign";
 } elsif ($call =~ /^\s*(([a-z0-9]+\/)?\d?[a-z]{1,2}[0-9Øø]{1,4}[a-z]+(\/[a-z0-9]+)?)\s*$/i) {
   $call = $1;
   $type = "callsign";
