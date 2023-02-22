@@ -288,7 +288,7 @@ if (!defined($country) and
     !defined($retcall) and
     !defined($name)) {
 
-  print uc($call), " not found\n";
+  print $type, " ", uc($call), " not found\n";
   exit $exitnonzeroonerror;
 }
 
@@ -614,7 +614,7 @@ sub scrapeXML {
     }
     if (/<Error>Not found/) {
       close(XML);
-      print uc($call), " not found\n";
+      print $type, " ", uc($call), " not found\n";
       exit $exitnonzeroonerror;
     }
     if ((/A subscription is required to access the complete record./ or /Invalid session key/ or /Session Timeout/) and $autoxml > 0) {
@@ -765,12 +765,12 @@ sub getAndParseData {
 	  exit $exitnonzeroonerror;
 	}
       }
-      print uc($call), " not found\n";
+      print $type, " ", uc($call), " not found\n";
       exit $exitnonzeroonerror;
     }
 
     if (/No result data was available for:/) {
-      print uc($call), " not found\n";
+      print $type, " ", uc($call), " not found\n";
       exit $exitnonzeroonerror;
     }
 
