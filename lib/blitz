@@ -80,6 +80,7 @@ my $req = '{"id":0,"method":"get_global_strikes_grid","params":[15,5000,0,0]}';
 
 
 local $/;   # read entire file -- FIXME: potentially memory hungry
+#print("curl --max-time 10 -s -k -L -H \"${ua}\" -H \"${ct}\" --data '${req}' $url\n");
 open (JSON, '-|', "curl --max-time 10 -s -k -L -H \"${ua}\" -H \"${ct}\" --data '${req}' $url");
 my $json = <JSON>;
 close(JSON);
@@ -125,35 +126,39 @@ my @funny = ("bang!",
   "wish you read R56",
   "EMP detected");
 
-my ($lat, $lon, $timedelta) = split(/,/,$closest);
-#my $grid = coordToGrid($lat, $lon);
-#my $qth = geolocate($lat, $lon);
-#print "$lat, $lon: $grid $qth\n";
-my $mygrid = coordToGrid($mylat, $mylon);
-my $myqth = geolocate($mylat, $mylon);
-my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
-my $dist_mi = sprintf("%.1f", $dist * 0.62137119);
-$dist = sprintf("%.1f", $dist);
-#$bearing = sprintf("%.0f°", $bearing);
-$bearing = azToNEWS($bearing);
-my $pos;
-if ($dist < 1.0) {
-  $pos = yellow("⚡⚡⚡⚡") . italic(bold($funny[int(rand($#funny))])) . italic(red(" $dist km ($dist_mi mi) $bearing"));
-} elsif ($dist < 5.0) {
-  $pos = yellow("⚡⚡⚡") . italic(red("$dist km ($dist_mi mi) $bearing"));
-} elsif ($dist < 20.0) {
-  $pos = yellow("⚡⚡") . red("$dist km ($dist_mi mi) $bearing");
-} elsif ($dist < 50.0) {
-  $pos = yellow("⚡$dist km ($dist_mi mi) $bearing");
-} else {
-  $pos = green("$dist km ($dist_mi mi) $bearing");
-}
-#printf("%s => $lat,$lon ($grid) #$count -- %.1f km, %.0f°\n", join(", ", @r), $dist $bearing);
-my $location;
-$location = "$myqth ($mygrid)" if defined $myqth;
-$location = "$mygrid" if not defined $myqth;
+if (defined $closest) {
+  my ($lat, $lon, $timedelta) = split(/,/,$closest);
+  #my $grid = coordToGrid($lat, $lon);
+  #my $qth = geolocate($lat, $lon);
+  #print "$lat, $lon: $grid $qth\n";
+  my $mygrid = coordToGrid($mylat, $mylon);
+  my $myqth = geolocate($mylat, $mylon);
+  my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
+  my $dist_mi = sprintf("%.1f", $dist * 0.62137119);
+  $dist = sprintf("%.1f", $dist);
+  #$bearing = sprintf("%.0f°", $bearing);
+  $bearing = azToNEWS($bearing);
+  my $pos;
+  if ($dist < 1.0) {
+    $pos = yellow("⚡⚡⚡⚡") . italic(bold($funny[int(rand($#funny))])) . italic(red(" $dist km ($dist_mi mi) $bearing"));
+  } elsif ($dist < 5.0) {
+    $pos = yellow("⚡⚡⚡") . italic(red("$dist km ($dist_mi mi) $bearing"));
+  } elsif ($dist < 20.0) {
+    $pos = yellow("⚡⚡") . red("$dist km ($dist_mi mi) $bearing");
+  } elsif ($dist < 50.0) {
+    $pos = yellow("⚡$dist km ($dist_mi mi) $bearing");
+  } else {
+    $pos = green("$dist km ($dist_mi mi) $bearing");
+  }
+  #printf("%s => $lat,$lon ($grid) #$count -- %.1f km, %.0f°\n", join(", ", @r), $dist $bearing);
+  my $location;
+  $location = "$myqth ($mygrid)" if defined $myqth;
+  $location = "$mygrid" if not defined $myqth;
 
-printf("Nearest lightning strike to $location in last 15 minutes: $pos at %s\n", strftime("%H:%Mz", gmtime($ts + $timedelta)));
+  printf("Nearest lightning strike to $location in last 15 minutes: $pos at %s\n", strftime("%H:%Mz", gmtime($ts + $timedelta)));
+} else {
+  print("No reports.  Possible server-side error.\n");
+}
 
 sub getLongFromIndex {
   my $index = shift;
