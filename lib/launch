@@ -50,6 +50,11 @@ while ($i <= $#ARGV) {
     $i++;
     next;
   }
+  if (lc $ARGV[$i] =~ /--ula/) {
+    $term = "ula";
+    $i++;
+    next;
+  }
   $term .= " " if $term ne "";
   $term .= $ARGV[$i];
   $i++;
