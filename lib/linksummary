@@ -674,10 +674,11 @@ sub doHtml {
   # -s => silent
   # -A => user agent
   # -H Accept => should cut down on images and the like, but check headers
+  # -H Accept-Language => try to get english first
   #print "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" '$url'";
   my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0";
   #print("curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=1.9\" -A \"$useragent\" '$url'");
-  open (HTTP, '-|', "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=1.9\" -A \"$useragent\" '$url'");
+  open (HTTP, '-|', "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=1.9\" -H \"Accept-Language: en-us, en;q=0.9, *;q=0.8\" -A \"$useragent\" '$url'");
   while (<HTTP>) {
     #print;
     chomp;
