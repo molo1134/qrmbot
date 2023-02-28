@@ -1,0 +1,135 @@
+#!/usr/bin/perl
+
+# 2-clause BSD license.
+# Copyright (c) 2023 molo1134@github. All rights reserved.
+
+# check pskreporter spots for a given spotter, and see where they are listening
+
+# inspired by Rob's !rxwidth command on discord
+
+use strict;
+
+use JSON qw( decode_json );
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Util;
+use Colors;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# configuration
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq getEggdropUID()) {
+    print "usage: !rxwidth <callsign>\n";
+  } else {
+    print "usage: $0 <callsign>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $callsign = undef;
+
+# when calling from eggdrop, parameters may be packed into first parameter.
+if ($#ARGV == 0 && $ARGV[0] =~ m/ /) {
+  @ARGV = split / /, $ARGV[0];
+}
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if (!defined($callsign)) {
+    $callsign = uc $ARGV[$i];
+    $i++; next;
+  }
+  $i++;
+}
+
+
+if (not defined $callsign or
+    not $callsign =~ m/^([A-Z0-9]+[0-9]?\/)?[A-Z0-9]+[0-9][A-Z]+(\/[A-Z0-9]+)?$/) {
+  print "invalid callsign: $callsign\n";
+  exit $exitnonzeroonerror;
+}
+
+
+my $url = "https://www.pskreporter.info/cgi-bin/pskquery5.pl?encap=0&callback=doNothing&statistics=0&noactive=1&nolocator=1&receiverCallsign=$callsign";
+
+local $/;   # read entire file -- FIXME: potentially memory hungry
+open (HTTP, '-|', "curl -L -4 -k --max-time 4 --retry 1 -s '$url'");
+my $json = <HTTP>;
+close(HTTP);
+
+if ($json eq "") {
+  print "error: pskreporter returned no data\n";
+  exit $exitnonzeroonerror;
+}
+if ($json =~ /The storm clouds are gathering/) {
+  print "error: pskreporter error\n";
+  exit $exitnonzeroonerror;
+}
+if ($json =~ /Your IP has made too many requests for the same data too often/ or
+    $json =~ /Your IP has made too many queries too often/ ) {
+  print "error: pskreporter throttled\n";
+  exit $exitnonzeroonerror;
+}
+if ($json =~ /"message": "(.*?)"/) {
+  print "unexpected error: $1\n";
+  exit $exitnonzeroonerror;
+}
+$json =~ s/^doNothing\(//;
+$json =~ s/\);$//;
+
+#print "$json\n";
+
+my $j = decode_json($json) or die "parse error: $json\n";
+
+my %minFreqByBand;
+my %maxFreqByBand;
+my %numByBand;
+
+my $t = time();
+
+foreach my $rec (@{$j->{receptionReport}}) {
+  next if $rec->{receiverCallsign} ne $callsign;
+
+  my $age = $t - $rec->{flowStartSeconds};
+  next if $age > (15 * 60); # ignore spots older than 15 minutes
+
+  my $f = $rec->{frequency};
+  my $b = int($f / 1000000);
+
+  $minFreqByBand{$b} = $f if not defined $minFreqByBand{$b};
+  $maxFreqByBand{$b} = $f if not defined $maxFreqByBand{$b};
+
+  $minFreqByBand{$b} = $f if defined $minFreqByBand{$b} and $f < $minFreqByBand{$b};
+  $maxFreqByBand{$b} = $f if defined $maxFreqByBand{$b} and $f > $maxFreqByBand{$b};
+  $numByBand{$b}++;
+}
+
+if ((scalar keys %minFreqByBand) == 0) {
+  print "no spots found reported by $callsign\n";
+  exit $exitnonzeroonerror;
+}
+
+printf("%s pskreporter spots last 15 minutes: ", bold($callsign));
+print "\n" if $username ne getEggdropUID();
+
+foreach my $b (sort { $a <=> $b } keys %minFreqByBand) {
+  my $min = $minFreqByBand{$b};
+  my $max = $maxFreqByBand{$b};
+  my $num = $numByBand{$b};
+
+  my $bw = $max - $min;
+
+  printf("%s%0.3f to %0.3f kHz, %u spots, bandwidth %0.3f kHz%s",
+    ($username eq getEggdropUID()) ? "" : "  ",
+    $min/1000, $max/1000, $num, $bw/1000,
+    ($username eq getEggdropUID()) ? "; " : "\n");
+}
+
+print "\n" if $username eq getEggdropUID();
+exit 0;

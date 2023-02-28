@@ -96,6 +96,9 @@ bind msg - !contests contests_msg
 bind pub - !activity activity
 bind msg - !activity activity_msg
 
+bind pub - !rxwidth rxwidth_pub
+bind msg - !rxwidth rxwidth_msg
+
 bind pub - !ki kindex
 bind pub - !kf kindex
 bind pub - !kindex kindex
@@ -212,6 +215,7 @@ set dxccbin "/home/eggdrop/bin/dxcc"
 set spotsbin "/home/eggdrop/bin/spots"
 set contestsbin "/home/eggdrop/bin/contests"
 set activitybin "/home/eggdrop/bin/activity"
+set rxwidthbin "/home/eggdrop/bin/rxwidth"
 set kindexbin "/home/eggdrop/bin/kindex"
 set morsebin "/home/eggdrop/bin/morse"
 set unmorsebin "/home/eggdrop/bin/unmorse"
@@ -1307,6 +1311,30 @@ proc activity_msg {nick uhand handle input} {
 	}
 	close $fd
 }
+
+proc rxwidth_pub { nick host hand chan text } {
+	global rxwidthbin
+	set params [sanitize_string [string trim "${text}"]]
+	putlog "rxwidth pub: $nick $host $hand $chan $params"
+	set fd [open "|${rxwidthbin} ${params}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc rxwidth_msg {nick uhand handle input} {
+	global rxwidthbin
+	set params [sanitize_string [string trim "${input}"]]
+	putlog "rxwidth msg: $nick $uhand $handle $params"
+	set fd [open "|${rxwidthbin} ${params}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
 
 proc kindex { nick host hand chan text } {
 	global kindexbin
