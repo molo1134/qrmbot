@@ -5,7 +5,7 @@
 
 # check pskreporter spots for a given spotter, and see where they are listening
 
-# inspired by Rob's !rxwidth command on discord
+# inspired by Jon's !rxwidth command on discord
 
 use strict;
 
