@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Google Translate API client
+# Translation client using Google Translate API and DeepL API
 #
 # 2-clause BSD license.
 # Copyright (c) 2020 molo1134@github. All rights reserved.
@@ -10,11 +10,16 @@ use Encode qw(decode);
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
+use URI::Escape;
+
 use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 use Util;
+
+# disable "experimental" warning on smart match operator use
+no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
@@ -45,9 +50,9 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq getEggdropUID()) {
-    print "usage: !translate [sourcelang] <targetlang> <text>\n";
+    print "usage: !translate [--deepl|--google] [sourcelang] <targetlang> <text>\n";
   } else {
-    print "usage: $0 [sourcelang] <targetlang> <text>\n";
+    print "usage: $0 [--deepl|--google] [sourcelang] <targetlang> <text>\n";
   }
   exit $exitnonzeroonerror;
 }
@@ -159,13 +164,92 @@ $lang{yi} = "Yiddish";
 $lang{yo} = "Yoruba";
 $lang{zu} = "Zulu";
 
+# from https://api-free.deepl.com/v2/languages?type=target (auth required) March 2023
+my %lang_dl_target;
+$lang_dl_target{bg} = "Bulgarian";
+$lang_dl_target{cs} = "Czech";
+$lang_dl_target{da} = "Danish";
+$lang_dl_target{de} = "German";
+$lang_dl_target{el} = "Greek";
+$lang_dl_target{en} = "English";
+$lang_dl_target{"en-gb"} = "English (British)";
+$lang_dl_target{"en-us"} = "English (American)";
+$lang_dl_target{es} = "Spanish";
+$lang_dl_target{et} = "Estonian";
+$lang_dl_target{fi} = "Finnish";
+$lang_dl_target{fr} = "French";
+$lang_dl_target{hu} = "Hungarian";
+$lang_dl_target{id} = "Indonesian";
+$lang_dl_target{it} = "Italian";
+$lang_dl_target{ja} = "Japanese";
+$lang_dl_target{ko} = "Korean";
+$lang_dl_target{lt} = "Lithuanian";
+$lang_dl_target{lv} = "Latvian";
+$lang_dl_target{nb} = "Norwegian";
+$lang_dl_target{nl} = "Dutch";
+$lang_dl_target{pl} = "Polish";
+$lang_dl_target{pt} = "Portuguese";
+$lang_dl_target{"pt-br"} = "Portuguese (Brazilian)";
+$lang_dl_target{"pt-pt"} = "Portuguese (European)";
+$lang_dl_target{ro} = "Romanian";
+$lang_dl_target{ru} = "Russian";
+$lang_dl_target{sk} = "Slovak";
+$lang_dl_target{sl} = "Slovenian";
+$lang_dl_target{sv} = "Swedish";
+$lang_dl_target{tr} = "Turkish";
+$lang_dl_target{uk} = "Ukrainian";
+$lang_dl_target{zh} = "Chinese (simplified)";
+
+# from https://api-free.deepl.com/v2/languages?type=source (auth required) March 2023
+my %lang_dl_source;
+$lang_dl_source{bg} = "Bulgarian";
+$lang_dl_source{cs} = "Czech";
+$lang_dl_source{da} = "Danish";
+$lang_dl_source{de} = "German";
+$lang_dl_source{el} = "Greek";
+$lang_dl_source{en} = "English";
+$lang_dl_source{es} = "Spanish";
+$lang_dl_source{et} = "Estonian";
+$lang_dl_source{fi} = "Finnish";
+$lang_dl_source{fr} = "French";
+$lang_dl_source{hu} = "Hungarian";
+$lang_dl_source{id} = "Indonesian";
+$lang_dl_source{it} = "Italian";
+$lang_dl_source{ja} = "Japanese";
+$lang_dl_source{ko} = "Korean";
+$lang_dl_source{lt} = "Lithuanian";
+$lang_dl_source{lv} = "Latvian";
+$lang_dl_source{nb} = "Norwegian";
+$lang_dl_source{nl} = "Dutch";
+$lang_dl_source{pl} = "Polish";
+$lang_dl_source{pt} = "Portuguese";
+$lang_dl_source{ro} = "Romanian";
+$lang_dl_source{ru} = "Russian";
+$lang_dl_source{sk} = "Slovak";
+$lang_dl_source{sl} = "Slovenian";
+$lang_dl_source{sv} = "Swedish";
+$lang_dl_source{tr} = "Turkish";
+$lang_dl_source{uk} = "Ukrainian";
+$lang_dl_source{zh} = "Chinese";
+
 # eggdrop doesn't split args on spaces
 @ARGV=split(' ', join(' ',@ARGV));
 
+my ($do_dl, $do_goog) = (0, 0);
 my ($source, $target, $query) = (undef, undef, undef);
 my ($lang1, $lang2);
 my $i = 0;
 while ($i <= $#ARGV) {
+
+  if ($ARGV[$i] =~ /--d(eep)?l/) {
+    $do_dl = 1;
+    $i++;
+  }
+  if ($ARGV[$i] =~ /--goog/) {
+    $do_goog = 1;
+    $i++;
+  }
+
   if ((not defined $lang1 or not defined $lang2) and not defined $query) {
 
     my $found = 0;
@@ -202,6 +286,9 @@ while ($i <= $#ARGV) {
   $i++;
 }
 
+# by default enable both; preference will be deepl
+($do_dl, $do_goog) = (1, 1) if $do_dl == 0 and $do_goog == 0;
+
 #print "lang1: $lang1\n";
 #print "lang2: $lang2\n";
 #print "query: $query\n";
@@ -232,39 +319,87 @@ if (defined $lang2) {
   $target = $lang1;
 }
 
-my $url = "https://translation.googleapis.com/language/translate/v2";
-my $apikey = getTranslateAPIKey();
+do_deepl() if $do_dl;
+do_google() if $do_goog;
 
-my $sourcedata = "";
-$sourcedata = "source=$source" if defined $source;
+sub do_deepl {
+  my $url = "https://api-free.deepl.com/v2/translate";
+  my $apikey = getDeepLAPIKey();
+  my $result;
 
-#print("curl --max-time 10 --stderr - -N -k -s -L '$url' -d 'format=text&${sourcedata}&target=$target&key=$apikey&q=$query'", "\n");
-
-my $result;
-
-open(HTTP, '-|', "curl --max-time 10 --stderr - -N -k -s -L '$url' -d 'format=text&${sourcedata}&target=$target&key=$apikey&q=$query'");
-binmode(HTTP, ":utf8");
-while (<HTTP>) {
-  #  print;
-
-#        "translatedText": "guten Morgen",
-#        "detectedSourceLanguage": "en"
-  if (/"translatedText": "(.*)"/) {
-    $result = $1;
+  my @targetlist = keys %lang_dl_target;
+  if (not $target ~~ @targetlist) {
+    print "DEEPL: not found: $target\n";
+    return 0;
   }
-  if (/"detectedSourceLanguage": "(.*)"/) {
-    $source = $1;
+
+  my $sourcedata = "";
+  $sourcedata = "-d 'source_lang=" . uc $source . "'" if defined $source;
+  my $targetdata = "-d 'target_lang=" . uc $target . "'";
+  my $auth = "-H 'Authorization: DeepL-Auth-Key $apikey'";
+  my $encodedquery = uri_escape_utf8($query);
+
+  #print("curl --max-time 10 --stderr - -N -k -s -L -X POST '$url' $auth $sourcedata $targetdata -d 'text=$encodedquery'\n");
+  open(HTTP, '-|', "curl --max-time 10 --stderr - -N -k -s -L -X POST '$url' $auth $sourcedata $targetdata -d 'text=$encodedquery' ");
+  binmode(HTTP, ":utf8");
+  while (<HTTP>) {
+    #print;
+    if (/"detected_source_language":"(.*?)"/) {
+      $source = lc $1;
+    }
+    if (/"text":"(.*?)"/) {
+      $result = $1;
+    }
   }
-}
-close(HTTP);
+  close(HTTP);
 
-if (not defined $result) {
-  print "error: no result?\n";
-  exit $exitnonzeroonerror;
+  if (not defined $result) {
+    print "DEEPL error: no result?\n";
+    return 0;
+  }
+
+  #print "$lang{$source} to $lang{$target}: \"$query\" ⇒ \"$result\"\n";
+  print "DEEPL: $lang_dl_source{$source} to $lang_dl_target{$target} ⇒ \"$result\"\n";
+  return 1;
 }
 
-#print "$lang{$source} to $lang{$target}: \"$query\" ⇒ \"$result\"\n";
-print "$lang{$source} to $lang{$target} ⇒ \"$result\"\n";
+sub do_google {
+
+  my $url = "https://translation.googleapis.com/language/translate/v2";
+  my $apikey = getTranslateAPIKey();
+
+  my $sourcedata = "";
+  $sourcedata = "source=$source" if defined $source;
+
+  #print("curl --max-time 10 --stderr - -N -k -s -L '$url' -d 'format=text&${sourcedata}&target=$target&key=$apikey&q=$query'", "\n");
+
+  my $result;
+
+  open(HTTP, '-|', "curl --max-time 10 --stderr - -N -k -s -L '$url' -d 'format=text&${sourcedata}&target=$target&key=$apikey&q=$query'");
+  binmode(HTTP, ":utf8");
+  while (<HTTP>) {
+    #  print;
+
+  #        "translatedText": "guten Morgen",
+  #        "detectedSourceLanguage": "en"
+    if (/"translatedText": "(.*)"/) {
+      $result = $1;
+    }
+    if (/"detectedSourceLanguage": "(.*)"/) {
+      $source = $1;
+    }
+  }
+  close(HTTP);
+
+  if (not defined $result) {
+    print "GOOGLE error: no result?\n";
+    return 0;
+  }
+
+  #print "$lang{$source} to $lang{$target}: \"$query\" ⇒ \"$result\"\n";
+  print "GOOGLE: $lang{$source} to $lang{$target} ⇒ \"$result\"\n";
+  return 1;
+}
 
 sub getTranslateAPIKey {
   my $apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
@@ -275,4 +410,15 @@ sub getTranslateAPIKey {
     print "error: unable to read file $apikeyfile\n";
   }
   return $translateapikey;
+}
+
+sub getDeepLAPIKey {
+  my $apikeyfile = $ENV{'HOME'} . "/.deeplapikey";
+  our $deeplapikey;
+  if (-e ($apikeyfile)) {
+    require($apikeyfile);
+  } else {
+    print "error: unable to read file $apikeyfile\n";
+  }
+  return $deeplapikey;
 }
