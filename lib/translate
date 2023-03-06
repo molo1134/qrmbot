@@ -11,6 +11,7 @@ use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
 use URI::Escape;
+use JSON qw( decode_json );
 
 use File::Basename;
 use Cwd 'realpath';
@@ -326,6 +327,7 @@ sub do_deepl {
   my $url = "https://api-free.deepl.com/v2/translate";
   my $apikey = getDeepLAPIKey();
   my $result;
+  my $dsource = uc $source;
 
   my @targetlist = keys %lang_dl_target;
   if (not $target ~~ @targetlist) {
@@ -341,17 +343,16 @@ sub do_deepl {
 
   #print("curl --max-time 10 --stderr - -N -k -s -L -X POST '$url' $auth $sourcedata $targetdata -d 'text=$encodedquery'\n");
   open(HTTP, '-|', "curl --max-time 10 --stderr - -N -k -s -L -X POST '$url' $auth $sourcedata $targetdata -d 'text=$encodedquery' ");
-  binmode(HTTP, ":utf8");
-  while (<HTTP>) {
-    #print;
-    if (/"detected_source_language":"(.*?)"/) {
-      $source = lc $1;
-    }
-    if (/"text":"(.*?)"/) {
-      $result = $1;
-    }
-  }
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $json = <HTTP>;
   close(HTTP);
+  #print ("$json\n");
+  my $j = decode_json($json); # includes utf-8 decode
+
+  if (defined $j->{translations} and defined $j->{translations}->[0]) {
+    $dsource = lc $j->{translations}->[0]->{detected_source_language};
+    $result = $j->{translations}->[0]->{text};
+  }
 
   if (not defined $result) {
     print "DEEPL error: no result?\n";
@@ -359,7 +360,7 @@ sub do_deepl {
   }
 
   #print "$lang{$source} to $lang{$target}: \"$query\" ⇒ \"$result\"\n";
-  print "DEEPL: $lang_dl_source{$source} to $lang_dl_target{$target} ⇒ \"$result\"\n";
+  print "DEEPL: $lang_dl_source{$dsource} to $lang_dl_target{$target} ⇒ \"$result\"\n";
   return 1;
 }
 
@@ -374,30 +375,32 @@ sub do_google {
   #print("curl --max-time 10 --stderr - -N -k -s -L '$url' -d 'format=text&${sourcedata}&target=$target&key=$apikey&q=$query'", "\n");
 
   my $result;
+  my $gsource = $source;
 
   open(HTTP, '-|', "curl --max-time 10 --stderr - -N -k -s -L '$url' -d 'format=text&${sourcedata}&target=$target&key=$apikey&q=$query'");
-  binmode(HTTP, ":utf8");
-  while (<HTTP>) {
-    #  print;
-
-  #        "translatedText": "guten Morgen",
-  #        "detectedSourceLanguage": "en"
-    if (/"translatedText": "(.*)"/) {
-      $result = $1;
-    }
-    if (/"detectedSourceLanguage": "(.*)"/) {
-      $source = $1;
-    }
-  }
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $json = <HTTP>;
   close(HTTP);
+  #print ("$json\n");
+  my $j = decode_json($json); # includes utf-8 decode
+
+  if (defined $j->{data}->{translations} and
+      defined $j->{data}->{translations}->[0]) {
+    $result = $j->{data}->{translations}->[0]->{translatedText};
+    $gsource = $j->{data}->{translations}->[0]->{detectedSourceLanguage} if not defined $gsource;
+  }
+
+  if (not defined $gsource and $json =~ /"detectedSourceLanguage": "(.*)"/) {
+    $gsource = $1;
+  }
 
   if (not defined $result) {
     print "GOOGLE error: no result?\n";
     return 0;
   }
 
-  #print "$lang{$source} to $lang{$target}: \"$query\" ⇒ \"$result\"\n";
-  print "GOOGLE: $lang{$source} to $lang{$target} ⇒ \"$result\"\n";
+  #print "$lang{$gsource} to $lang{$target}: \"$query\" ⇒ \"$result\"\n";
+  print "GOOGLE: $lang{$gsource} to $lang{$target} ⇒ \"$result\"\n";
   return 1;
 }
 
