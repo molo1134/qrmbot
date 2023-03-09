@@ -383,11 +383,19 @@ sub doRBN {
   my $freqmode = 0;
   $freqmode = 1 if $callsign =~ m/^\d+$/;
 
+  # this appears in https://www.reversebeacon.net/main.php as follows:
+  #
+  # window.RBN_version_hash = "fb94a8";
+  #
+  # if this stops working in the future, we may have to make a second request
+  # to get whatever the current version is.
+  my $version_hash = "fb94a8";
+
   my $url;
   if ($freqmode == 0) {
-    $url = "https://www.reversebeacon.net/spots.php?cdx=${callsign}&s=0&r=20";
+    $url = "https://www.reversebeacon.net/spots.php?h=${version_hash}&cdx=${callsign}&s=0&r=20";
   } else {
-    $url = "https://www.reversebeacon.net/spots.php?cdx=&s=0&r=100";
+    $url = "https://www.reversebeacon.net/spots.php?h=${version_hash}&cdx=&s=-1&r=100";
   }
   my $referer;
   my @seencalls;
@@ -425,7 +433,7 @@ sub doRBN {
   my %modes = %$modes_ref;
 
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  my $curl = "curl -L -k --max-time 4 --retry 1 -s '$url'";
+  my $curl = "curl -L -k --max-time 15 --retry 1 -s '$url'";
   $curl .= " -H 'Referer: $referer'" if defined $referer;
   open (HTTP, '-|', $curl);
   my $json = <HTTP>;
@@ -434,6 +442,11 @@ sub doRBN {
   if ($json =~ /<title>(\d\d\d .*?)<\/title>/) {
     my $error = $1;
     print "warning: RBN: $error\n";
+    return;
+  }
+  if ($json =~ /^{"error":(.*?)}/) {
+    my $error = $1;
+    print "warning: RBN: error $error\n";
     return;
   }
   return if $json eq "";
