@@ -777,6 +777,11 @@ sub getAndParseData {
       exit $exitnonzeroonerror;
     }
 
+    if (m|<h1>Maintenance</h1>|i) {
+      print "qrz.com down for maintenance\n";
+      exit $exitnonzeroonerror;
+    }
+
     if (/Service limit exceeded/) {
       if ($autoxml > 0) {
 	print "Warning: Service limit exceeded. Too many lookups.\n";
