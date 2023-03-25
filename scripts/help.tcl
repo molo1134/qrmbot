@@ -41,6 +41,7 @@ proc send_help {nick} {
   putmsg "$nick" "  !iono -- report from nearest ionosonde"
   putmsg "$nick" "  !muf -- GIRO MUF reports from ionosondes"
   putmsg "$nick" "  !blitz !zap -- lightning report"
+  putmsg "$nick" "  !rad -- report nearest radiation monitor"
   putmsg "$nick" "  !aprs -- APRS station information"
   putmsg "$nick" "  !eme -- EME prediction"
   putmsg "$nick" "  !graves -- 143 MHz radar as EME beacon"

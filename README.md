@@ -84,6 +84,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.mostwanted.txt` -- cached DXCC "most wanted" data from [clublog.org](http://clublog.org/)
 * `$HOME/.qrzcookies` -- HTTP cookies for qrz.com session
 * `$HOME/.spottimestamps` -- used for spots monitor mode; safe to remove
+* `$HOME/.qrmbot/cache/radmon.txt` -- cached rad monitor data; safe to remove
 
 
 ## Security

@@ -1,0 +1,382 @@
+#!/usr/bin/perl
+# get radiation monitor data
+#
+# 2-clause BSD license.
+# Copyright (c) 2023 molo1134@github. All rights reserved.
+
+use strict;
+use utf8;
+use Encode qw(decode);
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+use Util;
+
+use Math::Round;
+use Time::Piece ();
+use POSIX qw(floor);
+use POSIX qw(strftime);
+
+@ARGV = map { decode "utf-8", $_ } @ARGV;
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+my $geo = undef;
+my $query = undef;
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] eq "about") {
+    print "radiation montioring data from http://www.gmcmap.com/\n";
+    exit $exitnonzeroonerror;
+  }
+  if (!defined($geo) and $ARGV[$i] =~ /^--geo$/i) {
+    $i++;
+    $geo = $ARGV[$i];
+    $i++;
+    next;
+  }
+  if (defined($query)) {
+    $query = $query ." ". $ARGV[$i];
+  } else {
+    $query = $ARGV[$i];
+  }
+  $i++;
+}
+
+if (not defined $query and not defined $geo) {
+  if ($username eq getEggdropUID()) {
+    print "usage: !rad <grid>|<lat>,<lon>|<qth>\n";
+  } else {
+    print "usage: $0 <grid>|<lat>,<lon>|<qth>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $result = argToCoords($query) if defined $query;
+
+if (defined $query and not defined $result) {
+  print "error: unable to find \"$query\"\n";
+  exit $exitnonzeroonerror;
+}
+
+my ($mylat, $mylon) = split(',', $geo) if defined $geo;
+($mylat, $mylon) = split(',', $result) if defined $result;
+
+#print "$mylat, $mylon\n";
+
+my $cachedir = $ENV{HOME} . "/.qrmbot/cache";
+my $cachefile = $cachedir . "/radmon.txt";
+my $needrefresh = 0;
+my $maxage = 600; # 10 minutes
+
+if (not -d $cachedir) {
+  print "making cache directory..\n";
+  system ("mkdir -p $cachedir\n");
+  if (not -d $cachedir) {
+    print "unable to make cache directory $cachedir\n";
+  }
+}
+
+if (not -e $cachefile) {
+  $needrefresh = 1;
+} else {
+  my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $cachefile;
+  if (defined $mtime) {
+    my $age = time() - $mtime;
+    $needrefresh = 1 if ($age > $maxage or $size == 0);
+  } else {
+    $needrefresh = 1;
+  }
+}
+
+refreshData() if $needrefresh;
+our %stationData; # key is distance
+loadCache();
+displayStation();
+
+sub refreshData {
+  print "refreshing data..\n";
+
+  my %stations;
+
+  our $headerOpt = "-H 'Accept: */*' " .
+    "-H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0' " .
+    "-H 'Accept-Language: en-US,en;q=0.5' " .
+    "-H 'Accept-Encoding: gzip, deflate' " .
+    "-H 'Referer: http://www.gmcmap.com/index.asp' ";
+  my $offset = 0;
+  my $count = 0;
+  my $limit = 100;
+
+  do {
+    $count = 0;
+
+    my $url = "http://www.gmcmap.com/ajaxm.asp?OffSet=${offset}&Limit=${limit}&dataRange=1&timeZone=0&KEY=466";
+    #print "$url\n";
+
+    open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L $headerOpt '$url'");
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    my $html = <HTTP>;
+    close(HTTP);
+
+    $html =~ s/[^[:ascii:]]//g;
+
+    foreach my $line (split /\n/, $html) {
+      $count++;
+      #print "$line\n";
+      my ($device, $cpm, $acpm, $sv, $user, $tube, $ts, $id, $lat, $lng);
+
+      if ($line =~ m|<div class="topic-info-box">(.*?)</div>|) {
+	$device = $1;
+	$device =~ s/&nbsp;/ /;
+	$device =~ s/^\s+//;
+	$device =~ s/\s+$//;
+	$device =~ s/\s\s+/ /;
+	$device =~ s/GQ ELECTRONICS( LLC)?/GQ/;
+	#print "$device\n";
+      }
+
+      if ($line =~ m!<div class="info-box-reading">CPM:(\d+).*?ACPM:([0-9.]+).*?([0-9.]+|undefined)uSv/h.*?.*?Tube: (.*?)<br><br> on: (.*?) GMT<!) {
+	my $time;
+	($cpm, $acpm, $sv, $tube, $time) = ($1, $2, $3, $4, $5);
+
+	$tube =~ s/&nbsp;/ /;
+	$tube =~ s/^\s+//;
+	$tube =~ s/\s+$//;
+	$tube =~ s/\s\s+/ /;
+	$tube = undef if $tube eq "unknown";
+
+	if ($sv eq "undefined") {
+	  $sv = undef;
+	} else {
+	  $sv = nearest(0.01, $sv);
+	}
+
+	if ($time =~ /\d{4}-\d\d-\d\d \d\d:\d\d:\d\d/) {
+	  $ts = Time::Piece->strptime($time, "%Y-%m-%d %H:%M:%S")->epoch;
+	} else {
+	  print "bad time: $time\n";
+	}
+
+	#print "$cpm, $acpm, $sv µSv/hr, $tube, $time, $ts\n";
+      }
+
+      if ($line =~ m|By: (.*?)<br>|) {
+	$user = $1;
+	#print "$user\n";
+      }
+
+      if ($line =~ m|</div>',([-+]?[0-9.]+),([-+]?[0-9.]+),|) {
+	($lat, $lng) = ($1, $2);
+	#print "$lat, $lng\n";
+      }
+
+      if ($line =~ m|<a href=historyData.asp\?Param_ID=(\d+)&KEY=\d+ target=_blank>|) {
+	$id = $1;
+	#print "$id\n";
+      } else {
+	#print "** NO ID **\n";
+      }
+
+      if (defined $cpm and defined $lat and defined $ts and $ts > 0) {
+	my $key = "$lat,$lng,$id";
+	$stations{$key} = join("|", $device, $cpm, $acpm, $sv, $user, $tube, $ts, $id, $lat, $lng);
+	#print "$key => $stations{$key}\n";
+      } else {
+	#print "error: ", join("|", $device, $cpm, $acpm, $sv, $user, $tube, $ts, $id, $lat, $lng), "\n";
+	#print "line : ", $line, "\n";
+      }
+    }
+
+    # print "count: $count\n";
+    $offset += $limit;
+
+  } while ($count >= $limit);
+
+  #print "Writing to $cachefile ..\n";
+  open (CACHE, ">", $cachefile);
+  foreach my $k (sort keys %stations) {
+    #print "k: $k -- v: $stations{$k}\n";
+    print CACHE $stations{$k}, "\n";
+  }
+  close(CACHE);
+
+}
+
+sub loadCache {
+  our %stationData;
+  open (CACHE, "<", $cachefile);
+  while (<CACHE>) {
+    chomp;
+    my ($device, $cpm, $acpm, $sv, $user, $tube, $ts, $id, $lat, $lng) = split /\|/;
+    my ($dist, undef) = distBearing($mylat, $mylon, $lat, $lng);
+    $stationData{$dist} = $_;
+    #print "$lat, $lng: $dist\n";
+  }
+  close(CACHE);
+}
+
+sub displayStation {
+  our %stationData;
+  my $key = (sort { $a <=> $b } keys %stationData)[0];
+
+  #print "$key => $stationData{$key}\n";
+
+  my ($device, $cpm, $acpm, $sv, $user, $tube, $ts, $id, $lat, $lng) = split /\|/, $stationData{$key};
+  my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lng);
+  my $grid = coordToGrid($lat, $lng);
+  my $loc = geolocate($lat, $lng);
+
+  my $now = time();
+  my $old = "";
+  $old = yellow(" [old]") if $ts < ($now - (30*60));  # 30 min
+  $old = red(" [old]") if $ts < ($now - (120*60));    # 2 hour
+
+  print "$loc ($grid): ", colorByCPM($cpm, "$cpm"), " CPM; ", colorByCPM($acpm, "$acpm"), " Avg.CPM; ";
+  print colorByuSvhr($sv, "$sv"), " µSv/hr; at ", strftime("%Y-%m-%d %H%Mz", gmtime($ts)), $old;
+  print " -- $device", ((defined $tube and length($tube) > 0) ? " ($tube)" : "");
+  print " -- by $user" if defined $user and length($user) > 0;
+  print " -- " , floor($dist), " km ", azToNEWS($bearing), " from ", coordToGrid($mylat, $mylon), "\n";
+
+  displayHist($id) if defined $id and length $id > 0;
+
+}
+
+sub displayHist {
+  my $id = shift;
+  my $url = "http://www.gmcmap.com/historyData.asp?Param_ID=${id}&systemTimeZone=0";
+  #print "$url\n";
+
+  our $headerOpt;
+  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L $headerOpt '$url'");
+  #local $/;   # read entire file -- FIXME: potentially memory hungry
+  #my $html = <HTTP>;
+
+  my ($firsttime, $lasttime);
+  my @cpmData;
+
+  while (<HTTP>) {
+    if (/<tbody>/) {
+      $_ = <HTTP>;
+      $_ = <HTTP>;
+      if (m|<td>(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)</td>|) {
+	#print "$1\n";
+        my $ts = Time::Piece->strptime($1, "%Y-%m-%d %H:%M:%S")->epoch;
+	$firsttime = $ts if not defined $firsttime;
+	$lasttime = $ts;
+	$_ = <HTTP>;
+      }
+      if (m|<td>(\d+)</td>|) {
+	#print "$1\n";
+	unshift @cpmData, $1;
+      }
+    }
+  }
+  close(HTTP);
+
+  # only display last 160 elements
+  if (scalar @cpmData > 160) {
+    @cpmData = @cpmData[-160..-1];
+  }
+
+  my @result = seriesToSparkLine(\@cpmData);
+
+  my $min = $result[0];
+  my $max = $result[1];
+  my @spark = @result[2 .. $#result];
+  my $sparkline = optimizeIrcColor(join("", @spark));
+
+  printf "  time series chart: min %s, max %s -- %s\n",
+	colorByCPM($min, $min), colorByCPM($max, $max), $sparkline;
+
+}
+
+sub colorByCPM {
+  my $cpm = shift;
+  my $text = shift;
+  return green($text) if $cpm <= 50;
+  return lightgreen($text) if $cpm <= 100;
+  return yellow($text) if $cpm <= 150;
+  return darkRed($text) if $cpm <= 1000;
+  return red($text) if $cpm <= 2000;
+  return blink(red($text));
+}
+
+sub colorByuSvhr {
+  my $usvhr = shift;
+  my $text = shift;
+  return green($text) if $usvhr <= 0.33;
+  return lightgreen($text) if $usvhr <= 0.65;
+  return yellow($text) if $usvhr <= 1.0;
+  return darkRed($text) if $usvhr <= 6.5;
+  return red($text) if $usvhr <= 13.0;
+  return blink(red($text));
+}
+
+sub seriesToSparkLine {
+  my $arrayref = shift;
+  my @series = @$arrayref;
+  my $min = 999999999999;
+  my $max = -999999999999;
+  my @result;
+
+  foreach my $e (@series) {
+    $min = $e if $e < $min and $e > 0;
+    $max = $e if $e > $max and $e > 0;
+  }
+  $max = 0 if $max == -999999999999;
+
+  push @result, ($min, $max);
+
+  foreach my $v (@series) {
+    my $chr = valToBlock($v, $min, $max);
+    $chr = colorByCPM($v, $chr);
+    push @result, $chr;
+  }
+
+  return @result;
+}
+
+# relative to min/max
+sub valToBlock {
+  my $v = shift;
+  my $min = shift;
+  my $max = shift;
+  my $step = ($max - $min)/8;
+  my $chr = " ";
+
+  if ($v < $min) {
+    $chr = "\xA0"; # NBSP
+  } elsif ($v <= ($min + ($step * 1))) {
+    $chr = "▁";
+  } elsif ($v <= ($min + ($step * 2))) {
+    $chr = "▂";
+  } elsif ($v <= ($min + ($step * 3))) {
+    $chr = "▃";
+  } elsif ($v <= ($min + ($step * 4))) {
+    $chr = "▄";
+  } elsif ($v <= ($min + ($step * 5))) {
+    $chr = "▅";
+  } elsif ($v <= ($min + ($step * 6))) {
+    $chr = "▆";
+  } elsif ($v <= ($min + ($step * 7))) {
+    $chr = "▇";
+  } elsif ($v <= ($min + ($step * 8))) {
+    $chr = "█";
+  } else {
+    $chr = "↑";
+  }
+  return $chr;
+}
+

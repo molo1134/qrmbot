@@ -843,5 +843,46 @@ proc ud_msg {nick uhand handle input} {
 	close $fd
 }
 
+bind msg - !rad rad_msg
+bind pub - !rad rad_pub
+set radbin "/home/eggdrop/bin/rad"
+proc rad_pub { nick host hand chan text } {
+	global radbin
+	set query [sanitize_string [string trim "${text}"]]
+	set geo [qrz_getgeo $hand]
+
+	putlog "rad pub: $nick $host $hand $chan $query $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${radbin} ${query}" r]
+	} else {
+		set fd [open "|${radbin} ${query} --geo $geo" r]
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc rad_msg {nick uhand handle input} {
+	global radbin
+	set query [sanitize_string [string trim "${input}"]]
+	set geo [qrz_getgeo $handle]
+
+	putlog "rad msg: $nick $uhand $handle $query $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${radbin} ${query}" r]
+	} else {
+		set fd [open "|${radbin} ${query} --geo $geo" r]
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
+}
+
+
 putlog "fun.tcl loaded."
 
