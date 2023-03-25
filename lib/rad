@@ -285,9 +285,9 @@ sub displayHist {
   }
   close(HTTP);
 
-  # only display last 160 elements
-  if (scalar @cpmData > 160) {
-    @cpmData = @cpmData[-160..-1];
+  # only display last 60 elements
+  if (scalar @cpmData > 60) {
+    @cpmData = @cpmData[-60..-1];
   }
 
   my @result = seriesToSparkLine(\@cpmData);
