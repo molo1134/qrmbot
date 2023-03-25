@@ -166,7 +166,7 @@ sub refreshData {
 	if ($time =~ /\d{4}-\d\d-\d\d \d\d:\d\d:\d\d/) {
 	  $ts = Time::Piece->strptime($time, "%Y-%m-%d %H:%M:%S")->epoch;
 	} else {
-	  print "bad time: $time\n";
+	  #print "bad time: $time\n";
 	}
 
 	#print "$cpm, $acpm, $sv µSv/hr, $tube, $time, $ts\n";
