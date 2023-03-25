@@ -310,7 +310,7 @@ sub colorByCPM {
   return yellow($text) if $cpm <= 150;
   return darkRed($text) if $cpm <= 1000;
   return red($text) if $cpm <= 2000;
-  return blink(red($text));
+  return magenta($text);
 }
 
 sub colorByuSvhr {
@@ -321,7 +321,7 @@ sub colorByuSvhr {
   return yellow($text) if $usvhr <= 1.0;
   return darkRed($text) if $usvhr <= 6.5;
   return red($text) if $usvhr <= 13.0;
-  return blink(red($text));
+  return magenta($text);
 }
 
 sub seriesToSparkLine {
