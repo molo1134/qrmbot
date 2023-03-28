@@ -56,7 +56,7 @@ while ($i <= $#ARGV) {
     }
   }
 
-  if ($ARGV[$i] =~ m|^https?://(www\.\|m\.)?youtube\.com/watch\?v=([\w-]+)|i) {
+  if ($ARGV[$i] =~ m|^https?://(www\.\|m\.\|music\.)?youtube\.com/watch\?v=([\w-]+)|i) {
     printYouTubeMetaData($2);
   } elsif ($ARGV[$i] =~ m|^https?://youtu\.be/([\w-]+)|i) {
     printYouTubeMetaData($1);
