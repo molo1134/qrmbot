@@ -7,11 +7,12 @@
 # Copyright (c) 2018 molo1134@github. All rights reserved.
 #
 # Copyright 2019 AA4JQ. All rights reserved.
-# Copyright (c) 2019, 2020 molo1134@github. All rights reserved.
+# Copyright (c) 2019, 2020, 2023 molo1134@github. All rights reserved.
 
 # requires an API key from DarkSky.com  Place into $HOME/.darksky:
 #
 # $apikey = "0123456789abcdef";
+# $pirate_apikey = "0123456789abcdefghijklmnopqrstuvwxyz";
 #
 # The current conditions object ("currently") returns data as follows:
 # {
@@ -39,6 +40,7 @@
 # Weather data: 
 # Powered by Dark Sky
 # https://darksky.net/poweredby/
+# and https://pirateweather.net/
 
 use strict;
 use utf8;
@@ -55,6 +57,7 @@ use Util;
 use Colors;
 
 our $apikey = undef;
+our $pirate_apikey = undef;
 my $loc;
 my $lat;
 my $lon;
@@ -68,8 +71,17 @@ if (-e ($apikeyfile)) {
 }
 #die "error: no API key set" unless defined($apikey);
 
+my $site = "api.darksky.net";
+my $active_apikey = $apikey;
+
 my $i = 0;
 while ($i <= $#ARGV) {
+    if ($ARGV[$i] eq "--pirate" or $ARGV[$i] =~ m/^--arr/) {
+      $site = "api.pirateweather.net";
+      $active_apikey = $pirate_apikey;
+      $i++;
+      next;
+    }
     if (defined($loc)) {
         $loc = $loc . " " . $ARGV[$i];
     } else {
@@ -79,7 +91,7 @@ while ($i <= $#ARGV) {
 }
 
 if ($ARGV[0] =~ /about/i){
-    print "Weather: Powered by Dark Sky. https://darksky.net/poweredby/\n";
+    print "Weather: Powered by Dark Sky. https://darksky.net/poweredby/ and https://pirateweather.net/\n";
     exit 0;
 }
 
@@ -99,8 +111,8 @@ $placename = geolocate($lat, $lon);
 #print "Lon: $lon\n";
 #print "place: $placename\n";
 
-#my $url = "https://api.darksky.net/forecast/$apikey/$ARGV[0]?units=auto&exclude=hourly,minutely";
-my $url = "https://api.darksky.net/forecast/$apikey/$encodedloc?units=auto&exclude=hourly,minutely";
+#my $url = "https://${site}/forecast/$active_apikey/$ARGV[0]?units=auto&exclude=hourly,minutely";
+my $url = "https://${site}/forecast/$active_apikey/$encodedloc?units=auto&exclude=hourly,minutely";
 
 # darksky returns US Imperial units by default, but the units can be tweaked via
 # the query parameter 'units' as seen above. Their docs spell out the following
@@ -177,7 +189,7 @@ for ($units){
             print $windlabel . sprintf("%1d",$results{windSpeed}) . " mph, direction: " . $results{windBearing} . "° ";
         }
 
-        print $fclabel . $forecast . "\n";
+        print $fclabel, $forecast, "\n";
 
         if ($results{title} ne ''){
 
@@ -228,7 +240,7 @@ for ($units){
             print $windlabel . sprintf("%.1f",$results{windSpeed}) . " m/s, direction: " . $results{windBearing} . "° ";
         }
 
-        print $fclabel . $forecast;
+        print $fclabel, $forecast, "\n";
 
         if ($results{title} ne ''){
 
