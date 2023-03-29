@@ -372,12 +372,14 @@ sub do_google {
   my $sourcedata = "";
   $sourcedata = "source=$source" if defined $source;
 
-  #print("curl --max-time 10 --stderr - -N -k -s -L '$url' -d 'format=text&${sourcedata}&target=$target&key=$apikey&q=$query'", "\n");
+  my $encodedquery = uri_escape_utf8($query);
+
+  #print("curl --max-time 10 --stderr - -N -k -s -L '$url' -d 'format=text&${sourcedata}&target=$target&key=$apikey&q=$encodedquery'", "\n");
 
   my $result;
   my $gsource = $source;
 
-  open(HTTP, '-|', "curl --max-time 10 --stderr - -N -k -s -L '$url' -d 'format=text&${sourcedata}&target=$target&key=$apikey&q=$query'");
+  open(HTTP, '-|', "curl --max-time 10 --stderr - -N -k -s -L '$url' -d 'format=text&${sourcedata}&target=$target&key=$apikey&q=$encodedquery'");
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $json = <HTTP>;
   close(HTTP);
