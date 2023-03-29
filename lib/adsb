@@ -24,6 +24,9 @@ use Colors;
 use Location;
 use Util;
 
+STDOUT->autoflush();
+STDERR->autoflush();
+
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
