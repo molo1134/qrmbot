@@ -236,11 +236,16 @@ $lang_dl_source{zh} = "Chinese";
 # eggdrop doesn't split args on spaces
 @ARGV=split(' ', join(' ',@ARGV));
 
-my ($do_dl, $do_goog) = (0, 0);
+my ($do_dl, $do_goog, $decorate) = (0, 0, 1);
 my ($source, $target, $query) = (undef, undef, undef);
 my ($lang1, $lang2);
 my $i = 0;
 while ($i <= $#ARGV) {
+
+  if ($ARGV[$i] =~ /--nodecorate/) {
+    $decorate = 0;
+    $i++;
+  }
 
   if ($ARGV[$i] =~ /--d(eep)?l/) {
     $do_dl = 1;
@@ -360,7 +365,8 @@ sub do_deepl {
   }
 
   #print "$lang{$source} to $lang{$target}: \"$query\" ⇒ \"$result\"\n";
-  print "DEEPL: $lang_dl_source{$dsource} to $lang_dl_target{$target} ⇒ \"$result\"\n";
+  print "DEEPL: $lang_dl_source{$dsource} to $lang_dl_target{$target} ⇒ \"$result\"\n" if $decorate;
+  print "$result\n" if not $decorate;
   return 1;
 }
 
@@ -402,7 +408,9 @@ sub do_google {
   }
 
   #print "$lang{$gsource} to $lang{$target}: \"$query\" ⇒ \"$result\"\n";
-  print "GOOGLE: $lang{$gsource} to $lang{$target} ⇒ \"$result\"\n";
+  print "GOOGLE: $lang{$gsource} to $lang{$target} ⇒ \"$result\"\n" if $decorate;
+  print "$result\n" if not $decorate;
+
   return 1;
 }
 
