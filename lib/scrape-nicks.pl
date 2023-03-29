@@ -16,11 +16,16 @@ use Data::Dumper;
 
 use Cwd 'realpath';
 use File::Basename;
+use URI::Encode qw(uri_encode);
 
-my @subreddits = ("antennasporn", "hamfest", "hamdevs", "morse", "MMDVM",
-	"hampota", "hamspots", "PDXhamradio", "CHIhamradio", "baofeng",
-	"EmComm", "diytubes", "electricalengineering", "hamcasters", "lidnet",
-	"amateursatellites", "hamradio", "rtlsdr", "amateurradio");
+#my @subreddits = ("antennasporn", "hamfest", "hamdevs", "morse", "MMDVM",
+#	"hampota", "hamspots", "PDXhamradio", "CHIhamradio", "baofeng",
+#	"EmComm", "diytubes", "electricalengineering", "hamcasters", "lidnet",
+#	"amateursatellites", "hamradio", "rtlsdr", "amateurradio");
+my @subreddits = ("hamradio", "amateurradio");
+#my @subreddits = ("lowsodiumhamradio", "hamradio", "amateurradio");
+#my @subreddits = ("rtlsdr", "amateursatellites", "baofeng", "lowsodiumhamradio");
+#my @subreddits = ("hamradioreboot");
 
 #my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0";
 my $useragent = "foo";
@@ -56,6 +61,7 @@ foreach my $subreddit (@subreddits) {
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8ydhs6/2way_radio_recommendations/e2a6fcq/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/ayyp9l/calibration_instructions_for_a_daiwa_cn501h/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/bewqre/morsecodeme_online_morse_code_radio/.json";
++#push @baseurls, "https://www.reddit.com/r/amateurradio/comments/eklvpm/i_dropped_my_ft60_and_now_the_dial_knob_and/.json";
 
 our %nicks;
 our %results;
@@ -143,17 +149,26 @@ foreach my $baseurl (@baseurls) {
     $url = "$baseurl?after=$after" if defined $after;
     print "$count: $url\n";
 
-    open (HTTP, '-|', "curl --max-time 10 -s -k -L -A \"$useragent\" \"$url\"");
+    open (HTTP, '-|', "curl --retry 3 --fail --max-time 10 -s -k -L -A \"$useragent\" \"$url\"");
     binmode(HTTP, ":utf8");
 
     local $/;   # read entire file -- FIXME: potentially memory hungry
     my $json = <HTTP>;
-    my $j = decode_json($json);
     close(HTTP);
+    if (not defined $json or $json eq "") {
+      print "WARNING: skipping $url\n";
+      next;
+    }
+    my $j = decode_json($json);
 
     #print Dumper $j->{'data'}->{'children'}->[0];
     if (ref($j) eq "HASH") {
       foreach my $i (@{ $j->{'data'}->{'children'} }) {
+	if ($i->{'kind'} eq "t3") {
+	  # follow referenced threads
+	  my $url = uri_encode("https://www.reddit.com" . $i->{'data'}->{'permalink'} . ".json");
+	  push @baseurls, $url;
+	}
 	handleNode($i);
       }
 
