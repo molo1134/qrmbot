@@ -362,6 +362,23 @@ proc translate { nick host hand chan text } {
 	close $fd
 }
 
+bind pub - !qrm chatgpt
+set chatgptbin "/home/eggdrop/bin/chatgpt"
+proc chatgpt { nick host hand chan text } {
+	global chatgptbin
+
+	set cleantext [sanitize_string [string trim "${text}"]]
+
+	putlog "chatgpt pub: $nick $host $hand $chan $cleantext"
+
+	set fd [open "|${chatgptbin} ${cleantext}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "${line}"
+	}
+	close $fd
+}
+
 bind pub - !corona corona_pub
 bind pub - !covid corona_pub
 bind pub - !covid19 corona_pub
