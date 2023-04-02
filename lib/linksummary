@@ -603,11 +603,12 @@ sub doMastodon {
 sub doImdb {
   my $url = shift;
   my ($title, $desc, $rating, $ratings);
-  open (HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
+  open (HTTP, '-|', "curl --max-time $timeout -A foo -L -k -s '$url'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
-    if (/<meta property='og:title' content="([^"]*)"/) {
+    if (/<meta property="og:title" content="([^"]*)"/) {
       $title = $1;
+      $title =~ s/ - IMDb.*$//;
     }
     if (/<meta name="description" content="([^"]*)"/) {
       $desc = $1;
@@ -615,7 +616,7 @@ sub doImdb {
 	$desc = substr($desc, 0, 300) . "…";
       }
     }
-    if (/<strong title="([\d.]+) based on ([\d,]+) user ratings">/) {
+    if (/hero-rating-bar__aggregate-rating__score.*?><.*?>([0-9.]+)<.*sc-e457ee34-3.*?>(.*?)</) {
       ($rating, $ratings) = ($1, $2);
     }
   }
