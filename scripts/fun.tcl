@@ -900,6 +900,21 @@ proc rad_msg {nick uhand handle input} {
 	close $fd
 }
 
+bind pub - !ohio ohio
+proc ohio { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+
+	if [ expr (rand()*100) <= 1 ] then {
+		putchan $chan "https://www.youtube.com/watch?v=Um7CkufcOJw"
+	} elseif [ expr (rand()*10) <= 1 ] then {
+		putchan $chan "https://i.imgur.com/26gAZ2O.mp4"
+	} else {
+		putchan $chan "👬🍃🕺 (^O^) OHIOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
+	}
+}
+
 
 putlog "fun.tcl loaded."
 
