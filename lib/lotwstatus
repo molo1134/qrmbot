@@ -30,7 +30,7 @@ local $/;   # read entire file -- FIXME: potentially memory hungry
 my $json = <HTTP>;
 close HTTP;
 my $j = decode_json($json);
-$isup = $j->{statistics}->{counts}->{up} > 0;
+$isup = $j->{statistics}->{counts}->{down} == 0;
 $uptime = $j->{statistics}->{uptime}->{l1}->{ratio};
 print "LoTW up? ",$isup?green("yes"):red("no"), "; up ";
 print (($uptime < 100.0)?red($uptime):green($uptime));
