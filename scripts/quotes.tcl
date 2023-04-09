@@ -59,6 +59,9 @@ proc q_pubquote { nick uhost hand chan arg } {
     if { [string trim "$arg"] == "" } {
       set j [rand $tmp]
       #putmsg "$nick" "picked quote [expr $j + 1] of $tmp"
+      if { [string equal -nocase "$chan" "#dayton"] } {
+	      set j 1
+      }
     } else {
       set j "$arg"
       if { ( $j >= 1 ) && ( $j <= $tmp ) } {
@@ -71,16 +74,13 @@ proc q_pubquote { nick uhost hand chan arg } {
     }
 
     while { $j >= $i } {
-
       set line [gets $qf]
       incr i
-
     }
 
     close $qf
 
     putchan $chan "\[quote #[expr $j + 1]\] [lindex $line 0]"
-
 
   } else {
     putmsg "$nick" "error, $quotefile not found!"
