@@ -282,7 +282,9 @@ proc aaaaaaa { nick host hand chan text} {
 		return
 	}
 	
-	if [ expr (rand()*10) <= 3 ] then {
+	if [ expr (rand()*100) <= 1 ] then {
+		putchan $chan "https://i.imgur.com/7grmnJ1.mp4"
+	} elseif [ expr (rand()*10) <= 3 ] then {
 		putchan $chan "https://i.imgur.com/TtgYcS6.mp4"
 	} else {
 		putchan $chan "⛰🤠⛰ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
