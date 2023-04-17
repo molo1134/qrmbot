@@ -59,10 +59,6 @@ proc q_pubquote { nick uhost hand chan arg } {
     if { [string trim "$arg"] == "" } {
       set j [rand $tmp]
       #putmsg "$nick" "picked quote [expr $j + 1] of $tmp"
-      if { [string equal -nocase "$chan" "#dayton"] &&
-           [regexp -nocase {mo+nke+} "$nick"]} {
-	      set j 0
-      }
     } else {
       set j "$arg"
       if { ( $j >= 1 ) && ( $j <= $tmp ) } {
