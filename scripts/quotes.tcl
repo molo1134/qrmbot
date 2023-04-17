@@ -24,7 +24,7 @@ proc q_addquote { nick uhost hand chan arg } {
     set qf [open $quotefile w]
   }
   fconfigure $qf -encoding utf-8
-  
+
   set entry [list]
   lappend entry "$arg"
 
@@ -59,7 +59,8 @@ proc q_pubquote { nick uhost hand chan arg } {
     if { [string trim "$arg"] == "" } {
       set j [rand $tmp]
       #putmsg "$nick" "picked quote [expr $j + 1] of $tmp"
-      if { [string equal -nocase "$chan" "#dayton"] } {
+      if { [string equal -nocase "$chan" "#dayton"] &&
+           [regexp -nocase {mo+nke+} "$nick"]} {
 	      set j 0
       }
     } else {
@@ -99,19 +100,19 @@ proc q_pubquotesearch { nick uhost hand chan arg } {
 	putmsg "$nick" "error, search string too short"
     } elseif { [file exists $quotefile] } {
         set qf [open $quotefile r]
-        
+
         set fd [open "|wc -l $quotefile" r]
         while {![eof $fd]} {
           scan [gets $fd] " %d " tmp
           if {[eof $fd]} {break}
         }
         close $fd
-        
+
         set newarg [string tolower "$newarg"]
-        
+
         set i 0
         set j 0
-        
+
         while {$i < $tmp} {
             set line [gets $qf]
             if { [string first $newarg [string tolower [lindex $line 0] ] ] != -1 } {
@@ -122,7 +123,7 @@ proc q_pubquotesearch { nick uhost hand chan arg } {
         }
 
 	putmsg "$nick" "found $j hit(s) for $arg"
-        
+
     } else {
         putmsg "$nick" "error, $quotefile not found!"
     }
