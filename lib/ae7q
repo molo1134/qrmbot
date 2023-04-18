@@ -75,8 +75,11 @@ sub doAe7qRegion {
   my @unavail;
   my $lastcall;
   my $inCallTable = 0;
+  my $moving = 0;
+  #print "$url\n";
   open(HTTP, '-|', "curl --max-time $ae7qTimeout -L -k -s '$url'");
   while(<HTTP>) {
+    $moving = 1 if /<h1>I am moving./;
     $inCallTable = 1 if (m|>\s*[12]x[12] callsigns\s*<|);
     if (not defined $lastcall and $inCallTable and m|<a href='/query/data/CallHistory\.php\?CALL=([A-Z0-9]+)'|) {
       $lastcall = $1;
@@ -191,6 +194,7 @@ sub doAe7qRegion {
   print ": ", yellow(join(", ", @upcoming)) if scalar @upcoming > 0;
   print "; ", red(scalar @unavail), " unavailable: ",
 	red(join(", ", @unavail)) if scalar @unavail > 0;
+  print "; ** information may be out of date" if $moving;
   print "\n";
   $_ = $saved;
 }
@@ -233,6 +237,7 @@ sub doAe7qCall {
   close(CSV);
 
   $url = "http://www.ae7q.com/query/data/CallHistory.php?CALL=$call";
+  #print "$url\n";
   open(HTTP, '-|', "curl --max-time $ae7qTimeout -L -k -s '$url'");
   while(<HTTP>) {
     $inLicTable = 1 if m|<table class='Database' cellpadding='4' align='center'><tbody class='Database'>|;
@@ -414,9 +419,12 @@ sub printFrnApps {
   my $saved = $_;
   my $url = "http://ae7q.com/query/data/FrnHistory.php?FRN=$frn";
   my $inpred = 0;
+  my $moving = 0;
   my ($appdate, $procdate, $appid, $appidnum, $appcolor, $type, $seqnum, $vanity, $pred);
+  #print "$url\n";
   open(HTTP, '-|', "curl --max-time $ae7qTimeout -L -k -s '$url'");
   while(<HTTP>) {
+    $moving = 1 if /<h1>I am moving./;
     $inpred = 1 if /Retrieving predictions for pending applications from/;
 
     $appdate = $1 if m|/AppByReceipt\.php\?DATE=([0-9-]+)'| and $inpred == 1;
@@ -448,6 +456,7 @@ sub printFrnApps {
       print "$appdate -> $procdate: App $appid ($type) #$seqnum $vanity $pred$odds\n";
     }
   }
+  print " ** information may be out of date\n" if $moving;
   $_ = $saved;
 }
 
