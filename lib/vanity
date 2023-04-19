@@ -181,19 +181,21 @@ sub doCall {
   my @tooearly;
   my @toolate;
 
-  my ($status, $avail, $availdate, $class, $region, $restricted);
+  my ($status, $avail, $availdate, $chance, $class, $region, $restricted);
   my $url = "${predictionBaseUrl}/vanity-$call.csv";
   open(CSV, '-|', "curl --fail --max-time $httpTimeout -L -k -s '$url'");
   while(<CSV>) {
     chomp;
-    $status = $1 if /^# status: (.*)$/;
-    $avail = $1 if /^# avail: (.*)$/;
-    $availdate = $1 if /^# availdate: (.*)$/;
-    $class = $1 if /^# class: (.*)$/;
-    $region = $1 if /^# region: (.*)$/;
+    $status     = $1 if /^# status: (.*)$/;
+    $avail      = $1 if /^# avail: (.*)$/;
+    $chance     = $1 if /^# chance: (.*)$/;
+    $availdate  = $1 if /^# availdate: (.*)$/;
+    $class      = $1 if /^# class: (.*)$/;
+    $region     = $1 if /^# region: (.*)$/;
     $restricted = $1 if /^# restricted: (.*)$/;
     if (/^#metadata_end/) {
       print bold($call), ": ", formatStatus($status);
+      print yellow(sprintf(" (%0.1f%%)", $chance)) if defined $chance and $chance ne "";
       print green(" (available)") if $avail;
       print red(" (not available)") if not $avail;
       print ": Req'd class: $class -- Avail: $availdate -- $region";
@@ -229,13 +231,13 @@ sub doCall {
   open(CSV, '-|', "curl --fail --max-time $httpTimeout -L -k -s '$url'");
   while(<CSV>) {
     chomp;
-    $status = $1 if /^# status: (.*)$/;
+    $status    = $1 if /^# status: (.*)$/;
     $grantdate = $1 if /^# grantdate: (.*)$/;
-    $expdate = $1 if /^# expdate: (.*)$/;
-    $cxldate = $1 if /^# cxldate: (.*)$/;
-    $class = $1 if /^# class: (.*)$/;
-    $state = $1 if /^# state: (.*)$/;
-    $district = $1 if /^# district: (.*)$/;
+    $expdate   = $1 if /^# expdate: (.*)$/;
+    $cxldate   = $1 if /^# cxldate: (.*)$/;
+    $class     = $1 if /^# class: (.*)$/;
+    $state     = $1 if /^# state: (.*)$/;
+    $district  = $1 if /^# district: (.*)$/;
     if (/^#metadata_end/) {
       print bold($call), ": ", formatStatus($status);
       print ": class: $class -- grant: $grantdate -- exp: $expdate ";
@@ -321,6 +323,7 @@ sub formatStatus {
   $ret = green($h_status{$status} || $status) if $status =~ /^A/;
   $ret = yellow($h_status{$status} || $status) if $status =~ /^C/ or $status =~ /^E/;
   $ret = red($h_status{$status} || $status) if $status =~ /^T/;
+  $ret = lightblue($status) if $status =~ /Pending/;
   $ret = bold($status) if not defined $ret;
   return $ret;
 }
