@@ -71,8 +71,8 @@ if ($quick) {
     $aindex = $vals[8];
     $rawkindex = $vals[7];
     $kindex = int($vals[7]) if $vals[7] =~ /\.000/;
-    $kindex = int($vals[7]) . "+" if $vals[7] =~ /\.333/;
-    $kindex = int($vals[7]) + 1 . "-" if $vals[7] =~ /\.667/;
+    $kindex = int($vals[7]) . "⅓" if $vals[7] =~ /\.333/;
+    $kindex = int($vals[7]) . "⅔" if $vals[7] =~ /\.667/;
   }
 }
 
