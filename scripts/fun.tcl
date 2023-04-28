@@ -140,6 +140,14 @@ proc spacex_pub { nick host hand chan text } {
 proc spacex_msg {nick uhand handle input} {
 	launch_msg "$nick" $uhand $handle "--spacex"
 }
+bind msg - !ula ula_msg
+bind pub - !ula ula_pub
+proc ula_pub { nick host hand chan text } {
+	launch_pub "$nick" $host $hand $chan "--ula"
+}
+proc ula_msg {nick uhand handle input} {
+	launch_msg "$nick" $uhand $handle "--ula"
+}
 bind msg - !wallops wallops_msg
 bind pub - !wallops wallops_pub
 proc wallops_pub { nick host hand chan text } {
