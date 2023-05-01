@@ -2061,5 +2061,23 @@ proc dayton { nick host hand chan text } {
 	close $fd
 }
 
+bind pub - !fieldday fieldday
+bind pub - !fd fieldday
+bind pub - !arrlfd fieldday
+set fielddaybin "/home/eggdrop/bin/fieldday"
+proc fieldday { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	global fielddaybin
+	putlog "fieldday: $nick $host $hand $chan"
+	set fd [open "|${fielddaybin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
 putlog "Ham utils loaded."
 

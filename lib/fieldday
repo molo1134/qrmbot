@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+# countdown to ARRL Field Day
+# based on countdown to Hamvention by OliverUK and molo1134
+#
+# 2-clause BSD license.
+# Copyright (c) 2019 OliverUK. All rights reserved.
+# Copyright (c) 2019, 2020, 2023 molo1134@github. All rights reserved.
+
+use strict;
+use DateTime;
+use POSIX;
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Util;
+
+my $d1 = DateTime->now;
+my ($curryear, $currmon, $currdate) = split / /, strftime("%Y %m %d", gmtime($d1->epoch()));
+my ($fdyear, $fdmon, $fddate) = split / /, getFullWeekendInMonth(4, "Jun");	# 4th full weekend in June
+#print "$curryear, $currmon, $currdate\n";
+#print "$fdyear, $fdmon, $fddate\n"; # returns a saturday
+
+my $d2 = DateTime->new(
+    year       => $fdyear,
+    month      => $fdmon,
+    day        => $fddate,
+    hour       => 0,
+    minute     => 0,
+    second     => 0,
+);
+
+my $dur = $d2->epoch() - $d1->epoch();
+
+if ($dur < 0) {
+	print "GET ON THE AIR! Here's some fucking rando showing you how it's done: https://i.imgur.com/q08bJOy.png\n";
+	exit 0;
+}
+
+my $m = floor($dur / (30 * 24 * 60 * 60));
+my $d = floor($dur % (30 * 24 * 60 * 60) / (24 * 60 * 60));
+my $h = floor($dur % (24 * 60 * 60) / (60 * 60));
+my $min = ($dur / 60) % 60;
+my $sec = $dur % 60;
+
+print "ARRL Field Day countdown! ";
+print "$m month, " if $m == 1;
+print "$m months, " if $m > 1;
+print "$d day, " if $d == 1;
+print "$d days, " if $d > 1;
+print "$h hours, $min min, $sec sec\n";
