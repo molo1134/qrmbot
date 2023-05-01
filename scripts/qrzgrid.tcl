@@ -2043,5 +2043,23 @@ proc wrtc_msg {nick uhand handle input} {
 	close $fd
 }
 
+bind pub - !dayton dayton
+bind pub - !xenia dayton
+bind pub - !hamvention dayton
+set daytonbin "/home/eggdrop/bin/dayton"
+proc dayton { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	global daytonbin
+	putlog "dayton: $nick $host $hand $chan"
+	set fd [open "|${daytonbin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
 putlog "Ham utils loaded."
 

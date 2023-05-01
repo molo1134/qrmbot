@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+# countdown to Dayton Hamvention
+# based on countdown to christmas by OliverUK and molo1134
+#
+# 2-clause BSD license.
+# Copyright (c) 2019 OliverUK. All rights reserved.
+# Copyright (c) 2019, 2020, 2023 molo1134@github. All rights reserved.
+
+use strict;
+use DateTime;
+use POSIX;
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Util;
+
+my $d1 = DateTime->now;
+my ($curryear, $currmon, $currdate) = split / /, strftime("%Y %m %d", gmtime($d1->epoch()));
+my ($hamvyear, $hamvmon, $hamvdate) = split / /, getFullWeekendInMonth(3, "May");	# 3rd weekend in May
+#print "$curryear, $currmon, $currdate\n";
+#print "$hamvyear, $hamvmon, $hamvdate\n"; # returns a saturday
+
+my $d2 = DateTime->new(
+    year       => $hamvyear,
+    month      => $hamvmon,
+    day        => $hamvdate-1,
+    hour       => 0,
+    minute     => 0,
+    second     => 0,
+);
+
+my $dur = $d2->epoch() - $d1->epoch();
+
+if ($dur < 0) {
+	print "It's happening! https://i.imgur.com/whQmERC.jpg\n";
+	exit 0;
+}
+
+my $m = floor($dur / (30 * 24 * 60 * 60));
+my $d = floor($dur % (30 * 24 * 60 * 60) / (24 * 60 * 60));
+my $h = floor($dur % (24 * 60 * 60) / (60 * 60));
+my $min = ($dur / 60) % 60;
+my $sec = $dur % 60;
+
+print "Hamvention countdown! ";
+print "$m month, " if $m == 1;
+print "$m months, " if $m > 1;
+print "$d day, " if $d == 1;
+print "$d days, " if $d > 1;
+print "$h hours, $min min, $sec sec\n";
