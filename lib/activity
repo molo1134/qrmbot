@@ -134,6 +134,7 @@ my $max = (sort {$b <=> $a} (values %scores))[0];
 $mode = "all" if $mode eq "";
 
 print uc $mode, " from grid ", uc $grid, " (last $minutes min): ";
+print "\n" if $username ne getEggdropUID();
 
 $i = 0;
 foreach my $key (sort {($a =~ s/c?m//r) <=> ($b =~ s/c?m//r)} (keys %scores)) {
@@ -143,19 +144,20 @@ foreach my $key (sort {($a =~ s/c?m//r) <=> ($b =~ s/c?m//r)} (keys %scores)) {
     next;
   }
 
-  if ($scores{$key} == $max) {
-    print bold("${key}⇒$scores{$key}");
-  } else {
-    print "${key}⇒$scores{$key}"
-  }
-  print ", " unless ++$i == keys %scores;
+  $i++;
+  my $output = "${key}⇒$scores{$key}";
+  $output = sprintf("%3s⇒%u", ${key}, $scores{$key}) if $username ne getEggdropUID();
+  $output = bold($output) if $scores{$key} == $max;
+  print $output;
+  print ", " if $username eq getEggdropUID() and $i != keys %scores;
+  print "\n" if $username ne getEggdropUID();
 }
 
 if ($i == 0) {
   print "no data available";
 }
 
-print "\n";
+print "\n" if $username eq getEggdropUID();
 
 exit 0;
 
