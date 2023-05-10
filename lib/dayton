@@ -25,7 +25,7 @@ my $d2 = DateTime->new(
     year       => $hamvyear,
     month      => $hamvmon,
     day        => $hamvdate-1,
-    hour       => 0,
+    hour       => 13, # 9am EDT
     minute     => 0,
     second     => 0,
 );
