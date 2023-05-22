@@ -13,6 +13,7 @@ bind pub - !metard metard
 bind pub - !truck truck
 bind pub - !aaa aaaaaaa
 bind pub - !ooo ooooooo
+bind pub - !robface robface
 bind pub - !brexit brexit
 bind pub - !christmas christmas
 bind pub - !translate translate
@@ -297,6 +298,14 @@ proc aaaaaaa { nick host hand chan text} {
 	} else {
 		putchan $chan "⛰🤠⛰ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 	}
+}
+
+proc robface { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+
+	putchan $chan "https://i.imgur.com/cS9qmCH.jpg"
 }
 
 proc brexit { nick host hand chan text } {
