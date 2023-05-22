@@ -13,6 +13,7 @@ bind pub - !metard metard
 bind pub - !truck truck
 bind pub - !aaa aaaaaaa
 bind pub - !ooo ooooooo
+bind pub - !monke robface
 bind pub - !robface robface
 bind pub - !brexit brexit
 bind pub - !christmas christmas
