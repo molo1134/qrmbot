@@ -178,8 +178,8 @@ sub displayStation {
 
   my $now = time();
   my $old = "";
-  $old = yellow(" [old]") if $ts < ($now - (30*60));  # 30 min
-  $old = red(" [old]") if $ts < ($now - (120*60));    # 1 hour
+  $old = yellow(" [old]") if $ts < ($now - (60*60));  # 60 min
+  $old = red(" [old]") if $ts < ($now - (120*60));    # 2 hour
 
   print "$loc ($grid): Air Quality Index (PM2.5): ",
       colorByAQI($epa_nowcast, "$epa_nowcast"),
