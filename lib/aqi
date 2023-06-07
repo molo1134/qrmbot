@@ -183,7 +183,7 @@ sub displayStation {
 
   print "$loc ($grid): Air Quality Index (PM2.5): ",
       colorByAQI($epa_pm25, "$epa_pm25"),
-      " (", descriptionByAQI($epa_pm25), ")";
+      " (", descriptionByAQI($epa_pm25), ")$old";
   print " -- " , floor($dist), " km ", azToNEWS($bearing), " from ", coordToGrid($mylat, $mylon), "\n";
 
 }
