@@ -182,8 +182,9 @@ sub displayStation {
   $old = red(" [old]") if $ts < ($now - (120*60));    # 1 hour
 
   print "$loc ($grid): Air Quality Index (PM2.5): ",
-      colorByAQI($epa_pm25, "$epa_pm25"),
-      " (", descriptionByAQI($epa_pm25), ")$old";
+      colorByAQI($epa_nowcast, "$epa_nowcast"),
+      " (", descriptionByAQI($epa_nowcast), ")";
+  print " at ", strftime("%Y-%m-%d %H%Mz", gmtime($ts)), $old;
   print " -- " , floor($dist), " km ", azToNEWS($bearing), " from ", coordToGrid($mylat, $mylon), "\n";
 
 }
