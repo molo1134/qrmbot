@@ -181,7 +181,9 @@ sub displayStation {
   $old = yellow(" [old]") if $ts < ($now - (30*60));  # 30 min
   $old = red(" [old]") if $ts < ($now - (120*60));    # 1 hour
 
-  print "$loc ($grid): Air Quality Index (PM2.5): ", colorByAQI($epa_pm25, "$epa_pm25");
+  print "$loc ($grid): Air Quality Index (PM2.5): ",
+      colorByAQI($epa_pm25, "$epa_pm25"),
+      " (", descriptionByAQI($epa_pm25), ")";
   print " -- " , floor($dist), " km ", azToNEWS($bearing), " from ", coordToGrid($mylat, $mylon), "\n";
 
 }
@@ -197,3 +199,12 @@ sub colorByAQI {
   return darkRed($text);
 }
 
+sub descriptionByAQI {
+  my $aqi = shift;
+  return green("Good") if $aqi <= 50;
+  return yellow("Moderate") if $aqi <= 100;
+  return darkYellow("Unhealthy for sensitive groups") if $aqi <= 150;
+  return red("Unhealthy") if $aqi <= 200;
+  return magenta("Very Unhealthy") if $aqi <= 300;
+  return darkRed("Hazardous");
+}
