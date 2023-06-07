@@ -1,0 +1,199 @@
+#!/usr/bin/perl -w
+
+# get air quality index data
+#
+# 2-clause BSD license.
+# Copyright (c) 2023 molo1134@github. All rights reserved.
+#
+
+use strict;
+use utf8;
+use Encode qw(decode);
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+use Util;
+
+use Math::Round;
+use Time::Piece ();
+use POSIX qw(floor);
+use POSIX qw(strftime);
+
+@ARGV = map { decode "utf-8", $_ } @ARGV;
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+my $geo = undef;
+my $query = undef;
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] eq "about") {
+    print "air quality index data from https://fire.airnow.gov/\n";
+    exit $exitnonzeroonerror;
+  }
+  if (!defined($geo) and $ARGV[$i] =~ /^--geo$/i) {
+    $i++;
+    $geo = $ARGV[$i];
+    $i++;
+    next;
+  }
+  if (defined($query)) {
+    $query = $query ." ". $ARGV[$i];
+  } else {
+    $query = $ARGV[$i];
+  }
+  $i++;
+}
+
+if (not defined $query and not defined $geo) {
+  if ($username eq getEggdropUID()) {
+    print "usage: !aqi <grid>|<lat>,<lon>|<qth>\n";
+  } else {
+    print "usage: $0 <grid>|<lat>,<lon>|<qth>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $result = argToCoords($query) if defined $query;
+
+if (defined $query and not defined $result) {
+  print "error: unable to find \"$query\"\n";
+  exit $exitnonzeroonerror;
+}
+
+my ($mylat, $mylon) = split(',', $geo) if defined $geo;
+($mylat, $mylon) = split(',', $result) if defined $result;
+
+#print "$mylat, $mylon\n";
+
+my $cachedir = $ENV{HOME} . "/.qrmbot/cache";
+my $cachefile = $cachedir . "/aqi.csv";
+my $needrefresh = 0;
+my $maxage = 600; # 10 minutes
+
+if (not -d $cachedir) {
+  print "making cache directory..\n";
+  system ("mkdir -p $cachedir\n");
+  if (not -d $cachedir) {
+    print "unable to make cache directory $cachedir\n";
+  }
+}
+
+if (not -e $cachefile) {
+  $needrefresh = 1;
+} else {
+  my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $cachefile;
+  if (defined $mtime) {
+    my $age = time() - $mtime;
+    $needrefresh = 1 if ($age > $maxage or $size == 0);
+  } else {
+    $needrefresh = 1;
+  }
+}
+
+refreshData() if $needrefresh;
+our %stationData; # key is distance
+loadCache();
+displayStation();
+
+sub refreshData {
+  print "refreshing data..\n";
+
+  my %stations;
+
+  my $url = "https://s3-us-west-2.amazonaws.com/airfire-data-exports/maps/purple_air/v2/pas.csv";
+  #print "$url\n";
+
+  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $csv = <HTTP>;
+  close(HTTP);
+
+  $csv =~ s/[^[:ascii:]]//g;
+
+  foreach my $line (split /\n/, $csv) {
+    next if $line =~ /^sensor_index/; # skip header
+
+    #print "$line\n";
+    my ($id, $lat, $lng, $utc, $epa_pm25, $epa_nowcast, $tz, $raw_pm25) = split (/,/, $line);
+    my $ts = Time::Piece->strptime($utc, "%Y-%m-%d %H:%M:%S+0000")->epoch;
+
+    #print "$cpm, $acpm, $sv µSv/hr, $tube, $time, $ts\n";
+
+    if (defined $epa_pm25 and defined $lat and defined $ts and $ts > 0) {
+      my $key = "$lat,$lng,$id";
+      $stations{$key} = join("|", $id, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng);
+      #print "$key => $stations{$key}\n";
+    } else {
+      #print "error: ", join("|", $device, $cpm, $acpm, $sv, $user, $tube, $ts, $id, $lat, $lng), "\n";
+      #print "line : ", $line, "\n";
+    }
+  }
+
+
+  #print "Writing to $cachefile ..\n";
+  open (CACHE, ">", $cachefile);
+  foreach my $k (sort keys %stations) {
+    #print "k: $k -- v: $stations{$k}\n";
+    print CACHE $stations{$k}, "\n";
+  }
+  close(CACHE);
+
+}
+
+sub loadCache {
+  our %stationData;
+  open (CACHE, "<", $cachefile);
+  while (<CACHE>) {
+    chomp;
+    my ($id, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng) = split /\|/;
+    my ($dist, undef) = distBearing($mylat, $mylon, $lat, $lng);
+    $stationData{$dist} = $_;
+    #print "$lat, $lng: $dist\n";
+  }
+  close(CACHE);
+}
+
+sub displayStation {
+  our %stationData;
+  my $key = (sort { $a <=> $b } keys %stationData)[0];
+
+  #print "$key => $stationData{$key}\n";
+
+  my ($id, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng) = split /\|/, $stationData{$key};
+  my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lng);
+  my $grid = coordToGrid($lat, $lng);
+  my $loc = geolocate($lat, $lng);
+
+  my $now = time();
+  my $old = "";
+  $old = yellow(" [old]") if $ts < ($now - (30*60));  # 30 min
+  $old = red(" [old]") if $ts < ($now - (120*60));    # 1 hour
+
+  print "$loc ($grid): Air Quality Index (PM2.5): ", colorByAQI($epa_pm25, "$epa_pm25");
+  print " -- " , floor($dist), " km ", azToNEWS($bearing), " from ", coordToGrid($mylat, $mylon), "\n";
+
+}
+
+sub colorByAQI {
+  my $aqi = shift;
+  my $text = shift;
+  return green($text) if $aqi <= 50;
+  return yellow($text) if $aqi <= 100;
+  return darkYellow($text) if $aqi <= 150;
+  return red($text) if $aqi <= 200;
+  return magenta($text) if $aqi <= 300;
+  return darkRed($text);
+}
+

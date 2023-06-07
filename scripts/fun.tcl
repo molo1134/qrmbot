@@ -939,6 +939,46 @@ proc rad_msg {nick uhand handle input} {
 	close $fd
 }
 
+bind msg - !aqi aqi_msg
+bind pub - !aqi aqi_pub
+set aqibin "/home/eggdrop/bin/aqi"
+proc aqi_pub { nick host hand chan text } {
+	global aqibin
+	set query [sanitize_string [string trim "${text}"]]
+	set geo [qrz_getgeo $hand]
+
+	putlog "aqi pub: $nick $host $hand $chan $query $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${aqibin} ${query}" r]
+	} else {
+		set fd [open "|${aqibin} ${query} --geo $geo" r]
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc aqi_msg {nick uhand handle input} {
+	global aqibin
+	set query [sanitize_string [string trim "${input}"]]
+	set geo [qrz_getgeo $handle]
+
+	putlog "aqi msg: $nick $uhand $handle $query $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${aqibin} ${query}" r]
+	} else {
+		set fd [open "|${aqibin} ${query} --geo $geo" r]
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
+}
+
 bind pub - !ohio ohio
 proc ohio { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
