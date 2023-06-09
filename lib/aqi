@@ -187,6 +187,13 @@ sub displayStation {
   print " at ", strftime("%Y-%m-%d %H%Mz", gmtime($ts)), $old;
   print " -- " , floor($dist), " km ", azToNEWS($bearing), " from ", coordToGrid($mylat, $mylon), "\n";
 
+  my $series_ref = getTimeSeries($id);
+  my @result = seriesToSparkLine($series_ref);
+  my $min = $result[0];
+  my $max = $result[1];
+  my @spark = @result[2 .. $#result];
+  my $sparkline = optimizeIrcColor(join("", @spark));
+  printf "  hourly observations: %s - max %s\n", $sparkline, colorByAQI($max, $max);
 }
 
 sub colorByAQI {
@@ -209,3 +216,83 @@ sub descriptionByAQI {
   return magenta("Very Unhealthy") if $aqi <= 300;
   return darkRed("Hazardous");
 }
+
+sub getTimeSeries {
+  my $id = shift;
+
+  my $url = "https://s3-us-west-2.amazonaws.com/airfire-data-exports/maps/purple_air/v2/timeseries/weekly/$id.csv";
+  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $csv = <HTTP>;
+  close(HTTP);
+
+  $csv =~ s/[^[:ascii:]]//g;
+  
+  my @series;
+
+  foreach my $line (split /\n/, $csv) {
+    next if $line =~ /^epa_pm25/; # skip header
+    my ($epa_pm25, $epa_nowcast, $local_ts) = split /,/, $line;
+    push @series, $epa_nowcast
+      if defined $epa_nowcast and length($epa_nowcast) > 0;
+  }
+
+  return \@series;
+}
+
+sub seriesToSparkLine {
+  my $arrayref = shift;
+  my @series = @$arrayref;
+  my $min = 999999999999;
+  my $max = -999999999999;
+  my @result;
+
+  foreach my $e (@series) {
+    $min = $e if $e < $min and $e > 0;
+    $max = $e if $e > $max and $e > 0;
+  }
+  $max = 0 if $max == -999999999999;
+
+  push @result, ($min, $max);
+
+  foreach my $v (@series) {
+    my $chr = valToBlock($v, $min, $max);
+    $chr = colorByAQI($v, $chr);
+    push @result, $chr;
+  }
+
+  return @result;
+}
+
+# relative to min/max
+sub valToBlock {
+  my $v = shift;
+  my $min = shift;
+  my $max = shift;
+  my $step = ($max - $min)/8;
+  my $chr = " ";
+
+  if ($v < $min) {
+    $chr = "\xA0"; # NBSP
+  } elsif ($v <= ($min + ($step * 1))) {
+    $chr = "▁";
+  } elsif ($v <= ($min + ($step * 2))) {
+    $chr = "▂";
+  } elsif ($v <= ($min + ($step * 3))) {
+    $chr = "▃";
+  } elsif ($v <= ($min + ($step * 4))) {
+    $chr = "▄";
+  } elsif ($v <= ($min + ($step * 5))) {
+    $chr = "▅";
+  } elsif ($v <= ($min + ($step * 6))) {
+    $chr = "▆";
+  } elsif ($v <= ($min + ($step * 7))) {
+    $chr = "▇";
+  } elsif ($v <= ($min + ($step * 8))) {
+    $chr = "█";
+  } else {
+    $chr = "↑";
+  }
+  return $chr;
+}
+
