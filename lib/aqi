@@ -193,7 +193,7 @@ sub displayStation {
   my $max = $result[1];
   my @spark = @result[2 .. $#result];
   my $sparkline = optimizeIrcColor(join("", @spark));
-  printf "  hourly observations: %s - max %s\n", $sparkline, colorByAQI($max, $max);
+  printf "  last 72 hours: %s - max %s\n", $sparkline, colorByAQI($max, $max);
 }
 
 sub colorByAQI {
@@ -237,7 +237,9 @@ sub getTimeSeries {
       if defined $epa_nowcast and length($epa_nowcast) > 0;
   }
 
-  return \@series;
+  my @result = @series[$#series-72 .. $#series];
+
+  return \@result;
 }
 
 sub seriesToSparkLine {
