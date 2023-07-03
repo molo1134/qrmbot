@@ -152,11 +152,13 @@ while (<HTTP>) {
   $inDep = 1 if /"departure_time"\s*:/;
   if (not defined($departs) and $inDep == 1 and /"text"\s*:\s*"([^"]*)"/) {
     $departs = $1;
+    $departs =~ s/\\u([0-9a-f]{2,4})/chr(hex($1))/egi;
     $inDep = 0;
   }
   $inArr = 1 if /"arrival_time"\s*:/;
   if (not defined($arrives) and $inArr == 1 and /"text"\s*:\s*"([^"]*)"/) {
     $arrives = $1;
+    $arrives =~ s/\\u([0-9a-f]{2,4})/chr(hex($1))/egi;
     $inArr = 0;
   }
 
