@@ -869,10 +869,11 @@ proc diesel_msg {nick uhand handle input} {
 	gas_msg "$nick" "$uhand" "$handle" "--diesel $input"
 }
 
-bind pub - !ud ud_pub
+#bind pub - !ud ud_pub
 bind msg - !ud ud_msg
 set udbin "/home/eggdrop/bin/ud"
 proc ud_pub { nick host hand chan text } {
+	return
 	if [string equal "#amateurradio" $chan] then {
 		return
 	}
