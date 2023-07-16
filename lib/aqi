@@ -299,6 +299,7 @@ sub valToBlock {
 }
 
 sub pm25_to_aqi {
+  # https://forum.airnowtech.org/t/the-aqi-equation/169
   my $pm25 = shift;
 
   my ($aqi_lo, $aqi_hi, $conc_lo, $conc_hi);
