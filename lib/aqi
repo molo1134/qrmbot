@@ -129,8 +129,6 @@ sub refreshData {
     my ($id, $lat, $lng, $utc, $epa_pm25, $epa_nowcast, $tz, $raw_pm25) = split (/,/, $line);
     my $ts = Time::Piece->strptime($utc, "%Y-%m-%d %H:%M:%S+0000")->epoch;
 
-    #print "$cpm, $acpm, $sv µSv/hr, $tube, $time, $ts\n";
-
     if (defined $epa_pm25 and defined $lat and defined $ts and $ts > 0) {
       my $key = "$lat,$lng,$id";
       $stations{$key} = join("|", $id, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng);
@@ -181,9 +179,11 @@ sub displayStation {
   $old = yellow(" [old]") if $ts < ($now - (60*60));  # 60 min
   $old = red(" [old]") if $ts < ($now - (120*60));    # 2 hour
 
+  my $aqi = pm25_to_aqi($epa_nowcast);
+
   print "$loc ($grid): Air Quality Index (PM2.5): ",
-      colorByAQI($epa_nowcast, "$epa_nowcast"),
-      " (", descriptionByAQI($epa_nowcast), ")";
+      colorByAQI($aqi, "$aqi"),
+      " (", descriptionByAQI($aqi), ")";
   print " at ", strftime("%Y-%m-%d %H%Mz", gmtime($ts)), $old;
   print " -- " , floor($dist), " km ", azToNEWS($bearing), " from ", coordToGrid($mylat, $mylon), "\n";
 
@@ -233,7 +233,7 @@ sub getTimeSeries {
   foreach my $line (split /\n/, $csv) {
     next if $line =~ /^epa_pm25/; # skip header
     my ($epa_pm25, $epa_nowcast, $local_ts) = split /,/, $line;
-    push @series, $epa_nowcast
+    push @series, pm25_to_aqi($epa_nowcast)
       if defined $epa_nowcast and length($epa_nowcast) > 0;
   }
 
@@ -298,3 +298,46 @@ sub valToBlock {
   return $chr;
 }
 
+sub pm25_to_aqi {
+  my $pm25 = shift;
+
+  my ($aqi_lo, $aqi_hi, $conc_lo, $conc_hi);
+
+  if ($pm25 < 12.1) {
+    $aqi_lo = 0.0;
+    $aqi_hi = 50.0;
+    $conc_lo = 0.0;
+    $conc_hi = 12.0;
+  } elsif ($pm25 < 35.5) {
+    $aqi_lo = 51.0;
+    $aqi_hi = 100.0;
+    $conc_lo = 12.1;
+    $conc_hi = 35.4;
+  } elsif ($pm25 < 55.5) {
+    $aqi_lo = 101.0;
+    $aqi_hi = 150.0;
+    $conc_lo = 35.5;
+    $conc_hi = 55.4;
+  } elsif ($pm25 < 150.5) {
+    $aqi_lo = 151.0;
+    $aqi_hi = 200.0;
+    $conc_lo = 55.5;
+    $conc_hi = 150.4;
+  } elsif ($pm25 < 250.5) {
+    $aqi_lo = 201.0;
+    $aqi_hi = 300.0;
+    $conc_lo = 150.5;
+    $conc_hi = 250.4;
+  } elsif ($pm25 < 500.5) {
+    $aqi_lo = 301.0;
+    $aqi_hi = 500.0;
+    $conc_lo = 250.5;
+    $conc_hi = 500.4;
+  } else {
+    return -1;
+  }
+
+  my $aqi = ((($aqi_hi - $aqi_lo) / ($conc_hi - $conc_lo)) * ($pm25 - $conc_lo)) + $aqi_lo;
+
+  return round($aqi);
+}
