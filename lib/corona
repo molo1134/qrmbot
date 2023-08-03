@@ -31,6 +31,10 @@ use POSIX qw(strftime);
 # disable "experimental" warning on smart match operator use
 no if $] >= 5.018, warnings => "experimental::smartmatch";
 
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
 if ($ARGV[0] =~ /about/i){
   print "Covid19 case counts.  Data sources: https://github.com/CSSEGISandData/COVID-19 https://github.com/nytimes/covid-19-data/ https://github.com/jgehrcke/covid-19-germany-gae https://www.worldometers.info/coronavirus/ https://github.com/owid/covid-19-data/tree/master/public/data/vaccinations https://covid.cdc.gov/covid-data-tracker/#county-view https://www.economist.com/graphic-detail/coronavirus-excess-deaths-estimates\n";
 
@@ -69,6 +73,11 @@ $args = decode($codeset, $args);
 
 # eggdrop doesn't split args on spaces
 @ARGV = split(' ', $args);
+
+if ($#ARGV > 5 and $username eq getEggdropUID()) {
+  print "fuck off\n";
+  exit $exitnonzeroonerror;
+}
 
 my @interest;
 my @states;
