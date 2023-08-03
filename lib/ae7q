@@ -142,25 +142,25 @@ sub doAe7qRegion {
   my @callsToCheck;
   push (@callsToCheck, @pending);
   push (@callsToCheck, @avail);
-  foreach my $c (@callsToCheck) {
-    my $url = "${predictionBaseUrl}/vanity-$c.csv";
-    my $sum = 0.0;
-    my @seenApps;
-    open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
-    while(<CSV>) {
-      chomp;
-      next if /^#/;
-      my ($appid, $rdate, $call, $vanity, $pred) = split /,/;
-      print "error: expecting $c but found $vanity\n" if $vanity ne $c;
-      next if $appid ~~ @seenApps;
-      push @seenApps, $appid;
-      $sum += $pred if isNumeric($pred);
-      #print "$c += $pred = $sum\n";
-    }
-    close(CSV);
-    $regionPreds{$c} = $sum;
-    #print "$c => $sum\n";
-  }
+  #foreach my $c (@callsToCheck) {
+  #  my $url = "${predictionBaseUrl}/vanity-$c.csv";
+  #  my $sum = 0.0;
+  #  my @seenApps;
+  #  open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
+  #  while(<CSV>) {
+  #    chomp;
+  #    next if /^#/;
+  #    my ($appid, $rdate, $call, $vanity, $pred) = split /,/;
+  #    print "error: expecting $c but found $vanity\n" if $vanity ne $c;
+  #    next if $appid ~~ @seenApps;
+  #    push @seenApps, $appid;
+  #    $sum += $pred if isNumeric($pred);
+  #    #print "$c += $pred = $sum\n";
+  #  }
+  #  close(CSV);
+  #  $regionPreds{$c} = $sum;
+  #  #print "$c => $sum\n";
+  #}
 
   print "Region $region: ", green(scalar @avail), " available";
 
@@ -216,27 +216,27 @@ sub doAe7qCall {
 
   #  print "Note: ae7q.com is not providing full data after changes on the site. See https://www.ae7q.com/query/text/News.php\n";
 
-  my $url = "${predictionBaseUrl}/vanity-$call.csv";
-  open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
-  while(<CSV>) {
-    chomp;
-    next if /^#/;
-    my ($appid, undef, undef, $vanity, $pred) = split /,/;
-    $odds_sim{"${appid}_$vanity"} = $pred;
-  }
-  close(CSV);
+  #my $url = "${predictionBaseUrl}/vanity-$call.csv";
+  #open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
+  #while(<CSV>) {
+  #  chomp;
+  #  next if /^#/;
+  #  my ($appid, undef, undef, $vanity, $pred) = split /,/;
+  #  $odds_sim{"${appid}_$vanity"} = $pred;
+  #}
+  #close(CSV);
 
-  $url = "${predictionBaseUrl}/call-$call.csv";
-  open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
-  while(<CSV>) {
-    chomp;
-    next if /^#/;
-    my ($appid, undef, undef, $vanity, $pred) = split /,/;
-    $odds_sim{"${appid}_$vanity"} = $pred;
-  }
-  close(CSV);
+  #$url = "${predictionBaseUrl}/call-$call.csv";
+  #open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
+  #while(<CSV>) {
+  #  chomp;
+  #  next if /^#/;
+  #  my ($appid, undef, undef, $vanity, $pred) = split /,/;
+  #  $odds_sim{"${appid}_$vanity"} = $pred;
+  #}
+  #close(CSV);
 
-  $url = "http://www.ae7q.com/query/data/CallHistory.php?CALL=$call";
+  my $url = "http://www.ae7q.com/query/data/CallHistory.php?CALL=$call";
   #print "$url\n";
   open(HTTP, '-|', "curl --max-time $ae7qTimeout -L -k -s '$url'");
   while(<HTTP>) {
