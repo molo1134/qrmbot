@@ -993,6 +993,20 @@ proc ohio { nick host hand chan text} {
 	} else {
 		putchan $chan "👬🍃🕺 (^O^) OHIOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
 	}
+
+ bind pub - !uwu uwu
+proc uwu { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+
+	if [ expr (rand()*10) <= 1 ] then {
+		putchan $chan "https://www.youtube.com/watch?v=e6xG8QQWJiQ"
+	} elseif [ expr (rand()*100) <= 1 ] then {
+		putchan $chan "Rawr X3 *nuzzles* How are you? *pounces on you* you're so warm o3o *notices you have a bulge* someone's happy! *nuzzles your necky wecky* ~murr~ hehe ;) *rubbies your bulgy wolgy* you're so big!"    #idfk
+	} else {
+		putchan $chan "👀👀 ÚwÚ"
+	}
 }
 
 
