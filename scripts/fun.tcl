@@ -293,7 +293,7 @@ proc aaaaaaa { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
 	}
-	
+
 	if [ expr (rand()*100) <= 1 ] then {
 		putchan $chan "https://i.imgur.com/7grmnJ1.mp4"
 	} elseif [ expr (rand()*10) <= 3 ] then {
@@ -315,7 +315,7 @@ proc daveface { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
 	}
-	
+
 	putchan $chan "https://i.imgur.com/diBAl5G.png"
 }
 
@@ -323,7 +323,7 @@ proc burn { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
 	}
-	
+
 	putlog "burn: $nick $host $hand $chan"
 	putchan $chan "🔥 sick burn bro [https://i.imgur.com/rK6Oj0P.png]"
 }
@@ -993,8 +993,9 @@ proc ohio { nick host hand chan text} {
 	} else {
 		putchan $chan "👬🍃🕺 (^O^) OHIOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
 	}
+}
 
- bind pub - !uwu uwu
+bind pub - !uwu uwu
 proc uwu { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
