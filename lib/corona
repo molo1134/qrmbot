@@ -17,6 +17,9 @@ use Encode qw(decode);
 use I18N::Langinfo qw(langinfo CODESET);
 use JSON qw( decode_json );
 
+print "error: data is not current.\n";
+exit 0;
+
 use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
