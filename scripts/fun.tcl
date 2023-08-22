@@ -19,6 +19,8 @@ bind pub - !monkee daveface
 bind pub - !burn burn
 bind pub - !brexit brexit
 bind pub - !christmas christmas
+bind pub - !halloween spooky
+bind pub - !spooky spooky
 bind pub - !translate translate
 bind pub - !primaries primaries
 bind pub - !fivethirtyeight fivethirtyeight_pub
@@ -38,7 +40,6 @@ bind msg - !github msg_github
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
-set christmasbin "/home/eggdrop/bin/christmas"
 set translatebin "/home/eggdrop/bin/translate"
 set primariesbin "/home/eggdrop/bin/primaries"
 set fivethirtyeightbin "/home/eggdrop/bin/fivethirtyeight"
@@ -342,6 +343,7 @@ proc brexit { nick host hand chan text } {
 	close $fd
 }
 
+set christmasbin "/home/eggdrop/bin/christmas"
 proc christmas { nick host hand chan text } {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -349,6 +351,21 @@ proc christmas { nick host hand chan text } {
 	global christmasbin
 	putlog "christmas: $nick $host $hand $chan"
 	set fd [open "|${christmasbin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+set spookybin "/home/eggdrop/bin/spooky"
+proc spooky { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	global spookybin
+	putlog "spooky: $nick $host $hand $chan"
+	set fd [open "|${spookybin}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
