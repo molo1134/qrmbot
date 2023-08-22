@@ -160,8 +160,8 @@ if ($full == 1 and $curr->{precipMM} > 0.0) {
 print "\n";
 
 # debug
-my ($dist, $bearing) = distBearing(split(/,/, $geo), $area->{latitude}, $area->{longitude});
-$dist = nearest(0.1, $dist);
-$bearing = round($bearing);
-print "queried: $geo; returned: $area->{latitude},$area->{longitude}; ", bold("geographic error: $dist km $bearing°"), "\n";
+#my ($dist, $bearing) = distBearing(split(/,/, $geo), $area->{latitude}, $area->{longitude});
+#$dist = nearest(0.1, $dist);
+#$bearing = round($bearing);
+#print "queried: $geo; returned: $area->{latitude},$area->{longitude}; ", bold("geographic error: $dist km $bearing°"), "\n";
 
