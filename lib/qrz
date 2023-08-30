@@ -82,9 +82,9 @@ if (-e ($loginfile)) {
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq getEggdropUID()) {
-    print "usage: !qrz <callsign>|<name>|<grid>|<qth>\n";
+    print "usage: !qrz [call:]<callsign>|<name>|[grid:]<grid>|<qth>|dmr:<dmrID>\n";
   } else {
-    print "usage: $0 <callsign>|<name>|<grid>|<qth>\n";
+    print "usage: $0 [call:]<callsign>|<name>|[grid:]<grid>|<qth>|dmr:<dmrID>\n";
   }
   exit $exitnonzeroonerror;
 }
