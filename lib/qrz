@@ -81,12 +81,7 @@ if (-e ($loginfile)) {
 }
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  if ($username eq getEggdropUID()) {
-    print "usage: !qrz [call:]<callsign>|<name>|[grid:]<grid>|<qth>|dmr:<dmrID>\n";
-  } else {
-    print "usage: $0 [call:]<callsign>|<name>|[grid:]<grid>|<qth>|dmr:<dmrID>\n";
-  }
-  exit $exitnonzeroonerror;
+  usage();
 }
 
 my $call = undef;
@@ -156,7 +151,7 @@ while ($i <= $#ARGV) {
 my $codeset = langinfo(CODESET);
 $call = decode($codeset, $call);
 
-die "no callsign." unless defined $call;
+usage() unless defined $call;
 
 if ($call =~ /^(grid:)? ?([A-R]{2}[0-9]{2}([a-x]{2})?$)/i) {
   $call = $2;
@@ -1270,6 +1265,15 @@ sub findCallForDmr {
   }
 
   return join(",", @results);
+}
+
+sub usage {
+  if ($username eq getEggdropUID()) {
+    print "usage: !qrz [call:]<callsign>|<name>|[grid:]<grid>|<qth>|dmr:<dmrID>\n";
+  } else {
+    print "usage: $0 [call:]<callsign>|<name>|[grid:]<grid>|<qth>|dmr:<dmrID>\n";
+  }
+  exit $exitnonzeroonerror;
 }
 
 sub uniq {
