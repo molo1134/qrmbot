@@ -65,6 +65,10 @@ open(HTTP, '-|', "curl --max-time 5 -s -k -L -H 'Accept: application/json' '$url
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   #print;
+  if (/"data": {}/) {
+    print "error: no result\n";
+    exit 0;
+  }
   if (/"(\w+)":\s*"?(.*?)"?,?\s*$/) {
     my ($key, $value) = ($1, $2);
     $results{$key} = $value;
