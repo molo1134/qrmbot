@@ -389,8 +389,12 @@ sub getFaaReg
   my ($manuf, $model, $type, $etype, $icao, $owner, $frac);
   $frac = 0;
   my $url = "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=$reg";
+  my $headers =
+    "-H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0' " .
+    "-H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8' " .
+    "-H 'Accept-Encoding: gzip, deflate, br'";
   #print "$url\n";
-  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
+  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k $headers -L '$url'");
   while(<HTTP>) {
     #print;
     if (m|<td data-label="Manufacturer Name">([^<]+?)\s*</td>|) {
