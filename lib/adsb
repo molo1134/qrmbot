@@ -379,7 +379,8 @@ sub show
     print(": observed ICAO mode S code $rec{hex} differs from registered code $icao");
   }
 
-  print " -- ${baseUrl}?icao=$rec{hex}\n";
+  print " -- ${baseUrl}?icao=$rec{hex}\n" if $apitype eq "reapi";
+  print " -- https://adsb.lol/$rec{hex}\n" if $apitype eq "lol";
 }
 
 sub getFaaReg
