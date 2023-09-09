@@ -394,7 +394,7 @@ sub getFaaReg
     "-H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8' " .
     "-H 'Accept-Encoding: gzip, deflate, br'";
   #print "$url\n";
-  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k $headers -L '$url'");
+  open(HTTP, '-|', "curl --stderr - --max-time 4 -s -k $headers -L '$url'");
   while(<HTTP>) {
     #print;
     if (m|<td data-label="Manufacturer Name">([^<]+?)\s*</td>|) {
