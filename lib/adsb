@@ -92,7 +92,7 @@ while ($i <= $#ARGV) {
 
 updateICAOtypes();
 
-print "apitype: $apitype\n";
+#print "apitype: $apitype\n";
 if ($apitype eq "reapi") {
 
   my $apikey = $apikey_adsb_fi if $baseUrl =~ /adsb\.fi/;
@@ -130,7 +130,7 @@ if ($apitype eq "reapi") {
 
   DOHTTP_REAPI:
 
-  print "$url\n";
+  #print "$url\n";
   #print "curl --stderr - --max-time 10 -s -k -L $apiheaderOpt '$url'";
   open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L $apiheaderOpt '$url'");
   local $/;   # read entire file -- FIXME: potentially memory hungry
@@ -184,7 +184,7 @@ if ($apitype eq "reapi") {
   }
 
   DOHTTP_LOL:
-  print "$url\n";
+  #print "$url\n";
   open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $json = <HTTP>;
@@ -388,7 +388,7 @@ sub getFaaReg
   my ($manuf, $model, $type, $etype, $icao, $owner, $frac);
   $frac = 0;
   my $url = "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=$reg";
-  print "$url\n";
+  #print "$url\n";
   open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
   while(<HTTP>) {
     #print;
@@ -423,7 +423,7 @@ sub getFlightTrack
   my $url = "https://flightaware.com/live/flight/$flight";
   my ($airline, $orig, $dest, $fnum, $eta);
   my $token;
-  print "$url\n";
+  #print "$url\n";
   open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
   while(<HTTP>) {
     if (/name="origin".*content="([A-Z]+)"/) {
@@ -448,7 +448,7 @@ sub getFlightTrack
 
   if (defined($token)) {
     $url = "https://flightaware.com/ajax/trackpoll.rvt?token=$token&locale=en_US&summary=1";
-    print "$url\n";
+    #print "$url\n";
     open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
     while(<HTTP>) {
       #print;
