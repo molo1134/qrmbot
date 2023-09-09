@@ -35,7 +35,10 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 #my $baseUrl = "https://globe.adsb.fi/";
 #my $baseUrl = "https://globe.theairtraffic.com/";
-my $baseUrl = "https://globe.adsb.lol/";
+my $baseUrl = "https://api.adsb.lol/";
+my $apitype = "lol";
+#my $baseUrl = "https://globe.adsb.lol/";
+#my $apitype = "reapi";
 
 our $apikey_adsb_fi;
 my $apikeyfile = $ENV{'HOME'} . "/.adsb-api-keys";
@@ -59,13 +62,19 @@ while ($i <= $#ARGV) {
   }
   if ($ARGV[$i] =~ /--help/) {
     print "usage: adsb [--fi|--lol|--tac] <location>|<0xHEXCODE>|<callsign>|<registration>\n";
+    #    print "usage: adsb <location>|<0xHEXCODE>|<callsign>|<registration>\n";
     exit $exitnonzeroonerror;
   } elsif ($ARGV[$i] =~ /--fi/) {
     $baseUrl = "https://globe.adsb.fi/";
+    $apitype = "reapi";
   } elsif ($ARGV[$i] =~ /--lol/) {
-    $baseUrl = "https://globe.adsb.lol/";
+    $baseUrl = "https://api.adsb.lol/";
+    $apitype = "lol";
+    #$baseUrl = "https://globe.adsb.lol/";
+    #$apitype = "reapi";
   } elsif ($ARGV[$i] =~ /--(tac|atc|theairtraffic)/) {
     $baseUrl = "https://globe.theairtraffic.com/";
+    $apitype = "reapi";
   } elsif ($ARGV[$i] =~ /^0x([A-F0-9]{6})$/i) {
     $icaoQuery = $1;
     #print "icaoQuery: $icaoQuery\n";
@@ -83,70 +92,128 @@ while ($i <= $#ARGV) {
 
 updateICAOtypes();
 
-my $apikey = $apikey_adsb_fi if $baseUrl =~ /adsb\.fi/;
-my $apiheaderOpt = "";
-$apiheaderOpt = "-H 'access-key: $apikey'" if $baseUrl =~ /adsb\.fi/;
+print "apitype: $apitype\n";
+if ($apitype eq "reapi") {
 
-my $reapiUrl = "${baseUrl}re-api/";
+  my $apikey = $apikey_adsb_fi if $baseUrl =~ /adsb\.fi/;
+  my $apiheaderOpt = "";
+  $apiheaderOpt = "-H 'access-key: $apikey'" if $baseUrl =~ /adsb\.fi/;
 
-my $geo;
-my ($lat, $lon);
-my $url;
-#print "loc: $loc\n";
-if (defined($icaoQuery)) {
-  $url = "${reapiUrl}?find_hex=" . uri_escape($icaoQuery);
-} elsif (defined($callOrReg)) {
-  $url = "${reapiUrl}?find_reg=" . uri_escape($callOrReg);
-} elsif (defined($loc) and $loc =~ /^-?\d+(.\d+)?,-?\d+(.\d+)?$/) {
-  ($lat, $lon) = split /,/, $loc;
-  $url = "${reapiUrl}?closest=" . uri_escape($lat) . "," .
-    uri_escape($lon) . ",25"; # 25 nmi
-} elsif (defined($loc)) {
-  $loc =~ s/^\s*//;
-  $loc =~ s/\s*$//;
-  $geo = argToCoords($loc);
-  ($lat, $lon) = split /,/, $geo;
-  $url = "${reapiUrl}?closest=" . uri_escape($lat) . "," .
-    uri_escape($lon) . ",25"; # 25 nmi
-} else {
-  print "usage: adsb [--fi|--lol|--tac] <location>|<0xHEXCODE>|<callsign>|<registration>\n";
-  exit $exitnonzeroonerror;
+  my $reapiUrl = "${baseUrl}re-api/";
+
+  my $geo;
+  my ($lat, $lon);
+  my $url;
+  #print "loc: $loc\n";
+  if (defined($icaoQuery)) {
+    $url = "${reapiUrl}?find_hex=" . uri_escape($icaoQuery);
+  } elsif (defined($callOrReg)) {
+    $url = "${reapiUrl}?find_reg=" . uri_escape($callOrReg);
+  } elsif (defined($loc) and $loc =~ /^-?\d+(.\d+)?,-?\d+(.\d+)?$/) {
+    ($lat, $lon) = split /,/, $loc;
+    $url = "${reapiUrl}?closest=" . uri_escape($lat) . "," .
+      uri_escape($lon) . ",25"; # 25 nmi
+  } elsif (defined($loc)) {
+    $loc =~ s/^\s*//;
+    $loc =~ s/\s*$//;
+    $geo = argToCoords($loc);
+    ($lat, $lon) = split /,/, $geo;
+    $url = "${reapiUrl}?closest=" . uri_escape($lat) . "," .
+      uri_escape($lon) . ",25"; # 25 nmi
+  } else {
+    print "usage: adsb [--fi|--lol|--tac] <location>|<0xHEXCODE>|<callsign>|<registration>\n";
+    exit $exitnonzeroonerror;
+  }
+
+
+  my $total = 0;
+
+  DOHTTP_REAPI:
+
+  print "$url\n";
+  #print "curl --stderr - --max-time 10 -s -k -L $apiheaderOpt '$url'";
+  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L $apiheaderOpt '$url'");
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $json = <HTTP>;
+  close(HTTP);
+  if (not $json =~ /^\s*{/) {
+    print "error1 while retrieving data: from $url : $json\n";
+    exit $exitnonzeroonerror;
+  }
+  my $j = decode_json($json);
+
+  $total = $j->{resultCount};
+
+  if ($total == 0 and defined($callOrReg) and $url =~ /find_reg/) {
+    $url = "${reapiUrl}?find_callsign=" . uri_escape($callOrReg);
+    goto DOHTTP_REAPI;
+  }
+
+  print "no callsign/registration found: $callOrReg\n"
+	  if $total == 0 and $url =~ /find_callsign/;
+  print "icao code not found: $icaoQuery\n"
+	  if $total == 0 and $url =~ /find_hex/;
+  if ($total == 0 and $url =~ /closest/) {
+    my $localgrid = coordToGrid($lat, $lon) if defined($lat);
+    print "no planes found near $localgrid\n";
+  }
+  exit $exitnonzeroonerror if $total == 0;
+
+  show($j->{aircraft}->[0], $j->{now}, $lat, $lon);
+
+} elsif ($apitype eq "lol") {
+
+  my ($url, $lat, $lon, $geo);
+
+  if (defined($icaoQuery)) {
+    $url = "${baseUrl}v2/hex/" . uri_escape($icaoQuery);
+  } elsif (defined($callOrReg)) {
+    $url = "${baseUrl}v2/reg/" . uri_escape($callOrReg);
+  } elsif (defined($loc) and $loc =~ /^-?\d+(.\d+)?,-?\d+(.\d+)?$/) {
+    ($lat, $lon) = split /,/, $loc;
+    $url = "${baseUrl}v2/closest/" . uri_escape($lat) . "/" .  uri_escape($lon) . "/25"; # 25 nmi
+  } elsif (defined($loc)) {
+    $loc =~ s/^\s*//;
+    $loc =~ s/\s*$//;
+    $geo = argToCoords($loc);
+    ($lat, $lon) = split /,/, $geo;
+    $url = "${baseUrl}v2/closest/" . uri_escape($lat) . "/" .  uri_escape($lon) . "/25"; # 25 nmi
+  } else {
+    print "usage: adsb [--fi|--lol|--tac] <location>|<0xHEXCODE>|<callsign>|<registration>\n";
+    exit $exitnonzeroonerror;
+  }
+
+  DOHTTP_LOL:
+  print "$url\n";
+  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $json = <HTTP>;
+  close(HTTP);
+  if (not $json =~ /^\s*{/) {
+    print "error1 while retrieving data: from $url : $json\n";
+    exit $exitnonzeroonerror;
+  }
+  my $j = decode_json($json);
+
+  my $total = $j->{total};
+
+  if ($total == 0 and defined($callOrReg) and $url =~ m|/reg/|) {
+    $url = "${baseUrl}v2/callsign/" . uri_escape($callOrReg);
+    goto DOHTTP_LOL;
+  }
+
+  print "no callsign/registration found: $callOrReg\n"
+	  if $total == 0 and $url =~ m|/callsign/|;
+  print "icao code not found: $icaoQuery\n"
+	  if $total == 0 and $url =~ m|/hex/|;
+  if ($total == 0 and $url =~ /closest/) {
+    my $localgrid = coordToGrid($lat, $lon) if defined($lat);
+    print "no planes found near $localgrid\n";
+  }
+  exit $exitnonzeroonerror if $total == 0;
+
+  show($j->{ac}->[0], $j->{now}, $lat, $lon);
 }
-
-my $localgrid;
-$localgrid = coordToGrid($lat, $lon) if defined($lat);
-
-my $total = 0;
-
-DOHTTP:
-
-#print "$url\n";
-open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L $apiheaderOpt '$url'");
-local $/;   # read entire file -- FIXME: potentially memory hungry
-my $json = <HTTP>;
-close(HTTP);
-if (not $json =~ /^\s*{/) {
-  print "error1 while retrieving data: from $url: $json\n";
-  exit $exitnonzeroonerror;
-}
-my $j = decode_json($json);
-
-$total = $j->{resultCount};
-
-if ($total == 0 and defined($callOrReg) and $url =~ /find_reg/) {
-  $url = "${reapiUrl}?find_callsign=" . uri_escape($callOrReg);
-  goto DOHTTP;
-}
-
-print "no callsign/registration found: $callOrReg\n"
-	if $total == 0 and $url =~ /find_callsign/;
-print "icao code not found: $icaoQuery\n"
-	if $total == 0 and $url =~ /find_hex/;
-print "no planes found near $localgrid\n"
-	if $total == 0 and $url =~ /closest/;
-exit $exitnonzeroonerror if $total == 0;
-
-show($j->{aircraft}->[0], $j->{now});
 
 sub updateICAOtypes {
   # https://web.archive.org/web/20230101013553/https://www4.icao.int/doc8643/External/AircraftTypes
@@ -178,6 +245,8 @@ sub show
 {
   my %rec = %{ (shift) };
   my $timestamp = shift;
+  my $lat = shift;
+  my $lon = shift;
 
   $rec{lat} = $rec{lastPosition}->{lat} if not defined $rec{lat} and defined $rec{lastPosition}->{lat};
   $rec{lon} = $rec{lastPosition}->{lon} if not defined $rec{lon} and defined $rec{lastPosition}->{lon};
@@ -302,6 +371,7 @@ sub show
   print " at $time";
   print "; owner: $owner" if defined $owner;
   printf (" -- %.1f km, %.0f° %s", $dist, $bearing, azToNEWS($bearing)) if defined($lat);
+  my $localgrid = coordToGrid($lat, $lon) if defined($lat);
   print " from $localgrid" if defined($localgrid);
 
   if (defined($icao) and defined($rec{hex}) and lc $icao ne lc $rec{hex}) {
@@ -318,7 +388,7 @@ sub getFaaReg
   my ($manuf, $model, $type, $etype, $icao, $owner, $frac);
   $frac = 0;
   my $url = "https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=$reg";
-  #print "$url\n";
+  print "$url\n";
   open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
   while(<HTTP>) {
     #print;
@@ -353,7 +423,7 @@ sub getFlightTrack
   my $url = "https://flightaware.com/live/flight/$flight";
   my ($airline, $orig, $dest, $fnum, $eta);
   my $token;
-  #print "$url\n";
+  print "$url\n";
   open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
   while(<HTTP>) {
     if (/name="origin".*content="([A-Z]+)"/) {
@@ -378,7 +448,7 @@ sub getFlightTrack
 
   if (defined($token)) {
     $url = "https://flightaware.com/ajax/trackpoll.rvt?token=$token&locale=en_US&summary=1";
-    #print "$url\n";
+    print "$url\n";
     open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
     while(<HTTP>) {
       #print;
