@@ -34,7 +34,8 @@ our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 #my $baseUrl = "https://globe.adsb.fi/";
-my $baseUrl = "https://globe.theairtraffic.com/";
+#my $baseUrl = "https://globe.theairtraffic.com/";
+my $baseUrl = "https://globe.adsb.lol/";
 
 our $apikey_adsb_fi;
 my $apikeyfile = $ENV{'HOME'} . "/.adsb-api-keys";
