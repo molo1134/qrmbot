@@ -38,6 +38,7 @@ bind msg - !governor gov_msg
 bind pub - !github github
 bind msg - !github msg_github
 
+
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
 set translatebin "/home/eggdrop/bin/translate"
@@ -1011,6 +1012,15 @@ proc ohio { nick host hand chan text} {
 		putchan $chan "👬🍃🕺 (^O^) OHIOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
 	}
 }
+
+bind pub - !brad brad
+proc brad { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	putchan $chan "https://i.imgur.com/Y1UxFds.mp4"
+}
+
 
 bind pub - !uwu uwu
 proc uwu { nick host hand chan text} {
