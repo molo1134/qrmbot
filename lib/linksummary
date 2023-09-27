@@ -71,6 +71,8 @@ while ($i <= $#ARGV) {
     doImdb($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(\w+)\.wikipedia\.org/wiki/([^/\s]+)|i) {
     doWiki($1, $2);
+  } elsif ($ARGV[$i] =~ m|^https?://((www\|old\|np\|new)\.)?reddit\.com/r/\w+/s/\w+/?|i) {
+    doRedditShare($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://((www\|old\|np\|new)\.)?reddit\.com/(r/\w+/)?comments/\w+/?|i or
 	  $ARGV[$i] =~ m|^https?://redd\.it/\w+|i) {
     doReddit($ARGV[$i]);
@@ -815,6 +817,26 @@ sub doHtml {
   print " $shortUrl" if defined($shortUrl) and length($shortUrl) > 0;
   print " — $desc" if defined ($desc);
   print "\n";
+}
+
+sub doRedditShare {
+  my $url = shift;
+  $url =~ s|^https://reddit.com/|https://www.reddit.com/|;
+
+  open(REDIR, '-|', "curl --max-time $timeout -ski '$url' | grep -i ^location:");
+
+  binmode(REDIR, ":utf8");
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $location = <REDIR>;
+  close(REDIR);
+  
+  $location =~ s/^location:\s*//i;
+  $location =~ s/share_id=\w+//ig;
+  $location =~ s/utm_\w+=[^&]+//ig;
+  $location =~ s/&&+/&/g;
+  $location =~ s/&$//g;
+
+  doReddit($location);
 }
 
 sub doReddit {
