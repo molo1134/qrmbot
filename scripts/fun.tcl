@@ -1018,8 +1018,11 @@ proc brad { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
 	}
-	putchan $chan "https://i.imgur.com/Y1UxFds.mp4"
-}
+ 	if [ expr (rand()*10) <= 3 ] then {
+		putchan $chan "https://i.imgur.com/Y1UxFds.mp4"
+	} else {
+ 		putchan $chan "Bread 👍"
+	}
 
 
 bind pub - !uwu uwu
