@@ -1023,7 +1023,7 @@ proc brad { nick host hand chan text} {
 	} else {
  		putchan $chan "Bread 👍"
 	}
-
+}
 
 bind pub - !uwu uwu
 proc uwu { nick host hand chan text} {
