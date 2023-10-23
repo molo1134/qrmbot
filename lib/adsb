@@ -216,24 +216,24 @@ if ($apitype eq "reapi") {
 }
 
 sub updateICAOtypes {
-  # https://web.archive.org/web/20230101013553/https://www4.icao.int/doc8643/External/AircraftTypes
-  my $url = "https://www4.icao.int/doc8643/External/AircraftTypes";
+  #my $url = "https://www4.icao.int/doc8643/External/AircraftTypes";
+  my $url = "https://web.archive.org/web/20230101013553/https://www4.icao.int/doc8643/External/AircraftTypes";
   my $typesfile = $ENV{'HOME'} . "/.icao-types";
   my $needICAO = 0;
   my $now = time;
   my $maxage=604800; # 1 week
   if (not -e $typesfile) {
     $needICAO = 1
-  } else {
-    my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $typesfile;
-    if (defined $mtime) {
-      my $age = $now - $mtime;
-      if ($age > $maxage or $size == 0) {
-	$needICAO = 1;
-      }
-    } else {
-      $needICAO = 1;
-    }
+#  } else {
+#    my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $typesfile;
+#    if (defined $mtime) {
+#      my $age = $now - $mtime;
+#      if ($age > $maxage or $size == 0) {
+#	$needICAO = 1;
+#      }
+#    } else {
+#      $needICAO = 1;
+#    }
   }
   if ($needICAO == 1) {
     #print "$url\n";
