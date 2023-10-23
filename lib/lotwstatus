@@ -51,5 +51,9 @@ while (<HTTP>) {
   }
 }
 close HTTP;
-print " Queue Delay as of $epoch UTC: ", bold($delay), "\n";
+if (defined $epoch and defined $delay) {
+  print " Queue Delay as of $epoch UTC: ", bold($delay), "\n";
+} else {
+  print " Queue Delay ", yellow("undetermined"), "\n";
+}
 exit 0;
