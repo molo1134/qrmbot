@@ -259,10 +259,13 @@ sub show
   $time = strftime("%Y-%m-%d %H:%M:%Sz", gmtime(int($timestamp - $rec{seen_pos}))) if $rec{seen_pos} > 86400;
 
   my ($manuf, $model, $type, $etype, $icao, $owner);
-  if ($rec{r} =~ m/^N/) {
-    ($manuf, $model, $type, $etype, $icao, $owner) = getFaaReg($rec{r});
+  #if ($rec{r} =~ m/^N/) {
+  #  ($manuf, $model, $type, $etype, $icao, $owner) = getFaaReg($rec{r});
     #print("FAA reg: $manuf, $model, $type, $etype, $icao, $owner\n");
-  }
+  #}
+  ($manuf, $model, $type, $etype, $icao, $owner) = getAirFrame($rec{hex});
+  #print("db: $manuf, $model, $type, $etype, $icao, $owner\n");
+
   my ($airline, $orig, $dest, $fnum, $eta);
   if (defined($rec{flight}) and length($rec{flight}) > 0) {
     $rec{flight} =~ s/\s*$//;
@@ -348,7 +351,8 @@ sub show
   if (not defined($model)) {
     print " ($rec{t})";
   } else {
-    print " ($manuf $model)";
+    print " ($manuf $model)" if defined $manuf;
+    print " ($model)" if not defined $manuf;
   }
   print " ($airline $fnum ", bold("$orig->$dest") if defined $airline;
   print " eta $eta" if defined $eta;
@@ -420,6 +424,71 @@ sub getFaaReg
   close(HTTP);
   $owner .= " (fractional)" if $frac;
   return ($manuf, $model, $type, $etype, $icao, $owner);
+}
+
+sub getAirFrame
+{
+  my $hex = shift;
+
+  my $needUpdate = 0;
+  my $now = time;
+  my $maxage=604800; # 1 week
+  my $cachedir = $ENV{HOME} . "/.qrmbot/cache";
+  my $regCacheFile = $cachedir . "/aircraft.csv.gz";
+  my $url = "https://github.com/katlol/tar1090-db/releases/latest/download/aircraft.csv.gz";
+
+  if (not -d $cachedir) {
+    print "making cache directory..\n";
+    system ("mkdir -p $cachedir\n");
+    if (not -d $cachedir) {
+      print "unable to make cache directory $cachedir\n";
+    }
+  }
+
+  if (not -e $regCacheFile) {
+    $needUpdate = 1;
+  } else {
+    my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $regCacheFile;
+    if (defined $mtime) {
+      my $age = $now - $mtime;
+      if ($age > $maxage or $size == 0) {
+	$needUpdate = 1;
+      }
+    } else {
+      $needUpdate = 1;
+    }
+  }
+  if ($needUpdate == 1) {
+    #print "$url\n";
+    system("curl --stderr - -s -k -L --max-time 20 --retry 1 -o '$regCacheFile' '$url'");
+  }
+
+  return undef if not -e $regCacheFile;
+
+  local $/ = "\n";   # line-based IO
+  open(CSV, '-|', "gzip -dc $regCacheFile");
+  my ($hexcode,$reg,$type,$desc,$yr,$owner);
+  while(<CSV>) {
+    ($hexcode,$reg,$type,undef,$desc,$yr,$owner) = split /;/;
+
+    last if lc $hex eq lc $hexcode;
+
+    $hexcode = $reg = $type = $desc = $yr = $owner = undef;
+  }
+  close(CSV);
+
+  $reg = undef if $reg eq "";
+  $type = undef if $type eq "";
+  $yr = undef if $yr eq "";
+  $owner =~ s/^\s+//;
+  $owner =~ s/\s+$//;
+  $owner = undef if $owner eq "";
+  $desc =~ s/^\s+//;
+  $desc =~ s/\s+$//;
+  $desc = undef if $desc eq "";
+
+  #print "db: $reg, $type, $desc, $yr, $owner\n";
+  return (undef, $desc, $type, undef, $hexcode, $owner);
 }
 
 sub getFlightTrack
