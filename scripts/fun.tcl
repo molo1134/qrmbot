@@ -1046,6 +1046,7 @@ bind pub - !randnsfw randnsfw
 bind pub - !nsfw randnsfw
 set randnsfwbin "/home/eggdrop/bin/randnsfw"
 proc randnsfw { nick host hand chan text } {
+	return
 	if [string equal "#amateurradio" $chan] then {
 		return
 	}
