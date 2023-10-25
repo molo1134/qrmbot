@@ -1042,23 +1042,5 @@ proc uwu { nick host hand chan text} {
 	}
 }
 
-bind pub - !randnsfw randnsfw
-bind pub - !nsfw randnsfw
-set randnsfwbin "/home/eggdrop/bin/randnsfw"
-proc randnsfw { nick host hand chan text } {
-	return
-	if [string equal "#amateurradio" $chan] then {
-		return
-	}
-	global randnsfwbin
-	putlog "randnsfw: $nick $host $hand $chan"
-	set fd [open "|${randnsfwbin}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
-	}
-	close $fd
-}
-
 putlog "fun.tcl loaded."
 
