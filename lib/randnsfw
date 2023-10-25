@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+#
+# 2-clause BSD license.
+# Copyright (c) 2023 molo1134@github. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+use JSON qw( decode_json from_json );
+
+my $url = "https://old.reddit.com/r/randnsfw/top.json?t=all";
+
+
+open (HTTP, '-|', "curl -A none --max-time 10 -L -k -s --compressed '$url'");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+my $json = <HTTP>;
+close(HTTP);
+my $j = decode_json($json);
+
+if (defined $j->{error}) {
+  print "Error: $j->{error}: $j->{message}\n";
+  exit 1;
+}
+
+my $count = $j->{data}->{dist};
+my $num = int rand $count;
+
+my $targeturl = "https://www.reddit.com" . $j->{data}->{children}->[$num]->{data}->{permalink};
+
+my $ls = dirname(realpath(__FILE__)) . "/linksummary";
+system "$ls '$targeturl'"
+
