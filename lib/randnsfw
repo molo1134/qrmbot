@@ -35,6 +35,8 @@ my $num = int rand $count;
 
 my $targeturl = "https://www.reddit.com" . $j->{data}->{children}->[$num]->{data}->{permalink};
 
+print "/r/", $j->{data}->{children}->[$num]->{data}->{subreddit}, " - ";
+
 my $ls = dirname(realpath(__FILE__)) . "/linksummary";
 system "$ls '$targeturl'"
 
