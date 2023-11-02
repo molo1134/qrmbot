@@ -174,7 +174,7 @@ sub refreshData {
 
       if ($line =~ m|By: (.*?)<br>|) {
 	$user = $1;
-	#print "$user\n";
+	#print "user: $user\n";
       }
 
       if ($line =~ m|</div>',([-+]?[0-9.]+),([-+]?[0-9.]+),|) {
@@ -182,9 +182,9 @@ sub refreshData {
 	#print "$lat, $lng\n";
       }
 
-      if ($line =~ m|<a href=historyData.asp\?Param_ID=(\d+)&KEY=\d+ target=_blank>|) {
+      if ($line =~ m|<a href=historyData.asp\?Param_ID=(\d+) target=_blank>|) {
 	$id = $1;
-	#print "$id\n";
+	#print "id: $id\n";
       } else {
 	#print "** NO ID **\n";
       }
