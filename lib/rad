@@ -143,7 +143,7 @@ sub refreshData {
 	$device =~ s/^\s+//;
 	$device =~ s/\s+$//;
 	$device =~ s/\s\s+/ /;
-	$device =~ s/GQ ELECTRONICS( LLC)?/GQ/;
+	$device =~ s/GQ ?ELECTRONICS( LLC)?/GQ/;
 	#print "$device\n";
       }
 
@@ -156,6 +156,8 @@ sub refreshData {
 	$tube =~ s/\s+$//;
 	$tube =~ s/\s\s+/ /;
 	$tube = undef if $tube eq "unknown";
+
+	$acpm = nearest(0.1, $acpm) if defined $acpm and $acpm > 0.0;
 
 	if ($sv eq "undefined") {
 	  $sv = undef;
