@@ -936,7 +936,7 @@ sub doReddit {
 	my $shortLink = shortenUrl($link);
 	print " ", (defined($shortLink) ? $shortLink : $link), " ($domain)";
       }
-    } elsif ($post->{is_self}) {
+    } elsif ($post->{is_self} or defined($selftext)) {
       print " | \"", substr($selftext, 0, 160);
       print "…" if length($selftext) > 160;
       print '"';
