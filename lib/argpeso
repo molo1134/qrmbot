@@ -1,0 +1,38 @@
+#!/usr/bin/perl
+#
+# argentine peso
+#
+# 2-clause BSD license.
+# Copyright (c) 2023 molo1134@github. All rights reserved.
+
+use strict;
+use warnings;
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+if (defined $ARGV[0] and $ARGV[0] =~ /about/i){
+  print "Returns informal 'Dolar Blue' ARS/USD price.\n";
+  exit 0;
+}
+
+my $url = 'https://bluedollar.net/informal-rate/';
+open(HTTP, '-|', "curl --max-time 10 -s -L --insecure '$url' ");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+  chomp;
+  if (m|<div class="buy buy-sell-blue">([0-9.+-]+)<br><span class="small">Buy</span></div> <div class="sell buy-sell-blue">([0-9.+-]+)<br>|) {
+    my ($buyprice, $sellprice) = ($1, $2);
+    print "buy $buyprice / sell $sellprice USDARS 'Informal Price'\n";
+    last;
+  }
+}
+close(HTTP);
+
+exit 0;
+

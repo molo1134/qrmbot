@@ -801,6 +801,26 @@ proc amcorn_pub { nick host hand chan text } {
 	close $fd
 }
 
+set argpesobin "/home/eggdrop/bin/argpeso"
+bind pub - !argpeso argpeso_pub
+bind pub - !dolarblue argpeso_pub
+bind pub - !usdars argpeso_pub
+proc argpeso_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	global argpesobin
+	set param [sanitize_string [string trim "${text}"]]
+	putlog "argpeso pub: $nick $host $hand $chan $param"
+	set fd [open "|${argpesobin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+
 proc github { nick host hand chan text } {
 	global githublink
 	putlog "github pub: $nick $host $hand $chan"
