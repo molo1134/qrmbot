@@ -2043,6 +2043,7 @@ proc wrtc_msg {nick uhand handle input} {
 	close $fd
 }
 
+bind pub - !toby dayton
 bind pub - !dayton dayton
 bind pub - !xenia dayton
 bind pub - !hamvention dayton
