@@ -253,27 +253,6 @@ sub printYouTubeMetaData {
 }
 
 
-
-#
-# main (unnecessary?):
-#
-# curl -s 'https://twitter.com/DrEricDing/status/1346899021621813249' -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' -H 'Accept-Language: en-US,en;q=0.5' --compressed -H 'DNT: 1' -H 'Connection: keep-alive' -H 'Upgrade-Insecure-Requests: 1' | grep client-web/main
-#
-#
-# auth:
-#
-# curl -s 'https://abs.twimg.com/responsive-web/client-web/main.8c9ed305.js' -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0' -H 'Accept: */*' -H 'Accept-Language: en-US,en;q=0.5' --compressed -H 'Referer: https://twitter.com/' -H 'Origin: https://twitter.com' -H 'DNT: 1' -H 'Connection: keep-alive' -H 'Pragma: no-cache' -H 'Cache-Control: no-cache' | grep -P -o 'Web-12.*?a="[^"]*"'
-#
-# token:
-#
-# curl 'https://api.twitter.com/1.1/guest/activate.json' -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0' -H 'Accept: */*' -H 'Accept-Language: en-US,en;q=0.5' --compressed -H 'Referer: https://twitter.com/' -H 'authorization: Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA' -H 'x-twitter-client-language: en' -H 'x-twitter-active-user: yes' -H 'content-type: application/x-www-form-urlencoded' -H 'x-csrf-token: 96cd6e43ac2918c19fcc242b4b71a5bd' -H 'Origin: https://twitter.com' -H 'DNT: 1' -H 'Connection: keep-alive' -H 'Cookie: personalization_id="v1_tLuaNk4Y0edXrt3RPUjgDw=="; guest_id=v1%3A161030109738539015; gt=1348326644570845184; ct0=96cd6e43ac2918c19fcc242b4b71a5bd' --data-raw ''
-#
-# tweet:
-#
-# curl -s 'https://twitter.com/i/api/2/timeline/conversation/1346899021621813249.json?skip_status=1&include_ext_alt_text=true&include_quote_count=true&include_reply_count=1&tweet_mode=extended&include_entities=true&include_user_entities=true&include_ext_media_color=true&include_ext_media_availability=true&send_error_codes=true&simple_quoted_tweet=true' --compressed -H 'authorization: Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA' -H 'x-guest-token: 1348321983466000385'
-#
-#
-
 sub doTwitter {
   my $url = shift;
   my $id = undef;
@@ -295,34 +274,6 @@ sub doTwitter {
     $id = $5;
   }
 
-  if (not defined $username and $url =~ /https?:\/\/(mobile\.)?twitter\.com\/(\w+)\/?$/) {
-    # this is for getting the last tweet for a user
-    # TODO FIXME -- this is broken
-    $username = $2;
-
-    my $token = getTwitterAuthToken($url);
-
-    my $targeturl = "https://mobile.twitter.com/i/nojs_router?path=%2F$username";
-
-    $url =~ s/http:/https:/;
-
-    open (HTTP, '-|', "curl --max-time $timeout -L -k -s -H \"Referer: $url\" --data authenticity_token=$token \"$targeturl\"");
-    binmode(HTTP, ":utf8");
-    while(<HTTP>) {
-      chomp;
-      if (not defined $id and /retweeted/) {
-	#print "retweeted\n";
-	$directRT = 1;
-	$origUsername = $username;
-      }
-      if (not defined $id and /<div class="tweet-text" data-id="(\d+)">/) {
-	$id = $1;
-	next;
-      }
-    }
-    close(HTTP);
-  }
-
   if (not defined $id or not defined $username) {
     return;
   }
@@ -331,52 +282,78 @@ sub doTwitter {
   $alturl = "https://nitter.net/$username/status/$id" if $url =~ /twitter\.com/;
   $alturl = "https://twitter.com/$username/status/$id" if $url =~ /nitter\.net/;
 
-  my @tokens = getTwitterAuthTokens();
-  my $jsonurl = "https://twitter.com/i/api/2/timeline/conversation/$id.json" .
-    "?skip_status=0&include_ext_alt_text=true&include_quote_count=true&include_reply_count=1&tweet_mode=extended&include_entities=true&include_user_entities=true&include_ext_media_color=true&include_ext_media_availability=true&send_error_codes=true&simple_quoted_tweet=true";
-  my $headers =
-    " -H 'authorization: Bearer ". $tokens[0] ."' " .
-    " -H 'x-guest-token: ". $tokens[1] ."' ";
+  $url = "https://nitter.net/$username/status/$id";
+  my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0";
+  print "$url\n";
 
-  open (HTTP, '-|', "curl --max-time $timeout -L -k -s --compressed $headers '$jsonurl'");
-  local $/;   # read entire file -- FIXME: potentially memory hungry
-  my $json = <HTTP>;
-  close(HTTP);
-  #print $json;
-  #return;
-  my $j = decode_json($json);
+  my $headers = "-H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8' -H 'Accept-Language: en-US,en;q=0.5' -H 'Accept-Encoding: gzip, deflate, br' -H 'DNT: 1' -H 'Connection: keep-alive' -H 'Cookie: hlsPlayback=on' -H 'Upgrade-Insecure-Requests: 1' -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' -H 'Sec-Fetch-Site: none' -H 'Sec-Fetch-User: ?1' -H 'Pragma: no-cache' -H 'Cache-Control: no-cache'";
 
-  my $tweet = $j->{globalObjects}->{tweets}->{$id};
-  my $text = decodeEntities($tweet->{full_text});
-  my $userid = $tweet->{user_id_str};
-  my $retweet_count = $tweet->{retweet_count} + $tweet->{quote_count};
-  my $favorite_count = $tweet->{favorite_count};
-  my $reply_count = $tweet->{reply_count};
+  $timeout = 20;
 
-  my $datestr = $tweet->{created_at};
-  my $date = undef;
-  if (defined $datestr) {
-    # "created_at": "Sun Oct 02 18:32:49 +0000 2016"
-    my (undef, $mon, $d, $h, $m, $s, undef, $y) = split /[: ]/, $datestr;
-    my $time = timegm($s, $m, $h, $d, monthNameToNum($mon) - 1, $y);
-    $date = scalar(gmtime($time)) . " UTC";
-  }
+  my $in_main_tweet = 0;
 
-  my $rt = undef;
-  if ($tweet->{is_quote_status}) {
-    $rt = $tweet->{quoted_status_permalink}->{expanded};
-  }
-
-  my $media = undef;
-  my $tco = undef;
-  #my @links;
-
-
-  my $user = $j->{globalObjects}->{users}->{$userid};
-  my $username = $user->{screen_name};
-  my $fullname = $user->{name};
+  my $fullname = undef;
+  my $username = undef;
   my $verified = 0;
-  $verified = 1 if $user->{verified};
+  my $datestr = undef;
+  my $date = undef;
+  my $text = undef;
+  my $retweet_count = undef;
+  my $favorite_count = undef;
+  my $reply_count = undef;
+  # XXX TODO below here:
+  my ($media, $tco, $rt) = undef;
+
+  open (HTTP, '-|', "curl --max-time $timeout -A '$ua' $headers -L -k -s --compressed '$url'");
+  binmode(HTTP, ":utf8");
+  while (<HTTP>) {
+    $in_main_tweet = 1 if not $in_main_tweet and /<div .*?class="main-tweet">/;
+    next if not $in_main_tweet;
+    if (not defined $fullname and m|<a class="fullname" .*?>(.*?)<|) {
+      $fullname = $1;
+    }
+    $verified = 1 if /title="Verified account"/;
+    if (not defined $username and m|<a class="username" .*?>@(.*?)<|) {
+      $username = $1;
+    }
+    if (not defined $datestr and m|<span class="tweet-date".*?title="(.*?)"|) {
+      $datestr = $1;
+    }
+    if (not defined $text and m|<div class="tweet-content.*?>(.*?)</div>|) {
+      $text = $1;
+    }
+    if (not defined $reply_count and m|<span class="tweet-stat">.*<span class="icon-comment".*?></span> ([0-9,]+)<|) {
+      $reply_count = $1;
+      $reply_count =~ s/,//g;
+    }
+    if (not defined $retweet_count and m|<span class="tweet-stat">.*<span class="icon-retweet".*?></span> ([0-9,]+)<|) {
+      $retweet_count = $1;
+      $retweet_count =~ s/,//g;
+    }
+    if (m|<span class="tweet-stat">.*<span class="icon-quote".*?></span> ([0-9,]+)<|) {
+      my $quote_count = $1;
+      $quote_count =~ s/,//g;
+      $retweet_count += $quote_count if defined $retweet_count;
+      $retweet_count = $quote_count if not defined $retweet_count;
+    }
+    if (not defined $favorite_count and m|<span class="tweet-stat">.*<span class="icon-heart".*?></span> ([0-9,]+)<|) {
+      $favorite_count = $1;
+      $favorite_count =~ s/,//g;
+    }
+  }
+  close(HTTP);
+
+  if (defined $datestr) {
+    # "Nov 16, 2023 · 7:17 PM UTC"
+    $datestr =~ s/[,·]//g;
+    $datestr =~ s/  / /g;
+    #print "$datestr\n";
+    my ($mon, $d, $y, $h, $m, $ampm) = split /[: ]/, $datestr;
+    $h += 12 if $ampm eq "PM";
+    my $time = timegm(0, $m, $h, $d, monthNameToNum($mon) - 1, $y);
+    $date = scalar(gmtime($time)) . " UTC";
+    #print "$date\n";
+  }
 
 
   # 223   147   93     “     LEFT DOUBLE QUOTATION MARK
@@ -428,71 +405,6 @@ sub toHumanReadableNum {
   return nearest(0.1, ($val/1000)) . "k" if $val < 1000000;
   return nearest(0.1, ($val/1000000)) . "M" if $val < 1000000000;
   return nearest(0.1, ($val/1000000000)) . "B";
-}
-
-sub getTwitterAuthToken {
-  my $url = shift;
-  my $token = undef;
-  open (HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
-  binmode(HTTP, ":utf8");
-  while(<HTTP>) {
-    if (!defined($token) and /name="authenticity_token"/) {
-      if (/value="([0-9a-f]+)"/) {
-	$token = $1;
-      }
-    }
-  }
-  close(HTTP);
-  return $token;
-}
-
-sub getTwitterAuthTokens {
-  my $auth = undef;
-  my $token = undef;
-
-  my $mainjs_url = "https://abs.twimg.com/responsive-web/client-web/main.8c9ed305.js";
-  my $headers =
-    "-H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0' " .
-    "-H 'Accept: */*' " .
-    "-H 'Accept-Language: en-US,en;q=0.5' " .
-    "-H 'Referer: https://twitter.com/'" .
-    "-H 'Origin: https://twitter.com'";
-  open (HTTP, '-|', "curl --max-time $timeout -L -k -s --compressed $headers '$mainjs_url'");
-  binmode(HTTP, ":utf8");
-  while(<HTTP>) {
-    if (!defined($auth) and /Web-12.*?a="([^"]*)"/) {
-      $auth = uri_unescape($1);
-    }
-  }
-  close(HTTP);
-
-  #print "auth: $auth\n";
-
-  my $token_url = "https://api.twitter.com/1.1/guest/activate.json";
-  my $headers =
-    "-H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0' " .
-    "-H 'Accept: */*' " .
-    "-H 'Accept-Language: en-US,en;q=0.5' " .
-    "-H 'Referer: https://twitter.com/' " .
-    "-H 'authorization: Bearer " . uri_escape($auth) . "' " .
-    "-H 'x-twitter-client-language: en' " .
-    "-H 'x-twitter-active-user: yes' " .
-    "-H 'content-type: application/x-www-form-urlencoded' " .
-    "-H 'Origin: https://twitter.com' ";
-# -H 'DNT: 1' -H 'Connection: keep-alive' -H 'Cookie: personalization_id="v1_tLuaNk4Y0edXrt3RPUjgDw=="; guest_id=v1%3A161030109738539015; gt=1348326644570845184; ct0=96cd6e43ac2918c19fcc242b4b71a5bd'
-  open (HTTP, '-|', "curl --max-time $timeout -L -k -s --compressed $headers --data '' '$token_url'");
-
-  binmode(HTTP, ":utf8");
-  while(<HTTP>) {
-    if (/{"guest_token":"([0-9]+)"}/) {
-      $token = $1;
-    }
-  }
-  close(HTTP);
-
-  #print "token: $token\n";
-
-  return ($auth, $token);
 }
 
 sub doMastodon {
