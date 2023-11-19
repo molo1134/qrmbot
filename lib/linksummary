@@ -807,6 +807,7 @@ sub doReddit {
   $selftext =~ s/[\r\n]/ /g;
   $selftext =~ s/\s\s+/ /g;
   $selftext =~ s/^\s+//;
+  $selftext = undef if $selftext eq "";
 
   my $c_score = $comment->{score};
   my $c_author = $comment->{author};
