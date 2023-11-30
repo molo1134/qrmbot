@@ -20,12 +20,8 @@ my ($curryear, $currmon, $currdate) = split / /, strftime("%Y %m %d", gmtime($d1
 #print "$curryear, $currmon, $currdate\n";
 #print "$thxyear, $thxmon, $thxdate\n";
 
-
-my $spookyyear = $curryear;
-$spookyyear-- if $currmon == 1 and $currdate < 7;
-
 my $d2 = DateTime->new(
-    year       => $spookyyear,
+    year       => $curryear,
     month      => 10,
     day        => 30,
     hour       => 23,
@@ -35,9 +31,21 @@ my $d2 = DateTime->new(
 
 my $dur = $d2->epoch() - $d1->epoch();
 
-if ($dur < 0) {
+if ($dur < 0 and abs($dur) <= (24*60*60) ) {
 	print "🎃 🎃 🎃 Happy Halloween everyone! https://media2.giphy.com/media/l3vRfhFD8hJCiP0uQ/giphy.gif\n";
 	exit 0;
+}
+
+if ($dur < 0) {
+  $d2 = DateTime->new(
+      year       => $curryear+1,
+      month      => 10,
+      day        => 30,
+      hour       => 23,
+      minute     => 59,
+      second     => 59,
+  );
+  $dur = $d2->epoch() - $d1->epoch();
 }
 
 my $m = floor($dur / (30 * 24 * 60 * 60));
