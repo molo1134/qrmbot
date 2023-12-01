@@ -385,9 +385,9 @@ sub doTwitter {
   }
 
   for(my $i = 0; $i <= $#links; $i++) {
-    print "$i: $links[$i]\n";
+    #print "$i: $links[$i]\n";
     $links[$i] = shortenUrl($links[$i]);
-    print "$i: $links[$i]\n";
+    #print "$i: $links[$i]\n";
   }
 
   #print "TEXT: $text\n";
