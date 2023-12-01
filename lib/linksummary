@@ -303,6 +303,7 @@ sub doTwitter {
   my $retweet_count = undef;
   my $favorite_count = undef;
   my $reply_count = undef;
+  my @links;
   # XXX TODO below here:
   my ($media, $tco, $rt) = undef;
 
@@ -378,6 +379,17 @@ sub doTwitter {
     return;
   }
 
+  while ($text =~ m|<a[^>]*href=["']([^"']*?)["']\s*.*?>|i) {
+    push @links, $1;
+    $text =~ s|<a[^>]*href=.*?>(.*?)<\s*/a\s*>|$1|i;
+  }
+
+  for(my $i = 0; $i <= $#links; $i++) {
+    print "$i: $links[$i]\n";
+    $links[$i] = shortenUrl($links[$i]);
+    print "$i: $links[$i]\n";
+  }
+
   #print "TEXT: $text\n";
   #print "LINKS: ", join(" ", @links), "\n";
   #print "MEDIA: $media\n";
@@ -392,7 +404,7 @@ sub doTwitter {
   $text =~ s/\n//g;
   print "\@${origUsername} RT:" if defined $origUsername and $directRT = 1;
   print "\"$text\" ";
-  #print " ", join(" ", @links) if $#links >= 0;
+  print " ", join(" ", @links), " " if $#links >= 0;
   print "$media " if defined $media;
   print "RT: $tco " if defined $rt and defined $tco;
   print "$tco " if defined $tco and not defined $media and not defined $rt;
