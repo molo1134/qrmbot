@@ -299,6 +299,7 @@ sub doTwitter {
   my $datestr = undef;
   my $date = undef;
   my $text = undef;
+  my $multiline_text = 0;
   my $retweet_count = undef;
   my $favorite_count = undef;
   my $reply_count = undef;
@@ -309,6 +310,7 @@ sub doTwitter {
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
     $in_main_tweet = 1 if not $in_main_tweet and /<div .*?class="main-tweet">/;
+    $in_main_tweet = 0 if $in_main_tweet and /class=".*?after-tweet.*?"/;
     next if not $in_main_tweet;
     if (not defined $fullname and m|<a class="fullname" .*?>(.*?)<|) {
       $fullname = $1;
@@ -322,6 +324,14 @@ sub doTwitter {
     }
     if (not defined $text and m|<div class="tweet-content.*?>(.*?)</div>|) {
       $text = $1;
+    }
+    if (not defined $text and m|<div class="tweet-content.*?>(.*?)$|) {
+      $text = $1;
+      $multiline_text = 1;
+    } elsif ($multiline_text) {
+      $text .= $_;
+      $multiline_text = 0 if m|</div>$|;
+      $text =~ s|</div>||;
     }
     if (not defined $reply_count and m|<span class="tweet-stat">.*<span class="icon-comment".*?></span> ([0-9,]+)<|) {
       $reply_count = $1;
