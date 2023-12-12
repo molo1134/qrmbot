@@ -759,7 +759,9 @@ sub doRedditShare {
   my $url = shift;
   $url =~ s|^https://reddit.com/|https://www.reddit.com/|;
 
-  open(REDIR, '-|', "curl --max-time $timeout -ski '$url' | grep -i ^location:");
+  my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0";
+
+  open(REDIR, '-|', "curl --max-time $timeout -A '$ua' -ski '$url' | grep -i ^location:");
 
   binmode(REDIR, ":utf8");
   local $/;   # read entire file -- FIXME: potentially memory hungry
@@ -805,7 +807,8 @@ sub doReddit {
   }
 
   #print "$jsonurl\n";
-  open(HTTP, '-|', "curl --max-time $timeout -A foo -L -k -s '$jsonurl'");
+  my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0";
+  open(HTTP, '-|', "curl --max-time $timeout -A '$ua' -L -k -s '$jsonurl'");
   binmode(HTTP, ":utf8");
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $json = <HTTP>;
