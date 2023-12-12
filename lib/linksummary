@@ -796,7 +796,7 @@ sub doReddit {
     $id = $1;
     $jsonurl = "https://www.reddit.com/comments/$id/.json";
   } else {
-    print ("nope\n");
+    print ("unexpected url: $url\n");
     return;
   }
 
