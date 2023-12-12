@@ -772,7 +772,11 @@ sub doRedditShare {
   $location =~ s/&&+/&/g;
   $location =~ s/&$//g;
 
-  doReddit($location);
+  if (not defined $location or $location eq "") {
+    print "error: unable to resolve $url\n";
+  } else {
+    doReddit($location);
+  }
 }
 
 sub doReddit {
