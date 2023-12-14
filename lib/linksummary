@@ -798,9 +798,10 @@ sub doReddit {
     $jsonurl = $url;
     $jsonurl =~ s/context=\d+//;
     $jsonurl =~ s/(\?.*)?$/.json$1/;
+    $jsonurl =~ s|https?://((www\|old\|np\|new)\.)?reddit\.com/|https://old.reddit.com/|;
   } elsif ($url =~ /https?:\/\/redd\.it\/(\w+)/) {
     $id = $1;
-    $jsonurl = "https://www.reddit.com/comments/$id/.json";
+    $jsonurl = "https://old.reddit.com/comments/$id/.json";
   } else {
     print ("unexpected url: $url\n");
     return;
