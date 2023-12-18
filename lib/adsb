@@ -111,15 +111,17 @@ if ($apitype eq "reapi") {
     $url = "${reapiUrl}?find_reg=" . uri_escape($callOrReg);
   } elsif (defined($loc) and $loc =~ /^-?\d+(.\d+)?,-?\d+(.\d+)?$/) {
     ($lat, $lon) = split /,/, $loc;
-    $url = "${reapiUrl}?closest=" . uri_escape($lat) . "," .
-      uri_escape($lon) . ",25"; # 25 nmi
+    $url = "${reapiUrl}?closest=" . uri_escape($lat) . "," .  uri_escape($lon) . ",25"; # 25 nmi
   } elsif (defined($loc)) {
     $loc =~ s/^\s*//;
     $loc =~ s/\s*$//;
     $geo = argToCoords($loc);
+    if (not defined $geo) {
+      print "place not found: $loc\n";
+      exit $exitnonzeroonerror;
+    }
     ($lat, $lon) = split /,/, $geo;
-    $url = "${reapiUrl}?closest=" . uri_escape($lat) . "," .
-      uri_escape($lon) . ",25"; # 25 nmi
+    $url = "${reapiUrl}?closest=" . uri_escape($lat) . "," .  uri_escape($lon) . ",25"; # 25 nmi
   } else {
     print "usage: adsb [--fi|--lol|--tac] <location>|<0xHEXCODE>|<callsign>|<registration>\n";
     exit $exitnonzeroonerror;
@@ -137,7 +139,12 @@ if ($apitype eq "reapi") {
   my $json = <HTTP>;
   close(HTTP);
   if (not $json =~ /^\s*{/) {
-    print "error1 while retrieving data: from $url : $json\n";
+    my $err = undef;
+    if ($json =~ m|<title>([^<]*)</title>|i) {
+      $err = $1;
+    }
+    print "error1 while retrieving data: from $url : $err\n" if defined $err;
+    print "error1 while retrieving data: from $url : $json\n" if not defined $err;
     exit $exitnonzeroonerror;
   }
   my $j = decode_json($json);
@@ -176,6 +183,10 @@ if ($apitype eq "reapi") {
     $loc =~ s/^\s*//;
     $loc =~ s/\s*$//;
     $geo = argToCoords($loc);
+    if (not defined $geo) {
+      print "place not found: $loc\n";
+      exit $exitnonzeroonerror;
+    }
     ($lat, $lon) = split /,/, $geo;
     $url = "${baseUrl}v2/closest/" . uri_escape($lat) . "/" .  uri_escape($lon) . "/25"; # 25 nmi
   } else {
