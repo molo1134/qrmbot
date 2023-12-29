@@ -226,7 +226,9 @@ if (!defined $ursiCode or $place eq "list") {
   exit 0 if !defined($ursiCode);
 }
 
-my $dataUrl = "https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=${ursiCode}&charName=MUFD&DMUF=3000";
+# TODO: get additional stats: fof2, etc?
+#"https://lgdc.uml.edu/fastchar/getbest?ursiCode=MHJ45&charName=foF2,M(D),MUF(D)"
+my $dataUrl = "https://lgdc.uml.edu/fastchar/getbest?ursiCode=${ursiCode}&charName=MUF(D)";
 my ($grid, $lat, $lon, $utc, $cs, $mufd, $minmuf, $maxmuf, $mintime, $maxtime, $name);
 my ($last, $ts, $sec, $min, $hour, $day, $mon, $year);
 
@@ -239,7 +241,7 @@ my %mufrecords;
 #print "$dataUrl\n";
 open (DATA, '-|', "curl -s -k -L --max-time $timeout --retry 1 \"${dataUrl}\"");
 while (<DATA>) {
-  if (/Location: GEO (-?[0-9.]+)([NS]) (-?[0-9.]+)([EW]), URSI-Code (\w+) (.*?)\s*$/) {
+  if (/Location: GEO\s+\(\s+(-?[0-9.]+)\s+([NS])\s+(-?[0-9.]+)\s+([EW])\s+\), URSI-Code (\w+), (.*?)\s*$/) {
     $lat = $1;
     $lon = $3;
     $lat *= -1 if $2 eq "S";
