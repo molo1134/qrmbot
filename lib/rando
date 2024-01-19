@@ -171,18 +171,24 @@ if ($#list > 0) {
 
 #print "A=$a; X=$x\n";
 
+my $hex = 0;
+$hex = 1 if $x == 16;
+
 my $sum = 0;
 
 $i = 0;
 while ($i < $a) {
   my $val = int(rand($x)) + 1;
   $sum += $val;
-  print "[$val] " if $intermediates = 1 and $unicode == 0 and $a > 1;
+  print "[$val] " if $intermediates = 1 and $unicode == 0 and $a > 1 and $hex == 0;
   print chr(0x2680 + $val - 1), " " if $unicode == 1;
+  print "0x" if $i == 0 and $hex == 1;
+  printf "%X", ($val - 1) if $hex == 1;
   $i++;
 }
-print "= " if $intermediates = 1 and $a > 1;
-print "$sum\n" if not $#list > 0;
+print "= " if $intermediates = 1 and $a > 1 and $hex == 0;
+print "$sum\n" if not $#list > 0 and $hex == 0;
+print "\n" if $hex == 1;
 
 if ($#list > 0) {
   print $list[$sum - 1], "\n";
