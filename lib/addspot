@@ -1,9 +1,14 @@
 #!/usr/bin/perl
+#
+# 2-clause BSD license.
+# Copyright (c) 2024 molo1134@github. All rights reserved.
 
 use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
 
 use DBI ();
-
 use POSIX qw(strftime);
 
 use File::Basename;
@@ -56,6 +61,7 @@ $dbh->do('CREATE TABLE IF NOT EXISTS spots.t_spots (
 ') || die "execution failed: $dbh->errstr()";
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  USAGE:
   if ($username eq getEggdropUID()) {
     print "usage: !spot <callsign> <freq_khz> [notes]\n";
   } else {
@@ -102,6 +108,12 @@ while ($i <= $#ARGV) {
 }
 
 my $ts = time();
+
+if ((not defined $callsign or $callsign eq "") and
+    (not defined $freq_khz or $freq_khz eq "" or $freq_khz == 0) and
+    (not defined $notes or $notes eq "")) {
+    goto USAGE;
+}
 
 if (not defined $callsign or $callsign eq "") {
   print "$de: missing callsign\n";
