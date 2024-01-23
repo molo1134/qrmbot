@@ -2087,11 +2087,13 @@ proc pub_spot { nick host hand chan text } {
 	global spotbin
 	global spotchan
 	set input [sanitize_string [string trim "${text}"]]
+	set cleannick [sanitize_string [string trim "${nick}"]]
+	set cleanchan [sanitize_string [string trim "${chan}"]]
 	putlog "spot pub: $nick $host $hand $chan $input"
 
 	#TODO: verify bot is on $spotchan.  call channels[] method?
 
-	set fd [open "|${spotbin} --chan '$chan' --nick '$nick' ${input}" r]
+	set fd [open "|${spotbin} --chan ${cleanchan} --nick ${cleannick} ${input}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		if {[string first "usage" "$line"] == 0} {
@@ -2108,11 +2110,12 @@ proc msg_spot {nick uhand handle input} {
 	global spotbin
 	global spotchan
 	set input [sanitize_string [string trim "${input}"]]
+	set cleannick [sanitize_string [string trim "${nick}"]]
 	putlog "spot msg: $nick $uhand $handle $input"
 
 	#TODO: verify bot is on $spotchan.  call channels[] method?
 
-	set fd [open "|${spotbin} --nick '$nick' ${input}" r]
+	set fd [open "|${spotbin} --nick ${cleannick} ${input}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		if {[string first "usage" "$line"] == 0} {
