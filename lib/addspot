@@ -19,7 +19,16 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
-my $spotfile = "spots.sqlite";
+my $dbdir = $ENV{HOME} . "/.qrmbot/db";
+my $spotfile = "$dbdir/spots.sqlite";
+
+if (not -d $dbdir) {
+  print "making db directory..\n";
+  system ("mkdir -p $dbdir\n");
+  if (not -d $dbdir) {
+    print "unable to make db directory $dbdir\n";
+  }
+}
 
 my $dbh = DBI->connect("dbi:SQLite:db", '', '', {
     AutoCommit => 1,
