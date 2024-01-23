@@ -920,7 +920,8 @@ sub doQRMspot
   while(my @row = $sth->fetchrow()) {
     my($ts, $de, $chan, $call, $freq, $note) = @row;
     my $cmt = $note;
-    $cmt .= " " . $chan if defined $chan and $chan ne "";
+    $cmt = $chan if defined $chan and $chan ne "" and (not defined $note or $note eq "");
+    $cmt .= " " . $chan if defined $chan and $chan ne "" and (defined $note and $note ne "");
     $de = undef if $de eq "";
     push (@spots, {ts => $ts,
 		    src => "q",

@@ -142,7 +142,8 @@ my $sth = $dbh->prepare('
 $sth->execute($ts, $de, $channel, $callsign, int($freq_khz * 1000), $notes);
 
 my $cmt = $notes;
-$cmt .= " " . $channel if defined $channel and $channel ne "";
+$cmt = $channel if defined $channel and $channel ne "" and (not defined $notes or $notes eq "");
+$cmt .= " " . $channel if defined $channel and $channel ne "" and (defined $notes and $notes ne "");
 
 my $timedesc = strftime("%H%Mz %d %b", gmtime($ts));
 printf "%-7s %-7s %5d %-28s %s %s\n", $de, $callsign, int($freq_khz), substr($cmt, 0, 28), $timedesc, "q";
