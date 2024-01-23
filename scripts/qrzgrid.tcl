@@ -2096,9 +2096,9 @@ proc pub_spot { nick host hand chan text } {
 	set fd [open "|${spotbin} --chan ${cleanchan} --nick ${cleannick} ${input}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		if {[string first "usage" "$line"] == 0} {
+		if {[string first "usage:" "$line"] == 0} {
 		  putchan $chan "$line"
-		} elseif {[string first "$nick" "$line"] == 0} {
+		} elseif {[string first "${nick}:" "$line"] == 0} {
 		  putchan $chan "$line"
 		} else {
 		  putchan $spotchan "$line"
@@ -2118,9 +2118,9 @@ proc msg_spot {nick uhand handle input} {
 	set fd [open "|${spotbin} --nick ${cleannick} ${input}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
-		if {[string first "usage" "$line"] == 0} {
+		if {[string first "usage:" "$line"] == 0} {
 		  putmsg "$nick" "$line"
-		} elseif {[string first "$nick" "$line"] == 0} {
+		} elseif {[string first "${nick}:" "$line"] == 0} {
 		  putmsg "$nick" "$line"
 		} else {
 		  putchan $spotchan "$line"
