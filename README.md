@@ -38,6 +38,9 @@ As tested on Debian:
 * `libswitch-perl`
 * `libtext-csv-perl`
 * `liburi-perl`
+* `libdbd-sqlite3-perl`
+* `libdbi-perl`
+* `libsqlite3-0`
 
 ### Building `libastro-satpass-perl`
 
@@ -85,6 +88,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrzcookies` -- HTTP cookies for qrz.com session
 * `$HOME/.spottimestamps` -- used for spots monitor mode; safe to remove
 * `$HOME/.qrmbot/cache/radmon.txt` -- cached rad monitor data; safe to remove
+* `$HOME/.qrmbot/db/spots.sqlite` -- database of user-added radio spots
 
 
 ## Security
