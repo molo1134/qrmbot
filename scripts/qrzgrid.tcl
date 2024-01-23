@@ -2079,5 +2079,52 @@ proc fieldday { nick host hand chan text } {
 	close $fd
 }
 
+set spotbin "/home/eggdrop/bin/addspot"
+set spotchan "#spots"
+bind pub - !spot pub_spot
+bind msg - !spot msg_spot
+proc pub_spot { nick host hand chan text } {
+	global spotbin
+	global spotchan
+	set input [sanitize_string [string trim "${text}"]]
+	putlog "spot pub: $nick $host $hand $chan $input"
+
+	#TODO: verify bot is on $spotchan.  call channels[] method?
+
+	set fd [open "|${spotbin} --chan '$chan' --nick '$nick' ${input}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		if {[string first "usage" "$line"] == 0} {
+		  putchan $chan "$line"
+		} elseif {[string first "$nick" "$line"] == 0} {
+		  putchan $chan "$line"
+		} else {
+		  putchan $spotchan "$line"
+		}
+	}
+	close $fd
+}
+proc msg_spot {nick uhand handle input} {
+	global spotbin
+	global spotchan
+	set input [sanitize_string [string trim "${input}"]]
+	putlog "spot msg: $nick $uhand $handle $input"
+
+	#TODO: verify bot is on $spotchan.  call channels[] method?
+
+	set fd [open "|${spotbin} --nick '$nick' ${input}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		if {[string first "usage" "$line"] == 0} {
+		  putmsg "$nick" "$line"
+		} elseif {[string first "$nick" "$line"] == 0} {
+		  putmsg "$nick" "$line"
+		} else {
+		  putchan $spotchan "$line"
+		}
+	}
+	close $fd
+}
+
 putlog "Ham utils loaded."
 

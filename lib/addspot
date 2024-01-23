@@ -1,0 +1,155 @@
+#!/usr/bin/perl
+
+use strict;
+
+use DBI ();
+
+use POSIX qw(strftime);
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Location;
+use Util;
+use Colors;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# configuration
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+my $spotfile = "spots.sqlite";
+
+my $dbh = DBI->connect("dbi:SQLite:db", '', '', {
+    AutoCommit => 1,
+    PrintError => 0,
+    RaiseError => 1,
+    sqlite_use_immediate_transaction => 0,
+  }
+) or die "unable to load sqlite";
+
+$dbh->func('regexp', 2, sub {
+    my ($regex, $string) = @_;
+    return $string =~ /$regex/;
+}, 'create_function');
+
+$dbh->do("ATTACH DATABASE '$spotfile' AS spots;") || die "execution failed: $dbh->errstr()";
+$dbh->do('CREATE TABLE IF NOT EXISTS spots.t_spots (
+  timestamp INT,
+  de VARCHAR(30),
+  channel VARCHAR(40),
+  callsign VARCHAR(30),
+  freq_hz INT,
+  notes VARCHAR(256),
+  PRIMARY KEY (timestamp, callsign)
+  );
+') || die "execution failed: $dbh->errstr()";
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  if ($username eq getEggdropUID()) {
+    print "usage: !spot <callsign> <freq_khz> [notes]\n";
+  } else {
+    print "usage: $0 [--channel \\#<channel>] [--de <nick>] <callsign> <freq_khz> [notes]\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $callsign;
+my $freq_khz;
+my $notes;
+my $channel;
+my $de;
+
+# when calling from eggdrop, parameters may be packed into first parameter.
+if ($#ARGV == 0 && $ARGV[0] =~ m/ /) {
+  @ARGV = split / /, $ARGV[0];
+}
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] eq "--nick" or $ARGV[$i] eq "--de") {
+    $de = $ARGV[++$i];
+    $i++; next;
+  }
+  if ($ARGV[$i] eq "--chan" or $ARGV[$i] eq "--channel") {
+    $channel = $ARGV[++$i];
+    $i++; next;
+  }
+  if (!defined($callsign)) {
+    $callsign = uc $ARGV[$i];
+    $i++; next;
+  }
+  if (defined($callsign) and not defined($freq_khz) and $ARGV[$i] =~ /^\d+(\.\d*)?$/) {
+    $freq_khz = $ARGV[$i];
+    $i++; next;
+  }
+  if (defined($callsign) and defined($freq_khz)) {
+    $notes .= " " . $ARGV[$i] if defined $notes;
+    $notes = $ARGV[$i] if not defined $notes;
+    $i++; next;
+  }
+  $i++;
+}
+
+my $ts = time();
+
+if (not defined $callsign or $callsign eq "") {
+  print "$de: missing callsign\n";
+  exit $exitnonzeroonerror;
+}
+
+if (not ($callsign =~ m/^([A-Z0-9]+[0-9]?\/)?[A-Z0-9]+[0-9][A-Z]+(\/[A-Z0-9]+)?$/) and not ($callsign =~ m/^\d{3,}$/)) {
+  print "$de: invalid callsign: $callsign\n";
+  exit $exitnonzeroonerror;
+}
+
+if (not defined $freq_khz or $freq_khz eq "" or $freq_khz == 0) {
+  print "$de: missing frequency\n";
+  exit $exitnonzeroonerror;
+}
+
+if (not ishamfreq($freq_khz)) {
+  print "$de: invalid frequency: $freq_khz kHz\n";
+  exit $exitnonzeroonerror;
+}
+
+my $sth = $dbh->prepare('
+  INSERT INTO spots.t_spots (timestamp, de, channel, callsign, freq_hz, notes)
+  VALUES (?, ?, ?, ?, ?, ?);');
+$sth->execute($ts, $de, $channel, $callsign, int($freq_khz * 1000), $notes);
+
+my $timedesc = strftime("%H%Mz %d %b", gmtime($ts));
+printf "%-7s %-7s %5d %-28s %s %s\n", $de, $callsign, int($freq_khz), substr($notes, 0, 28), $timedesc, "q";
+exit 0;
+
+
+
+
+sub ishamfreq {
+  my $freqkhz = shift;
+  my $wholepart = int($freqkhz);
+
+  return 0 if $wholepart < 135;
+  return 1 if $freqkhz >= 135.7 and $freqkhz <= 137.8;
+  return 1 if $wholepart >= 472 and $wholepart <= 479;
+  return 1 if $wholepart >= 1800 and $wholepart <= 2000;
+  return 1 if $wholepart >= 3500 and $wholepart <= 4000;
+  return 1 if $wholepart >= 5200 and $wholepart <= 5500;
+  return 1 if $wholepart >= 7000 and $wholepart <= 7300;
+  return 1 if $wholepart >= 10100 and $wholepart <= 10150;
+  return 1 if $wholepart >= 14000 and $wholepart <= 14350;
+  return 1 if $wholepart >= 18068 and $wholepart <= 18168;
+  return 1 if $wholepart >= 21000 and $wholepart <= 21450;
+  return 1 if $wholepart >= 24890 and $wholepart <= 24990;
+  return 1 if $wholepart >= 28000 and $wholepart <= 29700;
+  return 1 if $wholepart >= 40000 and $wholepart <= 45000;
+  return 1 if $wholepart >= 50000 and $wholepart <= 54000;
+  return 1 if $wholepart >= 69900 and $wholepart <= 70600;
+  return 1 if $wholepart >= 144000 and $wholepart <= 148000;
+  return 1 if $wholepart >= 219000 and $wholepart <= 225000;
+  return 1 if $wholepart >= 420000 and $wholepart <= 450000;
+  return 1 if $wholepart >= 902000 and $wholepart <= 928000;
+  return 1 if $wholepart >= 1240000 and $wholepart <= 1300000;
+  return 0;
+}
