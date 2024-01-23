@@ -49,6 +49,7 @@ $dbh->func('regexp', 2, sub {
 }, 'create_function');
 
 $dbh->do("ATTACH DATABASE '$spotfile' AS spots;") || die "execution failed: $dbh->errstr()";
+  # TODO: keep this in sync with 'spots' file
 $dbh->do('CREATE TABLE IF NOT EXISTS spots.t_spots (
   timestamp INT,
   de VARCHAR(30),
@@ -140,8 +141,11 @@ my $sth = $dbh->prepare('
   VALUES (?, ?, ?, ?, ?, ?);');
 $sth->execute($ts, $de, $channel, $callsign, int($freq_khz * 1000), $notes);
 
+my $cmt = $notes;
+$cmt .= " " . $channel if defined $channel and $channel ne "";
+
 my $timedesc = strftime("%H%Mz %d %b", gmtime($ts));
-printf "%-7s %-7s %5d %-28s %s %s\n", $de, $callsign, int($freq_khz), substr($notes, 0, 28), $timedesc, "q";
+printf "%-7s %-7s %5d %-28s %s %s\n", $de, $callsign, int($freq_khz), substr($cmt, 0, 28), $timedesc, "q";
 exit 0;
 
 

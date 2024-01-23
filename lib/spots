@@ -20,6 +20,7 @@ use Switch;
 use v5.10;
 use JSON qw( decode_json );
 use Math::Round;
+use DBI ();
 
 use File::Basename;
 use Cwd 'realpath';
@@ -46,9 +47,9 @@ my $defaultSpotsForEggdrop = 3;
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq getEggdropUID()) {
-    print "usage: !spots [--dxw] [--rbn] [--psk] [--ham] [--pota] <callsign> [limit]\n";
+    print "usage: !spots [--qrm] [--dxw] [--rbn] [--psk] [--ham] [--pota] <callsign> [limit]\n";
   } else {
-    print "usage: $0 [--dxw] [--rbn] [--psk] [--ham] [--pota] <callsign> [limit]\n";
+    print "usage: $0 [--qrm] [--dxw] [--rbn] [--psk] [--ham] [--pota] <callsign> [limit]\n";
   }
   print "  highlight: ", cyan("different zone"), ", ", lightblue("different country"), ", ", lightgreen("different continent"), "\n";
   exit $exitnonzeroonerror;
@@ -70,6 +71,7 @@ my $dxw = 0;
 my $rbn = 0;
 my $ham = 0;
 my $pota = 0;
+my $qrm = 0;
 
 # when calling from eggdrop, parameters may be packed into first parameter.
 if ($#ARGV == 0 && $ARGV[0] =~ m/ /) {
@@ -82,6 +84,10 @@ while ($i <= $#ARGV) {
     # likely get your IP banned if you do it for any length of time.  This is
     # undocumented for a reason.
     $monitor = 1;
+    $i++; next;
+  }
+  if ($ARGV[$i] =~ /--qrm/) {
+    $qrm = 1;
     $i++; next;
   }
   if ($ARGV[$i] =~ /--dxw/) {
@@ -121,12 +127,13 @@ while ($i <= $#ARGV) {
   $i++;
 }
 
-if ($dxw == 0 && $rbn == 0 && $psk == 0 && $ham == 0 && $pota == 0) {
+if ($dxw == 0 && $rbn == 0 && $psk == 0 && $ham == 0 && $pota == 0 && $qrm == 0) {
   $rbn = 1;
   $dxw = 1;
   $psk = 1;
   $ham = 1;
   $pota = 1;
+  $qrm = 1;
 }
 
 $callsign = "" unless defined $callsign;
@@ -161,6 +168,7 @@ doDXWatch() unless $dxw == 0;	  # dx watch
 doRBN() unless $rbn == 0;	  # reverse beacon network
 doHamspots() unless $ham == 0;
 doPotaspot() unless $pota == 0;
+doQRMspot() unless $qrm == 0;
 
 if (scalar @spots > 0) {
   # for dxcc
@@ -715,7 +723,7 @@ sub show
     } else {
       $timedesc = strftime("%H%Mz %d %b", gmtime($spot{ts}));
     }
-    printf "%s %-7s %5d %-28s %s %s\n", colorizeDe($spot{de}, $spot{dx}), $spot{dx}, $spot{f}, $spot{msg}, $timedesc, $spot{src};
+    printf "%s %-7s %5d %-28s %s %s\n", colorizeDe($spot{de}, $spot{dx}, $spot{src}), $spot{dx}, $spot{f}, $spot{msg}, $timedesc, $spot{src};
     if (++$i >= $limit) {
       last;
     }
@@ -725,12 +733,13 @@ sub show
 sub colorizeDe {
   my $de = shift;
   my $dx = shift;
+  my $src = shift;
 
   my $formattedDe = sprintf("%-7s", $de);
 
   our %dxccCache;
 
-  return $formattedDe if not defined $de or not defined $dx;
+  return $formattedDe if not defined $de or not defined $dx or $src eq "q";
 
   my ($dxpfx,$dxcont,$dxzone);
   my ($depfx,$decont,$dezone);
@@ -859,6 +868,69 @@ sub doPotaspot
 		    msg => substr($desc, 0 , 28)}
 		);
   }
+}
+
+sub doQRMspot
+{
+  my $dbdir = $ENV{HOME} . "/.qrmbot/db";
+  my $spotfile = "$dbdir/spots.sqlite";
+
+  if (not -d $dbdir) {
+    print "making db directory..\n";
+    system ("mkdir -p $dbdir\n");
+    if (not -d $dbdir) {
+      print "unable to make db directory $dbdir\n";
+    }
+  }
+
+  my $dbh = DBI->connect("dbi:SQLite:db", '', '', {
+      AutoCommit => 1,
+      PrintError => 0,
+      RaiseError => 1,
+      sqlite_use_immediate_transaction => 0,
+    }
+  ) or die "unable to load sqlite";
+
+  $dbh->func('regexp', 2, sub {
+      my ($regex, $string) = @_;
+      return $string =~ /$regex/;
+    }, 'create_function');
+
+  $dbh->do("ATTACH DATABASE '$spotfile' AS spots;") || die "execution failed: $dbh->errstr()";
+  # TODO: keep this in sync with 'addspot' file
+  $dbh->do('CREATE TABLE IF NOT EXISTS spots.t_spots (
+    timestamp INT,
+    de VARCHAR(30),
+    channel VARCHAR(40),
+    callsign VARCHAR(30),
+    freq_hz INT,
+    notes VARCHAR(256),
+    PRIMARY KEY (timestamp, callsign)
+    );
+    ') || die "execution failed: $dbh->errstr()";
+
+  my $sth = $dbh->prepare('
+    SELECT timestamp, de, channel, callsign, freq_hz, notes
+    FROM spots.t_spots
+    WHERE callsign LIKE ?
+    ORDER BY timestamp DESC
+    LIMIT ?;');
+  $sth->execute($callsign, $limit);
+  my $row;
+  while(my @row = $sth->fetchrow()) {
+    my($ts, $de, $chan, $call, $freq, $note) = @row;
+    my $cmt = $note;
+    $cmt .= " " . $chan if defined $chan and $chan ne "";
+    $de = undef if $de eq "";
+    push (@spots, {ts => $ts,
+		    src => "q",
+		    de => $de,
+		    dx => $call,
+		    f => $freq / 1000,
+		    msg => substr($cmt, 0, 28)}
+		);
+  }
+
 }
 
 # vim: set ts=8 sw=2 sts=2
