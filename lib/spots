@@ -925,7 +925,7 @@ sub doQRMspot
     $de = undef if $de eq "";
     push (@spots, {ts => $ts,
 		    src => "q",
-		    de => $de,
+		    de => substr($de, 0, 7),
 		    dx => $call,
 		    f => $freq / 1000,
 		    msg => substr($cmt, 0, 28)}
