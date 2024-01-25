@@ -171,6 +171,11 @@ if ($#list > 0) {
 
 #print "A=$a; X=$x\n";
 
+if ($a > 1000) {
+  print "ain't nobody got time for that.\n";
+  exit 0;
+}
+
 my $hex = 0;
 $hex = 1 if $x == 16;
 
