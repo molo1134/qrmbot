@@ -113,6 +113,7 @@ sub doRegion {
     my ($call, $status, $odds, $comp) = split /,/;
     push @avail, $call if $status eq "available";
     push @unavail, $call if $status eq "blocked";
+    push @unavail, $call if $status eq "blacklisted";
     push @upcoming, $call if $status eq "upcoming";
     push @pending, $call if $status eq "pending";
     $regionPreds{$call} = $odds if $status eq "pending";
@@ -305,7 +306,7 @@ sub formatPred {
   $pred = lightblue($pred) if $pred =~ /^(Competition|Available)/;
   $pred = italic($pred) if $pred =~ /^Unneeded/;
   $pred = yellow($pred) if $pred =~ /^(Offlined|Await)/;
-  $pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv|Inactive|Block)/;
+  $pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv|Inactive|Block|Black)/;
   return $pred;
 }
 
