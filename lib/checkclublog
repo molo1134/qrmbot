@@ -183,7 +183,9 @@ my ($upload, undef) = split(" ", $rec{lastupload}) if defined $rec{lastupload};
 
 $upload = "${end}?" if defined $upload and $upload lt $end;
 
-print bold($call), ": clublog from $start to $end";
+print bold($call), ": ";
+print "clublog from $start to $end" if defined $start or defined $end;
+print "no clublog logs" if not defined $start and not defined $end;
 print "; last upload $upload" if defined $upload;
 print "; " . bold("OQRS") if $rec{oqrs} eq "true" or $rec{oqrs} == 1;
 print "; grid $rec{locator}" if defined $rec{locator};
