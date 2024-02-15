@@ -5,6 +5,7 @@
 
 use strict;
 use utf8;
+use Encode qw(decode);
 use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
@@ -77,10 +78,9 @@ my $notes;
 my $channel;
 my $de;
 
-# when calling from eggdrop, parameters may be packed into first parameter.
-if ($#ARGV == 0 && $ARGV[0] =~ m/ /) {
-  @ARGV = split / /, $ARGV[0];
-}
+@ARGV = map { decode "utf-8", $_ } @ARGV;
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
 
 my $i = 0;
 while ($i <= $#ARGV) {
