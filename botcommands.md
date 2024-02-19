@@ -7,9 +7,9 @@
  * `!bands` -- display HF propagation information
  * `!solar` -- display solar ionospheric conditions
  * `!xray` -- display xray flux
- * `!kindex` `!ki` -- 3-day k-index forecast
+ * `!kindex` `!ki` `!kf` -- 3-day k-index forecast
  * `!forecast` -- 27 day solar forecast
- * `!45day` -- 45 day solar forecast
+ * `!45day` `!usaf` -- USAF 45 day solar forecast
  * `!longterm` -- solar cycle forecast
  * `!activity` -- band activity from pskreporter
  * `!dxcc` -- display information on a dxcc entity
@@ -84,7 +84,7 @@
 
 ## Radio-related commands:
 
-### `!qrz` !call -- lookup callsign on qrz.com
+### `!qrz` `!call` -- lookup callsign on qrz.com
 
 Usage:
 
@@ -205,11 +205,92 @@ Example:
 
 Data source: GOES via NOAA SWPC
 
-### `!kindex` `!ki` -- 3-day k-index forecast
+### `!kindex` `!ki` `!kf` -- 3-day k-index forecast
+
+Example:
+
+```
+    <molo1134> !kindex
+    <qrm> Kp index prediction as of 2016 Feb 03 0030 UTC:
+    <qrm> Feb 03|Feb 04|Feb 05: ▃▄▃▄▃▂▂▃|▃▃▂▂▂▂▂▂|▂▂▂▂▁▁▂▂
+```
+
+Data source: NOAA SWPC
+
 ### `!forecast` -- 27 day solar forecast
-### `!45day` -- 45 day solar forecast
+
+Output also indicates major upcoming HF contests.
+
+Example:
+
+```
+    <molo1134> !forecast
+    <qrm> Daily forecast as of: 2023 Dec 04 0332 UTC; today to 2023 Dec 30:
+    <qrm> Kp : ▆▅▄▃▂▂▂▂▄▃▂▂▂▂▅▅▃▂▅▄▂▂▂▂▂▂▂
+    <qrm> Ap : ▄▂▂▁▁▁▁▁▂▁▁▁▁▁▂▃▁▁▃▂▁▁▁▁▁▁▁
+    <qrm> SFI: ▄▃▃▃▃▃▃▄▄▄▄▄▄▄▅▅▅▅▅▅▅▅▅▅▄▄▄
+    <qrm>           ^^ ARRL 10m
+    <qrm>                   ^ ARRL Rookie Roundup, CW
+```
+
+Data source: NOAA SWPC
+
+### `!45day` `!usaf` -- USAF 45 day solar forecast
+
+Example:
+
+```
+    <molo1134> !usaf
+    <qrm> USAF 45-day forecast as of: 2024 Jan 11 2141 UTC; today to 2024 Feb 25:
+    <qrm> Ap : ▁▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▂
+    <qrm> SFI: ▆▆▆▆▆▆▆▄▄▄▄▄▄▄▄▃▄▄▄▄▄▅▅▄▅▅▅▅▅▅▅▅▅▅▄▄▄▄▄▄▄▄▃▄▄
+```
+
+Data source: USAF via NOAA SWPC
+
 ### `!longterm` -- solar cycle forecast
+
+Example:
+
+```
+    <molo1134> !longterm
+    <qrm> NOAA: | 2023       | 2024       | 2025
+    <qrm> SFI: ▄|▄▄▄▄▄▄▃▃▃▃▃▃|▃▃▃▃▃▃▃▃▃▃▃▃|▃▃▃▄▄▄▄▄▄▄▃▃ : 119.9-142.6
+    <qrm> SN:  ▄|▄▄▄▄▄▄▃▂▁▁▁▁|▁▂▃▃▄▅▅▆▆▇▇▇|▇▇▇▇▇▇▇▇▇▇▇▇ : 92.5-114.6
+    <qrm> NASA:  | 2023       | 2024       | 2025
+    <qrm> SFI: ▄▄|▄▄▄▄▄▄▄▅▅▅▅▅|▄▄▄▄▄▄▄▄▄▄▄▄|▄▄▄▄▄▄▄▄▄▃▃▃ : 131.2-155.4
+    <qrm> AP:  ▁▁|▁▁▁▁▁▁▁▂▂▂▂▂|▂▂▂▁▁▁▁▂▂▃▃▃|▃▃▄▅▅▆▇▇▇▇▇▇ : 10.8-13.9
+```
+
+Data sources: NOAA SWPC, NASA MSAFE
+
 ### `!activity` -- band activity from pskreporter
+
+Usage:
+
+```
+    !activity [mode] <grid>
+```
+
+Examples:
+
+```
+    <molo1134> !activity FN
+    <qrm> ALL from grid FN (last 15 min): 0.23m⇒5, 2m⇒30, 6m⇒4, 10m⇒59903,
+             12m⇒13053, 15m⇒35153, 17m⇒9882, 20m⇒64162, 30m⇒16118, 40m⇒32383,
+             60m⇒964, 80m⇒5054, 160m⇒1037, 630m⇒10
+
+    <molo1134> !activity FN21
+    <qrm> ALL from grid FN21 (last 15 min): 10m⇒884, 12m⇒857, 15m⇒1483,
+             17m⇒26, 20m⇒140, 30m⇒75, 40m⇒52, 160m⇒1
+
+    <molo1134> !activity FN FT4
+    <qrm> FT4 from grid FN (last 15 min): 10m⇒2246, 12m⇒6, 15m⇒470, 17m⇒50,
+             20m⇒2630, 30m⇒281, 40m⇒1266, 60m⇒3, 80m⇒112, 160m⇒22
+```
+
+Data source: https://pskreporter.info/
+
 ### `!dxcc` -- display information on a dxcc entity
 ### `!spots` -- display spots for a callsign
 ### `!morse` `!cw` -- convert to morse code
