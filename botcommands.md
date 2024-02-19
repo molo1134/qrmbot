@@ -1,8 +1,90 @@
 #IRC bot Commands
 
+## Command summary:
+
+ * `!qrz` `!call` -- lookup callsign on qrz.com
+ * `!qth` `!grid` -- lookup grid square or qth
+ * `!bands` -- display HF propagation information
+ * `!solar` -- display solar ionospheric conditions
+ * `!xray` -- display xray flux
+ * `!kindex` `!ki` -- 3-day k-index forecast
+ * `!forecast` -- 27 day solar forecast
+ * `!45day` -- 45 day solar forecast
+ * `!longterm` -- solar cycle forecast
+ * `!activity` -- band activity from pskreporter
+ * `!dxcc` -- display information on a dxcc entity
+ * `!spots` -- display spots for a callsign
+ * `!morse` `!cw` -- convert to morse code
+ * `!unmorse` `!demorse` -- decode from morse
+ * `!repeater` -- search for repeater
+ * `!iono` -- report from nearest ionosonde
+ * `!muf` -- GIRO MUF reports from ionosondes
+ * `!blitz` `!zap` -- lightning report
+ * `!aprs` -- APRS station information
+ * `!eme` -- EME prediction
+ * `!graves` -- French 143 MHz radar as EME beacon
+ * `!sat` -- satellite info and pass predictor
+ * `!satpass` -- satellite pass predictor
+ * `!satinfo` -- satellite info
+ * `!qcode` `!q` -- qcode lookup
+ * `!rig` -- describe a radio or other gear
+ * `!lotw` -- last upload date to LoTW for a callsign
+ * `!eqsl` -- last login to eqsl.cc for a callsign
+ * `!clublog` `!oqrs` -- log and OQRS info on clublog.org
+ * `!qsl` -- check all of the above qsl methods
+ * `!league` -- report clublog league standings
+ * `!pota` -- search POTA parks and users
+ * `!sota` -- search SOTA summits
+ * `!iota` -- search IOTA islands
+ * `!1x1` -- search 1x1 special event stations
+ * `!contests` -- list current and upcoming contests
+ * `!wrtc` -- show WRTC standings for a callsign
+ * `!fspl` -- free space path loss calculator
+ * `!coax` `!atten` -- coax attenuation calculator
+ * `!ae7q` -- get US callsign availability info
+ * `!vanity` -- get US vanity callsign application info
+ * `!dxped` -- get current dxpedition info
+ * `!wx` `!wxfull` -- show current weather conditions
+ * `!wxf` `!wxflong` -- weather forecast
+ * `!metar` -- show METAR weather data
+ * `!taf` -- show TAF weather data
+ * `!utc` -- display current UTC time
+ * `!time` `!tz` -- localtime in the qth or grid specified
+ * `!wwv` -- emulate WWV station (in channel only)
+ * `!moon` -- Lunar position and phase
+ * `!sun` -- Solar position
+ * `!elev` -- get elevation data for a place
+ * `!drive` -- compute drive time and distance using google maps
+ * `!transit` -- compute transit time and route using google transit
+ * `!fire` -- show nearest wildfire
+ * `!rad` -- report nearest radiation monitor
+ * `!quake` `!quakef` -- earthquake info
+ * `!calc` -- calculator
+ * `!units` -- convert values between units
+ * `!ctof` `!ftoc` -- convert temperatures
+ * `!stock` -- financial quotes
+ * `!gold` `!silver` `!platinum` -- precious metal prices
+ * `!crypto` -- cryptocurrency price check
+ * `!bitcoin` `!btc` `!litecoin` `!ltc` `!etherium` `!eth` `!doge`
+ * `!debt` -- US government debt
+ * `!setgeo` `!getgeo` -- set your qth for results in some commands †
+ * `!github` -- display bot github URL
+ * `!quote` `!quotesearch` -- get a quote
+ * `!addquote` -- add a quote
+ * `!define` -- glossary lookup
+ * `!phoneticise` -- random phonetics
+ * `!imdb` -- movie info
+ * `!adsb` -- get plane information
+ * `!hofh` -- why your radio is broke
+ * `!ammo` -- find a price for ammo
+ * `!launch` -- search for upcoming rocket launch
+ * `!spacex` -- next spacex launch
+ * `!translate` -- translate text
+ * `!rand` `!dice` `!flip` `!8ball` -- random
+
 ## Radio-related commands:
 
-### !qrz !call -- lookup callsign on qrz.com
+### `!qrz` !call -- lookup callsign on qrz.com
 
 Usage:
 
@@ -54,7 +136,7 @@ Examples:
 
 Data source: https://www.qrz.com/
 
-### !qth !grid -- lookup grid square or qth
+### `!qth` `!grid` -- lookup grid square or qth
 
 Usage:
 
@@ -82,7 +164,7 @@ Examples:
 
 Data source: Google Geocoding API
 
-### !bands -- display HF propagation information
+### `!bands` -- display HF propagation information
 
 Example:
 
@@ -99,7 +181,7 @@ Example:
 
 Data sources: https://hamqsl.com/ ; eSSN and eSFI via https://prop.kc2g.com/
 
-### !solar -- display solar ionospheric conditions
+### `!solar` -- display solar ionospheric conditions
 
 Example:
 
@@ -111,7 +193,7 @@ Example:
 Data sources: Kp and Ap via gfz-potsdam.de; SFI via NOAA; SSN via sidc.be; eSSN
 and eSFI via https://prop.kc2g.com/
 
-### !xray -- display xray flux
+### `!xray` -- display xray flux
 
 Example:
 
@@ -123,91 +205,92 @@ Example:
 
 Data source: GOES via NOAA SWPC
 
-### !kindex !ki -- 3-day k-index forecast
-### !forecast -- 27 day solar forecast
-### !45day -- 45 day solar forecast
-### !longterm -- solar cycle forecast
-### !activity -- band activity from pskreporter
-### !dxcc -- display information on a dxcc entity
-### !spots -- display spots for a callsign
-### !morse !cw -- convert to morse code
-### !unmorse !demorse -- decode from morse
-### !repeater -- search for repeater
-### !iono -- report from nearest ionosonde
-### !muf -- GIRO MUF reports from ionosondes
-### !blitz !zap -- lightning report
-### !aprs -- APRS station information
-### !eme -- EME prediction
-### !graves -- French 143 MHz radar as EME beacon
-### !sat -- satellite info and pass predictor
-### !satpass -- satellite pass predictor
-### !satinfo -- satellite info
-### !qcode !q -- qcode lookup
-### !rig -- describe a radio or other gear
-### !lotw -- last upload date to LoTW for a callsign
-### !eqsl -- last login to eqsl.cc for a callsign
-### !clublog !oqrs -- log and OQRS info on clublog.org
-### !qsl -- check all of the above qsl methods
-### !league -- report clublog league standings
-### !pota -- search POTA parks and users
-### !sota -- search SOTA summits
-### !iota -- search IOTA islands
-### !1x1 -- search 1x1 special event stations
-### !contests -- list current and upcoming contests
-### !wrtc -- show WRTC standings for a callsign
-### !fspl -- free space path loss calculator
-### !coax !atten -- coax attenuation calculator
-### !ae7q -- get US callsign availability info
-### !vanity -- get US vanity callsign application info
-### !dxped -- get current dxpedition info
+### `!kindex` `!ki` -- 3-day k-index forecast
+### `!forecast` -- 27 day solar forecast
+### `!45day` -- 45 day solar forecast
+### `!longterm` -- solar cycle forecast
+### `!activity` -- band activity from pskreporter
+### `!dxcc` -- display information on a dxcc entity
+### `!spots` -- display spots for a callsign
+### `!morse` `!cw` -- convert to morse code
+### `!unmorse` `!demorse` -- decode from morse
+### `!repeater` -- search for repeater
+### `!iono` -- report from nearest ionosonde
+### `!muf` -- GIRO MUF reports from ionosondes
+### `!blitz` `!zap` -- lightning report
+### `!aprs` -- APRS station information
+### `!eme` -- EME prediction
+### `!graves` -- French 143 MHz radar as EME beacon
+### `!sat` -- satellite info and pass predictor
+### `!satpass` -- satellite pass predictor
+### `!satinfo` -- satellite info
+### `!qcode` `!q` -- qcode lookup
+### `!rig` -- describe a radio or other gear
+### `!lotw` -- last upload date to LoTW for a callsign
+### `!eqsl` -- last login to eqsl.cc for a callsign
+### `!clublog` `!oqrs` -- log and OQRS info on clublog.org
+### `!qsl` -- check all of the above qsl methods
+### `!league` -- report clublog league standings
+### `!pota` -- search POTA parks and users
+### `!sota` -- search SOTA summits
+### `!iota` -- search IOTA islands
+### `!1x1` -- search 1x1 special event stations
+### `!contests` -- list current and upcoming contests
+### `!wrtc` -- show WRTC standings for a callsign
+### `!fspl` -- free space path loss calculator
+### `!coax` `!atten` -- coax attenuation calculator
+### `!ae7q` -- get US callsign availability info
+### `!vanity` -- get US vanity callsign application info
+### `!dxped` -- get current dxpedition info
 
 ## Geophysical-related commands:
 
-### !wx !wxfull -- show current weather conditions
-### !wxf !wxflong -- weather forecast
-### !metar -- show METAR weather data
-### !taf -- show TAF weather data
-### !utc -- display current UTC time
-### !time !tz -- localtime in the qth or grid specified
-### !wwv -- emulate WWV station (in channel only)
-### !moon -- Lunar position and phase
-### !sun -- Solar position
-### !elev -- get elevation data for a place
-### !drive -- compute drive time and distance using google maps
-### !transit -- compute transit time and route using google transit
-### !fire -- show nearest wildfire
-### !rad -- report nearest radiation monitor
-### !quake !quakef -- earthquake info
+### `!wx` `!wxfull` -- show current weather conditions
+### `!wxf` `!wxflong` -- weather forecast
+### `!metar` -- show METAR weather data
+### `!taf` -- show TAF weather data
+### `!utc` -- display current UTC time
+### `!time` `!tz` -- localtime in the qth or grid specified
+### `!wwv` -- emulate WWV station (in channel only)
+### `!moon` -- Lunar position and phase
+### `!sun` -- Solar position
+### `!elev` -- get elevation data for a place
+### `!drive` -- compute drive time and distance using google maps
+### `!transit` -- compute transit time and route using google transit
+### `!fire` -- show nearest wildfire
+### `!rad` -- report nearest radiation monitor
+### `!quake` `!quakef` -- earthquake info
 
 ## Numerical and finance
 
-### !calc -- calculator
-### !units -- convert values between units
-### !ctof !ftoc -- convert temperatures
-### !stock -- financial quotes
-### !gold !silver !platinum -- precious metal prices
-### !crypto -- cryptocurrency price check
-### !bitcoin !btc !litecoin !ltc !etherium !eth !doge
-### !debt -- US government debt
+### `!calc` -- calculator
+### `!units` -- convert values between units
+### `!ctof` `!ftoc` -- convert temperatures
+### `!stock` -- financial quotes
+### `!gold` `!silver` `!platinum` -- precious metal prices
+### `!crypto` -- cryptocurrency price check
+### `!bitcoin` `!btc` `!litecoin` `!ltc` `!etherium` `!eth` `!doge`
+### `!debt` -- US government debt
 
 ## Metadata and bot control
 
-### !setgeo !getgeo -- set your qth for results in some commands †
-### !github -- display bot github URL
+### `!setgeo` `!getgeo` -- set your qth for results in some commands †
+### `!github` -- display bot github URL
 
 ## Fun stuff / web scraping
 
-### !quote !quotesearch -- get a quote
-### !addquote -- add a quote
-### !define -- glossary lookup
-### !phoneticise -- random phonetics
-### !imdb -- movie info
-### !adsb -- get plane information
-### !hofh -- why your radio is broke
-### !ammo -- find a price for ammo
-### !spacex -- next spacex launch
-### !translate -- translate text
-### !rand !dice !flip !8ball -- random
+### `!quote` `!quotesearch` -- get a quote
+### `!addquote` -- add a quote
+### `!define` -- glossary lookup
+### `!phoneticise` -- random phonetics
+### `!imdb` -- movie info
+### `!adsb` -- get plane information
+### `!hofh` -- why your radio is broke
+### `!ammo` -- find a price for ammo
+### `!launch` -- search for upcoming rocket launch
+### `!spacex` -- next spacex launch
+### `!translate` -- translate text
+### `!rand` `!dice` `!flip` `!8ball` -- random
 
 <!-- !amcon - - some dumb prepper shit -->
 <!-- !c19 !corona - - coronavirus stats -->
