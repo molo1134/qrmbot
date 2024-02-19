@@ -1,4 +1,4 @@
-#IRC bot Commands
+# IRC bot Commands
 
 ## Command summary:
 
