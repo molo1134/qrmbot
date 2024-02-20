@@ -1384,7 +1384,7 @@ proc unmorse_pub { nick host hand chan text } {
 	global unmorsebin
 	set msg [sanitize_string [string trim "${text}"]]
 	putlog "unmorse pub: $nick $host $hand $chan $msg"
-	set fd [open "|${unmorsebin} ${msg}" r]
+	set fd [open "|${unmorsebin} \"${msg}\"" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
@@ -1395,7 +1395,7 @@ proc unmorse_msg {nick uhand handle input} {
 	global unmorsebin
 	set msg [sanitize_string [string trim "${input}"]]
 	putlog "unmorse msg: $nick $uhand $handle $msg"
-	set fd [open "|${unmorsebin} ${msg}" r]
+	set fd [open "|${unmorsebin} \"${msg}\"" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg "$nick" "$line"
