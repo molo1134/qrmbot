@@ -153,11 +153,11 @@ Examples:
     <molo1134> !grid 41.714775,-72.727260
     <qrm> FN31pr: 41.714775, -72.727260: Newington, CT, USA
 
-    <molo1134> !grid 1400 pennsylvania avenue washington dc
+    <molo1134> !qth 1400 pennsylvania avenue washington dc
     <qrm> FM18lv: 38.8960168, -77.0329812: Northwest Washington, Washington, 
              DC, USA
 
-    <molo1134> !grid 1400 pennsylvania avenue washington dc DE 41.714775,-72.727260
+    <molo1134> !qth 1400 pennsylvania avenue washington dc DE 41.714775,-72.727260
     <qrm> FM18lv: 38.8960168, -77.0329812: Northwest Washington, Washington, 
              DC, USA -- 481.6 km, 231° from FN31pr
 ```
@@ -292,13 +292,191 @@ Examples:
 Data source: https://pskreporter.info/
 
 ### `!dxcc` -- display information on a dxcc entity
+
+Usage:
+
+```
+    !dxcc <callsign>|<prefix>|<name> [de <grid>|<lat>,<lon>|<qth>]
+```
+
+Examples:
+
+```
+    <molo1134> !dxcc W1AW
+    <qrm> W1AW: United States (K): NA CQ:5 ITU:8 MW:340
+
+    <molo1134> !dxcc kiribati
+    <qrm> T30: Western Kiribati: OC CQ:31 ITU:65 MW:86
+
+    <molo1134> !dxcc kiribati de hawaii
+    <qrm> T30: Western Kiribati: OC CQ:31 ITU:65 MW:86 -- 3982.2 km, 243°
+             from BK29ev
+```
+
+Data sources:
+
+* DXCC Country File "Big-CTY": http://www.country-files.com/big-cty/
+* Clublog most-wanted entities: https://clublog.org/mostwanted.php
+
 ### `!spots` -- display spots for a callsign
+
+Usage:
+
+```
+    !spots [--qrm] [--dxw] [--rbn] [--psk] [--ham] [--pota] <callsign> [limit]
+    !spots <freq_khz>
+```
+
+Examples:
+
+```
+    <molo1134> !spots W1AW
+    <qrm> G4UFK   W1AW     1802 579 with qsb                 0333z 08 Oct d
+    <qrm> N8MSA   W1AW     7047 cw 21 dB, 18 wpm             0301z 08 Oct r
+    <qrm> KP3Z    W1AW     7047 cw 18 dB, 15 wpm             0155z 08 Oct r
+
+    <molo1134> !spots --dxw W1AW
+    <qrm> KO6BQV  W1AW    28467                              1805z 16 Feb d
+    <qrm> PD7V    W1AW    28476 Thnx visit my qrz page pleas 1626z 16 Feb d
+    <qrm> M7GTP   W1AW    28476 CQ                           1618z 16 Feb d
+
+    <molo1134> !spots 7005
+    <qrm> WF5K    OX7AM    7003                              0159z 20 Feb d
+    <qrm> WP4O    VU2GSM   7004                              0135z 20 Feb d
+```
+
+Data sources: dxwatch.com (DX Cluster), ReverseBeacon.net, pskreporter.info, hamspots.net, pota.app
+
 ### `!morse` `!cw` -- convert to morse code
+
+Usage:
+
+```
+   !morse [--weight] <text>
+```
+
+Examples:
+
+```
+    <molo1134> !morse CQ CQ DE W1AW
+    <qrm> -.-. --.-   -.-. --.-   -.. .   .-- .---- .- .--   
+
+    <molo1134> !morse --weight W1AA K1AA N1AA
+    <qrm> W1AA: 48; K1AA: 48; N1AA: 44
+```
+
 ### `!unmorse` `!demorse` -- decode from morse
+
+Usage:
+```
+    !unmorse [--cyrillic] [--greek] [--hebrew] [--arabic] [--japanese] <morse code text>
+```
+
+Examples:
+
+```
+    <molo1134> !unmorse -.-. --.-   -.-. --.-   -.. .   .-- .---- .- .--
+    <qrm> CQ CQ DE W1AW
+
+    <molo1134> !unmorse --greek -.-. --.-   -.-. --.-   -.. .   .-- .---- .- .--
+    <qrm> ΘΨ ΘΨ ΔΕ Ω1ΑΩ
+```
+
 ### `!repeater` -- search for repeater
+
+Usage:
+
+```
+    !repeater [--world] <search terms> [band]
+```
+
+Examples:
+
+```
+    <molo1134> !repeater KQ2H
+    <qrm> KQ2H: 29.6200 (-) 146.2 / CSQ PL @ Wurtsburo, Catskill Mountains,
+          Sullivan County, NY -- truncated, see: https://repeaterbook.com/repeaters/keyword.php?func=result&keyword=kq2h&state_id=0
+
+    <molo1134> !repeater KQ2H 2m
+    <qrm> N2ACF: 146.4600 (s) 77.0  PL @ Pomona, Rockland County, NY --
+          truncated, see: https://repeaterbook.com/repeaters/keyword.php?func=result&keyword=kq2h&state_id=0
+
+    <molo1134> !repeater fort lee
+    <qrm> KB2RQE: 145.3100 (-) 100.0  PL @ Fort Lee, Bergen County, NJ --
+             truncated, see: https://repeaterbook.com/repeaters/keyword.php?func=result&keyword=fort%20lee&state_id=0
+```
+
+Data source: repeaterbook.com
+
 ### `!iono` -- report from nearest ionosonde
+
+Usage:
+
+```
+    !iono <grid>|<lat>,<lon>|<qth>
+```
+
+Examples:
+
+```
+    <molo1134> !iono tokyo
+    <qrm> I-Cheon, South Korea (PM37 1096 km WNW) @ 2024-02-20 0222z: MUF 
+          38.756 MHz, FoF2 11.825 MHz with M(D) 3.277x
+
+    <molo1134> !iono FN21
+    <qrm> Millstone Hill, MA, USA (FN42 314 km ENE) @ 2024-02-20 0237z: MUF 
+           13.291 MHz, FoF2 3.475 MHz with M(D) 3.825x
+```
+
+Data source: https://prop.kc2g.com/
+
 ### `!muf` -- GIRO MUF reports from ionosondes
+
+Usage:
+
+```
+    !muf <station>
+    !muf list
+```
+
+List of stations is sent via private message.
+
+Examples:
+
+```
+    <molo1134> !muf millstone
+    <qrm> MILLSTONE HILL (FN42): MUF @ 2024-02-20 0237z: 13.291 MHz; recent
+          high: 36.006 at 2107z; low 10.141 at 1015z
+
+    <molo1134> !muf icheon
+    <qrm> I-CHEON (PM37): MUF @ 2024-02-20 0230z: 38.497 MHz; recent high:
+          38.853 at 0215z; low 11.958 at 1852z
+```
+
+Data source: GIRO DIDBase https://lgdc.uml.edu/common/DIDBFastStationList
+
 ### `!blitz` `!zap` -- lightning report
+
+Usage:
+
+```
+    !blitz <grid>|<lat>,<lon>|<qth>
+```
+
+Examples:
+
+```
+    <molo1134> !blitz bundeena
+    <qrm> Nearest lightning strike to Bundeena NSW 2230, Australia (QF55nv)
+          in last 15 minutes: ⚡48.5 km (30.2 mi) S at 02:47z
+
+    <molo1134> !blitz colfax, california
+    <qrm> Nearest lightning strike to Colfax, CA 95713, USA (CM99mc) in last
+          15 minutes: ⚡⚡16.6 km (10.3 mi) SSE at 02:51z
+```
+
+Data source: blitzortung.org
+
 ### `!aprs` -- APRS station information
 ### `!eme` -- EME prediction
 ### `!graves` -- French 143 MHz radar as EME beacon
@@ -416,52 +594,12 @@ Notes:
 
 ## Examples
 
-    < molo1134> !call W1AW 
-    < qrm> W1AW: USA:  ARRL HQ OPERATORS CLUB -- W1AW@ARRL.ORG -- Club class
-           -- trustee: K1ZZ -- QSL: US STATIONS PLEASE QSL VIA LOTW OR DIRECT
-           WITH SASE. [LEM] -- 225 MAIN ST; NEWINGTON, CT 06111; USA --
-           FN31pr [src: user]
-
-    < molo1134> !call TX3X
-    < qrm> TX3X: Chesterfield Islands: Chesterfield Islands 2015 DX-pedition
-           -- k5gs@pdxg.net -- IOTA: OC-176 -- QSL: See QSL info at TX3X.com
-           [LM] -- PO Box 189; Divide, CO 80814; USA -- QH90dl [src: user]
-
-    < molo1134> !dxcc W1AW
-    < qrm> W1AW: United States (K): NA CQ:5 ITU:8 MW:340
-
-    < molo1134> !dxcc kiribati
-    < qrm> T30: Western Kiribati: OC CQ:31 ITU:65 MW:97
-
-    < molo1134> !solar
-    < qrm> Conditions as of 08 Oct 2015 1547 GMT: SFI=80 SN=24 A=77 K=5
-
-    < molo1134> !bands
-    < qrm> Bands as of 08 Oct 2015 1547 GMT: SFI=80 SN=24 A=77 K=5
-    < qrm> | 12m-10m | day: Shit | night: Shit |
-    < qrm> | 17m-15m | day: Shit | night: Shit |
-    < qrm> | 30m-20m | day: Shit | night: Shit |
-    < qrm> | 80m-40m | day: Shit | night: Shit |
-    < qrm> vhf-aurora: northern_hemi MID LAT AUR
 
     < molo1134> !lotw W1AW
     < qrm> W1AW: 2015-09-28
 
     < molo1134> !eqsl W1AW
     < qrm> W1AW: (AG) FN31pr; last login: 07-Feb-2014
-
-    < molo1134> !spots W1AW
-    < qrm> G4UFK   W1AW     1802 579 with qsb                 0333z 08 Oct d
-    < qrm> N8MSA   W1AW     7047 cw 21 dB, 18 wpm             0301z 08 Oct r
-    < qrm> KP3Z    W1AW     7047 cw 18 dB, 15 wpm             0155z 08 Oct r
-
-    < molo1134> !activity CW FN  
-    < qrm> CW from grid FN: 10m⇒4, 15m⇒17, 17m⇒7, 20m⇒53, 30m⇒95, 40m⇒171,  
-           80m⇒53, 160m⇒3  
-
-    < molo1134> !activity IO  
-    < qrm> ALL from grid IO: 15m⇒16, 20m⇒8, 30m⇒55, 40m⇒880, 60m⇒1, 80m⇒663,  
-           160m⇒218, 630m⇒23  
 
     < molo1134> !qth london, uk from san jose, california
     < qrm> IO91wm: 51.5073509, -0.1277583: London, UK -- 8641.5 km, 33° from
@@ -490,40 +628,8 @@ Notes:
     < qrm>  Wind: North at 24kph/15mph  Pressure: 29.96inHg/1014mb (↓)  
     < qrm>  Precipitation: today: 0.5mm/0.02in  
 
-    < molo1134> !morse CQ CQ DE W1AW
-    < qrm> -.-. --.-   -.-. --.-   -.. .   .-- .---- .- .--   
-    < molo1134> !demorse -.-. --.-   -.-. --.-   -.. .   .-- .---- .- .--
-    < qrm> CQ CQ DE W1AW
-
-    < molo1134> !kindex
-    < qrm> Kp index prediction as of 2016 Feb 03 0030 UTC:
-    < qrm> Feb 03|Feb 04|Feb 05: ▃▄▃▄▃▂▂▃|▃▃▂▂▂▂▂▂|▂▂▂▂▁▁▂▂
-
-
-    < molo1134> !forecast
-    <+qrm> Daily forecast as of: 2017 Nov 20 0559 UTC; today to 2017 Dec 16:
-    <+qrm> Kp : ▄▄▃▂▂▂▂▂▃▃▂▂▂▆▆▅▅▃▂▂▄▄▄▃▂▂
-    <+qrm> Ap : ▂▂▁▁▁▁▁▁▁▂▁▁▁▄▅▃▃▂▁▁▂▂▂▁▁▁
-    <+qrm> SFI: ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
-
     < VA7EEX_> !phonetics w8tam
     < qrm> welcomed 8 tabulate aural matchmakers
-
-    < JR2TTS> !repeater W3VPR
-    <+qrm> W3VPR: 147.0750 (+) 107.2 PL @ Glen Burnie, Anne Arundel County, MD
-    <+qrm> truncated, see: http://repeaterbook.com/repeaters/keyResult.php?keyword=W3VPR
-
-    <molo1134> !muf list
-    <qrm> Ascension Beijing Boulder Brisbane Camden Canberra Casey Chongqing 
-            Cocos_Is Darwin Dixon Dourbes Eglin ElArensillo Fairford Gibilmanna 
-            Grahamstown Guangzhou Hainan Hermanus Hobart Jeju Jicamarca 
-            Juliusruh Learmonth Louisvale Madimbo Magadan Manzhouli Mawson 
-            Moscow Murmansk Niue Norfolk_Is Perth Pruhonice Rome Salekhard 
-            San_Vito Scott_Base Tomsk Townsville Tromso Warsaw 
-
-    < Hamsterdave> !muf wallops
-    <+qrm> Wallops (37,-76) MUF @ 2016-06-14 1940 UTC: 15.064 MHz; recent high:
-        21.46 at 1140 UTC; low: 8.658 at 0925 UTC
 
     <+NS7I> !aprs n3bbq-9
     <+qrm> N3BBQ-9: Grand Junction, CO, USA @ 27kph/17mph 89° alt 1765m/5790ft
@@ -586,24 +692,12 @@ account and set your origin.  Note: **only decimal degrees are accepted for !set
 
 ## Data sources
 
-* callsign lookup: http://qrz.com
-* DXCC entities: http://www.country-files.com/big-cty/
-* most-wanted entities: http://www.clublog.org/mostwanted.php
-* activity: http://pskreporter.info/
-* band conditions: http://www.hamqsl.com/solarxml.php
 * contest calendar: http://www.hornucopia.com/contestcal/weeklycont.php
 * eqsl status: http://www.eqsl.cc/Member.cfm?CALLSIGN
 * lotw status: https://lotw.arrl.org/lotw-user-activity.csv
-* kindex prediction: http://services.swpc.noaa.gov/text/3-day-forecast.txt
-* solar forecast: http://services.swpc.noaa.gov/text/27-day-outlook.txt
 * units: [GNU Units](https://www.gnu.org/software/units/)
 * weather: https://www.wunderground.com/weather/api/
-* spots: http://pskreporter.info/, http://dxwatch.com/, http://reversebeacon.net/, http://hamspots.net/
-* qth geocoding: [Google maps geocoding API](https://developers.google.com/maps/documentation/geocoding/intro)
-* repeaters: https://www.repeaterbook.com/
 * aprs: http://aprs.fi/
-* MUF: ftp://ftp.swpc.noaa.gov/pub/lists/iono_day/
-* MUF2: https://lgdc.uml.edu/common/DIDBFastStationList
 * Sats: http://www.amsat.org/amsat/ftp/keps/current/nasabare.txt
 * Cryptocurrency prices: https://coinmarketcap.com/api/
 
