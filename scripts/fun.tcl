@@ -321,6 +321,16 @@ proc daveface { nick host hand chan text} {
 	putchan $chan "https://i.imgur.com/diBAl5G.png"
 }
 
+bind pub - !junk junk
+proc junk { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+
+	putchan $chan "https://i.imgur.com/guWbMxA.png"
+}
+
+
 proc burn { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
