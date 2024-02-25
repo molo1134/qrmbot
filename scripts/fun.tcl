@@ -18,6 +18,7 @@ bind pub - !robface robface
 bind pub - !monkee daveface
 bind pub - !burn burn
 bind pub - !brexit brexit
+bind pub - !trumpfine trumpfine
 bind pub - !christmas christmas
 bind pub - !halloween spooky
 bind pub - !spooky spooky
@@ -41,6 +42,7 @@ bind msg - !github msg_github
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
+set trumpfinebin "/home/eggdrop/bin/trumpfine"
 set translatebin "/home/eggdrop/bin/translate"
 set primariesbin "/home/eggdrop/bin/primaries"
 set fivethirtyeightbin "/home/eggdrop/bin/fivethirtyeight"
@@ -347,6 +349,20 @@ proc brexit { nick host hand chan text } {
 	global brexitbin
 	putlog "brexit: $nick $host $hand $chan"
 	set fd [open "|${brexitbin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc trumpfine { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	global trumpfinebin
+	putlog "trumpfine: $nick $host $hand $chan"
+	set fd [open "|${trumpfinebin}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
