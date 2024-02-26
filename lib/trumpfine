@@ -1,12 +1,22 @@
 #!/usr/bin/perl
-# brexit countdown; contributed by OliverUK
+# trump debt countdown; based on brexit countdown contributed by OliverUK
 #
 # 2-clause BSD license.
 # Copyright (c) 2019, 2020, 2024 molo1134@github. All rights reserved.
 
 use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Util;
+
 use DateTime;
 use POSIX;
+use Time::Piece ();
 
 my $d1 = DateTime->now;
 my $d2 = DateTime->new(
@@ -31,7 +41,31 @@ my $h = floor($dur % (24 * 60 * 60) / (60 * 60));
 my $min = ($dur / 60) % 60;
 my $sec = $dur % 60;
 
+my $init;
+my $initTs;
+my $increasePerSec;
+
+my $url = "https://trumpdebtcounter.com/";
+open(HTTP, '-|', "curl --max-time 10 -s -L -k '$url' ");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+  if (/var initialCounter = ([0-9.]+);/) {
+    $init = $1;
+  }
+  if (/var startTime = new Date\(&#x27;([0-9-]+T[0-9:]+Z)&#x27;\);/) {
+    $initTs = Time::Piece->strptime("$1", "%Y-%m-%dT%H:%M:%SZ")->epoch;
+  }
+  if (/var increaseRate = ([0-9.]+);/) {
+    $increasePerSec = $1;
+  }
+}
+close(HTTP);
+my $now = time();
+my $diff = $now - $initTs;
+my $owed = $init + ($diff * $increasePerSec);
+
 print "Trump payment deadline countdown! ";
+print "\$", commify($owed), " due in ";
 print "$m month, " if $m == 1;
 print "$m months, " if $m > 1;
 print "$d day, " if $d == 1;
