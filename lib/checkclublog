@@ -64,6 +64,10 @@ if (defined $call2) {
   my $json = <JSON>;
   close(JSON);
   #print "$json\n";
+  if ($json =~ /is not registered on Club Log/) {
+    print "$call not registered on clublog\n";
+    exit 0;
+  }
   my $j = decode_json($json);
   if (ref($j) ne 'HASH') {
     print "$call2 not found in $call clublog\n";
