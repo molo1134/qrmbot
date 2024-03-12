@@ -56,7 +56,7 @@ proc q_pubquote { nick uhost hand chan arg } {
 
     set i 0
 
-    if { [string trim "$arg"] == "" } {
+    if { ! [string is integer -strict [string trim "$arg"]] } {
       set j [rand $tmp]
       #putmsg "$nick" "picked quote [expr $j + 1] of $tmp"
     } else {
