@@ -15,7 +15,6 @@ use Math::Round;
 use Math::BigFloat;
 use POSIX qw(strftime);
 use URI::Escape;
-use File::Temp;
 
 use File::Basename;
 use Cwd 'realpath';
@@ -45,31 +44,72 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   $quote = $ARGV[0];
 }
 
-
 my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0";
-my $url = "https://guce.yahoo.com/consent";
-my $cookiefile = File::Temp::tempnam("/tmp", "yahoocookies");
-
-open(HTTP, '-|', "curl -4 --compressed --max-time 10 -s -k -L --cookie-jar $cookiefile -A '$ua' -H 'accept-language: en-US,en;q=0.9' '$url'");
-while(<HTTP>) {
-}
-close(HTTP);
-
+my $cookiefile = $ENV{HOME} . "/.qrmbot/cache/yahoofinance.cookies";
+my $crumbfile = $ENV{HOME} . "/.qrmbot/cache/yahoofinance.crumb";
+my $needcookies = 0;
+my $needcrumb = 0;
 my $crumb = undef;
-$url = "https://query2.finance.yahoo.com/v1/test/getcrumb";
-open(HTTP, '-|', "curl -4 --compressed --max-time 10 -s -k -L --cookie $cookiefile --cookie-jar $cookiefile -A '$ua' -H 'accept-language: en-US,en;q=0.9' '$url'");
-$crumb = <HTTP>;
-close(HTTP);
 
-$url = "https://query2.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&.tsrc=finance&symbols=${quote}&crumb=${crumb}";
+if (not -e $cookiefile) {
+  $needcookies = 1;
+} else {
+  # check for expiration
+  my $now = time();
+  open(COOKIES, '<', $cookiefile);
+  while(<COOKIES>) {
+    next if /^# /;
+    next if /^\s*$/;
+    my (undef, undef, undef, undef, $ts) = split(/\t/);
+    next if $ts == 0;
+    $needcookies = 1 if $ts < $now;
+  }
+  close(COOKIES);
+}
+
+if ($needcookies) {
+  my $url = "https://guce.yahoo.com/consent";
+  $needcrumb = 1; # always need a new crumb when getting new cookies
+
+  unlink $cookiefile;
+  open(HTTP, '-|', "curl -4 --compressed --max-time 10 -s -k -L --cookie-jar $cookiefile -A '$ua' -H 'accept-language: en-US,en;q=0.9' '$url'");
+  while(<HTTP>) {
+  }
+  close(HTTP);
+}
+
+if (not -e $crumbfile) {
+  $needcrumb = 1;
+} else {
+  open(CRUMB, '<', $crumbfile);
+  $crumb = <CRUMB>;
+  close(CRUMB);
+  $crumb =~ s/^\s+//;
+  $crumb =~ s/\s+$//;
+  if ($crumb eq "") {
+    $needcrumb = 1;
+    $crumb = undef;
+  }
+}
+
+if ($needcrumb) {
+  my $url = "https://query2.finance.yahoo.com/v1/test/getcrumb";
+  open(HTTP, '-|', "curl -4 --compressed --max-time 10 -s -k -L --cookie $cookiefile --cookie-jar $cookiefile -A '$ua' -H 'accept-language: en-US,en;q=0.9' '$url'");
+  $crumb = <HTTP>;
+  close(HTTP);
+
+  open(CRUMB, '>', $crumbfile);
+  print CRUMB $crumb;
+  close(CRUMB);
+}
+
+my $url = "https://query2.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&.tsrc=finance&symbols=${quote}&crumb=${crumb}";
 open(HTTP, '-|', "curl -4 --compressed --max-time 10 -s -k -L --cookie $cookiefile -A '$ua' '$url'");
 binmode(HTTP, ":utf8");
 local $/;   # read entire file -- FIXME: potentially memory hungry
 my $json = <HTTP>;
 close(HTTP);
 #print "$json\n"; #debug XXX
-
-unlink $cookiefile;
 
 if (not $json =~ /^\s*{/) {
   if ($json =~ /^<!doctype/i or $json =~ /<html/i) {
