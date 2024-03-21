@@ -57,7 +57,7 @@ my $targetcall = $ARGV[0];
 # only allow alphanumeric and "." and "-"
 $targetcall =~ s/[^A-Za-z0-9.-]//g;
 
-my $url = "http://api.aprs.fi/api/get?name=${targetcall}&what=loc&apikey=${apikey}&format=json";
+my $url = "https://api.aprs.fi/api/get?name=${targetcall}&what=loc&apikey=${apikey}&format=json";
 
 #print "$url\n";
 
@@ -82,7 +82,7 @@ if (defined $vals{found} and $vals{found} != 1) {
 #
 #if ($vals{type} eq "w") {
   # get weather fields
-  $url = "http://api.aprs.fi/api/get?name=${targetcall}&what=wx&apikey=${apikey}&format=json";
+  $url = "https://api.aprs.fi/api/get?name=${targetcall}&what=wx&apikey=${apikey}&format=json";
   getvals($url, \%vals);
 
   $vals{temp_c} = round($vals{temp}) if defined $vals{temp};
