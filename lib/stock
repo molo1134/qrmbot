@@ -15,6 +15,7 @@ use Math::Round;
 use Math::BigFloat;
 use POSIX qw(strftime);
 use URI::Escape;
+use File::Temp;
 
 use File::Basename;
 use Cwd 'realpath';
@@ -45,14 +46,30 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 }
 
 
-my $url = "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=$quote";
+my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0";
+my $url = "https://guce.yahoo.com/consent";
+my $cookiefile = File::Temp::tempnam("/tmp", "yahoocookies");
 
-open(HTTP, '-|', "curl -4 --max-time 10 -s -k -L '$url'");
+open(HTTP, '-|', "curl -4 --compressed --max-time 10 -s -k -L --cookie-jar $cookiefile -A '$ua' -H 'accept-language: en-US,en;q=0.9' '$url'");
+while(<HTTP>) {
+}
+close(HTTP);
+
+my $crumb = undef;
+$url = "https://query2.finance.yahoo.com/v1/test/getcrumb";
+open(HTTP, '-|', "curl -4 --compressed --max-time 10 -s -k -L --cookie $cookiefile --cookie-jar $cookiefile -A '$ua' -H 'accept-language: en-US,en;q=0.9' '$url'");
+$crumb = <HTTP>;
+close(HTTP);
+
+$url = "https://query2.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&.tsrc=finance&symbols=${quote}&crumb=${crumb}";
+open(HTTP, '-|', "curl -4 --compressed --max-time 10 -s -k -L --cookie $cookiefile -A '$ua' '$url'");
 binmode(HTTP, ":utf8");
 local $/;   # read entire file -- FIXME: potentially memory hungry
 my $json = <HTTP>;
 close(HTTP);
 #print "$json\n"; #debug XXX
+
+unlink $cookiefile;
 
 if (not $json =~ /^\s*{/) {
   if ($json =~ /^<!doctype/i or $json =~ /<html/i) {
