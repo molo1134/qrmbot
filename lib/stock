@@ -155,11 +155,13 @@ if (defined $r->{regularMarketPrice}) {
 }
 
 my $trend = 1;
-$trend = 0 if defined($pct) and $pct < 0.0;
+$trend = 0 if defined($chg) and $chg == 0.0;
+$trend = -1 if defined($chg) and $chg < 0.0;
 
 my $trendsymbol;
 $trendsymbol = green("↑") if $trend > 0;
-$trendsymbol = red("↓") if $trend <= 0;
+$trendsymbol = lightblue("→") if $trend == 0;
+$trendsymbol = red("↓") if $trend < 0;
 
 my $name = $r->{displayName};
 $name = $r->{shortName} if not defined $name;
@@ -167,10 +169,11 @@ $name = $r->{longName} if not defined $name;
 
 print bold($r->{symbol}), " $trendsymbol$price ";
 
-print "+$chg (" if $trend;
-print "$chg (" if not $trend;
-print green("+$pct") if $trend;
-print red($pct) if not $trend;
+print "+$chg (" if $trend >= 0;
+print "$chg (" if $trend < 0;
+print green("+$pct") if $trend > 0;
+print "+$pct" if $trend == 0;
+print red($pct) if $trend < 0;
 print "%)";
 
 #print " bid: $r->{bid}x$r->{bidSize} ask: $r->{ask}x$r->{askSize}";
