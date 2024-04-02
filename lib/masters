@@ -22,6 +22,7 @@ my ($fdyear, $fdmon, $fddate) = split / /, getFullWeekendInMonth(4, "Jun");	# 4t
 #print "$curryear, $currmon, $currdate\n";
 #print "$fdyear, $fdmon, $fddate\n"; # returns a saturday
 
+# will need to update each year manually
 my $d2 = DateTime->new(
     year       => 2024,
     month      => 04,
@@ -34,7 +35,7 @@ my $d2 = DateTime->new(
 my $dur = $d2->epoch() - $d1->epoch();
 
 if ($dur < 0) {
-	print "Hello, friends. A tradition unlike any other. https://themasters.com\n";
+	print "Hello, friends. A tradition unlike any other. https://masters.com\n";
 	exit 0;
 }
 
