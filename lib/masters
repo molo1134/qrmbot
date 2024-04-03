@@ -17,33 +17,36 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Util;
 
+$ENV{TZ} = "EST5EDT";
+
 my $d1 = DateTime->now;
 my ($curryear, $currmon, $currdate) = split / /, strftime("%Y %m %d", gmtime($d1->epoch()));
-my $fddate = new Date::Manip::Date;
-$fddate->parse('Second Sunday in April');
-my ($fdyear, $fdmon, $fdday) = split / /, $fddate->printf('%Y %m %d');
+my $mastersdate = new Date::Manip::Date;
+$mastersdate->parse('Second Sunday in April');
+my ($mastersyear, $mastersmon, $mastersday) = split / /, $mastersdate->printf('%Y %m %d');
 
 my $d2 = DateTime->new(
-    year       => $fdyear,
-    month      => $fdmon,
-    day        => $fdday - 3,
-    hour       => 12, # 1800 UTC
+    year       => $mastersyear,
+    month      => $mastersmon,
+    day        => $mastersday - 3,
+    hour       => 7, # 7am Thursday
     minute     => 0,
     second     => 0,
 );
 
 my $d3 = DateTime->new(
-    year       => $fdyear,
-    month      => $fdmon,
-    day        => $fdday,
-    hour       => 23, # 1800 UTC
-    minute     => 59,
+    year       => $mastersyear,
+    month      => $mastersmon,
+    day        => $mastersday,
+    hour       => 20, # Usually done by 8pm Sunday
+    minute     => 01,
     second     => 00,
 );
 
 my $dur = $d2->epoch() - $d1->epoch();
 my $after = $d3->epoch() - $d1->epoch();
 
+# if the event has ended, flip to next year
 if ($dur < 0 && $after < 0) {
 	$d2->set_year($curryear +1);
 	$dur = $d2->epoch() - $d1->epoch();
