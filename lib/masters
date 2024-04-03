@@ -17,7 +17,7 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Util;
 
-$ENV{TZ} = "EST5EDT";
+#$ENV{TZ} = "EST5EDT";
 
 my $d1 = DateTime->now;
 my ($curryear, $currmon, $currdate) = split / /, strftime("%Y %m %d", gmtime($d1->epoch()));
@@ -32,6 +32,7 @@ my $d2 = DateTime->new(
     hour       => 7, # 7am Thursday
     minute     => 0,
     second     => 0,
+    time_zone  => 'America/New_York'
 );
 
 my $d3 = DateTime->new(
@@ -41,6 +42,7 @@ my $d3 = DateTime->new(
     hour       => 20, # Usually done by 8pm Sunday
     minute     => 01,
     second     => 00,
+    time_zone  => 'America/New_York'
 );
 
 my $dur = $d2->epoch() - $d1->epoch();
