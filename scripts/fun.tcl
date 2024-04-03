@@ -339,7 +339,7 @@ proc burn { nick host hand chan text} {
 	}
 
 	putlog "burn: $nick $host $hand $chan"
-	putchan $chan "🔥 sick burn bro [https://i.imgur.com/rK6Oj0P.png]"
+	putchan $chan "🔥 sick burn bro - https://i.imgur.com/rK6Oj0P.png"
 }
 
 proc brexit { nick host hand chan text } {
