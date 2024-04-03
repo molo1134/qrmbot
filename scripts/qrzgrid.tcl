@@ -2129,21 +2129,5 @@ proc msg_spot {nick uhand handle input} {
 	close $fd
 }
 
-bind pub - !masters masters
-bind pub - !themasters masters
-set mastersbin "/home/eggdrop/bin/masters"
-proc fieldday { nick host hand chan text } {
-	if [string equal "#amateurradio" $chan] then {
-		return
-	}
-	global mastersbin
-	putlog "masters: $nick $host $hand $chan"
-	set fd [open "|${mastersbin}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
-	}
-	close $fd
-}
 putlog "Ham utils loaded."
 
