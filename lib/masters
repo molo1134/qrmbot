@@ -1,0 +1,71 @@
+#!/usr/bin/perl
+# countdown to The Masters 
+# based on countdown to Hamvention and ARRL Field Day by OliverUK and molo1134
+#
+# 2-clause BSD license.
+# Copyright (c) 2019 OliverUK. All rights reserved.
+# Copyright (c) 2019, 2020, 2023 molo1134@github. All rights reserved.
+# Copyright (c) 2024 km8v. All rights reserved.
+
+use strict;
+use DateTime;
+use POSIX;
+use Date::Manip::Date;
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Util;
+
+$ENV{TZ} = "EST5EDT";
+
+my $d1 = DateTime->now;
+my ($curryear, $currmon, $currdate) = split / /, strftime("%Y %m %d", gmtime($d1->epoch()));
+my $mastersdate = new Date::Manip::Date;
+$mastersdate->parse('Second Sunday in April');
+my ($mastersyear, $mastersmon, $mastersday) = split / /, $mastersdate->printf('%Y %m %d');
+
+my $d2 = DateTime->new(
+    year       => $mastersyear,
+    month      => $mastersmon,
+    day        => $mastersday - 3,
+    hour       => 7, # 7am Thursday
+    minute     => 0,
+    second     => 0,
+);
+
+my $d3 = DateTime->new(
+    year       => $mastersyear,
+    month      => $mastersmon,
+    day        => $mastersday,
+    hour       => 20, # Usually done by 8pm Sunday
+    minute     => 01,
+    second     => 00,
+);
+
+my $dur = $d2->epoch() - $d1->epoch();
+my $after = $d3->epoch() - $d1->epoch();
+
+# if the event has ended, flip to next year
+if ($dur < 0 && $after < 0) {
+	$d2->set_year($curryear +1);
+	$dur = $d2->epoch() - $d1->epoch();
+}
+
+if ($dur < 0 && $after > 0) {
+	print "Hello, friends. A tradition unlike any other. https://masters.com\n";
+	exit 0;
+}
+
+my $m = floor($dur / (30 * 24 * 60 * 60));
+my $d = floor($dur % (30 * 24 * 60 * 60) / (24 * 60 * 60));
+my $h = floor($dur % (24 * 60 * 60) / (60 * 60));
+my $min = ($dur / 60) % 60;
+my $sec = $dur % 60;
+
+print "The Masters Countdown! ";
+print "$m month, " if $m == 1;
+print "$m months, " if $m > 1;
+print "$d day, " if $d == 1;
+print "$d days, " if $d > 1;
+print "$h hours, $min min, $sec sec\n";
