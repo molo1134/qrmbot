@@ -5,11 +5,12 @@
 # 2-clause BSD license.
 # Copyright (c) 2019 OliverUK. All rights reserved.
 # Copyright (c) 2019, 2020, 2023 molo1134@github. All rights reserved.
-# Copyright (c) 2024 0x8v. All rights reserved.
+# Copyright (c) 2024 km8v. All rights reserved.
 
 use strict;
 use DateTime;
 use POSIX;
+use Date::Manip::Date;
 
 use File::Basename;
 use Cwd 'realpath';
@@ -18,23 +19,37 @@ use Util;
 
 my $d1 = DateTime->now;
 my ($curryear, $currmon, $currdate) = split / /, strftime("%Y %m %d", gmtime($d1->epoch()));
-my ($fdyear, $fdmon, $fddate) = split / /, getFullWeekendInMonth(4, "Jun");	# 4th full weekend in June
-#print "$curryear, $currmon, $currdate\n";
-#print "$fdyear, $fdmon, $fddate\n"; # returns a saturday
+my $fddate = new Date::Manip::Date;
+$fddate->parse('Second Sunday in April');
+my ($fdyear, $fdmon, $fdday) = split / /, $fddate->printf('%Y %m %d');
 
-# will need to update each year manually
 my $d2 = DateTime->new(
-    year       => 2024,
-    month      => 04,
-    day        => 11,
+    year       => $fdyear,
+    month      => $fdmon,
+    day        => $fdday - 3,
     hour       => 12, # 1800 UTC
     minute     => 0,
     second     => 0,
 );
 
-my $dur = $d2->epoch() - $d1->epoch();
+my $d3 = DateTime->new(
+    year       => $fdyear,
+    month      => $fdmon,
+    day        => $fdday,
+    hour       => 23, # 1800 UTC
+    minute     => 59,
+    second     => 00,
+);
 
-if ($dur < 0) {
+my $dur = $d2->epoch() - $d1->epoch();
+my $after = $d3->epoch() - $d1->epoch();
+
+if ($dur < 0 && $after < 0) {
+	$d2->set_year($curryear +1);
+	$dur = $d2->epoch() - $d1->epoch();
+}
+
+if ($dur < 0 && $after > 0) {
 	print "Hello, friends. A tradition unlike any other. https://masters.com\n";
 	exit 0;
 }
