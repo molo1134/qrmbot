@@ -65,7 +65,7 @@ while ($i <= $#ARGV) {
   } elsif ($ARGV[$i] =~ m|^https?://t\.co/\w+|i or
 	  $ARGV[$i] =~ m|^https?://(mobile\.)?twitter\.com/|i or
 	  $ARGV[$i] =~ m|^https?://x\.com/|i or
-	  $ARGV[$i] =~ m|^https?://nitter\.net/|i) {
+	  $ARGV[$i] =~ m|^https?://nitter\.|i) {
     doTwitter($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?imdb\.com/title/tt\d+|i or
 	  $ARGV[$i] =~ m|^https?://imdb\.to/\w+|i) {
@@ -270,7 +270,7 @@ sub doTwitter {
   }
   #  'curl --max-time $timeout -Ls -o /dev/null -w "%{url_effective}" "https://t.co/aoVVgKEfqC"'
 
-  if ($url =~ /https?:\/\/(mobile\.)?(x\.com|twitter\.com|nitter\.net)\/(\w+)\/status(es)?\/(\d+)/) {
+  if ($url =~ /https?:\/\/(mobile\.)?(x\.com|twitter\.com|nitter\..*?)\/(\w+)\/status(es)?\/(\d+)/) {
     $username = $3;
     $id = $5;
   }
@@ -280,10 +280,10 @@ sub doTwitter {
   }
 
   my $alturl = undef;
-  $alturl = "https://nitter.net/$username/status/$id" if $url =~ /(twitter|x)\.com/;
-  $alturl = "https://twitter.com/$username/status/$id" if $url =~ /nitter\.net/;
+  $alturl = "https://nitter.katia.sh/$username/status/$id" if $url =~ /(twitter|x)\.com/;
+  $alturl = "https://twitter.com/$username/status/$id" if $url =~ /nitter/;
 
-  $url = "https://nitter.net/$username/status/$id";
+  $url = "https://nitter.katia.sh/$username/status/$id";
   my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0";
   #print "$url\n";
 
