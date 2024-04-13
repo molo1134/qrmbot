@@ -280,10 +280,10 @@ sub doTwitter {
   }
 
   my $alturl = undef;
-  $alturl = "https://nitter.katia.sh/$username/status/$id" if $url =~ /(twitter|x)\.com/;
+  $alturl = "https://nitter.poast.org/$username/status/$id" if $url =~ /(twitter|x)\.com/;
   $alturl = "https://twitter.com/$username/status/$id" if $url =~ /nitter/;
 
-  $url = "https://nitter.katia.sh/$username/status/$id";
+  $url = "https://nitter.poast.org/$username/status/$id";
   my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0";
   #print "$url\n";
 
