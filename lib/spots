@@ -393,11 +393,11 @@ sub doRBN {
 
   # this appears in https://www.reversebeacon.net/main.php as follows:
   #
-  # window.RBN_version_hash = "fb94a8";
+  # window.RBN_version_hash = "0c9dd3";
   #
   # if this stops working in the future, we may have to make a second request
   # to get whatever the current version is.
-  my $version_hash = "fb94a8";
+  my $version_hash = "0c9dd3";
 
   my $url;
   if ($freqmode == 0) {
@@ -441,7 +441,7 @@ sub doRBN {
   my %modes = %$modes_ref;
 
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  my $curl = "curl -L -k --max-time 15 --retry 1 -s '$url'";
+  my $curl = "curl -L -k --max-time 20 --retry 1 -s '$url'";
   $curl .= " -H 'Referer: $referer'" if defined $referer;
   open (HTTP, '-|', $curl);
   my $json = <HTTP>;
