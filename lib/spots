@@ -393,11 +393,11 @@ sub doRBN {
 
   # this appears in https://www.reversebeacon.net/main.php as follows:
   #
-  # window.RBN_version_hash = "0c9dd3";
+  # window.RBN_version_hash = "254317";
   #
   # if this stops working in the future, we may have to make a second request
   # to get whatever the current version is.
-  my $version_hash = "0c9dd3";
+  my $version_hash = "254317";
 
   my $url;
   if ($freqmode == 0) {
