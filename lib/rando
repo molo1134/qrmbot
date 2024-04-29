@@ -137,8 +137,8 @@ while ($i <= $#ARGV) {
       }
       $i++;
     }
-    if (not defined $n or $n == 0) {
-      print "error: must include number of cards to draw\n";
+    if (not defined $n or $n <= 0) {
+      print "error: must include valid number of cards to draw\n";
       exit 0;
     }
     $n = 52 if $n > 52;
