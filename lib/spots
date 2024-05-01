@@ -128,7 +128,7 @@ while ($i <= $#ARGV) {
 }
 
 if ($dxw == 0 && $rbn == 0 && $psk == 0 && $ham == 0 && $pota == 0 && $qrm == 0) {
-  $rbn = 1;
+  $rbn = 0;  # XXX temporary since rbn is being fucking slow
   $dxw = 1;
   $psk = 1;
   $ham = 1;
@@ -441,7 +441,7 @@ sub doRBN {
   my %modes = %$modes_ref;
 
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  my $curl = "curl -L -k --max-time 20 --retry 1 -s '$url'";
+  my $curl = "curl -L -k --max-time 60 --retry 1 -s '$url'";  # XXX 60s b/c slow
   $curl .= " -H 'Referer: $referer'" if defined $referer;
   open (HTTP, '-|', $curl);
   my $json = <HTTP>;
