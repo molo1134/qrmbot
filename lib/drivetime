@@ -114,7 +114,7 @@ if (defined($term2) and $term2 =~ /^[A-R]{2}[0-9]{2}([A-X]{2})?/i) {
 my ($origin, $dest);
 ($origin, $dest) = ($term2, $term1) unless $to == 1;
 ($origin, $dest) = ($term1, $term2) if     $to == 1;
-my ($encodedOrigin, $encodedDest) = (uri_escape($origin), uri_escape($dest));
+my ($encodedOrigin, $encodedDest) = (uri_escape_utf8($origin), uri_escape_utf8($dest));
 
 my $apikey = getGeocodingAPIKey();
 
