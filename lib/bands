@@ -77,12 +77,22 @@ if ($quick) {
 }
 
 if ($quick) {
-  # alternative: my $url = "https://lasp.colorado.edu/lisird/latis/dap/penticton_radio_flux.csv"; # this is slow, ~1MB of data and we only want the last row
   my $url = "https://services.swpc.noaa.gov/products/summary/10cm-flux.json";
   open (JSON, '-|', "curl --max-time 15 -s -k -L $url | tail -1 ");
   $_ = <JSON>;
   $solarflux = $1 if m/"Flux":"(\d+)"/;
   close(JSON);
+
+  # attempt #2
+  if (not defined $solarflux or $solarflux == 0) {
+    # this is slow, ~1MB of data and we only want the last row
+    my $url = "https://lasp.colorado.edu/lisird/latis/dap/penticton_radio_flux.csv";
+    open (CSV, '-|', "curl --max-time 25 -s -k -L $url | tail -1 ");
+    $_ = <CSV>;
+    chomp;
+    (undef, undef, $solarflux) = split /,/;
+    close(CSV);
+  }
 }
 
 if ($quick) {
