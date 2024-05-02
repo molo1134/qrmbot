@@ -67,14 +67,14 @@ while ( my $line = <HTTP>) {
     print "ACTIVE INCIDENT (Conduct AmRRON Nets according to the Emergency Net Schedule. Make adjustments based on the situation.)\n";
     $found = 1;
   } else {
-    print "unknown AmRRON Communications Condition Level\n";
+    print "unknown AmRRON Communications Condition Level; $url\n";
     exit 0;
   }
 }
 close(HTTP);
 
 if (not $found) {
-    print "unable to retrieve AmRRON Communications Condition Level\n";
+    print "unable to retrieve AmRRON Communications Condition Level; $url\n";
     exit 0;
 }
 
