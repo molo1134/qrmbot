@@ -16,6 +16,7 @@ bind pub - !ooo ooooooo
 bind pub - !monke robface
 bind pub - !robface robface
 bind pub - !monkee daveface
+bind pub - !rick rickface
 bind pub - !burn burn
 bind pub - !brexit brexit
 bind pub - !trumpfine trumpfine
@@ -313,6 +314,19 @@ proc robface { nick host hand chan text} {
 	}
 
 	putchan $chan "https://i.imgur.com/cS9qmCH.jpg"
+}
+
+proc rickface { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+
+ 	if [string equal "#dayton" $chan] then {
+  		putchan $chan "https://i.imgur.com/rWqnVT1.png"
+		return
+	}
+
+	putchan $chan "https://i.imgur.com/dQAgMCf.png"
 }
 
 proc daveface { nick host hand chan text} {
