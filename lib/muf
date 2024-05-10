@@ -279,7 +279,10 @@ if ($last > 0) {
   my $old = "";
   $old = yellow(" [old]") if $last < (time() - (30*60));  # 30 min
   $old = red(" [old]") if $last < (time() - (120*60));    # 2 hour
-  print bold($station), " ($grid): MUF @ $datetime$old: ",
+  my $conf = "";
+  $conf = yellow(" [confidence: $cs]") if $cs < 100 and $cs > 0;
+  $conf = red(" [confidence: $cs]") if $cs <= 0;
+  print bold($station), " ($grid): MUF @ $datetime$old$conf: ",
 	bold("$mufrecords{$last} MHz"),
 	"; recent high: $maxmuf at $maxtime; low $minmuf at $mintime\n";
 } else {
