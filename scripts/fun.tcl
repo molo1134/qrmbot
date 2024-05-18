@@ -1076,6 +1076,7 @@ proc ohio { nick host hand chan text} {
 }
 
 bind pub - !brad brad
+bind pub - !bread brad
 proc brad { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -1083,7 +1084,8 @@ proc brad { nick host hand chan text} {
  	if [ expr (rand()*20) <= 1 ] then {
 		putchan $chan "https://www.youtube.com/watch?v=J1DAmmROUX8"
 	} elseif [ expr (rand()*10) <= 3 ] then {
-		putchan $chan "https://i.imgur.com/Y1UxFds.mp4"
+		#putchan $chan "https://i.imgur.com/Y1UxFds.mp4"
+		putchan $chan "https://i.imgur.com/SwCo2ma.jpg"
 	} else {
  		putchan $chan "Bread 👍"
 	}
