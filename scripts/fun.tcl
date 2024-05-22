@@ -1086,6 +1086,8 @@ proc brad { nick host hand chan text} {
 	} elseif [ expr (rand()*10) <= 3 ] then {
 		#putchan $chan "https://i.imgur.com/Y1UxFds.mp4"
 		putchan $chan "https://i.imgur.com/SwCo2ma.jpg"
+	} elseif [ expr (rand()*10) >= 7 ] then {
+		putchan $chan "https://i.imgur.com/eYAgj4T.png"
 	} else {
  		putchan $chan "Bread 👍"
 	}
