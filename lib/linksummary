@@ -279,9 +279,13 @@ sub doTwitter {
     return;
   }
 
-  my $nitterInstance = getNitterInstance();
+  my $i = -1;
+  NEXT_NITTER:
+  $i++;
+  my $nitterInstance = getNitterInstance($i);
   if (not defined $nitterInstance) {
-    print "error: no nitter instance available";
+    print "error: no nitter instance available\n";
+    return;
   }
 
   my $alturl = undef;
@@ -318,12 +322,14 @@ sub doTwitter {
   while (<HTTP>) {
     #print;
     if (/429 Too Many Requests/) {
-      print "error: 429 Too Many Requests\n";
-      return;
+      #print "error: 429 Too Many Requests\n";
+      close(HTTP);
+      goto NEXT_NITTER;
     }
     if (/Instance has been rate limited./) {
-      print "error: rate limited\n";
-      return;
+      #print "error: rate limited\n";
+      close(HTTP);
+      goto NEXT_NITTER;
     }
 
     $in_main_tweet = 1 if not $in_main_tweet and /<div .*?class="main-tweet">/;
@@ -390,9 +396,8 @@ sub doTwitter {
   # ☑ ✓ ✔ ✅
 
   if (not defined $text) {
-    print "not found\n";
-    #exit 0;
-    return;
+    #print "not found\n";
+    goto NEXT_NITTER;
   }
 
   while ($text =~ m|<a[^>]*href=["']([^"']*?)["']\s*.*?>|i) {
@@ -439,6 +444,7 @@ sub doTwitter {
 }
 
 sub getNitterInstance {
+  my $target = shift;
   my $apiUrl = "https://status.d420.de/api/v1/instances";
   my $cachedir = $ENV{HOME} . "/.qrmbot/cache";
   my $instanceCacheFile = $cachedir . "/nitter_instances.json";
@@ -485,9 +491,13 @@ sub getNitterInstance {
   }
   my $j = from_json($json);
 
+  my $found = -1;
   foreach my $h (@{$j->{hosts}}) {
     if ($h->{healthy} and $h->{points} > 0) {
-      return $h->{url};
+      $found++;
+      if ($found == $target) {
+	return $h->{url};
+      }
     }
   }
 
