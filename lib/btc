@@ -88,7 +88,7 @@ $qty = 0;
 $volume = humanNum(int($results{"volume_24h"})) if defined $results{"volume_24h"};
 $mktcap = humanNum(int($results{"market_cap"})) if defined $results{"market_cap"} and $results{"market_cap"} ne "null";
 $mktcap = "" if not defined $mktcap;
-$qty = int ($results{"volume_24h"} / $results{"price"}) if defined $results{"price"} and defined $results{"volume_24h"};
+$qty = int ($results{"volume_24h"} / $results{"price"}) if defined $results{"price"} and defined $results{"volume_24h"} and $results{"price"} ne "null";
 $results{"price"} = commify($results{"price"}) if defined($results{"price"});
 
 my $trendsymbol;
