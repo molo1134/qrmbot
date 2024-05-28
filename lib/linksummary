@@ -279,11 +279,16 @@ sub doTwitter {
     return;
   }
 
+  my $nitterInstance = getNitterInstance();
+  if (not defined $nitterInstance) {
+    print "error: no nitter instance available";
+  }
+
   my $alturl = undef;
-  $alturl = "https://nitter.poast.org/$username/status/$id" if $url =~ /(twitter|x)\.com/;
+  $alturl = "$nitterInstance/$username/status/$id" if $url =~ /(twitter|x)\.com/;
   $alturl = "https://twitter.com/$username/status/$id" if $url =~ /nitter/;
 
-  $url = "https://nitter.poast.org/$username/status/$id";
+  $url = "$nitterInstance/$username/status/$id";
   my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0";
   #print "$url\n";
 
@@ -307,9 +312,11 @@ sub doTwitter {
   # XXX TODO below here:
   my ($media, $tco, $rt) = undef;
 
+  #print "url: $url\n";
   open (HTTP, '-|', "curl --max-time $timeout -A '$ua' $headers -L -k -s --compressed '$url'");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
+    #print;
     $in_main_tweet = 1 if not $in_main_tweet and /<div .*?class="main-tweet">/;
     $in_main_tweet = 0 if $in_main_tweet and /class=".*?after-tweet.*?"/;
     next if not $in_main_tweet;
@@ -420,6 +427,62 @@ sub doTwitter {
     #exit 0;
   }
 
+}
+
+sub getNitterInstance {
+  my $apiUrl = "https://status.d420.de/api/v1/instances";
+  my $cachedir = $ENV{HOME} . "/.qrmbot/cache";
+  my $instanceCacheFile = $cachedir . "/nitter_instances.json";
+  my $needUpdate = 0;
+  my $now = time();
+  my $maxage=900; # 15 min
+  my $url = undef; # result
+
+  if (not -d $cachedir) {
+    print "making cache directory..\n";
+    system ("mkdir -p $cachedir\n");
+    if (not -d $cachedir) {
+      print "unable to make cache directory $cachedir\n";
+    }
+  }
+
+  if (not -e $instanceCacheFile) {
+    $needUpdate = 1;
+  } else {
+    my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $instanceCacheFile;
+    if (defined $mtime) {
+      my $age = $now - $mtime;
+      if ($age > $maxage or $size == 0) {
+	$needUpdate = 1;
+      }
+    } else {
+      $needUpdate = 1;
+    }
+  }
+  if ($needUpdate == 1) {
+    #print "$apiUrl\n";
+    system("curl --stderr - -s -k -L --max-time 20 --retry 1 -o '$instanceCacheFile' '$apiUrl'");
+  }
+
+  return undef if not -e $instanceCacheFile;
+
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  open(JSON, '<', "$instanceCacheFile");
+  my $json = <JSON>;
+  close(JSON);
+  if (not $json =~ /^\s*{/) {
+    print "error while decoding cached json file from $apiUrl : $json\n";
+    return undef;
+  }
+  my $j = from_json($json);
+
+  foreach my $h (@{$j->{hosts}}) {
+    if ($h->{healthy} and $h->{points} > 0) {
+      return $h->{url};
+    }
+  }
+
+  return undef;
 }
 
 sub toHumanReadableNum {
