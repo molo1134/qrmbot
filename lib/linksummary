@@ -317,6 +317,15 @@ sub doTwitter {
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
     #print;
+    if (/429 Too Many Requests/) {
+      print "error: 429 Too Many Requests\n";
+      return;
+    }
+    if (/Instance has been rate limited./) {
+      print "error: rate limited\n";
+      return;
+    }
+
     $in_main_tweet = 1 if not $in_main_tweet and /<div .*?class="main-tweet">/;
     $in_main_tweet = 0 if $in_main_tweet and /class=".*?after-tweet.*?"/;
     next if not $in_main_tweet;
