@@ -91,6 +91,10 @@ local $/;   # read entire file -- FIXME: potentially memory hungry
 open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$search_url'");
 my $json = <JSON>;
 close(JSON);
+if (not defined $json or $json eq "") {
+  print "no response from $search_url\n";
+  exit $exitnonzeroonerror;
+}
 #print $json, "\n";
 my $j = decode_json($json);
 my $count = scalar @{$j};
