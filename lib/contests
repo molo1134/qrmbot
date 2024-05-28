@@ -93,8 +93,10 @@ while (defined $contests{$i}) {
 	$start > $now and
 	($end-$start) > 43100) {
     if (($yday - $jdate) < 6) {
+      #print("thisweekend: $summary -- $start -- $now -- $end\n");
       push @thisweekend, $summary;
     } elsif (($yday - $jdate) < 13) {
+      #print("nextweekend: $summary -- $start -- $now -- $end\n");
       push @nextweekend, $summary;
     } else {
       #print "2 weeks or more away: $summary\n";
@@ -111,8 +113,10 @@ while (defined $contests{$i}) {
 	($end-$start) > 43100) {
     if (($yday - $jdate) < 6) {
       push @thisweekend, $summary;
+      #print("thisweekend: $summary -- $start -- $now -- $end\n");
     } elsif (($yday - $jdate) < 13) {
       push @nextweekend, $summary;
+      #print("nextweekend: $summary -- $start -- $now -- $end\n");
     } else {
       #print "2 week or more away: $summary\n";
     }
