@@ -32,8 +32,9 @@ my $outmonth;
 
 my $i = 0;
 while ($i <= $#ARGV) {
-  if (not defined $amount and isNumeric($ARGV[$i])) {
+  if (not defined $amount and (isNumeric($ARGV[$i]) or $ARGV[$i] =~ m/\$?[0-9.,]*/)) {
     $amount = $ARGV[$i];
+    $amount =~ s/[\$,]//g;
   } elsif (defined $amount and
 	    not defined $inyear and
 	    isNumeric($ARGV[$i])) {
@@ -113,6 +114,6 @@ if (not defined $answer) {
   exit $exitnonzeroonerror;
 }
 
-printf("\$%0.2f in $inyear-$inmonth dollars is worth %s in $outyear-$outmonth dollars.\n",
-  $amount,
+printf("%s in $inyear-$inmonth dollars is worth %s in $outyear-$outmonth dollars.\n",
+  commify(sprintf("\$%0.2f", $amount)),
   bold(commify(sprintf("\$%0.2f", $answer))));
