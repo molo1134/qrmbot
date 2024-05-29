@@ -115,6 +115,34 @@ proc debt_pub { nick host hand chan text } {
 	close $fd
 }
 
+bind msg - !cpi cpi_msg
+bind pub - !cpi cpi_pub
+bind msg - !inflation cpi_msg
+bind pub - !inflation cpi_pub
+set cpibin "/home/eggdrop/bin/cpi"
+proc cpi_pub { nick host hand chan text } {
+	global cpibin
+	set param [sanitize_string [string trim "${text}"]]
+	putlog "cpi pub: $nick $host $hand $chan $param"
+	set fd [open "|${cpibin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc cpi_msg {nick uhand handle input} {
+	global cpibin
+	set param [sanitize_string [string trim "${input}"]]
+	putlog "cpi msg: $nick $uhand $handle $param"
+	set fd [open "|${cpibin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
 
 bind msg - !launch launch_msg
 bind pub - !launch launch_pub

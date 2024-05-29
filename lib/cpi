@@ -1,0 +1,118 @@
+#!/usr/bin/perl -w
+# US CPI inflation calculator
+
+# 2-clause BSD license.
+# Copyright (c) 2024 molo1134@github. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+my $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $amount;
+my $inyear;
+my $inmonth;
+my $outyear;
+my $outmonth;
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if (not defined $amount and isNumeric($ARGV[$i])) {
+    $amount = $ARGV[$i];
+  } elsif (defined $amount and
+	    not defined $inyear and
+	    isNumeric($ARGV[$i])) {
+    $inyear = $ARGV[$i];
+  } elsif (defined $amount and
+	    not defined $inyear and
+	    not isNumeric($ARGV[$i]) and
+	    $ARGV[$i] =~ m/^([0-9]{4})-([0-9]{2})$/) {
+    ($inyear, $inmonth) = ($1, $2);
+  } elsif (defined $amount and
+	    defined $inyear and
+	    isNumeric($ARGV[$i])) {
+    $outyear = $ARGV[$i];
+  } elsif (defined $amount and
+	    defined $inyear and
+	    not isNumeric($ARGV[$i]) and
+	    $ARGV[$i] =~ m/^([0-9]{4})-([0-9]{2})$/) {
+    ($outyear, $outmonth) = ($1, $2);
+  }
+  $i++;
+}
+
+my (undef,undef,undef,undef,$curmon,$curyear,undef,undef) = gmtime(time());
+$curyear += 1900;
+
+if (defined $inyear and not defined $inmonth) {
+  $inmonth = 1;
+}
+if (not defined $outyear) {
+  $outyear = $curyear;
+  $outmonth = $curmon; # note, 0-indexed
+  if ($outmonth == 0) {
+    $outmonth = 12;
+    $outyear--;
+  }
+}
+if (defined $outyear and not defined $outmonth) {
+  $outmonth = 1;
+}
+
+if (not defined $amount or not defined $inyear) {
+  print "usage: cpi <amount> <year>[-month] [<target year>[-month]]\n";
+  exit $exitnonzeroonerror;
+}
+
+#print ("amount: $amount\n");
+#print ("inyear: $inyear\n");
+#print ("inmonth: $inmonth\n");
+#print ("outyear: $outyear\n");
+#print ("outmonth: $outmonth\n");
+
+$inmonth = sprintf("%02d", $inmonth);
+$outmonth = sprintf("%02d", $outmonth);
+
+my $answer = undef;
+
+my $url = "https://data.bls.gov/cgi-bin/cpicalc.pl?cost1=$amount&year1=$inyear$inmonth&year2=$outyear$outmonth";
+#print "$url\n";
+open(HTTP, '-|', "curl --max-time 10 -s -k -L '$url'");
+binmode(HTTP, ":utf8");
+while (<HTTP>) {
+  if (m|<span id="answer">\$(.*?)</span>|) {
+    $answer = $1;
+    $answer =~ s/,//g;
+  }
+  if (/Error:<br>(.*)\s*$/) {
+    print("error: $1\n");
+    exit $exitnonzeroonerror;
+  }
+}
+close(HTTP);
+
+#print "answer: $answer\n";
+
+if (not defined $answer) {
+  print "bug: undefined error\n";
+  exit $exitnonzeroonerror;
+}
+
+printf("\$%0.2f in $inyear-$inmonth dollars is worth %s in $outyear-$outmonth dollars.\n",
+  $amount,
+  bold(commify(sprintf("\$%0.2f", $answer))));
