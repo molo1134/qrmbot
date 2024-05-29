@@ -67,6 +67,7 @@
  * `!crypto` -- cryptocurrency price check
  * `!bitcoin` `!btc` `!litecoin` `!ltc` `!etherium` `!eth` `!doge`
  * `!debt` -- US government debt
+ * `!cpi` -- US dollar inflation calculator
  * `!setgeo` `!getgeo` -- set your qth for results in some commands †
  * `!github` -- display bot github URL
  * `!quote` `!quotesearch` -- get a quote
@@ -530,6 +531,7 @@ Data source: blitzortung.org
 ### `!crypto` -- cryptocurrency price check
 ### `!bitcoin` `!btc` `!litecoin` `!ltc` `!etherium` `!eth` `!doge`
 ### `!debt` -- US government debt
+### `!cpi` -- US dollar inflation calculator
 
 ## Metadata and bot control
 
