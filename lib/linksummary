@@ -1071,12 +1071,11 @@ sub doQth {
 sub doAmazon {
   my $url = shift;
   my $shortUrl = shortenUrl($url);
-  my $useragent = 'Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0';
-  #my $useragent = "foo";
+  my $useragent = 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0';
   my ($price, $curr, $stars, $prime, $vendor, $fulfilled, $title);
   my $lastbuyboxlabel = undef;
   my $coreprice = 0;
-  open(HTTP, '-|', "curl -A \"$useragent\" --compressed --max-time $timeout -L -k -s '$url'");
+  open(HTTP, '-|', "curl -4 -A \"$useragent\" --compressed --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     #print;
@@ -1092,10 +1091,10 @@ sub doAmazon {
       print "$shortUrl\n";
       return;
     }
-    if (/Something Went Wrong/i) {
-      print "Something went wrong; $shortUrl\n";
-      return;
-    }
+    #if (/Something Went Wrong/i) {
+    #  print "Something went wrong; $shortUrl\n";
+    #  return;
+    #}
 
     if (not defined $title and /<title>(Amazon.com\s*:|Amazon\s*\|)?\s*([^<]*?)(-?\s*Amazon.com|-?\s*Amazon Canada)?<\/title>/) {
       $title = decodeEntities($2);
@@ -1136,6 +1135,11 @@ sub doAmazon {
       $price = $2;
       $curr = '€';
       $coreprice = 0;
+    }
+    if ($coreprice and not defined $price and m/<span class="a-price.*?data-a-color="base">(<span.*?>)?([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
+      $curr = $2;
+      $curr =~ tr/￥/¥/;
+      $price = $3;
     }
     if (not defined $price and /span class=.*offer-price.*">([\$￥£]|CDN\$)\s*([0-9.,]+)</) {
       $curr = $1;
