@@ -1102,6 +1102,8 @@ sub doAmazon {
       $title =~ s/: Amazon.ca:.*$//;
       $title =~ s/:\s*Amazon.de:.*$//;
       $title =~ s/- Amazon.com.*$//;
+      $title =~ s/^Amazon.com\s*:\s*//;
+      $title =~ s/\s*:\s*[^:]*$//;
     }
     if (/<meta name="title" content="(.*?)"/) {
       $title = decodeEntities($1);
@@ -1109,6 +1111,8 @@ sub doAmazon {
       $title =~ s/: Amazon.ca:.*$//;
       $title =~ s/:\s*Amazon.de:.*$//;
       $title =~ s/- Amazon.com.*$//;
+      $title =~ s/^Amazon.com\s*:\s*//;
+      $title =~ s/\s*:\s*[^:]*$//;
     }
     if (/<span id="priceblock_ourprice"[^>]+>([0-9.,]+)\s*€</) {
       $price = $1;
@@ -1167,10 +1171,27 @@ sub doAmazon {
     }
     $prime = 1 if /a-icon-prime.*aria-label="Free Shipping for Prime Members"/;
     $prime = 1 if /shipped by Amazon or get <b>Fast, Free Shipping<\/b> with/;
+    $prime = 1 if /Get <b>Fast, Free Shipping<\/b> with <a.*?>Amazon Prime<\/a>/;
+
+    if (/<span>Join Prime to buy this item at <\/span><span.*?>([\$￥£]|CDN\$)\s*([0-9.,]+)<\/span>/) {
+      $prime = 1;
+      $curr = $1;
+      $curr =~ tr/￥/¥/;
+      $price = $2;
+    }
     #if (/(Sold by |この商品は、)<[^>]+>([^<]+)</) {
     #  $vendor = $2;
     #  print "setting vendor 3: $vendor\n";
     #}
+    if (/>\s*Sold by\s*.*?id='sellerProfileTriggerId'>(.*?)<\/a>/) {
+      $vendor = $1;
+    }
+    if (/>\s*Sold by\s*.*?<span.*?>Amazon.com<\/span>/) {
+      ($vendor, $fulfilled) = ("Amazon", 1);
+    }
+    if (/>\s*Sold by\s*.*?isAmazonFulfilled=1/) {
+      $fulfilled = 1;
+    }
     if (/(Ships|Dispatches) from and sold by <[^>]+>([^<]+)</) {
       $vendor = $1;
       $fulfilled = 0;
