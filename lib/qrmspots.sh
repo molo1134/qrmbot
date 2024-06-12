@@ -14,5 +14,6 @@ if [ ! -e "$SPOTFILE" ]; then
   exit 1
 fi
 
-sqlite3 -readonly -header -column "$SPOTFILE" "$QUERY";
+#sqlite3 -readonly -header -column "$SPOTFILE" "$QUERY";
+sqlite3 -header -column "$SPOTFILE" "$QUERY";
 
