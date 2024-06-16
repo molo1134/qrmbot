@@ -391,6 +391,8 @@ sub doRBN {
   my $freqmode = 0;
   $freqmode = 1 if $callsign =~ m/^\d+$/;
 
+  my $url = "https://www.reversebeacon.net/main.php";
+
   # this appears in https://www.reversebeacon.net/main.php as follows:
   #
   # window.RBN_version_hash = "254317";
@@ -399,7 +401,15 @@ sub doRBN {
   # to get whatever the current version is.
   my $version_hash = "254317";
 
-  my $url;
+  my $curl = "curl -L -k --max-time 10 --retry 1 -s '$url'";
+  open (HTTP, '-|', $curl);
+  while (<HTTP>) {
+    if (m/window.RBN_version_hash\s*=\s*"([0-9a-f]+)"/) {
+      $version_hash = $1;
+    }
+  }
+  close(HTTP);
+
   if ($freqmode == 0) {
     $url = "https://www.reversebeacon.net/spots.php?h=${version_hash}&cdx=${callsign}&s=0&r=20";
   } else {
@@ -441,7 +451,7 @@ sub doRBN {
   my %modes = %$modes_ref;
 
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  my $curl = "curl -L -k --max-time 60 --retry 1 -s '$url'";  # XXX 60s b/c slow
+  $curl = "curl -L -k --max-time 60 --retry 1 -s '$url'";  # XXX 60s b/c slow
   $curl .= " -H 'Referer: $referer'" if defined $referer;
   open (HTTP, '-|', $curl);
   my $json = <HTTP>;
