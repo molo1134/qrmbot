@@ -392,14 +392,13 @@ sub doRBN {
   $freqmode = 1 if $callsign =~ m/^\d+$/;
 
   my $url = "https://www.reversebeacon.net/main.php";
-
+  my $version_hash = undef;
   # this appears in https://www.reversebeacon.net/main.php as follows:
   #
-  # window.RBN_version_hash = "254317";
+  # window.RBN_version_hash = "254f17";
   #
-  # if this stops working in the future, we may have to make a second request
-  # to get whatever the current version is.
-  my $version_hash = "254317";
+  # this stops working periodcally, so make a request to get whatever the
+  # current version is.
 
   my $curl = "curl -L -k --max-time 10 --retry 1 -s '$url'";
   open (HTTP, '-|', $curl);
@@ -409,6 +408,11 @@ sub doRBN {
     }
   }
   close(HTTP);
+
+  if (not defined $version_hash) {
+    print "RBN error: unable to retrieve version hash";
+    exit $exitnonzeroonerror;
+  }
 
   if ($freqmode == 0) {
     $url = "https://www.reversebeacon.net/spots.php?h=${version_hash}&cdx=${callsign}&s=0&r=20";
