@@ -400,16 +400,58 @@ sub doRBN {
   # this stops working periodcally, so make a request to get whatever the
   # current version is.
 
-  my $curl = "curl -L -k --max-time 10 --retry 1 -s '$url'";
-  open (HTTP, '-|', $curl);
-  while (<HTTP>) {
-    if (m/window.RBN_version_hash\s*=\s*"([0-9a-f]+)"/) {
-      $version_hash = $1;
+  my $cachedir = $ENV{HOME} . "/.qrmbot/cache";
+  my $cachedRbnHashFile = $cachedir . "/rbn_hash.txt";
+  my $now = time;
+  my $maxage=604800; # 1 week
+
+  if (not -d $cachedir) {
+    print "making cache directory..\n";
+    system ("mkdir -p $cachedir\n");
+    if (not -d $cachedir) {
+      print "unable to make cache directory $cachedir\n";
     }
   }
-  close(HTTP);
 
-  if (not defined $version_hash) {
+  my $needUpdate = 0;
+  if (not -e $cachedRbnHashFile) {
+    $needUpdate = 1;
+  } else {
+    my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $cachedRbnHashFile;
+    if (defined $mtime) {
+      my $age = $now - $mtime;
+      if ($age > $maxage or $size == 0) {
+	$needUpdate = 1;
+      }
+    } else {
+      $needUpdate = 1;
+    }
+  }
+
+  if ($needUpdate == 1) {
+    my $curl = "curl -L -k --max-time 10 --retry 1 -s '$url'";
+    open (HTTP, '-|', $curl);
+    while (<HTTP>) {
+      if (m/window.RBN_version_hash\s*=\s*"([0-9a-f]+)"/) {
+	$version_hash = $1;
+      }
+    }
+    close(HTTP);
+
+    if (defined $version_hash) {
+      open(CACHE, '>', $cachedRbnHashFile);
+      print CACHE $version_hash, "\n";
+      close(CACHE);
+    }
+  } else {
+    # read cache file
+    open(CACHE, '<', $cachedRbnHashFile);
+    $version_hash = <CACHE>;
+    close(CACHE);
+    chomp($version_hash);
+  }
+
+  if (not defined $version_hash or $version_hash eq "") {
     print "RBN error: unable to retrieve version hash";
     exit $exitnonzeroonerror;
   }
@@ -455,7 +497,7 @@ sub doRBN {
   my %modes = %$modes_ref;
 
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  $curl = "curl -L -k --max-time 60 --retry 1 -s '$url'";  # XXX 60s b/c slow
+  my $curl = "curl -L -k --max-time 60 --retry 1 -s '$url'";  # XXX 60s b/c slow
   $curl .= " -H 'Referer: $referer'" if defined $referer;
   open (HTTP, '-|', $curl);
   my $json = <HTTP>;
@@ -467,6 +509,7 @@ sub doRBN {
     return;
   }
   if ($json =~ /^{"error":(.*?)}/) {
+    # TODO FIXME: on error # 888, invalidate the RBN version hash cache and try again
     my $error = $1;
     print "warning: RBN: error $error\n";
     return;
