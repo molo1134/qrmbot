@@ -1302,7 +1302,7 @@ sub doImgur {
   my $isimg = 0;
 
   my $hash = undef;
-  if ($url =~ m!/gallery/([0-9A-Za-z_]+)/?(#[0-9A-Za-z_]+)?$!) {
+  if ($url =~ m!/gallery/[a-z-]*([0-9A-Za-z_]+)/?(#[0-9A-Za-z_]+)?$!) {
     $hash = $1;
     $isgal = 1;
   }
