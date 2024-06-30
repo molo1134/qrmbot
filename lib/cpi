@@ -30,6 +30,20 @@ my $inmonth;
 my $outyear;
 my $outmonth;
 
+my %monthnames;
+$monthnames{"01"} = "January";
+$monthnames{"02"} = "February";
+$monthnames{"03"} = "March";
+$monthnames{"04"} = "April";
+$monthnames{"05"} = "May";
+$monthnames{"06"} = "June";
+$monthnames{"07"} = "July";
+$monthnames{"08"} = "August";
+$monthnames{"09"} = "September";
+$monthnames{"10"} = "October";
+$monthnames{"11"} = "November";
+$monthnames{"12"} = "December";
+
 my $i = 0;
 while ($i <= $#ARGV) {
   if (not defined $amount and (isNumeric($ARGV[$i]) or $ARGV[$i] =~ m/\$?[0-9.,]*/)) {
@@ -114,6 +128,6 @@ if (not defined $answer) {
   exit $exitnonzeroonerror;
 }
 
-printf("%s in $inyear-$inmonth dollars is worth %s in $outyear-$outmonth dollars.\n",
+printf("%s in $monthnames{$inmonth} $inyear dollars is worth %s in $monthnames{$outmonth} $outyear dollars when adjusted for inflation.\n",
   commify(sprintf("\$%0.2f", $amount)),
   bold(commify(sprintf("\$%0.2f", $answer))));
