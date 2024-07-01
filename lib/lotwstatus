@@ -42,11 +42,11 @@ binmode(HTTP, ":utf8");
 while (<HTTP>) {
   chomp;
   if (not defined $epoch and
-	m|<TD class='_left'>([0-9: -]+)</TD>|) {
+	m|<TD class='_left.*?'>([0-9: -]+)</TD>|) {
     $epoch = $1;
   }
   if (not defined $delay and
-	m|<TD class='_right'>[0-9: -]+<br />\(([0-9a-z ]+) ago\)</TD>|) {
+	m|<TD class='_right.*?'>[0-9: -]+<br />\(([0-9a-z ]+) ago\)</TD>|) {
     $delay = $1;
   }
 }
