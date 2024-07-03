@@ -20,13 +20,9 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
-my $callsearch_url = "http://www.1x1callsigns.org/index.php/index.php?option=com_jumi&fileid=4";
-my $callsearch_params = "action=callSearch&submit=Search&searchCall=";
-
-my $eventsearch_url = "http://www.1x1callsigns.org/index.php/index.php?option=com_jumi&fileid=4&action=search_event";
-my $eventsearch_params = "action=search_event&Submit3=Search&evnt_string=";
-
-my $detail_url = "http://www.1x1callsigns.org/index.php/index.php?option=com_jumi&fileid=4&action=recDetail&recid=";
+my $callsearch_url = "https://www.1x1callsigns.org/1x1search.php?callsign=";
+my $eventsearch_url = "https://www.1x1callsigns.org/1x1search.php?event=";
+my $detail_url = "https://www.1x1callsigns.org/1x1search.php?byid=";
 
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
@@ -46,16 +42,20 @@ $call =~ s/^\s*//;
 $call =~ s/\s*$//;
 
 if ($call =~ /^[WNK][0-9][A-Z]$/) {
-  open(INDEX, '-|', "curl -k -L --max-time 10 --retry 1 -s '$callsearch_url' --data '${callsearch_params}${call}'");
+  open(INDEX, '-|', "curl -k -L --max-time 10 --retry 1 -s '${callsearch_url}${call}' ");
 } else {
   my $query = join(" ", @ARGV);
   my $encodedquery = uri_escape($query);
-  open(INDEX, '-|', "curl -k -L --max-time 10 --retry 1 -s '$eventsearch_url' --data '${eventsearch_params}${encodedquery}'");
+  open(INDEX, '-|', "curl -k -L --max-time 10 --retry 1 -s '${eventsearch_url}${encodedquery}' ");
 }
 
 my @rec;
-while (<INDEX>) {
-  if (m|<a href=index.php\?option=com_jumi&fileid=4&action=recDetail&recid=(\d+)>details</a>|) {
+local $/;   # read entire file -- FIXME: potentially memory hungry
+my $index = <INDEX>;
+$index =~ s|</tr><|</tr>\n<|g;
+my @lines = split /\n/, $index;
+foreach my $l (@lines) {
+  if ($l =~ m|<a href=/1x1search.php\?byid=(\d+)>details</a>|) {
     push @rec, $1;
   }
   next;
@@ -76,37 +76,37 @@ foreach my $r (@rec) {
 
   open(DETAIL, '-|', "curl -k -L --max-time 10 --retry 1 -s '${detail_url}${r}'");
   while (<DETAIL>) {
-    if (m|<td nowrap colspan="2"><font face="Verdana, Arial, Helvetica, sans-serif" size="2" color="#7F6E4E"><b><font color="#252525">([WNK][0-9][A-Z])</font> : (.*?)</b></font></td>|) {
+
+    if (m|<tr><td>1x1call</td><td>([WNK][0-9][A-Z])</td></tr>|) {
       $rcall = $1;
-      $event = $2;
     }
-    if (m|<td valign="top" width="99%" nowrap><font face="Verdana, Arial, Helvetica, sans-serif" size="-2" color="#3D536A"><b>(.*?)</b></font></td>|) {
+    if (m|<tr><td>Event</td><td>(.*?)</td></tr>|) {
+      $event = $1;
+    }
+    if (m|<tr><td>Start</td><td>([0-9]{4}-[0-9]{2}-[0-9]{2})</td></tr>|) {
       $sdate = $1;
-      $sepoch = Time::Piece->strptime($sdate, "%B %d, %Y")->epoch;
-      $sdate = strftime("%Y-%m-%d", gmtime($sepoch));
+      $sepoch = Time::Piece->strptime($sdate, "%Y-%m-%d")->epoch;
       # ARRL: Assignments are made by calendar date, for the full day at
       # Coordinated Universal Time (UTC) or Zulu Time (Z):  0000Z to 2359Z
     }
-    if (m|<td valign="top" height="21" width="99%" nowrap><font face="Verdana, Arial, Helvetica, sans-serif" size="-2" color="#3D536A"><b>(.*?)</b></font></td>|) {
+    if (m|<tr><td>End</td><td>([0-9]{4}-[0-9]{2}-[0-9]{2})</td></tr>|) {
       $edate = $1;
-      $eepoch = Time::Piece->strptime($edate, "%B %d, %Y")->epoch + 86399;  # 23:59:59
-      $edate = strftime("%Y-%m-%d", gmtime($eepoch));
+      $eepoch = Time::Piece->strptime($edate, "%Y-%m-%d")->epoch;
       # ARRL: Assignments are made by calendar date, for the full day at
       # Coordinated Universal Time (UTC) or Zulu Time (Z):  0000Z to 2359Z
     }
-    if (m|<td valign="top" width="99%" height="18" nowrap><font face="Verdana, Arial, Helvetica, sans-serif" size="1" color="#535353"><b>(.*?)</b></font></td>|) {
+    if (m|<tr><td>Requestor</td><td>(.*?)</td></tr>|) {
       $by = $1;
     }
-    if (m|<td valign="top" width="99%" nowrap><font color="#212121" face="Courier New, Courier, mono" size="2">(.*?)</font></td>|) {
-      $orig_call = $1;
+    if (m|<tr><td>Reqcall</td><td>(.*?)</td></tr>|) {
+      $orig_call = uc $1;
     }
-
-    if (m|<td valign="top" width="99%" nowrap> <font color="#535353" face="Verdana, Arial, Helvetica, sans-serif" size="-2">(.*?)</font></td>|) {
-      $email = $1;
-      $email = lc $email if defined $email;
-    }
-    if (m|<td valign="top" width="99%" nowrap><font color="#535353" face="Verdana, Arial, Helvetica, sans-serif" size="-2">(.*?)</font></td>|) {
+    if (m|<tr><td>Reqphone</td><td>(.*?)</td></tr>|) {
       $phone = $1;
+    }
+    if (m|<tr><td>Reqemail</td><td>.*?data-cfemail="([0-9a-f]+)">|i) {
+      $email = $1;
+      $email = decodeEmail($email);
     }
   }
   close(DETAIL);
@@ -120,7 +120,11 @@ foreach my $r (@rec) {
     print bold($rcall), ": $rel: ",  bold($event),
       " from $sdate to $edate by $orig_call ($by";
     print "; $email" if defined $email and $email ne "";
-    print ")\n";
+    if ($username ne getEggdropUID()) {
+      print "; $phone" if defined $phone and $phone ne "";
+    }
+    print ")";
+    print "\n";
     $found = 1;
   }
   last if defined $rel and $rel eq "past";
@@ -131,3 +135,25 @@ if ($found == 0) {
   exit $exitnonzeroonerror;
 }
 
+
+# get the value of the encoded hex byte at position
+sub decodeHexPos {
+  my $str = shift;
+  my $pos = shift;
+  my $h = substr($str, $pos, 2);
+  return hex($h);
+}
+
+sub decodeEmail {
+  my $encoded = shift;
+  my $output = "";
+  # XORed with first byte of hex string
+  my $xor = decodeHexPos($encoded, 0);
+
+  for (my $i = 2; $i < length($encoded); $i += 2) {
+    my $ascii = decodeHexPos($encoded, $i) ^ $xor;
+    $output .= chr($ascii);
+  }
+
+  return lc $output;
+}
