@@ -128,7 +128,7 @@ while ($i <= $#ARGV) {
 }
 
 if ($dxw == 0 && $rbn == 0 && $psk == 0 && $ham == 0 && $pota == 0 && $qrm == 0) {
-  $rbn = 0;  # XXX temporary since rbn is being fucking slow
+  $rbn = 1;
   $dxw = 1;
   $psk = 1;
   $ham = 1;
