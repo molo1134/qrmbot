@@ -1098,6 +1098,8 @@ proc ohio { nick host hand chan text} {
 		putchan $chan "https://i.imgur.com/26gAZ2O.mp4"
 	} elseif [ expr (rand()*10) <= 1 ] then {
 		putchan $chan "https://i.imgur.com/3zGAblD.png"
+	} elseif [ expr (rand()*10) <= 1 ] then {
+		putchan $chan "https://i.imgur.com/9aGEy2z.jpeg"
 	} else {
 		putchan $chan "👬🍃🕺 (^O^) OHIOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
 	}
