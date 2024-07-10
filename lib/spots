@@ -16,7 +16,6 @@ use strict;
 use POSIX qw(floor strftime);
 use Text::CSV;
 use DateTime::Format::Strptime;
-use Switch;
 use v5.10;
 use JSON qw( decode_json );
 use Math::Round;
@@ -563,22 +562,9 @@ sub doRBN {
 sub getyearformonthday
 {
   my ($monthabbr, $day) = @_;
-  my $num;
-  switch ($monthabbr) {
-    case "Jan" { $num = 1 }
-    case "Feb" { $num = 2 }
-    case "Mar" { $num = 3 }
-    case "Apr" { $num = 4 }
-    case "May" { $num = 5 }
-    case "Jun" { $num = 6 }
-    case "Jul" { $num = 7 }
-    case "Aug" { $num = 8 }
-    case "Sep" { $num = 9 }
-    case "Oct" { $num = 10 }
-    case "Nov" { $num = 11 }
-    case "Dec" { $num = 12 }
-    else       { say "unknown month: $monthabbr" }
-  }
+  my $num = monthNameToNum($monthabbr);
+  say "unknown month: $monthabbr" if not defined $num;
+
   my $now = DateTime->now(time_zone => 'UTC');
   my $currmonthnum = $now->month();
   if ($num < $now->month() ||

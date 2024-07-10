@@ -35,7 +35,6 @@ As tested on Debian:
 * `libjson-perl`
 * `libmath-bigint-perl`
 * `libmath-round-perl`
-* `libswitch-perl`
 * `libtext-csv-perl`
 * `liburi-perl`
 * `libdbd-sqlite3-perl`
