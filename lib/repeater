@@ -108,7 +108,7 @@ open (HTTP, '-|', "curl --max-time $http_timeout --retry 1 --insecure -L -s '$ur
 binmode(HTTP, ":encoding(cp1252)");
 while (<HTTP>) {
 	#print;
-  if (/error/) {
+  if (/error/ and not /throw/ and not /TypeError/ and not /<script/ and not /addEventListener/) {
 	  s/<\/?b>//g;
 	  s/<\/?\s*br\s*\/?>//g;
 	  print;
@@ -120,27 +120,37 @@ while (<HTTP>) {
   if (m|title="View Details.">([0-9.]+)([-+xs])</a>|) {
     $freq = $1;
     $offset = $2;
+    #print "freq: $freq\n";
+    #print "offset: $offset\n";
   }
-  if (defined($freq) and not defined($squelch) and /^([^<]+)<\/td>\s*$/) {
+  if (defined($freq) and not defined($squelch) and /^<td>([^<]+?)\s*<\/td>\s*$/) {
     $squelch = $1;
+    #print "squelch: $squelch\n";
   }
-  if (not defined($location) and m|^<td NOWRAP>([^<]*)</td>\s*$|) {
+  if (not defined($location) and m|^<td nowrap>([^<]*)</td>\s*$|) {
     $location = $1;
+    #print "loc: $location\n";
+    next;
   }
-  if (defined($location) and m|^<td NOWRAP class="w3-center">([^<]+)</td>\s*$|){
+  if (defined($location) and m|^<td nowrap class="w3-center">([^<]+)</td>\s*$|){
     $state = $1;
+    #print "state: $state\n";
   }
-  if (defined($location) and m|^<td NOWRAP>([^<]*)</td>\s*$|) {
+  if (defined($location) and m|^<td nowrap>([^<]*)</td>\s*$|) {
     $county = $1;
+    #print "county: $county\n";
   }
   if (defined($location) and not defined($callsign) and /^([^<]+)<\/td>\s*$/) {
     $callsign = $1;
+    #print "call: $callsign\n";
   }
 
   if (defined($freq) and defined($location) and m|</tr>|) {
+    $squelch = "" if not defined($squelch);
+    $callsign = "undefined" if not defined $callsign or length $callsign == 0;
     $vals{"$freq,$location"} = join("::", $freq, $offset, $squelch, $location, $state, $county, $callsign);
-    $freq = $offset = $squelch = $location = $state = $county = $callsign = undef;
     #print "added $freq: " . $vals{"$freq,$location"} . "\n";
+    $freq = $offset = $squelch = $location = $state = $county = $callsign = undef;
   }
 
 }
@@ -183,36 +193,42 @@ $freq = $offset = $squelch = $location = $state = $county = $callsign = undef;
 my $haveone = 0;
 my $havemany = 0;
 
-$url = "https://www.repeaterbook.com/row_repeaters/keyResult.php?keyword=${encoded}&state_id=0";
+$url = "https://www.repeaterbook.com/row_repeaters/keyword.php?func=result&keyword=${encoded}&state_id=0";
 
 #print "$url\n";
 open (HTTP, '-|', "curl --max-time $http_timeout --retry 1 --insecure -L -s '$url'");
 #binmode(HTTP, ":encoding(cp1252)");
 binmode(HTTP, ":utf8");	# page headers say cp1252, but it's actually utf8.
 while (<HTTP>) {
-	#print;
+  #print;
   chomp;
   if (/View Details.*?>([0-9.]+)</) {
     $freq = $1;
+    #print "freq: $freq\n";
   }
-  if (defined $freq and /^([^>]+)<\/td>\s*$/) {
+  if (defined $freq and /<td>([^>]+?)\s*<\/td>\s*$/) {
     $squelch = $1;
+    #print "squelch: $squelch\n";
   }
 
-  if (/^<td NOWRAP><font CLASS="normal">([^<]*)<\/td>\s*$/) {
+  if (/^<td nowrap>([^<]*)<\/td>\s*$/) {
     $location = $1;
+    #print "location: $location\n";
   }
 
-  if (m|<td NOWRAP ALIGN="center"><font CLASS="normal">([^<]+)</font></td>|) {
+  if (m|<td nowrap class="w3-center">([^<]+)</td>|) {
     $state = $1;
+    #print "state: $state\n";
   }
 
-  if (m|<font CLASS="normal">([A-Z0-9]+)</td>|) {
+  if (not defined $callsign and m|^([A-Z0-9]+)</td>|) {
     $callsign = $1;
+    #print "callsign: $callsign\n";
   }
 
   if (m|</tr>| and defined($freq) and defined($location)) {
     $squelch = "" if !defined($squelch);
+    $callsign = "undefined" if not defined $callsign or length $callsign == 0;
     $vals{"$freq,$location"} = join("::", $freq, $squelch, $location, $state, $callsign);
     #print "added $freq: " . $vals{"$freq,$location"} . "\n";
     $freq = $offset = $squelch = $location = $state = $county = $callsign = undef;
