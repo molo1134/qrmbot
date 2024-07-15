@@ -30,6 +30,12 @@ if (-e ($imgurfile)) {
   require($imgurfile);
 }
 
+our $scrapingant_key=undef;
+my $scrapingantfile = $ENV{'HOME'} . "/.qrmbot/keys/scrapingantkey";
+if (-e ($scrapingantfile)) {
+  require($scrapingantfile);
+}
+
 my $timeout = 4;	# max 4 seconds
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
@@ -1011,7 +1017,11 @@ sub doQthCom {
   my ($title, $desc, $call);
 
   # Temporary proxy - TODO: permanent URL?
-  $url =~ s|https?://swap\.qth\.com/view_ad\.php\?counter=|https://www.k2cr.com/phpproxy/qth-proxy.php?id=|i;
+  #$url =~ s|https?://swap\.qth\.com/view_ad\.php\?counter=|https://www.k2cr.com/phpproxy/qth-proxy.php?id=|i;
+  our $scrapingant_key;
+  if (defined $scrapingant_key) {
+    $url = "https://api.scrapingant.com/v2/general?url=". uri_escape($url) . "&x-api-key=${scrapingant_key}&browser=false";
+  }
 
   open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$url'");
   binmode(HTTP, ":utf8");
