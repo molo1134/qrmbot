@@ -276,6 +276,7 @@ sub doTwitter {
   }
   #  'curl --max-time $timeout -Ls -o /dev/null -w "%{url_effective}" "https://t.co/aoVVgKEfqC"'
 
+  my $origurl = $url;
   if ($url =~ /https?:\/\/(mobile\.)?(x\.com|twitter\.com|nitter\..*?)\/(\w+)\/status(es)?\/(\d+)/) {
     $username = $3;
     $id = $5;
@@ -295,8 +296,11 @@ sub doTwitter {
   }
 
   my $alturl = undef;
-  $alturl = "$nitterInstance/$username/status/$id" if $url =~ /(twitter|x)\.com/;
-  $alturl = "https://twitter.com/$username/status/$id" if $url =~ /nitter/;
+  if ($origurl =~ /\b(twitter|x)\.com/) {
+    $alturl = "$nitterInstance/$username/status/$id";
+  } else {
+    $alturl = "https://twitter.com/$username/status/$id";
+  }
 
   $url = "$nitterInstance/$username/status/$id";
   my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0";
@@ -512,6 +516,7 @@ sub getNitterInstance {
 
 sub toHumanReadableNum {
   my $val = shift;
+  return undef if not defined $val;
   return $val if not isNumeric($val);
   return $val if $val < 1000;
   return nearest(0.1, ($val/1000)) . "k" if $val < 1000000;
