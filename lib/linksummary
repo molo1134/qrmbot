@@ -902,6 +902,10 @@ sub doReddit {
 
   #print "$jsonurl\n";
   my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0";
+  our $scrapingant_key;
+  if (defined $scrapingant_key) {
+    $jsonurl = "https://api.scrapingant.com/v2/general?url=". uri_escape($jsonurl) . "&x-api-key=${scrapingant_key}&browser=false";
+  }
   open(HTTP, '-|', "curl --max-time $timeout -A '$ua' -L -k -s '$jsonurl'");
   binmode(HTTP, ":utf8");
   local $/;   # read entire file -- FIXME: potentially memory hungry
@@ -1346,8 +1350,16 @@ sub doImgur {
   print "unrecognized url: $url\n" if not defined $apiurl;
   return if not defined $apiurl;
 
+  my $header = "Authorization: Client-ID $imgur_key";
+
+  our $scrapingant_key;
+  if (defined $scrapingant_key) {
+    $apiurl = "https://api.scrapingant.com/v2/general?url=". uri_escape($apiurl) . "&x-api-key=${scrapingant_key}&browser=false";
+    $header = "Ant-$header";
+  }
+
   my %data;
-  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$apiurl' --request GET --header 'Authorization: Client-ID $imgur_key'");
+  open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$apiurl' --request GET --header '$header'");
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     #print;
