@@ -106,17 +106,20 @@ sub doRegion {
   my @unavail;
   my %regionPreds;
   my %regionComp;
+  my %prelim;
   open(HTTP, '-|', "curl --max-time $httpTimeout -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
   while(<HTTP>) {
     chomp;
     next if /^#/;
     my ($call, $status, $odds, $comp) = split /,/;
-    push @avail, $call if $status eq "available";
-    push @unavail, $call if $status eq "blocked";
-    push @unavail, $call if $status eq "blacklisted";
-    push @upcoming, $call if $status eq "upcoming";
-    push @pending, $call if $status eq "pending";
-    $regionPreds{$call} = $odds if $status eq "pending";
+    push @avail, $call if $status =~ /^available/;
+    push @unavail, $call if $status =~ /^blocked/;
+    push @unavail, $call if $status =~ /^blacklisted/;
+    push @upcoming, $call if $status =~ /^upcoming/;
+    push @pending, $call if $status =~ /^pending/;
+    $prelim{$call} = 1 if $status =~ /†/;
+    $regionPreds{$call} = $odds if $status =~ /^pending/;
     $regionComp{$call} = $comp if defined $comp and $comp ne "";
   }
   close(HTTP);
@@ -131,6 +134,7 @@ sub doRegion {
       print green($c);
       print yellow(" ($regionPreds{$c}%)") # \
 	if defined $regionPreds{$c} and $regionPreds{$c} > 0.0;
+      print red("†") if $prelim{$c};
       if ($num >= 30) {
 	print " (truncated)";
 	last;
@@ -155,6 +159,7 @@ sub doRegion {
 	  print "$regionComp{$c}x" if $docomp;
 	  print ")";
       }
+      print red("†") if $prelim{$c};
       print ", " unless ++$num == scalar @pending;
     }
     #print ": ", lightblue(join(", ", @pending)) if scalar @pending > 0;
@@ -185,6 +190,7 @@ sub doCall {
   my ($status, $avail, $availdate, $chance, $class, $region, $restricted);
   my $url = "${predictionBaseUrl}/vanity-$call.csv";
   open(CSV, '-|', "curl --fail --max-time $httpTimeout -L -k -s '$url'");
+  binmode(CSV, ":utf8");
   while(<CSV>) {
     chomp;
     $status     = $1 if /^# status: (.*)$/;
@@ -230,6 +236,7 @@ sub doCall {
   $url = "${predictionBaseUrl}/call-$call.csv";
   my ($grantdate, $expdate, $cxldate, $state, $district);
   open(CSV, '-|', "curl --fail --max-time $httpTimeout -L -k -s '$url'");
+  binmode(CSV, ":utf8");
   while(<CSV>) {
     chomp;
     $status    = $1 if /^# status: (.*)$/;
@@ -265,6 +272,7 @@ sub doApp {
   my $app = shift;
   my $url = "${predictionBaseUrl}/app-$app.csv";
   open(CSV, '-|', "curl --fail --max-time $httpTimeout -L -k -s '$url'");
+  binmode(CSV, ":utf8");
   while(<CSV>) {
     chomp;
     next if /^#/;
@@ -301,12 +309,15 @@ sub formatOdds {
 
 sub formatPred {
   my $pred = shift;
+  my $prelim = $pred =~ tr/†//;
   $pred =~ s/_/ /g;
-  $pred = green($pred) if $pred eq "Assignment";
+  $pred =~ s/†//g;
+  $pred = green($pred) if $pred =~ /^Assignment/;
   $pred = lightblue($pred) if $pred =~ /^(Competition|Available)/;
   $pred = italic($pred) if $pred =~ /^Unneeded/;
   $pred = yellow($pred) if $pred =~ /^(Offlined|Await)/;
   $pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv|Inactive|Block|Black)/;
+  $pred .= red("†") if $prelim;
   return $pred;
 }
 
