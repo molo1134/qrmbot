@@ -278,6 +278,7 @@ sub displayHist {
 	$firsttime = $ts if not defined $firsttime;
 	$lasttime = $ts;
 	$_ = <HTTP>;
+	$_ = <HTTP>;
       }
       if (m|<td>(\d+)</td>|) {
 	#print "$1\n";
