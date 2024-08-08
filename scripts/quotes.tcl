@@ -100,8 +100,6 @@ proc q_pebus { nick uhost hand chan arg } {
         }
         close $fd
 
-        set newarg [string tolower "$newarg"]
-
         set i 0
 
         while {$i < $tmp} {
