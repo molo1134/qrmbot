@@ -92,6 +92,7 @@ proc q_pebus { nick uhost hand chan arg } {
 
     if { [file exists $quotefile] } {
         set qf [open $quotefile r]
+	fconfigure $qf -encoding utf-8
 
         set fd [open "|wc -l $quotefile" r]
         while {![eof $fd]} {
@@ -109,6 +110,7 @@ proc q_pebus { nick uhost hand chan arg } {
 	    }
             incr i
         }
+	close $qf
 
 	set quotenum [lindex $found [expr int(rand() * [llength $found])]]
 
