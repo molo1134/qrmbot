@@ -7,6 +7,7 @@
 bind pub - !addquote q_addquote
 bind pub - !quote q_pubquote
 bind pub - !quotesearch q_pubquotesearch
+bind pub - !pebus q_pebus
 
 proc q_addquote { nick uhost hand chan arg } {
   set quotefile "quotelist-$chan"
@@ -84,6 +85,38 @@ proc q_pubquote { nick uhost hand chan arg } {
   }
 }
 
+proc q_pebus { nick uhost hand chan arg } {
+    putlog "pebus pub: $nick $uhost $hand $chan"
+
+    set quotefile "quotelist-$chan"
+
+    if { [file exists $quotefile] } {
+        set qf [open $quotefile r]
+
+        set fd [open "|wc -l $quotefile" r]
+        while {![eof $fd]} {
+          scan [gets $fd] " %d " tmp
+          if {[eof $fd]} {break}
+        }
+        close $fd
+
+        set newarg [string tolower "$newarg"]
+
+        set i 0
+
+        while {$i < $tmp} {
+            set line [gets $qf]
+	    if { [regexp -nocase {n0rua|ae0kw|tonyc} [lindex $line 0]] } then {
+		lappend found $i
+	    }
+            incr i
+        }
+
+	set quotenum [lindex $found [expr int(rand() * [llength $found])]]
+
+	return [q_pubquote $nick $uhost $hand $chan $quotenum]
+    }
+}
 
 proc q_pubquotesearch { nick uhost hand chan arg } {
     set quotefile "quotelist-$chan"
