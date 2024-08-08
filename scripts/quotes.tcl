@@ -105,7 +105,7 @@ proc q_pebus { nick uhost hand chan arg } {
         while {$i < $tmp} {
             set line [gets $qf]
 	    if { [regexp -nocase {n0rua|ae0kw|tonyc} [lindex $line 0]] } then {
-		lappend found $i
+		lappend found [expr $i + 1]
 	    }
             incr i
         }
