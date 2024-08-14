@@ -867,6 +867,7 @@ sub doRedditShare {
   $location =~ s/utm_\w+=[^&]+//ig;
   $location =~ s/&&+/&/g;
   $location =~ s/&$//g;
+  $location =~ s/\?$//g;
 
   if (not defined $location or $location eq "") {
     print "error: unable to resolve $url\n";
@@ -885,7 +886,7 @@ sub doReddit {
   my $jsonurl;
   my $commentId;
 
-  if ($url =~ m|https?://((www\|old\|np\|new)\.)?reddit\.com/(r/\w+/comments/)?(\w+)/([^/]+/\w+/)?|i) {
+  if ($url =~ m|https?://((www\|old\|np\|new)\.)?reddit\.com/(r/\w+/comments/)?(\w+)/([^/]+/\w+/?)?|i) {
     $id = $4;
     $commentId = $5 if defined $5;
     $shortCommentUrl = shortenUrl($url) if defined($5);
