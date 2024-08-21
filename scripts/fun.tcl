@@ -12,6 +12,7 @@ bind pub - !phoneticize phoneticise
 bind pub - !metard metard
 bind pub - !truck truck
 bind pub - !aaa aaaaaaa
+bind pub - !really really
 bind pub - !ooo ooooooo
 bind pub - !monke robface
 bind pub - !robface robface
@@ -336,6 +337,19 @@ proc aaaaaaa { nick host hand chan text} {
 	}
 }
 
+proc really { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+
+	if [ expr (rand()*100) <= 1 ] then {
+		putchan $chan "https://i.imgur.com/ygyYn1n.mp4"  
+	} elseif [ expr (rand()*10) <= 3 ] then {
+		putchan $chan "https://i.imgur.com/icBPoib.mp4"  //f
+	} else {
+		putchan $chan "https://i.imgur.com/Wok2ms7.mp4"
+	}
+}
 proc robface { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -1156,4 +1170,3 @@ proc masters { nick host hand chan text } {
 }
 
 putlog "fun.tcl loaded."
-
