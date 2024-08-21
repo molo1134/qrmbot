@@ -345,7 +345,7 @@ proc really { nick host hand chan text} {
 	if [ expr (rand()*100) <= 1 ] then {
 		putchan $chan "https://i.imgur.com/ygyYn1n.mp4"  
 	} elseif [ expr (rand()*10) <= 3 ] then {
-		putchan $chan "https://i.imgur.com/icBPoib.mp4"  //f
+		putchan $chan "https://i.imgur.com/icBPoib.mp4"
 	} else {
 		putchan $chan "https://i.imgur.com/Wok2ms7.mp4"
 	}
