@@ -86,14 +86,14 @@ my $json = <JSON>;
 close(JSON);
 my $j = decode_json($json) or die "parse error: $json\n";
 
-our $xd = $j->{'xd'}; # longitude delta
-our $yd = $j->{'yd'}; # latitude delta
-our $x0 = $j->{'x0'}; # longitude start
-our $y1 = $j->{'y1'}; # latitude start
-our $xc = $j->{'xc'}; # num longitude bins
-our $yc = $j->{'yc'}; # num latitude bins
-our $t = $j->{'t'};   # reference timestamp
-our $dt = $j->{'dt'}; # time window?
+our $xd = $j->[0]->{'xd'}; # longitude delta
+our $yd = $j->[0]->{'yd'}; # latitude delta
+our $x0 = $j->[0]->{'x0'}; # longitude start
+our $y1 = $j->[0]->{'y1'}; # latitude start
+our $xc = $j->[0]->{'xc'}; # num longitude bins
+our $yc = $j->[0]->{'yc'}; # num latitude bins
+our $t = $j->[0]->{'t'};   # reference timestamp
+our $dt = $j->[0]->{'dt'}; # time window?
 
 # not sure why this is necessary - should be returned by the server.
 $y1 = $x0 = 0.0 if $req =~ /get_global_strikes_grid/;
@@ -103,7 +103,7 @@ my $ts = Time::Piece->strptime($t, "%Y%m%dT%H:%M:%S")->epoch;
 my $mindist = 20000.0;
 my $closest = undef;
 
-foreach my $r (@{$j->{'r'}}) {
+foreach my $r (@{$j->[0]->{'r'}}) {
   my @r = @{$r};
   my ($longIndex, $latIndex, $count, $timedelta) = @r;
   my $lat = getLatFromIndex($latIndex);
