@@ -374,7 +374,9 @@ proc rickface { nick host hand chan text} {
  	if [string equal "#dayton" $chan] then {
   		putchan $chan "https://i.imgur.com/rWqnVT1.png"
 		return
-	}
+	} else {
+ 		putchan $chan "https://i.imgur.com/VmiWh7r.png"
+ 	}
 
 	putchan $chan "https://i.imgur.com/dQAgMCf.png"
 }
