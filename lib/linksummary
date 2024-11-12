@@ -1135,6 +1135,11 @@ sub doAmazon {
       $title =~ s/^Amazon.com\s*:\s*//;
       $title =~ s/\s*:\s*[^:]*$//;
     }
+    if (m|data-a-size="xl".*<span class="a-price-symbol">(.*?)</span><span class="a-price-whole">(.*?)<span class="a-price-decimal">.*?</span></span><span class="a-price-fraction">(.*?)</span>|) {
+      $curr = $1;
+      $curr =~ tr/￥/¥/;
+      $price = "$2.$3";
+    }
     if (/<span id="priceblock_ourprice"[^>]+>([0-9.,]+)\s*€</) {
       $price = $1;
       $curr = "€";
@@ -1181,6 +1186,9 @@ sub doAmazon {
       $curr =~ tr/￥/¥/;
       $price = $2;
     }
+    if (/<span id="acrPopover".*title="([0-9.]+) out of 5 stars">/) {
+      $stars = $1;
+    }
     if (/"([0-9.]+) out of 5 stars"/ and not defined $stars) {
       $stars = $1;
     }
@@ -1193,6 +1201,7 @@ sub doAmazon {
     $prime = 1 if /a-icon-prime.*aria-label="Free Shipping for Prime Members"/;
     $prime = 1 if /shipped by Amazon or get <b>Fast, Free Shipping<\/b> with/;
     $prime = 1 if /Get <b>Fast, Free Shipping<\/b> with <a.*?>Amazon Prime<\/a>/;
+    $prime = 1 if /Join Prime.*to get FREE delivery/;
 
     if (/<span>Join Prime to buy this item at <\/span><span.*?>([\$￥£]|CDN\$)\s*([0-9.,]+)<\/span>/) {
       $prime = 1;
