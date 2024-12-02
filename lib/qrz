@@ -777,6 +777,11 @@ sub getAndParseData {
       exit $exitnonzeroonerror;
     }
 
+    if (m|<title>429 Too Many Requests</title>|i) {
+      print "qrz.com: 429: Too Many Requests\n";
+      exit $exitnonzeroonerror;
+    }
+
     if (/Service limit exceeded/) {
       if ($autoxml > 0) {
 	print "Warning: Service limit exceeded. Too many lookups.\n";
