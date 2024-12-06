@@ -118,6 +118,8 @@ while ($i <= $#ARGV) {
     $url =~ s/(www\.)?instagram\.com/imginn.com/;
     print "$url -- ";
     doHtml($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|https://bsky.app/profile/([A-Za-z0-9._-]+)/post/([a-z0-9]+)|) {
+    doBlueSky($1, $2);
   } elsif ($ARGV[$i] =~ m|^https?://| and
 	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
     # TODO: HTTP HEAD for these file types ^^ -- get size and last modified date
@@ -630,6 +632,98 @@ sub doMastodon {
   print "\n";
 }
 
+
+sub doBlueSky {
+  my $prof = shift;
+  my $post = shift;
+
+  my $uri = "at://$prof/app.bsky.feed.post/$post";
+  my $url = "https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=" . uri_escape($uri) . "&depth=1";
+
+  #print "$url\n";
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  open(HTTP, '-|', "curl --compressed  -H 'Accept: application/json' --max-time $timeout -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  my $json = <HTTP>;
+  close(HTTP);
+  #print "$json\n";
+  my $j = from_json($json);
+  if (defined $j->{error}) {
+    print "error: $j->{error}: $j->{message}\n";
+    return;
+  }
+
+  my $post = $j->{thread}->{post};
+
+  my $username = "\@${prof}";
+  my $fullname = $post->{author}->{displayName};
+  my $text = $post->{record}->{text};
+  $text =~ s/^\s*$//g;
+  $text =~ s/\n\s*\n/\n/sg;
+  $text =~ s/\n/ /sg;
+  $text =~ s/(\S)\n(\S)/$1 $2/sg;
+  $text =~ s/\n/ /sg;
+  my $datestr = $post->{record}->{createdAt};
+  # 2024-12-05T21:59:16.214Z
+  my $date = undef;
+  if (defined $datestr) {
+    my ($y, $mon, $d, $h, $m, $s, undef) = split /[-T:.Z]/, $datestr;
+    my $time = timegm($s, $m, $h, $d, $mon - 1, $y);
+    $date = scalar(gmtime($time)) . " UTC";
+  }
+
+  my @mediaTypes;
+  my @mediaUrls;
+  my @mediaAlts;
+  my @mediaAttachments;
+
+  if (defined $post->{embed}) {
+    if ($post->{embed}->{'$type'} eq "app.bsky.embed.video#view") {
+      # single video
+      my $i = 0;
+      $mediaTypes[$i] = "vid";
+      $mediaUrls[$i] = shortenUrl($post->{embed}->{playlist});
+      $mediaAlts[$i] = trim($post->{embed}->{alt});
+      $mediaAlts[$i] = undef if $mediaAlts[$i] eq "";
+      my $char = chr(0x2460 + $i); # 0x2460 = ①
+      $mediaAttachments[$i] = "$char $mediaTypes[$i]: ";
+      $mediaAttachments[$i] .= $mediaAlts[$i] . ": " if defined $mediaAlts[$i];
+      $mediaAttachments[$i] .= "$mediaUrls[$i]";
+    } elsif ($post->{embed}->{'$type'} eq "app.bsky.embed.images#view") {
+      for (my $i = 0; $i < scalar @{$post->{embed}->{images}}; $i++) {
+	my $image = $post->{embed}->{images}->[$i];
+
+	$mediaTypes[$i] = "img";
+	$mediaUrls[$i] = shortenUrl($image->{fullsize});
+	$mediaAlts[$i] = trim($image->{alt});
+	$mediaAlts[$i] = undef if $mediaAlts[$i] eq "";
+	my $char = chr(0x2460 + $i); # 0x2460 = ①
+	$mediaAttachments[$i] = "$char $mediaTypes[$i]: ";
+	$mediaAttachments[$i] .= $mediaAlts[$i] . ": " if defined $mediaAlts[$i];
+	$mediaAttachments[$i] .= "$mediaUrls[$i]";
+      }
+    } else {
+      print "warning: unknown embed type: $post->{embed}->{'$type'}\n";
+    }
+  }
+
+  my $repost_count = $post->{repostCount};
+  my $reply_count = $post->{replyCount};
+  my $quote_count = $post->{quoteCount};
+  my $like_count = $post->{likeCount};
+
+  print "\"$text\" ";
+  if (@mediaAttachments and scalar @mediaAttachments > 0) {
+    for (my $i = 0; $i < scalar @mediaAttachments; $i++) {
+      print $mediaAttachments[$i], " ";
+    }
+  }
+  print "— $username";
+  print " ($fullname)" if defined $fullname;
+  print ", $date";
+  print " (↩ ", toHumanReadableNum($reply_count), "; ↺ ", toHumanReadableNum($repost_count), "; ★ ", toHumanReadableNum($like_count), ")";
+  print "\n";
+}
 
 
 sub doImdb {
@@ -1598,4 +1692,11 @@ sub strip_html {
   $t =~ s| +| |g;
   $t = decodeEntities($t);
   return $t;
+}
+
+sub trim {
+  my $s = shift;
+  $s =~ s/^\s*//;
+  $s =~ s/\s*$//;
+  return $s;
 }
