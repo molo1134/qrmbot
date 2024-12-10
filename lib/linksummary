@@ -1446,6 +1446,10 @@ sub doImgur {
     $hash = $2;
     $isgal = 1;
   }
+  if ($url =~ m!imgur\.(com|io)/[a-z0-9-]+-([0-9A-Za-z_]+)$!) {
+    $hash = $2;
+    $isgal = 1;
+  }
 
   my $apiurl = undef;
   $apiurl = "https://api.imgur.com/3/image/$hash" if $isimg == 1;
