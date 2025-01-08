@@ -211,7 +211,7 @@ while (<HTTP>) {
     #print "squelch: $squelch\n";
   }
 
-  if (/^<td nowrap>([^<]*)<\/td>\s*$/) {
+  if (/^\s*<td nowrap>([^<]*)<\/td>\s*$/) {
     $location = $1;
     #print "location: $location\n";
   }
@@ -221,7 +221,7 @@ while (<HTTP>) {
     #print "state: $state\n";
   }
 
-  if (not defined $callsign and m|^([A-Z0-9]+)</td>|) {
+  if (not defined $callsign and m|^\s*([A-Z0-9]+)</td>|) {
     $callsign = $1;
     #print "callsign: $callsign\n";
   }
