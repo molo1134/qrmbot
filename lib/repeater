@@ -123,24 +123,24 @@ while (<HTTP>) {
     #print "freq: $freq\n";
     #print "offset: $offset\n";
   }
-  if (defined($freq) and not defined($squelch) and /^<td>([^<]+?)\s*<\/td>\s*$/) {
+  if (defined($freq) and not defined($squelch) and /^\s*<td>([^<]+?)\s*<\/td>\s*$/) {
     $squelch = $1;
     #print "squelch: $squelch\n";
   }
-  if (not defined($location) and m|^<td nowrap>([^<]*)</td>\s*$|) {
+  if (not defined($location) and m|^\s*<td nowrap>([^<]*)</td>\s*$|) {
     $location = $1;
     #print "loc: $location\n";
     next;
   }
-  if (defined($location) and m|^<td nowrap class="w3-center">([^<]+)</td>\s*$|){
+  if (defined($location) and m|^\s*<td nowrap class="w3-center">([^<]+)</td>\s*$|){
     $state = $1;
     #print "state: $state\n";
   }
-  if (defined($location) and m|^<td nowrap>([^<]*)</td>\s*$|) {
+  if (defined($location) and m|^\s*<td nowrap>([^<]*)</td>\s*$|) {
     $county = $1;
     #print "county: $county\n";
   }
-  if (defined($location) and not defined($callsign) and /^([^<]+)<\/td>\s*$/) {
+  if (defined($location) and not defined($callsign) and /^\s*([^<]+)<\/td>\s*$/) {
     $callsign = $1;
     #print "call: $callsign\n";
   }
