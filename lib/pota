@@ -129,7 +129,14 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
     my $json = <JSON>;
     close(JSON);
     #print $json, "\n";
-    my $k = decode_json($json);
+    my $k = undef;
+    if ($json eq "[]") {
+      $k = {};
+      $k->{activations} = 0;
+      $k->{contacts} = 0;
+    } else {
+      $k = decode_json($json);
+    }
 
     my $url = "https://api.pota.app/park/activations/$srec->{value}?count=1";
     local $/;   # read entire file -- FIXME: potentially memory hungry
