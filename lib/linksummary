@@ -130,110 +130,42 @@ while ($i <= $#ARGV) {
 }
 
 sub printYouTubeMetaData {
-  return;
+  # uses yt-dlp -4 -J '$url', which outputs json metadata
   my $id = shift;
   my $url = "https://youtube.com/watch?v=$id";
   my $shortcut = "http://youtu.be/$id";
-  my $vidimg = "https://i.ytimg.com/vi/$id/hqdefault.jpg";
-  #my $vidimg = "https://i.ytimg.com/vi/$id/maxresdefault.jpg";
-  my $done = 0;
-  my ($title, $len, $desc, $count, $pubdate, $genre, $nsfw, $unlisted, $paid, $author, $likes, $dislikes, $live);
-  open(HTTP, '-|', "curl -4 --max-time $timeout -L -k -s '$url'");
-  binmode(HTTP, ":utf8");
-  while(<HTTP>) {
-    if (/Our systems have detected unusual traffic from your computer network./) {
-      print;
-      exit 0;
-    }
-    if (/This video is no longer available/) {
-      s/^\s*//; s/\s*$//;
-      print;
-      print "\n";
-      exit 0;
-    }
-    if (/<meta.*?></) {
-      s/></>\n</g;
-      my @lines = split /\n/;
-      foreach my $l (@lines) {
-	if ($l =~ /<meta\s+(itemprop|property|name)="([^"]+)"\s+content="([^"]*)">/) {
-	  my ($k, $v) = ($2, $3);
-	  $v = decodeEntities($v);
-	  #print "$k = $v\n";
-	  $title = $v if $k eq "twitter:title";
-	  $title = $v if $k eq "title";
-	  $title = $v if $k eq "name";
-	  #$len   = $v if $k eq "duration";
-	  $desc  = $v if $k eq "description";
-	  $desc  = $v if $k eq "twitter:description";
-	  $count = $v if $k eq "interactionCount";
-	  $pubdate = $v if $k eq "datePublished";
-	  $genre = $v if $k eq "genre";
-	  $nsfw = $v eq "False" ? 1 : 0 if $k eq "isFamilyFriendly";
-	  $unlisted = $v eq "True" ? 1 : 0 if $k eq "unlisted";
-	  $paid = $v eq "True" ? 1 : 0 if $k eq "paid";
 
-	  if ($k eq "duration") {
-	    # ISO 8601 duration; youtube only actually uses minutes and seconds?
-	    #print "duration: $v\n";
-	    $len = 0;
-	    if ($v =~ m/P((\d+)Y)?((\d+)M)?((\d+)D)?T((\d+)H)?((\d+)M)?((\d+)S)?/) {
-	      my ($y, $mo, $d, $h, $m, $s) = ($2, $4, $6, $8, $10, $12);
-	      $len += ($y * 60 * 60 * 24 * 365) if length $y > 0;
-	      $len += ($mo * 60 * 60 * 24 * 30) if length $mo > 0;
-	      $len += ($d * 60 * 60 * 24)       if length $d > 0;
-	      $len += ($h * 60 * 60)            if length $h > 0;
-	      $len += ($m * 60)                 if length $m > 0;
-	      $len += $s                        if length $s > 0;
-	    }
-	  }
-	}
-      }
+  my ($title, $len, $desc, $count, $pubdate, $genre, $nsfw, $unlisted, $paid, $author, $likes, $dislikes, $live, $streamed, $vidimg);
+
+  if (is_executable_in_path("yt-dlp")) {
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    open(JSON, '-|', "yt-dlp -4 -J '$url'");
+    my $json = <JSON>;
+    close(JSON);
+
+    if (not $json =~ /^\s*{/) {
+      print "error while decoding json description for $url : $json\n";
+      return undef;
     }
-    if (not defined $nsfw and /"isUnlisted\\?":(true|.*?),/) {
-      $unlisted = ($1 eq "true" ? 1 : 0);
-    }
-    if (not defined $nsfw and /"isFamilySafe\\?":(true|.*?),/) {
-      $nsfw = ($1 eq "true" ? 0 : 1);
-    }
-    if (not defined $count and /"viewCount\\?":\\?"([^"]+)\\?"/) {
-      $count = $1;
-    }
-    if (not defined $pubdate and /"publishDate\\?":\\?"([^"]+)\\?"/) {
-      $pubdate = $1;
-    }
-    if (/"author\\?":\\?"([^"]+)\\?"/) {
-      $author = $1;
-    }
-    if (not defined $len and /dur=(\d+)/) {
-      #$len = $1;
-    }
-    if (not defined $len and /dur%3D(\d+)/) {
-      #$len = $1;
-    }
-    if (not defined $len and /approxDurationMs":"(\d+)"/) {
-      #$len = int($1 / 1000);
-    }
-    if (/([0-9,]+) watching now/i) {
-      my $t = $1;
-      $t =~ s/,//g;
-      $count = $t if $t > 2;
-    }
-#    if (/"shortDescription":"([^"]+)"/) {
-#      $desc = $1;
-#    }
-    if (/"like this video along with ([0-9,]+) other people"/) {
-      $likes = $1;
-      $likes =~ s/,//g;
-    }
-    if (/"dislike this video along with ([0-9,]+) other people"/) {
-      $dislikes = $1;
-      $dislikes =~ s/,//g;
-    }
-    if (/"isLiveNow\\?":true/) {
-      $live = 1;
-    }
+    my $j = from_json($json);
+
+    $title = $j->{title};
+    $len = $j->{duration};
+    $desc = $j->{description};
+    $count = $j->{view_count};
+    $count - $j->{concurrent_view_count} if defined $j->{concurrent_view_count};
+    $pubdate = $j->{release_date};
+    $pubdate =~ s/(\d{4})(\d{2})(\d{2})/\1-\2-\3/;
+    $author = $j->{uploader_id};
+    $live = $j->{is_live};
+    $streamed = $j->{was_live};
+    $likes = $j->{like_count};
+    $unlisted = 1 if $j->{availability} eq "unlisted";
+    $vidimg = $j->{thumbnail};
+
+  } else {
+    return;
   }
-  close(HTTP);
 
   $desc = "(no description)" if $desc =~ /^\s*$/;
   if (length $desc > 100) {
@@ -250,6 +182,7 @@ sub printYouTubeMetaData {
   print "${m}m" if $m > 0;
   print "${s}s;" if $s > 0;
   print red("[LIVE]") if $live == 1;
+  print red("[STREAMED]") if $live == 0 and $streamed == 1;
   print " $count views" if not defined $live or $live != 1;
   print " $count watching" if $live == 1;
   print green(" ${likes}↑") if defined $likes;
@@ -1703,4 +1636,14 @@ sub trim {
   $s =~ s/^\s*//;
   $s =~ s/\s*$//;
   return $s;
+}
+
+sub is_executable_in_path {
+  my $exe = shift;
+  for my $dir (split /:/, $ENV{'PATH'}) {
+    if (-x "$dir/$exe") {
+      return 1;
+    }
+  }
+  return 0;
 }
