@@ -940,7 +940,18 @@ sub doReddit {
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $json = <HTTP>;
   close(HTTP);
+
+  if ($json =~ m/^\s*$/) {
+    print "error: no response\n";
+    exit 0;
+  }
+
   my $j = decode_json($json);
+
+  if (ref($j) eq 'HASH' and defined $j->{detail}) {
+    print("error: $j->{detail}\n");
+    exit 0;
+  }
 
   my $post = $j->[0]->{data}->{children}->[0]->{data};
   my $comment = $j->[1]->{data}->{children}->[0]->{data};
