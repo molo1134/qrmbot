@@ -78,7 +78,7 @@ my ($mylat, $mylon) = split(',', $geo) if defined $geo;
 my $cachedir = $ENV{HOME} . "/.qrmbot/cache";
 my $cachefile = $cachedir . "/radmon.txt";
 my $needrefresh = 0;
-my $maxage = 600; # 10 minutes
+my $maxage = 3600; # 1 hour
 
 if (not -d $cachedir) {
   print "making cache directory..\n";
@@ -106,7 +106,7 @@ loadCache();
 displayStation();
 
 sub refreshData {
-  print "refreshing data..\n";
+  print "refreshing data (may take 5 minutes)..\n";
 
   my %stations;
 
@@ -125,7 +125,7 @@ sub refreshData {
     my $url = "http://www.gmcmap.com/ajaxm.asp?OffSet=${offset}&Limit=${limit}&dataRange=1&timeZone=0&KEY=466";
     #print "$url\n";
 
-    open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L $headerOpt '$url'");
+    open(HTTP, '-|', "curl --stderr - --max-time 60 -s -k -L $headerOpt '$url'");
     local $/;   # read entire file -- FIXME: potentially memory hungry
     my $html = <HTTP>;
     close(HTTP);
@@ -235,6 +235,11 @@ sub displayStation {
 
   #print "$key => $stationData{$key}\n";
 
+  if (not defined $key) {
+    print "error: no data returned\n";
+    exit $exitnonzeroonerror;
+  }
+
   my ($device, $cpm, $acpm, $sv, $user, $tube, $ts, $id, $lat, $lng) = split /\|/, $stationData{$key};
   my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lng);
   my $grid = coordToGrid($lat, $lng);
@@ -261,7 +266,7 @@ sub displayHist {
   #print "$url\n";
 
   our $headerOpt;
-  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L $headerOpt '$url'");
+  open(HTTP, '-|', "curl --stderr - --max-time 60 -s -k -L $headerOpt '$url'");
   #local $/;   # read entire file -- FIXME: potentially memory hungry
   #my $html = <HTTP>;
 
