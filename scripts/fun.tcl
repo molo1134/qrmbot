@@ -878,17 +878,14 @@ proc dog_pub { nick host hand chan text } {
 	set msg(0) "bark"
 	set msg(1) "woof"
 	set index [expr {int(rand()*[array size msg])}]
-	set command "curl -s -k -L -A foo https://old.reddit.com/r/WhatsWrongWithYourDog/random.json | jq -r first(.\[\].data.children\[\].data.url) "
-	set fd [open "|${command}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		set jd [clock format [clock seconds] -gmt 1 -format "%j"]
-		if { [string equal $jd "045"] } {
-			set line "https://i.imgur.com/usMFstp.png"
-		}
-		putchan $chan "$msg($index): $line"
+
+	set line [getSubredditImage "WhatsWrongWithYourDog"]
+
+	set jd [clock format [clock seconds] -gmt 1 -format "%j"]
+	if { [string equal $jd "045"] } {
+		set line "https://i.imgur.com/usMFstp.png"
 	}
-	close $fd
+	putchan $chan "$msg($index): $line"
 }
 
 set amconbin "/home/eggdrop/bin/amcon"
