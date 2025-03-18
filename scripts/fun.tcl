@@ -780,6 +780,59 @@ proc draw_pub { nick host hand chan text } {
 	close $fd
 }
 
+
+# load imgur api key if present
+set imgur_key ""
+set imgurfile [file join $env(HOME) ".imgurkey"]
+if {[file exists $imgurfile]} {
+    set fd [open $imgurfile r]
+    set file_content [read $fd]
+    close $fd
+    regexp {imgur_key="([^"]+)"} $file_content -> imgur_key
+}
+
+# load scraping ant api key if present
+set scrapingant_key ""
+set scrapingantfile [file join $env(HOME) ".qrmbot/keys/scrapingantkey"]
+if {[file exists $scrapingantfile]} {
+    set fd [open $scrapingantfile r]
+    set file_content [read $fd]
+    close $fd
+    regexp {scrapingant_key="([^"]+)"} $file_content -> scrapingant_key
+}
+
+proc getSubredditImage {subreddit} {
+    global imgur_key
+    global scrapingant_key
+
+    set apiurl "https://api.imgur.com/3/gallery/r/$subreddit/new/day"
+    set header "Authorization: Client-ID $imgur_key"
+
+    if {[string length $imgur_key] == 0} {
+      putlog "Error: no imgur key loaded"
+    }
+
+    if {[string length $scrapingant_key] > 0} {
+        set encoded_url [string map {& %26 = %3D ? %3F} $apiurl]
+        set apiurl "https://api.scrapingant.com/v2/general?url=$encoded_url&x-api-key=$scrapingant_key&browser=false"
+        set header "Ant-$header"
+    }
+
+    set command "curl -skL -H \"${header}\" \"${apiurl}\" | jq -r \".data\[\].link\" | shuf -n 1 "
+    #putlog $command
+    set r ""
+    set fd [open "|${command}" r]
+    fconfigure $fd -encoding utf-8
+    while {[gets $fd line] >= 0} {
+        set r $line
+    }
+    if {[catch {close $fd} result]} {
+      putlog "Error: $result"
+    }
+    return $r
+}
+
+
 bind pub - !cat cat_pub
 bind pub - !zach cat_pub
 proc cat_pub { nick host hand chan text } {
@@ -804,18 +857,16 @@ proc cat_pub { nick host hand chan text } {
 	set msg(13) "you're obsessed"
 	set msg(14) "seriously, wtf"
 	set index [expr {int(rand()*[array size msg])}]
-	set command "curl -s -k -L -A foo https://old.reddit.com/r/WhatsWrongWithYourCat/random.json | jq -r first(.\[\].data.children\[\].data.url) "
-	set fd [open "|${command}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		set jd [clock format [clock seconds] -gmt 1 -format "%j"]
-		if { [string equal $jd "045"] } {
-			set line "https://i.imgur.com/v0790At.jpg"
-		}
-		putchan $chan "$msg($index): $line"
+
+	set line [getSubredditImage "WhatsWrongWithYourCat"]
+
+	set jd [clock format [clock seconds] -gmt 1 -format "%j"]
+	if { [string equal $jd "045"] } {
+	  set line "https://i.imgur.com/v0790At.jpg"
 	}
-	close $fd
+	putchan $chan "$msg($index): $line"
 }
+
 
 bind pub - !dog dog_pub
 proc dog_pub { nick host hand chan text } {
