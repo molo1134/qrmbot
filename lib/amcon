@@ -12,7 +12,15 @@ use lib dirname(realpath(__FILE__));
 use Colors;
 use Util;
 
+use URI::Escape;
+
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+our $scrapingant_key=undef;
+my $scrapingantfile = $ENV{'HOME'} . "/.qrmbot/keys/scrapingantkey";
+if (-e ($scrapingantfile)) {
+  require($scrapingantfile);
+}
 
 if (defined $ARGV[0] and $ARGV[0] =~ /about/i){
   print "Returns current AmCON status from the AmRRON page.\n";
@@ -29,6 +37,9 @@ my $url = "https://amrron.com/net-resourcestools/amcon-amrron-communications-con
 #$url = "https://web.archive.org/web/20211204203353/" . $url; # level 4
 #$url = "https://web.archive.org/web/20191223033133/" . $url; # level 5
 my $found = 0;
+if (defined $scrapingant_key) {
+  $url = "https://api.scrapingant.com/v2/general?url=". uri_escape($url) . "&x-api-key=${scrapingant_key}&browser=false";
+}
 open(HTTP, '-|', "curl -A '$ua' --max-time 10 -s -L --insecure '$url' | grep og:image | head -1");
 binmode(HTTP, ":utf8");
 while ( my $line = <HTTP>) {
