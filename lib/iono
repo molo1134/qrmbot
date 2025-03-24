@@ -17,6 +17,7 @@ use Colors;
 use Location;
 use Util;
 
+use JSON qw( from_json );
 use Math::Round;
 use Time::Piece ();
 use POSIX qw(floor);
@@ -140,6 +141,13 @@ if (not defined $closest) {
 my ($fof2, $mufd, $md, $code, $name, $lat, $lon, $ts, $cs, $dist, $bearing) =
   split(/\^\^/,$result{$closest});
 
+$url = "https://prop.kc2g.com/api/point_prediction.json?grid=${mylat},${mylon}";
+open (JSON, '-|', "curl -s -k -L --max-time $timeout --retry 1 \"${url}\"");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+binmode(JSON, ":utf8");
+my $json = <JSON>;
+my $j = from_json($json) or die "error: could not decode response\n";
+
 my $grid = substr(coordToGrid($lat, $lon), 0, 4);
 my $old = "";
 $old = yellow(" [old]") if $ts < (time() - (30*60));  # 30 min
@@ -154,4 +162,13 @@ print ", " if length $mufd > 0 and $mufd > 0.0 and length $fof2 > 0 and $fof2 > 
 print "FoF2 $fof2 MHz" if length $fof2 > 0 and $fof2 > 0.0;
 print " with M(D) ${md}x" if length $fof2 > 0 and $fof2 > 0.0 and length $md > 0;
 print "\n";
+
+if (defined ($j) and defined $j->{fof2} and defined $j->{mufd} and defined $j->{ts}) {
+  my $age = time() - $j->{ts};
+  my $old = "";
+  $old = yellow(" [old]") if $age > 17*60;
+  $old = red(" [old]") if $age > 32*60;
+  printf(" kc2g prop model prediction for %s: %s; FoF2 %0.3f MHz%s\n",
+    coordToGrid($mylat, $mylon), bold(sprintf("MUF %0.3f MHz", $j->{mufd})), $j->{fof2}, $old);
+}
 
