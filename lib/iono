@@ -170,7 +170,7 @@ if (defined ($j) and defined $j->{fof2} and defined $j->{mufd} and defined $j->{
   my $old = "";
   $old = yellow(" [old]") if $age > 17*60;
   $old = red(" [old]") if $age > 32*60;
-  printf(" kc2g prop model prediction for %s: %s; FoF2 %0.3f MHz%s\n",
+  printf(" prop.kc2g.com model prediction for %s: %s; FoF2 %0.3f MHz%s\n",
     coordToGrid($mylat, $mylon), bold(sprintf("MUF %0.3f MHz", $j->{mufd})), $j->{fof2}, $old);
 }
 
