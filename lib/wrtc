@@ -22,11 +22,20 @@ use Util;
 # eggdrop doesn't split args on spaces
 @ARGV=split(' ', join(' ',@ARGV));
 
+my $do2022 = 0;
+my $do2026 = 0;
+
 my @calls;
 my $i = 0;
 while ($i <= $#ARGV) {
-  if ($ARGV[$i] =~ /^([a-z0-9]+\/)?\d?[a-z]{1,2}[0-9Øø]{1,4}[a-z]+(\/[a-z0-9]+)?$/i) {
+  if ($ARGV[$i] eq "--2022") {
+    $do2022 = 1;
+  } elsif ($ARGV[$i] eq "--2026") {
+    $do2026 = 1;
+  } elsif ($ARGV[$i] =~ /^([a-z0-9]+\/)?\d?[a-z]{1,2}[0-9Øø]{1,4}[a-z]+(\/[a-z0-9]+)?$/i) {
     push @calls, uc $ARGV[$i];
+  } else {
+    print "warning: unexpected parameter: $ARGV[$i]\n";
   }
   $i++;
 }
@@ -36,28 +45,36 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
-my $urlbase = "https://www.wrtc2022.it/en/qualification-standings-9.asp?CallsignEntries=1&callsign=";
-
 if (scalar @calls == 0) {
   if ($username eq getEggdropUID()) {
-    print "usage: !wrtc <callsign> [callsign 2] ... [callsign N]\n";
+    print "usage: !wrtc [--2022] [--2026] <callsign> [callsign 2] ... [callsign N]\n";
   } else {
-    print "usage: $0 <callsign> [callsign 2] ... [callsign N]\n";
+    print "usage: $0 [--2022] [--2026] <callsign> [callsign 2] ... [callsign N]\n";
   }
   exit $exitnonzeroonerror;
 }
 
+$do2026 = 1 if 0 == $do2022 and 0 == $do2026;
+
+if ($do2026) {
+  updateCty() if (checkCtyDat() == 1);
+  my $ref = getDxccDataRef(); # load data
+}
+
 foreach my $c (@calls) {
-  doWRTC($c);
+  doWRTC2022($c) if $do2022;
+  doWRTC2026($c) if $do2026;
 }
 
 
-sub doWRTC {
+sub doWRTC2022 {
   my $call = shift;
 
   my ($name, $pts, $claimed, $area_rank, $area, $cty_rank, $cty, $num_multi, $num_outside, $num_entries);
   my $lead = 0;
   my $member = 0;
+
+  my $urlbase = "https://www.wrtc2022.it/en/qualification-standings-9.asp?CallsignEntries=1&callsign=";
 
   open (HTTP, '-|', "curl --max-time 60 -s -k -L '${urlbase}${call}'");
   while(<HTTP>) {
@@ -94,14 +111,61 @@ sub doWRTC {
   close(HTTP);
 
   if (not defined $name) {
-    print "not found $call\n";
+    print "2022: not found $call\n";
     return;
   }
 
-  print bold($call), ": $name: $cty #$cty_rank; $area #$area_rank; Points: $pts";
+  print "2022: ", bold($call), ": $name: $cty #$cty_rank; $area #$area_rank; Points: $pts";
   print "; ($claimed claimed)" if defined $claimed and $claimed != $pts;
   print "; ",  yellow("[Eligible Teammate]") if $member;
   print "; ", lightgreen("[Eligible Team Leader]") if $lead;
   print "\n";
 }
 
+sub doWRTC2026 {
+  my $call = uc shift;
+
+  my ($cty, $cty_name) = getCtyForCall($call);
+
+  #print "$call: $cty\n";
+
+  my $url = "https://www.wrtc2026.org/qualification-standings/qualification-standings-dxcc/";
+  open(HTTP, '-|', "curl --max-time 15 -ksl -X POST '$url' -d 'dxcc=$cty'");
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $html = <HTTP>;
+  close(HTTP);
+
+  my ($cty_rank, $pts, $entries, $a_rank, $a_name);
+  if ($html =~ m|<tr>\s*<td>(\d+)</td>\s*<td><a href="/qualification-standings/qualification-standings-callsign/\?callsign=$call">$call</a></td>\s*<td>(\d+)</td>\s*<td>(\d+)</td>\s*<td>(\d+)</td>\s*<td>([^<]+)</td>\s*</tr>|i) {
+    ($cty_rank, $pts, $entries, $a_rank, $a_name) = ($1, $2, $3, $4, $5);
+    #print "$call: ($cty_rank, $pts, $entries, $a_rank, $a_name)\n";
+  }
+  if (defined $a_name and $a_name ne "") {
+    $a_name =~ s/\s*#\s*/-/;
+  }
+  if (not defined $cty_rank or $cty_rank eq "") {
+    print "2026: $call not found\n";
+    return;
+  }
+
+  print "2026: ", bold($call), ": $cty_name #$cty_rank; $a_name #$a_rank; Points: $pts";
+  #print "; ($claimed claimed)" if defined $claimed and $claimed != $pts;
+  #print "; ",  yellow("[Eligible Teammate]") if $member;
+  #print "; ", lightgreen("[Eligible Team Leader]") if $lead;
+  print "\n";
+}
+
+sub getCtyForCall {
+  my $call = shift;
+
+  my $ref = getDxccDataRef(); # data should already be loaded
+
+  foreach my $rec (@{$ref->{rec}}) {
+    my ($length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz) = split /\|/,$rec;
+
+    if ($call =~ m/$pattern/i) {
+      return ($dxcc, $name);
+    }
+  }
+  return undef;
+}
