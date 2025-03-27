@@ -510,7 +510,7 @@ sub doMastodon {
   }
 
   my $post_url = $j->{url};
-  if ($post_url ne $url) {
+  if (defined $post_url and $post_url ne "" and $post_url ne $url) {
     doMastodon($post_url);
     return;
   }
