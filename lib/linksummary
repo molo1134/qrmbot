@@ -496,6 +496,7 @@ sub doMastodon {
   $uri =~ s/[\n\r]//sg;
 
   my $apiurl = "${instance_base}/api/v1/statuses/$statusid";
+  #print "apiurl: $apiurl\n";
   open(JSON, '-|', "curl --max-time $timeout -L -k -s '$apiurl'");
   binmode(JSON, ":utf8");
   local $/;   # read entire file -- FIXME: potentially memory hungry
@@ -505,6 +506,12 @@ sub doMastodon {
 
   if (defined $j->{error}) {
     print "error: $j->{error}\n";
+    return;
+  }
+
+  my $post_url = $j->{url};
+  if ($post_url ne $url) {
+    doMastodon($post_url);
     return;
   }
 
