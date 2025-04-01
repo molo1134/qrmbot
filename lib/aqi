@@ -112,7 +112,7 @@ sub refreshData {
 
   my %stations;
 
-  my $url = "https://s3-us-west-2.amazonaws.com/airfire-data-exports/maps/purple_air/v2/pas.csv";
+  my $url = "https://s3-us-west-2.amazonaws.com/airfire-data-exports/maps/purple_air/v4/pas.csv";
   #print "$url\n";
 
   open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
@@ -199,6 +199,7 @@ sub displayStation {
 sub colorByAQI {
   my $aqi = shift;
   my $text = shift;
+  return $text if not defined $aqi;
   return green($text) if $aqi <= 50;
   return yellow($text) if $aqi <= 100;
   return darkYellow($text) if $aqi <= 150;
@@ -220,7 +221,7 @@ sub descriptionByAQI {
 sub getTimeSeries {
   my $id = shift;
 
-  my $url = "https://s3-us-west-2.amazonaws.com/airfire-data-exports/maps/purple_air/v2/timeseries/weekly/$id.csv";
+  my $url = "https://s3-us-west-2.amazonaws.com/airfire-data-exports/maps/purple_air/v4/timeseries/weekly/$id.csv";
   open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $csv = <HTTP>;
@@ -250,8 +251,8 @@ sub seriesToSparkLine {
   my @result;
 
   foreach my $e (@series) {
-    $min = $e if $e < $min and $e > 0;
-    $max = $e if $e > $max and $e > 0;
+    $min = $e if defined $e and $e < $min and $e > 0;
+    $max = $e if defined $e and $e > $max and $e > 0;
   }
   $max = 0 if $max == -999999999999;
 
@@ -273,6 +274,8 @@ sub valToBlock {
   my $max = shift;
   my $step = ($max - $min)/8;
   my $chr = " ";
+
+  return $chr if not defined $v;
 
   if ($v < $min) {
     $chr = "\xA0"; # NBSP
