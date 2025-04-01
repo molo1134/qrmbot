@@ -37,7 +37,8 @@ bind msg - !tz msg_timezone
 bind pub - !elev elev
 bind msg - !elev msg_elev
 
-bind pub - !bands bands
+#bind pub - !bands bands
+bind pub - !bands b_pubquote
 bind msg - !bands msg_bands
 
 bind pub - !solar solar
