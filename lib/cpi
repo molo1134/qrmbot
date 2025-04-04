@@ -79,7 +79,7 @@ if (defined $inyear and not defined $inmonth) {
 }
 if (not defined $outyear) {
   $outyear = $curyear;
-  $outmonth = $curmon; # note, 0-indexed
+  $outmonth = $curmon; # note, gmtime output is 0-indexed
   if ($outmonth == 0) {
     $outmonth = 12;
     $outyear--;
@@ -100,6 +100,8 @@ if (not defined $amount or not defined $inyear) {
 #print ("outyear: $outyear\n");
 #print ("outmonth: $outmonth\n");
 
+RETRY:
+
 $inmonth = sprintf("%02d", $inmonth);
 $outmonth = sprintf("%02d", $outmonth);
 
@@ -113,6 +115,16 @@ while (<HTTP>) {
   if (m|<span id="answer">\$(.*?)</span>|) {
     $answer = $1;
     $answer =~ s/,//g;
+  }
+  if (/Error:<br>Invalid year./ and $curyear == $outyear) {
+    # not actually an invalid year, likely that the previous month's cpi index is
+    # not published yet.
+    $outmonth--;
+    if ($outmonth == 0) {
+      $outmonth = 12;
+      $outyear--;
+    }
+    goto RETRY;
   }
   if (/Error:<br>(.*)\s*$/) {
     print("error: $1\n");
