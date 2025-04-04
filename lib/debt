@@ -53,21 +53,37 @@ while (<HTTP>) {
 close HTTP;
 
 my $url = "https://www.census.gov/popclock/data/population.php/us";
-my $user_agent = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0";
+my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0";
+
+#if (defined $scrapingant_key) {
+#  $url = "https://api.scrapingant.com/v2/general?url=". uri_escape($url) . "&x-api-key=${scrapingant_key}&browser=false";
+#}
+
 local $/;   # read entire file -- FIXME: potentially memory hungry
-open (JSON, '-|', "curl --compressed --max-time 10 -A '$user_agent' -s -k -L $url");
+open (JSON, '-|', "curl -4 --compressed --max-time 10 -A '$ua' -s -k -L '$url'");
 my $json = <JSON>;
 close(JSON);
-my $j = decode_json($json) or die "parse error: $json\n";
+my $j;
+if (length($json) > 0) {
+  $j = decode_json($json) or die "parse error: $json\n";
+}
 
-my $pop = $j->{us}->{population};
+if (defined $j->{detail}) {
+  print "error: $j->{detail}\n";
+  exit 0;
+}
+
+my $pop;
+$pop = $j->{us}->{population} if defined $j->{us}->{population};
 
 my $numtotal = $total;
 $numtotal =~ s/,//g;
 
-my $percap = nearest(0.01, $numtotal / $pop);
 my $avg_household_size = 2.52; # TODO would like to get a data source
-my $avg_hh_debt = nearest(0.01, $percap * $avg_household_size);
+my $percap;
+my $avg_hh_debt;
+$percap = nearest(0.01, $numtotal / $pop) if defined $pop;
+$avg_hh_debt = nearest(0.01, $percap * $avg_household_size) if defined $pop;
 
 #print "$date $total $public $intra\n";
 print "As of $date, the total federal public US debt is USD\$ $total"
