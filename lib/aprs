@@ -147,10 +147,12 @@ if (defined($vals{speed})) {
   my $kph = floor($vals{speed});
   my $mph = floor($vals{speed} * 0.62137119);
   print " @ ${kph}kph/${mph}mph";
-}
 
-print " $vals{heading}°" if defined($vals{heading});
-print " $vals{course}°" if defined($vals{course});
+  if ($vals{speed} > 0.0) {
+    printf " %0.1f°", $vals{heading}  if defined($vals{heading});
+    printf " %0.1f°", $vals{course} if defined($vals{course});
+  }
+}
 
 if (defined($vals{altitude})) {
   my $alt_m = floor($vals{altitude});
