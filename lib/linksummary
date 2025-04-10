@@ -623,20 +623,42 @@ sub doBlueSky {
       my $i = 0;
       $mediaTypes[$i] = "vid";
       $mediaUrls[$i] = shortenUrl($post->{embed}->{playlist});
+
       $mediaAlts[$i] = trim($post->{embed}->{alt});
       $mediaAlts[$i] = undef if $mediaAlts[$i] eq "";
+      $mediaAlts[$i] =~ s/^\s*$//g;
+      $mediaAlts[$i] =~ s/\n\s*\n/\n/sg;
+      $mediaAlts[$i] =~ s/\n/ /sg;
+      $mediaAlts[$i] =~ s/(\S)\n(\S)/$1 $2/sg;
+      $mediaAlts[$i] =~ s/\n/ /sg;
+      $mediaAlts[$i] =~ s/\s\s+/ /g;
+      if (length($mediaAlts[$i]) > 80) {
+	$mediaAlts[$i] = substr($mediaAlts[$i], 0, 80) . "…";
+      }
+
       my $char = chr(0x2460 + $i); # 0x2460 = ①
       $mediaAttachments[$i] = "$char $mediaTypes[$i]: ";
       $mediaAttachments[$i] .= $mediaAlts[$i] . ": " if defined $mediaAlts[$i];
       $mediaAttachments[$i] .= "$mediaUrls[$i]";
+
     } elsif ($post->{embed}->{'$type'} eq "app.bsky.embed.images#view") {
       for (my $i = 0; $i < scalar @{$post->{embed}->{images}}; $i++) {
 	my $image = $post->{embed}->{images}->[$i];
 
 	$mediaTypes[$i] = "img";
 	$mediaUrls[$i] = shortenUrl($image->{fullsize});
+
 	$mediaAlts[$i] = trim($image->{alt});
 	$mediaAlts[$i] = undef if $mediaAlts[$i] eq "";
+	$mediaAlts[$i] =~ s/\n\s*\n/\n/sg;
+	$mediaAlts[$i] =~ s/\n/ /sg;
+	$mediaAlts[$i] =~ s/(\S)\n(\S)/$1 $2/sg;
+	$mediaAlts[$i] =~ s/\n/ /sg;
+	$mediaAlts[$i] =~ s/\s\s+/ /g;
+	if (length($mediaAlts[$i]) > 80) {
+	  $mediaAlts[$i] = substr($mediaAlts[$i], 0, 80) . "…";
+	}
+
 	my $char = chr(0x2460 + $i); # 0x2460 = ①
 	$mediaAttachments[$i] = "$char $mediaTypes[$i]: ";
 	$mediaAttachments[$i] .= $mediaAlts[$i] . ": " if defined $mediaAlts[$i];
