@@ -1224,4 +1224,62 @@ proc masters { nick host hand chan text } {
         close $fd
 }
 
+# --- Shart Timer ---
+set shart_data_file "shart_timestamp.txt" ##Molo, please update with where the file should be stored
+set shart_timestamp 0
+set shart_nick ""
+
+# Load saved shart timestamp and nickname on start
+if {[file exists $shart_data_file]} {
+    set fp [open $shart_data_file r]
+    set data [split [read $fp] "\n"]
+    close $fp
+    if {[llength $data] >= 2} {
+        set shart_timestamp [lindex $data 0]
+        set shart_nick [lindex $data 1]
+    }
+}
+
+proc save_shart_data {} {
+    global shart_timestamp shart_nick shart_data_file
+    set fp [open $shart_data_file w]
+    puts $fp "$shart_timestamp\n$shart_nick"
+    close $fp
+}
+
+proc shartreset {nick uhost hand chan text} {
+    global shart_timestamp shart_nick
+
+    if {$text eq ""} {
+        putquick "PRIVMSG $chan :$nick: You must specify a nickname! Usage: !shartreset <nickname>"
+        return
+    }
+
+    set shart_timestamp [clock seconds]
+    set shart_nick $text
+    save_shart_data
+    putquick "PRIVMSG $chan :$nick: Shart timer has been reset by $text!"
+}
+
+proc shart {nick uhost hand chan text} {
+    global shart_timestamp shart_nick
+
+    if {$shart_timestamp == 0 || $shart_nick eq ""} {
+        putquick "PRIVMSG $chan :$nick: The shart timer hasn't been started yet! Use !shartreset <nickname>."
+        return
+    }
+
+    set now [clock seconds]
+    set elapsed [expr {$now - $shart_timestamp}]
+
+    set weeks [expr {$elapsed / (60 * 60 * 24 * 7)}]
+    set days [expr {($elapsed / (60 * 60 * 24)) % 7}]
+    set hours [expr {($elapsed / (60 * 60)) % 24}]
+    set minutes [expr {($elapsed / 60) % 60}]
+
+    putquick "PRIVMSG $chan :$nick: It's been $weeks week(s), $days day(s), $hours hour(s), and $minutes minute(s) since $shart_nick's last shart."
+}
+bind pub - !shartreset shartreset
+bind pub - !shart shart
+
 putlog "fun.tcl loaded."
