@@ -1248,6 +1248,9 @@ proc save_shart_data {} {
 }
 
 proc shartreset {nick uhost hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+		}
     global shart_timestamp shart_nick
 
     if {$text eq ""} {
@@ -1262,6 +1265,9 @@ proc shartreset {nick uhost hand chan text} {
 }
 
 proc shart {nick uhost hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+		}
     global shart_timestamp shart_nick
 
     if {$shart_timestamp == 0 || $shart_nick eq ""} {
