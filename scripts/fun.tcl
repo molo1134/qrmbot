@@ -1225,7 +1225,7 @@ proc masters { nick host hand chan text } {
 }
 
 # --- Shart Timer ---
-set shart_data_file "shart_timestamp.txt" ##Molo, please update with where the file should be stored
+set shart_data_file "shart_timestamp.txt"
 set shart_timestamp 0
 set shart_nick ""
 
@@ -1248,9 +1248,9 @@ proc save_shart_data {} {
 }
 
 proc shartreset {nick uhost hand chan text} {
-	if [string equal "#amateurradio" $chan] then {
-		return
-		}
+    if [string equal "#amateurradio" $chan] then {
+        return
+    }
     global shart_timestamp shart_nick
 
     if {$text eq ""} {
@@ -1265,9 +1265,9 @@ proc shartreset {nick uhost hand chan text} {
 }
 
 proc shart {nick uhost hand chan text} {
-	if [string equal "#amateurradio" $chan] then {
-		return
-		}
+    if [string equal "#amateurradio" $chan] then {
+        return
+    }
     global shart_timestamp shart_nick
 
     if {$shart_timestamp == 0 || $shart_nick eq ""} {
