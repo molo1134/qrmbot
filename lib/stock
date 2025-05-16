@@ -61,6 +61,9 @@ my $curl_impersonate = "curl_chrome116";
 my $curl_impersonate_path = `which $curl_impersonate`;
 chomp $curl_impersonate_path;
 if ( not -e $curl_impersonate_path or not -x $curl_impersonate_path ) {
+  $curl_impersonate_path = $ENV{HOME} . "/bin/$curl_impersonate";
+}
+if ( not -e $curl_impersonate_path or not -x $curl_impersonate_path ) {
   print("Error: unable to find $curl_impersonate\n");
   exit $exitnonzeroonerror;
 }
