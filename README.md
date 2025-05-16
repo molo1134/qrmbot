@@ -41,6 +41,12 @@ As tested on Debian:
 * `libdbi-perl`
 * `libsqlite3-0`
 
+If using the `stock` command, the `curl-impersonate` fork/patch is needed to
+emulate the TLS handshake of an actual browser to work around TLS
+fingerprinting:
+
+* [curl-impersonate](https://github.com/lwthiker/curl-impersonate)
+
 ### Building `libastro-satpass-perl`
 
 ```

@@ -2,7 +2,7 @@
 
 # 2-clause BSD license.
 # Copyright (c) 2018 AA4JQ. All rights reserved.
-# Copyright (c) 2018, 2019, 2020, 2021 molo1134@github. All rights reserved.
+# Copyright (c) 2018, 2019, 2020, 2021, 2022, 2024, 2025 molo1134@github. All rights reserved.
 
 use strict;
 use warnings;
@@ -49,12 +49,28 @@ if ($quote =~ /cummies/i) {
   exit 0;
 }
 
-my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0";
-my $cookiefile = $ENV{HOME} . "/.qrmbot/cache/yahoofinance.cookies";
-my $crumbfile = $ENV{HOME} . "/.qrmbot/cache/yahoofinance.crumb";
+my $cachepath = $ENV{HOME} . "/.qrmbot/cache/";
+if (not -e $ENV{HOME}) {
+  $cachepath = "/tmp/$username/.qrmbot/cache/";
+}
+if (not -e $cachepath) {
+  system("mkdir -p $cachepath");
+}
+
+my $curl_impersonate = "curl_chrome116";
+my $curl_impersonate_path = `which $curl_impersonate`;
+chomp $curl_impersonate_path;
+if ( not -e $curl_impersonate_path or not -x $curl_impersonate_path ) {
+  print("Error: unable to find $curl_impersonate\n");
+  exit $exitnonzeroonerror;
+}
+
+my $cookiefile = $cachepath . "yahoofinance.cookies";
+my $crumbfile = $cachepath . "yahoofinance.crumb";
 my $needcookies = 0;
 my $needcrumb = 0;
 my $crumb = undef;
+
 
 if (not -e $cookiefile) {
   $needcookies = 1;
@@ -77,7 +93,8 @@ if ($needcookies) {
   $needcrumb = 1; # always need a new crumb when getting new cookies
 
   unlink $cookiefile;
-  open(HTTP, '-|', "curl -4 --compressed --max-time 10 -s -k -L --cookie-jar $cookiefile -A '$ua' -H 'accept-language: en-US,en;q=0.9' '$url'");
+  #print "needcookies: $url\n";
+  open(HTTP, '-|', "$curl_impersonate_path -4 --compressed --max-time 10 -s -k -L --cookie-jar $cookiefile '$url'");
   while(<HTTP>) {
   }
   close(HTTP);
@@ -95,21 +112,33 @@ if (not -e $crumbfile) {
     $needcrumb = 1;
     $crumb = undef;
   }
+  if (not $crumb =~ m|^[A-Za-z0-9/.]{10,}$|) {
+    print "Error: invalid crumb: $crumb\n";
+    unlink $crumbfile;
+    exit $exitnonzeroonerror;
+  }
 }
 
 if ($needcrumb) {
   my $url = "https://query2.finance.yahoo.com/v1/test/getcrumb";
-  open(HTTP, '-|', "curl -4 --compressed --max-time 10 -s -k -L --cookie $cookiefile --cookie-jar $cookiefile -A '$ua' -H 'accept-language: en-US,en;q=0.9' '$url'");
+  #print "needcrumb: $url\n";
+  open(HTTP, '-|', "$curl_impersonate_path -4 --max-time 10 -s -k -L --cookie $cookiefile --cookie-jar $cookiefile '$url'");
   $crumb = <HTTP>;
   close(HTTP);
+
+  if ($crumb =~ /Too Many Requests/i) {
+    print "Error retrieving crumb: $crumb\n";
+    return;
+  }
 
   open(CRUMB, '>', $crumbfile);
   print CRUMB $crumb;
   close(CRUMB);
 }
 
-my $url = "https://query2.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&.tsrc=finance&symbols=${quote}&crumb=${crumb}";
-open(HTTP, '-|', "curl -4 --compressed --max-time 10 -s -k -L --cookie $cookiefile -A '$ua' '$url'");
+my $url = "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&.tsrc=finance&symbols=${quote}&crumb=${crumb}";
+#print "quote: $url\n";
+open(HTTP, '-|', "$curl_impersonate_path -4 --max-time 10 -s -k -L --cookie $cookiefile '$url'");
 binmode(HTTP, ":utf8");
 local $/;   # read entire file -- FIXME: potentially memory hungry
 my $json = <HTTP>;
