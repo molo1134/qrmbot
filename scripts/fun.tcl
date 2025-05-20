@@ -41,6 +41,7 @@ bind pub - !governor gov_pub
 bind msg - !governor gov_msg
 bind pub - !github github
 bind msg - !github msg_github
+bind pub - !winadmin winadmin
 
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
@@ -49,6 +50,7 @@ set trumpfinebin "/home/eggdrop/bin/trumpfine"
 set translatebin "/home/eggdrop/bin/translate"
 set primariesbin "/home/eggdrop/bin/primaries"
 set fivethirtyeightbin "/home/eggdrop/bin/fivethirtyeight"
+set winadminbin "/home/eggdrop/bin/winadmin"
 
 set githublink "https://github.com/molo1134/qrmbot/"
 
@@ -412,6 +414,20 @@ proc brexit { nick host hand chan text } {
 	global brexitbin
 	putlog "brexit: $nick $host $hand $chan"
 	set fd [open "|${brexitbin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc winadmin { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	global winadminbin
+	putlog "winadmin: $nick $host $hand $chan"
+	set fd [open "|${winadminbin}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
