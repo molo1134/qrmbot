@@ -304,7 +304,11 @@ proc metard { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
 	}
-	putchan $chan "$nick you tard"
+	if [ expr (rand()*20) <= 1 ] then {
+		putchan $chan "https://i.imgur.com/hHm1sN2.mp4"
+	} else {
+		putchan $chan "$nick you tard"
+	}
 }
 
 proc truck { nick host hand chan text} {
