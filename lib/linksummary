@@ -23,6 +23,7 @@ use List::Util qw[min max];
 use POSIX qw(strftime);
 use JSON qw( decode_json from_json );
 use Math::Round;
+use MIME::Base64;
 
 our $imgur_key=undef;
 my $imgurfile = $ENV{'HOME'} . "/.imgurkey";
@@ -137,35 +138,43 @@ sub printYouTubeMetaData {
 
   my ($title, $len, $desc, $count, $pubdate, $genre, $nsfw, $unlisted, $paid, $author, $likes, $dislikes, $live, $streamed, $vidimg);
 
+  my $json = undef;
   if (is_executable_in_path("yt-dlp")) {
     local $/;   # read entire file -- FIXME: potentially memory hungry
     open(JSON, '-|', "yt-dlp -4 -J '$url'");
-    my $json = <JSON>;
+    $json = <JSON>;
     close(JSON);
-
-    if (not $json =~ /^\s*{/) {
-      print "error while decoding json description for $url : $json\n";
-      return undef;
-    }
-    my $j = from_json($json);
-
-    $title = $j->{title};
-    $len = $j->{duration};
-    $desc = $j->{description};
-    $count = $j->{view_count};
-    $count - $j->{concurrent_view_count} if defined $j->{concurrent_view_count};
-    $pubdate = $j->{release_date};
-    $pubdate =~ s/(\d{4})(\d{2})(\d{2})/\1-\2-\3/;
-    $author = $j->{uploader_id};
-    $live = $j->{is_live};
-    $streamed = $j->{was_live};
-    $likes = $j->{like_count};
-    $unlisted = 1 if $j->{availability} eq "unlisted";
-    $vidimg = $j->{thumbnail};
-
   } else {
-    return;
+    # this is not a public service
+    my $obscured_url = "aHR0cDovL3JhbXNleS5ydXZvbG8ubmV0OjgwMDEvY2dpLWJpbi95dC1kbHAtanNvbi5jZ2k/aWQ9";
+    my $url = decode_base64($obscured_url) . $id;
+
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    open(JSON, '-|', "curl -s -k '$url'");
+    $json = <JSON>;
+    close(JSON);
   }
+
+  if (not $json =~ /^\s*{/) {
+    print "error while decoding json description for $url : $json\n";
+    return undef;
+  }
+  my $j = from_json($json);
+  return if not defined $j;
+
+  $title = $j->{title};
+  $len = $j->{duration};
+  $desc = $j->{description};
+  $count = $j->{view_count};
+  $count - $j->{concurrent_view_count} if defined $j->{concurrent_view_count};
+  $pubdate = $j->{release_date};
+  $pubdate =~ s/(\d{4})(\d{2})(\d{2})/\1-\2-\3/;
+  $author = $j->{uploader_id};
+  $live = $j->{is_live};
+  $streamed = $j->{was_live};
+  $likes = $j->{like_count};
+  $unlisted = 1 if $j->{availability} eq "unlisted";
+  $vidimg = $j->{thumbnail};
 
   $desc = "(no description)" if $desc =~ /^\s*$/;
   if (length $desc > 100) {
@@ -917,7 +926,7 @@ sub doRedditShare {
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $location = <REDIR>;
   close(REDIR);
-  
+
   $location =~ s/^location:\s*//i;
   $location =~ s/share_id=\w+//ig;
   $location =~ s/utm_\w+=[^&]+//ig;
