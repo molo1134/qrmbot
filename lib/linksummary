@@ -167,7 +167,7 @@ sub printYouTubeMetaData {
   $desc = $j->{description};
   $count = $j->{view_count};
   $count - $j->{concurrent_view_count} if defined $j->{concurrent_view_count};
-  $pubdate = $j->{release_date};
+  $pubdate = $j->{release_date} || $j->{upload_date};
   $pubdate =~ s/(\d{4})(\d{2})(\d{2})/\1-\2-\3/;
   $author = $j->{uploader_id};
   $live = $j->{is_live};
