@@ -141,7 +141,7 @@ sub printYouTubeMetaData {
   my $json = undef;
   if (is_executable_in_path("yt-dlp")) {
     local $/;   # read entire file -- FIXME: potentially memory hungry
-    open(JSON, '-|', "yt-dlp -4 -J '$url'");
+    open(JSON, '-|', "yt-dlp -4 --no-cache-dir -J '$url'");
     $json = <JSON>;
     close(JSON);
   } else {
@@ -169,7 +169,7 @@ sub printYouTubeMetaData {
   $count - $j->{concurrent_view_count} if defined $j->{concurrent_view_count};
   $pubdate = $j->{release_date} || $j->{upload_date};
   $pubdate =~ s/(\d{4})(\d{2})(\d{2})/\1-\2-\3/;
-  $author = $j->{uploader_id};
+  $author = $j->{uploader_id} || "\"$j->{uploader}\"";
   $live = $j->{is_live};
   $streamed = $j->{was_live};
   $likes = $j->{like_count};
@@ -177,6 +177,8 @@ sub printYouTubeMetaData {
   $vidimg = $j->{thumbnail};
 
   $desc = "(no description)" if $desc =~ /^\s*$/;
+  $desc =~ s/\n/ /g;
+  $desc =~ s/\s+\s/ /g;
   if (length $desc > 100) {
     $desc = substr($desc, 0, 100) . "…";
   }
