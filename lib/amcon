@@ -41,7 +41,7 @@ my $found = 0;
 if (defined $scrapingant_key) {
   $url = "https://api.scrapingant.com/v2/general?url=". uri_escape($url) . "&x-api-key=${scrapingant_key}&browser=false";
 }
-open(HTTP, '-|', "curl -A '$ua' --max-time 10 -s -L --insecure '$url' | grep og:image | head -1");
+open(HTTP, '-|', "curl -A '$ua' --max-time 10 -s -L --insecure '$url' | grep fetchpriority | head -1");
 binmode(HTTP, ":utf8");
 while ( my $line = <HTTP>) {
   #print $line;
