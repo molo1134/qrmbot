@@ -236,7 +236,7 @@ sub doSearch {
     exit 0;
   }
 
-  open(HTTP, '-|', "curl -4 --max-time 10 -s -k -L '$url'");
+  open(HTTP, '-|', "$curl_impersonate_path -4 --max-time 10 -s -k -L '$url'");
   #binmode(HTTP, ":utf8");  #breaks
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $json = <HTTP>;
