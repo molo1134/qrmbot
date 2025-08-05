@@ -100,7 +100,7 @@ displayStation();
 sub getNearest {
   our %stationData;
 
-  my $url = "https://near-me.airfire.org/fasm/monitor?lat=$mylat&lng=$mylon&maxDistanceMiles=250&limit=1";
+  my $url = "https://near-me.airfire.org/fasm/monitor?lat=$mylat&lng=$mylon&maxDistanceMiles=10000&limit=1";
   #print "$url\n";
 
   open(JSON, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
@@ -158,6 +158,10 @@ sub displayStation {
   our %stationData;
   my $key = (sort { $a <=> $b } keys %stationData)[0];
 
+  if (not defined $key) {
+    print "no stations found\n";
+    return;
+  }
   #print "$key => $stationData{$key}\n";
 
   my ($src, $id, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng) = split /\|/, $stationData{$key};
