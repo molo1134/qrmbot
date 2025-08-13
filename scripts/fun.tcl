@@ -1196,20 +1196,54 @@ proc ohio { nick host hand chan text} {
 
 bind pub - !brad brad
 bind pub - !bread brad
-proc brad { nick host hand chan text} {
-	if [string equal "#amateurradio" $chan] then {
-		return
-	}
- 	if [ expr (rand()*20) <= 1 ] then {
-		putchan $chan "https://www.youtube.com/watch?v=J1DAmmROUX8"
-	} elseif [ expr (rand()*10) <= 3 ] then {
-		#putchan $chan "https://i.imgur.com/Y1UxFds.mp4"
-		putchan $chan "https://i.imgur.com/SwCo2ma.jpg"
-	} elseif [ expr (rand()*10) >= 7 ] then {
-		putchan $chan "https://i.imgur.com/eYAgj4T.png"
-	} else {
- 		putchan $chan "Bread 👍"
-	}
+set yellowjacket_facts {
+  {Yellowjackets are wasps, not bees.}
+  {All yellowjacket workers are female.}
+  {Male yellowjackets cannot sting.}
+  {Yellowjackets can sting multiple times without dying.}
+  {Yellowjacket nests are made from chewed wood pulp.}
+  {Many yellowjackets build their nests underground.}
+  {Yellowjacket colonies last only one season.}
+  {New yellowjacket queens hibernate over winter.}
+  {A yellowjacket colony can grow to thousands of workers.}
+  {Yellowjackets hunt flies and caterpillars for food.}
+  {Yellowjacket stripes warn predators to stay away.}
+  {Early in the year, yellowjackets seek protein.}
+  {Late in the year, yellowjackets crave sugar.}
+  {Yellowjackets aggressively defend their nests.}
+  {Yellowjacket larvae feed workers sugary liquids.}
+  {In late summer, yellowjackets produce new queens and males.}
+  {Only the yellowjacket queen survives the winter.}
+  {Most yellowjacket nests have a single guarded entrance.}
+  {Yellowjackets chew into fruit to reach the juice.}
+  {Cool mornings slow yellowjacket activity.}
+}
+
+proc brad {nick host hand chan text} {
+  if {[string equal "#amateurradio" $chan]} {
+    return
+  }
+
+  if {[expr {rand() < 0.5}]} {
+    global yellowjacket_facts
+    set n [llength $yellowjacket_facts]
+    if {$n > 0} {
+      set fact [lindex $yellowjacket_facts [expr {int(rand() * $n)}]]
+      putchan $chan "Fun fact: $fact"
+      return
+    }
+  }
+
+  if {[expr {(rand()*20) <= 1}]} {
+    putchan $chan "https://www.youtube.com/watch?v=J1DAmmROUX8"
+  } elseif {[expr {(rand()*10) <= 3}]} {
+    #putchan $chan "https://i.imgur.com/Y1UxFds.mp4"
+    putchan $chan "https://i.imgur.com/SwCo2ma.jpg"
+  } elseif {[expr {(rand()*10) >= 7}]} {
+    putchan $chan "https://i.imgur.com/eYAgj4T.png"
+  } else {
+    putchan $chan "Bread 👍"
+  }
 }
 
 bind pub - !uwu uwu
