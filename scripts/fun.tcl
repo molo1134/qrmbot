@@ -1307,13 +1307,8 @@ proc shartreset {nick uhost hand chan text} {
     }
     global shart_timestamp shart_nick
 
-    if {$text eq ""} {
-        putquick "PRIVMSG $chan :$nick: You must specify a nickname! Usage: !shartreset <nickname>"
-        return
-    }
-
     set shart_timestamp [clock seconds]
-    set shart_nick $text
+    set shart_nick $nick
     save_shart_data
     putquick "PRIVMSG $chan :$nick: Shart timer has been reset by $text!"
 }
