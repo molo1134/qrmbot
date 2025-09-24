@@ -997,7 +997,7 @@ sub doReddit {
   my $comment = $j->[1]->{data}->{children}->[0]->{data};
 
   my $sub = $post->{subreddit};
-  my $title = $post->{title};
+  my $title = decodeEntities($post->{title});
   my $p_score = $post->{score};
   my $p_ratio = $post->{upvote_ratio};
   my $p_gilds = $post->{gilded};
@@ -1010,7 +1010,7 @@ sub doReddit {
   my $numComments = $post->{num_comments};
   my $link = $post->{url};
   my $domain = $post->{domain};
-  my $selftext = $post->{selftext};
+  my $selftext = decodeEntities($post->{selftext});
   $selftext =~ s/[\r\n]/ /g;
   $selftext =~ s/\s\s+/ /g;
   $selftext =~ s/^\s+//;
