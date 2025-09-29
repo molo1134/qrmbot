@@ -636,13 +636,13 @@ sub doBlueSky {
       $mediaUrls[$i] = shortenUrl($post->{embed}->{playlist});
 
       $mediaAlts[$i] = trim($post->{embed}->{alt});
-      $mediaAlts[$i] = undef if $mediaAlts[$i] eq "";
       $mediaAlts[$i] =~ s/^\s*$//g;
       $mediaAlts[$i] =~ s/\n\s*\n/\n/sg;
       $mediaAlts[$i] =~ s/\n/ /sg;
       $mediaAlts[$i] =~ s/(\S)\n(\S)/$1 $2/sg;
       $mediaAlts[$i] =~ s/\n/ /sg;
       $mediaAlts[$i] =~ s/\s\s+/ /g;
+      $mediaAlts[$i] = undef if $mediaAlts[$i] eq "";
       if (length($mediaAlts[$i]) > 80) {
 	$mediaAlts[$i] = substr($mediaAlts[$i], 0, 80) . "…";
       }
