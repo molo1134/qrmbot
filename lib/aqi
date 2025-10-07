@@ -23,6 +23,7 @@ use Math::Round;
 use Time::Piece ();
 use POSIX qw(floor);
 use POSIX qw(strftime);
+use JSON qw( from_json );
 
 @ARGV = map { decode "utf-8", $_ } @ARGV;
 # eggdrop doesn't split args on spaces
@@ -78,9 +79,7 @@ my ($mylat, $mylon) = split(',', $geo) if defined $geo;
 #print "$mylat, $mylon\n";
 
 my $cachedir = $ENV{HOME} . "/.qrmbot/cache";
-my $cachefile = $cachedir . "/aqi.csv";
-my $needrefresh = 0;
-my $maxage = 600; # 10 minutes
+my $oldcachefile = $cachedir . "/aqi.csv";
 
 if (not -d $cachedir) {
   print "making cache directory..\n";
@@ -90,89 +89,87 @@ if (not -d $cachedir) {
   }
 }
 
-if (not -e $cachefile) {
-  $needrefresh = 1;
-} else {
-  my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $cachefile;
-  if (defined $mtime) {
-    my $age = time() - $mtime;
-    $needrefresh = 1 if ($age > $maxage or $size == 0);
-  } else {
-    $needrefresh = 1;
-  }
+if (-e $oldcachefile) {
+  unlink $oldcachefile or print "warning: unable to remove $oldcachefile\n";
 }
 
-refreshData() if $needrefresh;
 our %stationData; # key is distance
-loadCache();
+getNearest();
 displayStation();
 
-sub refreshData {
-  print "refreshing data..\n";
+sub getNearest {
+  our %stationData;
 
-  my %stations;
-
-  my $url = "https://s3-us-west-2.amazonaws.com/airfire-data-exports/maps/purple_air/v4/pas.csv";
+  my $url = "https://near-me.airfire.org/fasm/monitor?lat=$mylat&lng=$mylon&maxDistanceMiles=10000&limit=1";
   #print "$url\n";
 
-  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
+  open(JSON, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  my $csv = <HTTP>;
-  close(HTTP);
 
-  $csv =~ s/[^[:ascii:]]//g;
+  binmode(JSON, ":utf8");
+  my $json = <JSON>;
+  close(JSON);
+  my $j = from_json($json) or die "error: could not decode response\n";
 
-  foreach my $line (split /\n/, $csv) {
-    next if $line =~ /^sensor_index/; # skip header
+  if (defined $j->{'aqMonitors'}->[0]) {
 
-    #print "$line\n";
-    my ($id, $lat, $lng, $utc, $epa_pm25, $epa_nowcast, $tz, $raw_pm25) = split (/,/, $line);
-    my $ts = Time::Piece->strptime($utc, "%Y-%m-%d %H:%M:%S+0000")->epoch;
-
-    if (defined $epa_pm25 and defined $lat and defined $ts and $ts > 0) {
-      my $key = "$lat,$lng,$id";
-      $stations{$key} = join("|", $id, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng);
-      #print "$key => $stations{$key}\n";
-    } else {
-      #print "error: ", join("|", $device, $cpm, $acpm, $sv, $user, $tube, $ts, $id, $lat, $lng), "\n";
-      #print "line : ", $line, "\n";
-    }
-  }
-
-
-  #print "Writing to $cachefile ..\n";
-  open (CACHE, ">", $cachefile);
-  foreach my $k (sort keys %stations) {
-    #print "k: $k -- v: $stations{$k}\n";
-    print CACHE $stations{$k}, "\n";
-  }
-  close(CACHE);
-
-}
-
-sub loadCache {
-  our %stationData;
-  open (CACHE, "<", $cachefile);
-  while (<CACHE>) {
-    chomp;
-    my ($id, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng) = split /\|/;
+    my $sta = $j->{'aqMonitors'}->[0];
+    my $ts = Time::Piece->strptime($sta->{'utc_ts'}, "%Y-%m-%dT%H:%M:%S+00:00")->epoch;
+    my $src = "aq";
+    my ($id, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng) = (
+      $sta->{'unit_id'},
+      "",
+      defined($sta->{'nowcast'}) ? $sta->{'nowcast'} : "",
+      $sta->{'raw_pm25'},
+      $sta->{'lat'},
+      $sta->{'lng'}
+    );
     my ($dist, undef) = distBearing($mylat, $mylon, $lat, $lng);
-    $stationData{$dist} = $_;
-    #print "$lat, $lng: $dist\n";
+    $stationData{$dist} = join('|', ($src, $id, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng));
+
+  } else {
+    print "warning: no aqMonitors found in getNearest()\n";
   }
-  close(CACHE);
+
+  if (defined $j->{'purpleAir'}->[0]) {
+
+    my $sta = $j->{'purpleAir'}->[0];
+    my $ts = Time::Piece->strptime($sta->{'utc_ts'}, "%Y-%m-%dT%H:%M:%S+00:00")->epoch;
+    my $src = "pa";
+    my ($id, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng) = (
+      $sta->{'unit_id'},
+      $sta->{'corrected_pm25'},
+      $sta->{'nowcast'},
+      $sta->{'raw_pm25'},
+      $sta->{'lat'},
+      $sta->{'lng'}
+    );
+    #print "aqi: $sta->{'aqi'}\n" if defined $sta->{'aqi'}; # XXX DEBUG
+    my ($dist, undef) = distBearing($mylat, $mylon, $lat, $lng);
+    $stationData{$dist} = join('|', ($src, $id, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng));
+
+  } else {
+    print "warning: no purpleAir found in getNearest()\n";
+  }
+
 }
 
 sub displayStation {
   our %stationData;
   my $key = (sort { $a <=> $b } keys %stationData)[0];
 
+  if (not defined $key) {
+    print "no stations found\n";
+    return;
+  }
   #print "$key => $stationData{$key}\n";
 
-  my ($id, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng) = split /\|/, $stationData{$key};
+  my ($src, $id, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng) = split /\|/, $stationData{$key};
   my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lng);
   my $grid = coordToGrid($lat, $lng);
   my $loc = geolocate($lat, $lng);
+
+  #print "source: $src\n";
 
   my $now = time();
   my $old = "";
@@ -187,7 +184,11 @@ sub displayStation {
   print " at ", strftime("%Y-%m-%d %H%Mz", gmtime($ts)), $old;
   print " -- " , floor($dist), " km ", azToNEWS($bearing), " from ", coordToGrid($mylat, $mylon), "\n";
 
-  my $series_ref = getTimeSeries($id);
+  my $series_ref;
+  $series_ref = getTimeSeriesPA($id) if $src eq "pa";
+  $series_ref = getTimeseriesAQ($id) if $src eq "aq";
+  return if not defined $series_ref;
+
   my @result = seriesToSparkLine($series_ref);
   my $min = $result[0];
   my $max = $result[1];
@@ -200,6 +201,7 @@ sub colorByAQI {
   my $aqi = shift;
   my $text = shift;
   return $text if not defined $aqi;
+  return red($text) if $aqi < 0;
   return green($text) if $aqi <= 50;
   return yellow($text) if $aqi <= 100;
   return darkYellow($text) if $aqi <= 150;
@@ -210,6 +212,7 @@ sub colorByAQI {
 
 sub descriptionByAQI {
   my $aqi = shift;
+  return red("error") if $aqi < 0;
   return green("Good") if $aqi <= 50;
   return yellow("Moderate") if $aqi <= 100;
   return darkYellow("Unhealthy for sensitive groups") if $aqi <= 150;
@@ -218,17 +221,22 @@ sub descriptionByAQI {
   return darkRed("Hazardous");
 }
 
-sub getTimeSeries {
+sub getTimeSeriesPA {
   my $id = shift;
 
   my $url = "https://s3-us-west-2.amazonaws.com/airfire-data-exports/maps/purple_air/v4/timeseries/weekly/$id.csv";
+  #print "$url\n";
   open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $csv = <HTTP>;
   close(HTTP);
 
+  if ($csv =~ m|<Error><Code>NoSuchKey</Code>|i) {
+    return undef;
+  }
+
   $csv =~ s/[^[:ascii:]]//g;
-  
+
   my @series;
 
   foreach my $line (split /\n/, $csv) {
@@ -236,6 +244,35 @@ sub getTimeSeries {
     my ($epa_pm25, $epa_nowcast, $local_ts) = split /,/, $line;
     push @series, pm25_to_aqi($epa_nowcast)
       if defined $epa_nowcast and length($epa_nowcast) > 0;
+  }
+
+  my @result = @series[$#series-72 .. $#series];
+
+  return \@result;
+}
+
+sub getTimeseriesAQ {
+  my $id = shift;
+  my $url = "https://s3-us-west-2.amazonaws.com/airfire-data-exports/monitoring/v2/latest/csv/$id.csv";
+  #print "$url\n";
+  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $csv = <HTTP>;
+  close(HTTP);
+
+  if ($csv =~ m|<Error><Code>NoSuchKey</Code>|i) {
+    return undef;
+  }
+
+  $csv =~ s/[^[:ascii:]]//g;
+
+  my @series;
+
+  foreach my $line (split /\n/, $csv) {
+    next if $line =~ /^utcTime/; # skip header
+    my ($utcTime, $localTime, $pm25, $nowcast) = split /,/, $line;
+    push @series, pm25_to_aqi($nowcast)
+      if defined $nowcast and length($nowcast) > 0;
   }
 
   my @result = @series[$#series-72 .. $#series];
@@ -304,6 +341,7 @@ sub valToBlock {
 sub pm25_to_aqi {
   # https://forum.airnowtech.org/t/the-aqi-equation/169
   my $pm25 = shift;
+  return -1 if not isNumeric($pm25);
 
   my ($aqi_lo, $aqi_hi, $conc_lo, $conc_hi);
 

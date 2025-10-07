@@ -212,17 +212,18 @@ sub doCall {
       ($status, $class) = (undef, undef);
     }
     next if /^#/;
-    my ($appid, $rdate, $pdate, $appcall, $state, $seq, $vanity, $pred, $odds) = split /,/;
+    my ($appid, $rdate, $pdate, $appcall, $state, $seq, $vanity, $pred, $odds, $r_status, $r_assigned, $r_okay) = split /,/;
     if ($pred =~ /^Too Early/i) {
       push @tooearly, $appcall;
     } elsif ($pred =~ /^Too Late/i) {
       push @toolate, $appcall;
     } else {
       $odds = formatOdds($odds);
-      $pred = formatPred($pred);
+      $pred = formatPred($pred, $r_assigned);
+      my $formatOkay = formatOkay($r_okay);
       $pdate = " ?        " if $pdate eq "";
       $seq = "$seq/?";		# TODO FIXME
-      printf "$rdate -> $pdate %-6s ($state) App $appid #%-5s $pred%s\n", $appcall, $seq, $odds;
+      printf "$rdate -> $pdate %-6s ($state) App $appid #%-5s $pred%s%s\n", $appcall, $seq, $odds, $formatOkay;
     }
     $found = 1;
   }
@@ -254,12 +255,13 @@ sub doCall {
       print "-- $state ($district)\n"
     }
     next if /^#/;
-    my ($appid, $rdate, $pdate, $call, $state, $seq, $vanity, $pred, $odds) = split /,/;
+    my ($appid, $rdate, $pdate, $call, $state, $seq, $vanity, $pred, $odds, $r_status, $r_assigned, $r_okay) = split /,/;
     $pdate = " ?        " if $pdate eq "";
     my $type = "type?";		# TODO FIXME
     $odds = formatOdds($odds);
-    $pred = formatPred($pred);
-    print "$rdate -> $pdate App $appid ($type) #$seq $vanity $pred$odds\n";
+    $pred = formatPred($pred, $r_assigned);
+    my $formatOkay = formatOkay($r_okay);
+    print "$rdate -> $pdate App $appid ($type) #$seq $vanity $pred$odds$formatOkay\n";
     $found = 1;
   }
   close(CSV);
@@ -277,12 +279,13 @@ sub doApp {
   while(<CSV>) {
     chomp;
     next if /^#/;
-    my ($appid, $rdate, $pdate, $call, undef, $seq, $vanity, $pred, $odds) = split /,/;
+    my ($appid, $rdate, $pdate, $call, undef, $seq, $vanity, $pred, $odds, $r_status, $r_assigned, $r_okay) = split /,/;
     $pdate = " ?        " if $pdate eq "";
     my $type = "type?";		# TODO FIXME
     $odds = formatOdds($odds);
-    $pred = formatPred($pred);
-    print "$rdate -> $pdate App $appid ($type) #$seq $vanity $pred$odds\n";
+    $pred = formatPred($pred, $r_assigned);
+    my $formatOkay = formatOkay($r_okay);
+    print "$rdate -> $pdate App $appid ($type) #$seq $vanity $pred$odds$formatOkay\n";
   }
   close(CSV);
 }
@@ -310,6 +313,7 @@ sub formatOdds {
 
 sub formatPred {
   my $pred = shift;
+  my $result_assigned = shift;
   my $prelim = $pred =~ tr/†//;
   $pred =~ s/_/ /g;
   $pred =~ s/†//g;
@@ -319,7 +323,19 @@ sub formatPred {
   $pred = yellow($pred) if $pred =~ /^(Offlined|Await)/;
   $pred = red($pred) if $pred =~ /^(Too|Not|Invalid|Insuff|Restricted|Active|Duplic|Reserv|Inactive|Block|Black|Ban)/;
   $pred .= red("†") if $prelim;
+  $pred .= green("✔") if defined $result_assigned and $result_assigned ne "" and $result_assigned > 0;
   return $pred;
+}
+
+sub formatOkay {
+  my $okay = shift;
+  return "" if not defined $okay;
+  return "" if $okay eq "";
+  if ($okay) {
+    return grey(" [OK]");
+  } else {
+    return red(" [ERR]");
+  }
 }
 
 

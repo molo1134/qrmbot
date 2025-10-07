@@ -126,37 +126,59 @@ while ($i <= $#ARGV) {
   } elsif ($ARGV[$i] eq "--roulette" or $ARGV[$i] eq "--wheel") {
     @list = @wheel;
   } elsif ($ARGV[$i] eq "--draw") {
+    # allow per-user counts: e.g. --draw 5 user1 user2 7 user3
     $i++;
     my $n;
-    my @userlist;
+    my @draws;       # will hold arrayrefs [ user, count ]
+
     while ($i <= $#ARGV) {
       if (isNumeric($ARGV[$i])) {
 	$n = $ARGV[$i];
+	if ($n <= 0) {
+	  print "error: invalid number of cards to draw: $n\n";
+	  exit 0;
+	}
+	$n = 52 if $n > 52;
       } else {
-	push @userlist, $ARGV[$i];
+	if (not defined $n) {
+	  print "error: must specify a count before users\n";
+	  exit 0;
+	}
+	push @draws, [ $ARGV[$i], $n ]; # array ref
       }
       $i++;
     }
-    if (not defined $n or $n <= 0) {
-      print "error: must include valid number of cards to draw\n";
-      exit 0;
+
+    if (not @draws) {
+      if (not defined $n) {
+	print "error: no users given for draw\n";
+	exit 0;
+      } else {
+	push @draws, [ "", $n ]; # array ref
+      }
     }
-    $n = 52 if $n > 52;
+
     my $total = 0;
-    foreach my $u (@userlist) {
+    foreach my $pair (@draws) {
+      my ($user, $want) = @$pair;
       my $output = "";
       my $j = 0;
-      while ($j < $n and $total < 52) {
-	my $val = int(rand(52));
+
+      while ($j < $want and $total < 52) {
+	my $val = int rand(52);
 	if (defined $carddeck[$val]) {
 	  $output .= $carddeck[$val];
-	  $output .= " " if $j < $n - 1;
+	  $output .= " " if $j < $want - 1;
 	  $carddeck[$val] = undef;
 	  $j++;
 	  $total++;
 	}
       }
-      print "$u: $output\n";
+      if (defined $user and $user ne "") {
+	print "$user: $output\n";
+      } else {
+	print "$output\n";
+      }
     }
     exit 0;
   } elsif (isNumeric($ARGV[$i])) {

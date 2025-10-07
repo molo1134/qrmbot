@@ -41,6 +41,7 @@ bind pub - !governor gov_pub
 bind msg - !governor gov_msg
 bind pub - !github github
 bind msg - !github msg_github
+bind pub - !winadmin winadmin
 
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
@@ -49,6 +50,7 @@ set trumpfinebin "/home/eggdrop/bin/trumpfine"
 set translatebin "/home/eggdrop/bin/translate"
 set primariesbin "/home/eggdrop/bin/primaries"
 set fivethirtyeightbin "/home/eggdrop/bin/fivethirtyeight"
+set winadminbin "/home/eggdrop/bin/winadmin"
 
 set githublink "https://github.com/molo1134/qrmbot/"
 
@@ -302,7 +304,11 @@ proc metard { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
 	}
-	putchan $chan "$nick you tard"
+	if [ expr (rand()*20) <= 1 ] then {
+		putchan $chan "https://i.imgur.com/hHm1sN2.mp4"
+	} else {
+		putchan $chan "$nick you tard"
+	}
 }
 
 proc truck { nick host hand chan text} {
@@ -412,6 +418,20 @@ proc brexit { nick host hand chan text } {
 	global brexitbin
 	putlog "brexit: $nick $host $hand $chan"
 	set fd [open "|${brexitbin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc winadmin { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	global winadminbin
+	putlog "winadmin: $nick $host $hand $chan"
+	set fd [open "|${winadminbin}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
@@ -1176,20 +1196,54 @@ proc ohio { nick host hand chan text} {
 
 bind pub - !brad brad
 bind pub - !bread brad
-proc brad { nick host hand chan text} {
-	if [string equal "#amateurradio" $chan] then {
-		return
-	}
- 	if [ expr (rand()*20) <= 1 ] then {
-		putchan $chan "https://www.youtube.com/watch?v=J1DAmmROUX8"
-	} elseif [ expr (rand()*10) <= 3 ] then {
-		#putchan $chan "https://i.imgur.com/Y1UxFds.mp4"
-		putchan $chan "https://i.imgur.com/SwCo2ma.jpg"
-	} elseif [ expr (rand()*10) >= 7 ] then {
-		putchan $chan "https://i.imgur.com/eYAgj4T.png"
-	} else {
- 		putchan $chan "Bread 👍"
-	}
+set yellowjacket_facts {
+  {Yellowjackets are wasps, not bees.}
+  {All yellowjacket workers are female.}
+  {Male yellowjackets cannot sting.}
+  {Yellowjackets can sting multiple times without dying.}
+  {Yellowjacket nests are made from chewed wood pulp.}
+  {Many yellowjackets build their nests underground.}
+  {Yellowjacket colonies last only one season.}
+  {New yellowjacket queens hibernate over winter.}
+  {A yellowjacket colony can grow to thousands of workers.}
+  {Yellowjackets hunt flies and caterpillars for food.}
+  {Yellowjacket stripes warn predators to stay away.}
+  {Early in the year, yellowjackets seek protein.}
+  {Late in the year, yellowjackets crave sugar.}
+  {Yellowjackets aggressively defend their nests.}
+  {Yellowjacket larvae feed workers sugary liquids.}
+  {In late summer, yellowjackets produce new queens and males.}
+  {Only the yellowjacket queen survives the winter.}
+  {Most yellowjacket nests have a single guarded entrance.}
+  {Yellowjackets chew into fruit to reach the juice.}
+  {Cool mornings slow yellowjacket activity.}
+}
+
+proc brad {nick host hand chan text} {
+  if {[string equal "#amateurradio" $chan]} {
+    return
+  }
+
+  if {[expr {rand() < 0.5}]} {
+    global yellowjacket_facts
+    set n [llength $yellowjacket_facts]
+    if {$n > 0} {
+      set fact [lindex $yellowjacket_facts [expr {int(rand() * $n)}]]
+      putchan $chan "Fun fact: $fact"
+      return
+    }
+  }
+
+  if {[expr {(rand()*20) <= 1}]} {
+    putchan $chan "https://www.youtube.com/watch?v=J1DAmmROUX8"
+  } elseif {[expr {(rand()*10) <= 3}]} {
+    #putchan $chan "https://i.imgur.com/Y1UxFds.mp4"
+    putchan $chan "https://i.imgur.com/SwCo2ma.jpg"
+  } elseif {[expr {(rand()*10) >= 7}]} {
+    putchan $chan "https://i.imgur.com/eYAgj4T.png"
+  } else {
+    putchan $chan "Bread 👍"
+  }
 }
 
 bind pub - !uwu uwu
@@ -1223,5 +1277,141 @@ proc masters { nick host hand chan text } {
         }
         close $fd
 }
+
+# --- Shart Timer ---
+set shart_data_file "shart_timestamp.txt"
+set shart_timestamp 0
+set shart_nick ""
+set pending_shart_nick ""
+set pending_shart_time 0
+
+# Load saved shart timestamp and nickname on start
+if {[file exists $shart_data_file]} {
+    set fp [open $shart_data_file r]
+    set data [split [read $fp] "\n"]
+    close $fp
+    if {[llength $data] >= 2} {
+        set shart_timestamp [lindex $data 0]
+        set shart_nick [lindex $data 1]
+    }
+}
+
+proc save_shart_data {} {
+    global shart_timestamp shart_nick shart_data_file
+    set fp [open $shart_data_file w]
+    puts $fp "$shart_timestamp\n$shart_nick"
+    close $fp
+}
+
+# --- Request Reset ---
+proc shartreset {nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then {
+        return
+    }
+    global pending_shart_nick pending_shart_time
+
+    if {$text eq ""} {
+        putquick "PRIVMSG $chan :$nick: You must specify a nickname! Usage: !shartreset <nickname>"
+        return
+    }
+
+    set pending_shart_nick $text
+    set pending_shart_time [clock seconds]
+    putquick "PRIVMSG $chan :$nick has requested to reset the shart timer for $pending_shart_nick."
+    putquick "PRIVMSG $chan :Reset request pending for $pending_shart_nick. $pending_shart_nick: Please confirm the shart with !shartconfirm within 24 hours."
+}
+
+# --- Confirm Shart ---
+proc shartconfirm {nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then {
+        return
+    }
+    global shart_timestamp shart_nick pending_shart_nick pending_shart_time
+
+    if {$pending_shart_nick eq ""} {
+        putquick "PRIVMSG $chan :$nick: There is no pending shart request."
+        return
+    }
+
+    # Check expiration (24h = 86400 seconds)
+    set now [clock seconds]
+    if {[expr {$now - $pending_shart_time}] > 86400} {
+        putquick "PRIVMSG $chan :The shart request for $pending_shart_nick has expired (24h limit). Please request again."
+        set pending_shart_nick ""
+        set pending_shart_time 0
+        return
+    }
+
+    if {![string equal -nocase $nick $pending_shart_nick]} {
+        putquick "PRIVMSG $chan :$nick: Only $pending_shart_nick can confirm this shart!"
+        return
+    }
+
+    set shart_timestamp $now
+    set shart_nick $nick
+    set pending_shart_nick ""
+    set pending_shart_time 0
+    save_shart_data
+
+    putquick "PRIVMSG $chan :$nick has confirmed the shart."
+}
+
+# --- Show Timer ---
+proc shart {nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then {
+        return
+    }
+    global shart_timestamp shart_nick
+
+    if {$shart_timestamp == 0 || $shart_nick eq ""} {
+        putquick "PRIVMSG $chan :$nick: The shart timer hasn't been started yet! Use !shartreset <nickname>."
+        return
+    }
+
+    set now [clock seconds]
+    set elapsed [expr {$now - $shart_timestamp}]
+
+    set weeks [expr {$elapsed / (60 * 60 * 24 * 7)}]
+    set days [expr {($elapsed / (60 * 60 * 24)) % 7}]
+    set hours [expr {($elapsed / (60 * 60)) % 24}]
+    set minutes [expr {($elapsed / 60) % 60}]
+
+    putquick "PRIVMSG $chan :$nick: It's been $weeks week(s), $days day(s), $hours hour(s), and $minutes minute(s) since $shart_nick's last shart."
+}
+
+# --- Shart Status ---
+proc shartstatus {nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then {
+        return
+    }
+    global pending_shart_nick pending_shart_time
+
+    if {$pending_shart_nick eq ""} {
+        putquick "PRIVMSG $chan :$nick: There is no pending shart request."
+        return
+    }
+
+    set now [clock seconds]
+    set remaining [expr {86400 - ($now - $pending_shart_time)}]
+
+    if {$remaining <= 0} {
+        putquick "PRIVMSG $chan :The shart request for $pending_shart_nick has expired."
+        set pending_shart_nick ""
+        set pending_shart_time 0
+        return
+    }
+
+    set hours [expr {$remaining / 3600}]
+    set minutes [expr {($remaining % 3600) / 60}]
+
+    putquick "PRIVMSG $chan :A shart request is pending for $pending_shart_nick. Time left to confirm: $hours hour(s) and $minutes minute(s)."
+}
+
+# --- Command Bindings ---
+bind pub - !shartreset shartreset
+bind pub - !shartconfirm shartconfirm
+bind pub - !shart shart
+bind pub - !shartstatus shartstatus
+
 
 putlog "fun.tcl loaded."

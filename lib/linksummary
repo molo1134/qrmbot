@@ -23,6 +23,7 @@ use List::Util qw[min max];
 use POSIX qw(strftime);
 use JSON qw( decode_json from_json );
 use Math::Round;
+use MIME::Base64;
 
 our $imgur_key=undef;
 my $imgurfile = $ENV{'HOME'} . "/.imgurkey";
@@ -137,37 +138,47 @@ sub printYouTubeMetaData {
 
   my ($title, $len, $desc, $count, $pubdate, $genre, $nsfw, $unlisted, $paid, $author, $likes, $dislikes, $live, $streamed, $vidimg);
 
+  my $json = undef;
   if (is_executable_in_path("yt-dlp")) {
     local $/;   # read entire file -- FIXME: potentially memory hungry
-    open(JSON, '-|', "yt-dlp -4 -J '$url'");
-    my $json = <JSON>;
+    open(JSON, '-|', "yt-dlp -4 --no-cache-dir -J '$url'");
+    $json = <JSON>;
     close(JSON);
-
-    if (not $json =~ /^\s*{/) {
-      print "error while decoding json description for $url : $json\n";
-      return undef;
-    }
-    my $j = from_json($json);
-
-    $title = $j->{title};
-    $len = $j->{duration};
-    $desc = $j->{description};
-    $count = $j->{view_count};
-    $count - $j->{concurrent_view_count} if defined $j->{concurrent_view_count};
-    $pubdate = $j->{release_date};
-    $pubdate =~ s/(\d{4})(\d{2})(\d{2})/\1-\2-\3/;
-    $author = $j->{uploader_id};
-    $live = $j->{is_live};
-    $streamed = $j->{was_live};
-    $likes = $j->{like_count};
-    $unlisted = 1 if $j->{availability} eq "unlisted";
-    $vidimg = $j->{thumbnail};
-
   } else {
-    return;
+    # this is not a public service
+    my $obscured_url = "aHR0cDovL3JhbXNleS5ydXZvbG8ubmV0OjgwMDEvY2dpLWJpbi95dC1kbHAtanNvbi5jZ2k/aWQ9";
+    my $url = decode_base64($obscured_url) . $id;
+
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    open(JSON, '-|', "curl -s -k '$url'");
+    $json = <JSON>;
+    close(JSON);
   }
 
+  if (not $json =~ /^\s*{/) {
+    print "error while decoding json description for $url : $json\n";
+    return undef;
+  }
+  my $j = from_json($json);
+  return if not defined $j;
+
+  $title = $j->{title};
+  $len = $j->{duration};
+  $desc = $j->{description};
+  $count = $j->{view_count};
+  $count - $j->{concurrent_view_count} if defined $j->{concurrent_view_count};
+  $pubdate = $j->{release_date} || $j->{upload_date};
+  $pubdate =~ s/(\d{4})(\d{2})(\d{2})/\1-\2-\3/;
+  $author = $j->{uploader_id} || "\"$j->{uploader}\"";
+  $live = $j->{is_live};
+  $streamed = $j->{was_live};
+  $likes = $j->{like_count};
+  $unlisted = 1 if $j->{availability} eq "unlisted";
+  $vidimg = $j->{thumbnail};
+
   $desc = "(no description)" if $desc =~ /^\s*$/;
+  $desc =~ s/\n/ /g;
+  $desc =~ s/\s+\s/ /g;
   if (length $desc > 100) {
     $desc = substr($desc, 0, 100) . "…";
   }
@@ -623,20 +634,42 @@ sub doBlueSky {
       my $i = 0;
       $mediaTypes[$i] = "vid";
       $mediaUrls[$i] = shortenUrl($post->{embed}->{playlist});
+
       $mediaAlts[$i] = trim($post->{embed}->{alt});
+      $mediaAlts[$i] =~ s/^\s*$//g;
+      $mediaAlts[$i] =~ s/\n\s*\n/\n/sg;
+      $mediaAlts[$i] =~ s/\n/ /sg;
+      $mediaAlts[$i] =~ s/(\S)\n(\S)/$1 $2/sg;
+      $mediaAlts[$i] =~ s/\n/ /sg;
+      $mediaAlts[$i] =~ s/\s\s+/ /g;
       $mediaAlts[$i] = undef if $mediaAlts[$i] eq "";
+      if (length($mediaAlts[$i]) > 80) {
+	$mediaAlts[$i] = substr($mediaAlts[$i], 0, 80) . "…";
+      }
+
       my $char = chr(0x2460 + $i); # 0x2460 = ①
       $mediaAttachments[$i] = "$char $mediaTypes[$i]: ";
       $mediaAttachments[$i] .= $mediaAlts[$i] . ": " if defined $mediaAlts[$i];
       $mediaAttachments[$i] .= "$mediaUrls[$i]";
+
     } elsif ($post->{embed}->{'$type'} eq "app.bsky.embed.images#view") {
       for (my $i = 0; $i < scalar @{$post->{embed}->{images}}; $i++) {
 	my $image = $post->{embed}->{images}->[$i];
 
 	$mediaTypes[$i] = "img";
 	$mediaUrls[$i] = shortenUrl($image->{fullsize});
+
 	$mediaAlts[$i] = trim($image->{alt});
 	$mediaAlts[$i] = undef if $mediaAlts[$i] eq "";
+	$mediaAlts[$i] =~ s/\n\s*\n/\n/sg;
+	$mediaAlts[$i] =~ s/\n/ /sg;
+	$mediaAlts[$i] =~ s/(\S)\n(\S)/$1 $2/sg;
+	$mediaAlts[$i] =~ s/\n/ /sg;
+	$mediaAlts[$i] =~ s/\s\s+/ /g;
+	if (length($mediaAlts[$i]) > 80) {
+	  $mediaAlts[$i] = substr($mediaAlts[$i], 0, 80) . "…";
+	}
+
 	my $char = chr(0x2460 + $i); # 0x2460 = ①
 	$mediaAttachments[$i] = "$char $mediaTypes[$i]: ";
 	$mediaAttachments[$i] .= $mediaAlts[$i] . ": " if defined $mediaAlts[$i];
@@ -743,7 +776,7 @@ sub doHtml {
   # -H Accept => should cut down on images and the like, but check headers
   # -H Accept-Language => try to get english first
   #print "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" '$url'";
-  my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0";
+  my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0";
   #print("curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=1.9\" -A \"$useragent\" '$url'");
   open (HTTP, '-|', "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=1.9\" -H \"Accept-Language: en-us, en;q=0.9, *;q=0.8\" -A \"$useragent\" '$url'");
   while (<HTTP>) {
@@ -895,7 +928,7 @@ sub doRedditShare {
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $location = <REDIR>;
   close(REDIR);
-  
+
   $location =~ s/^location:\s*//i;
   $location =~ s/share_id=\w+//ig;
   $location =~ s/utm_\w+=[^&]+//ig;
@@ -964,7 +997,7 @@ sub doReddit {
   my $comment = $j->[1]->{data}->{children}->[0]->{data};
 
   my $sub = $post->{subreddit};
-  my $title = $post->{title};
+  my $title = decodeEntities($post->{title});
   my $p_score = $post->{score};
   my $p_ratio = $post->{upvote_ratio};
   my $p_gilds = $post->{gilded};
@@ -977,7 +1010,7 @@ sub doReddit {
   my $numComments = $post->{num_comments};
   my $link = $post->{url};
   my $domain = $post->{domain};
-  my $selftext = $post->{selftext};
+  my $selftext = decodeEntities($post->{selftext});
   $selftext =~ s/[\r\n]/ /g;
   $selftext =~ s/\s\s+/ /g;
   $selftext =~ s/^\s+//;

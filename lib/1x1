@@ -81,7 +81,7 @@ foreach my $r (@rec) {
       $rcall = $1;
     }
     if (m|<tr><td>Event</td><td>(.*?)</td></tr>|) {
-      $event = $1;
+      $event = decodeEntities($1);
     }
     if (m|<tr><td>Start</td><td>([0-9]{4}-[0-9]{2}-[0-9]{2})</td></tr>|) {
       $sdate = $1;
@@ -96,7 +96,7 @@ foreach my $r (@rec) {
       # Coordinated Universal Time (UTC) or Zulu Time (Z):  0000Z to 2359Z
     }
     if (m|<tr><td>Requestor</td><td>(.*?)</td></tr>|) {
-      $by = $1;
+      $by = decodeEntities($1);
     }
     if (m|<tr><td>Reqcall</td><td>(.*?)</td></tr>|) {
       $orig_call = uc $1;

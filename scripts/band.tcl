@@ -31,6 +31,9 @@ proc b_addquote { nick uhost hand chan arg } {
 
 proc b_pubquote { nick uhost hand chan arg } {
   global bandfile
+  if [string equal "#amateurradio" $chan] then {
+    return
+  }
 
   if { [file exists $bandfile] } {
 
@@ -80,6 +83,9 @@ proc b_pubquote { nick uhost hand chan arg } {
 
 proc b_pubquotesearch { nick uhost hand chan arg } {
     global bandfile
+    if [string equal "#amateurradio" $chan] then {
+	return
+    }
 
     set newarg [string trim "$arg"]
 

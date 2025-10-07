@@ -37,6 +37,17 @@ my $query = undef;
 my $fuelId = 1; # TODO
 my $dist = 10; # km TODO
 
+my $curl_impersonate = "curl-impersonate-chrome";
+my $curl_impersonate_path = `which $curl_impersonate`;
+chomp $curl_impersonate_path;
+if ( not -e $curl_impersonate_path or not -x $curl_impersonate_path ) {
+  $curl_impersonate_path = $ENV{HOME} . "/bin/$curl_impersonate";
+}
+if ( not -e $curl_impersonate_path or not -x $curl_impersonate_path ) {
+  print("Error: unable to find $curl_impersonate\n");
+  exit $exitnonzeroonerror;
+}
+
 my $i = 0;
 while ($i <= $#ARGV) {
   if (!defined($geo) and $ARGV[$i] =~ /^--geo$/i) {
@@ -89,7 +100,7 @@ my $req = "{\"fuelTypeId\":\"$fuelId\",\"minLat\":$minlat,\"maxLat\":$maxlat,\"m
 # curl 'https://www.gasbuddy.com/gaspricemap/map' --compressed -H 'Content-Type: application/json; charset=utf-8' --data-raw '{"fuelTypeId":"1","minLat":41.02367207781487,"maxLat":41.10133099662773,"minLng":-74.2389950182373,"maxLng":-74.0324863817627,"width":1203,"height":600}'
 #
 local $/;   # read entire file -- FIXME: potentially memory hungry
-open (JSON, '-|', "curl --max-time 10 -s -k -L -H '${ct}' --data '${req}' $url");
+open (JSON, '-|', "curl --compressed --max-time 10 -s -k -L -H '${ct}' --data '${req}' $url");
 my $json = <JSON>;
 close(JSON);
 my $j = decode_json($json) or die "parse error: $json\n";
@@ -165,7 +176,7 @@ if (defined $nearestCash) {
   $req = "{\"id\":$id,\"fuelTypeId\":\"$fuelId\"}";
 
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  open (JSON, '-|', "curl --max-time 10 -s -k -L -H '${ct}' --data '${req}' $url");
+  open (JSON, '-|', "$curl_impersonate_path -X POST --compressed --max-time 10 -s -k -L  -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0' -H '${ct}' --data '${req}' $url");
   $json = <JSON>;
   close(JSON);
   if ($json =~ /Cloudflare/) {
@@ -185,7 +196,7 @@ if (defined $nearestCredit) {
   $req = "{\"id\":$id,\"fuelTypeId\":\"$fuelId\"}";
 
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  open (JSON, '-|', "curl --max-time 10 -s -k -L -H '${ct}' --data '${req}' $url");
+  open (JSON, '-|', "$curl_impersonate_path -X POST --compressed --max-time 10 -s -k -L  -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0' -H '${ct}' --data '${req}' $url");
   $json = <JSON>;
   close(JSON);
   #print $json, "\n";

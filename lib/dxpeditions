@@ -78,9 +78,10 @@ while(<HTTP>) {
   if (m|<span class="call"><a href="(.*?)">(.*?)</a></span>|i) {
     ($dxurl, $call) = ($1, $2);
     $dxurl = undef if $dxurl =~ /qrz.com/;
-    $dxurl =~ s|^https://|http://|;
-    $dxurl =~ s|://www.|://|;
+    #$dxurl =~ s|^https://|http://|;
+    #$dxurl =~ s|://www.|://|;
     #$dxurl =~ s|qrz.com/lookup/|qrz.com/db/|;
+    $dxurl = shortenUrl($dxurl);
   } elsif (m|<span class="call">(.*?)</span>|i) {
     $call = $1;
   }
