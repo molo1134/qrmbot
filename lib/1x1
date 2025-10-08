@@ -98,7 +98,7 @@ foreach my $r (@rec) {
     if (m|<tr><td>Requestor</td><td>(.*?)</td></tr>|) {
       $by = decodeEntities($1);
     }
-    if (m|<tr><td>Reqcall</td><td>(.*?)</td></tr>|) {
+    if (m|<tr><td>Requestor call</td><td>(.*?)</td></tr>|) {
       $orig_call = uc $1;
     }
     if (m|<tr><td>Reqphone</td><td>(.*?)</td></tr>|) {
