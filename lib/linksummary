@@ -175,6 +175,7 @@ sub printYouTubeMetaData {
   $likes = $j->{like_count};
   $unlisted = 1 if $j->{availability} eq "unlisted";
   $vidimg = $j->{thumbnail};
+  $vidimg = shortenUrl($vidimg) if length($vidimg) >= 40;
 
   $desc = "(no description)" if $desc =~ /^\s*$/;
   $desc =~ s/\n/ /g;
