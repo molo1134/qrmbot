@@ -71,7 +71,7 @@ while ($i <= $#ARGV) {
     printYouTubeMetaData($3);
   } elsif ($ARGV[$i] =~ m|^https?://t\.co/\w+|i or
 	  $ARGV[$i] =~ m|^https?://(mobile\.)?twitter\.com/|i or
-	  $ARGV[$i] =~ m|^https?://x\.com/|i or
+	  $ARGV[$i] =~ m|^https?://x(cancel)?\.com/|i or
 	  $ARGV[$i] =~ m|^https?://nitter\.|i) {
     doTwitter($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?imdb\.com/title/tt\d+|i or
@@ -225,9 +225,9 @@ sub doTwitter {
   #  'curl --max-time $timeout -Ls -o /dev/null -w "%{url_effective}" "https://t.co/aoVVgKEfqC"'
 
   my $origurl = $url;
-  if ($url =~ /https?:\/\/(mobile\.)?(x\.com|twitter\.com|nitter\..*?)\/(\w+)\/status(es)?\/(\d+)/) {
-    $username = $3;
-    $id = $5;
+  if ($url =~ /https?:\/\/(mobile\.)?(x(cancel)?\.com|twitter\.com|nitter\..*?)\/(\w+)\/status(es)?\/(\d+)/) {
+    $username = $4;
+    $id = $6;
   }
 
   if (not defined $id or not defined $username) {
