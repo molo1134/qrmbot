@@ -238,6 +238,7 @@ sub doTwitter {
   NEXT_NITTER:
   $i++;
   my $nitterInstance = getNitterInstance($i);
+  #print "$i: $nitterInstance\n";
   if (not defined $nitterInstance) {
     print "error: no nitter instance available\n";
     return;
@@ -251,15 +252,24 @@ sub doTwitter {
   }
 
   $url = "$nitterInstance/$username/status/$id";
-  my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0";
+
+  my $curl_bin = "curl-impersonate-chrome";
+  my $curl_bin_path = `which $curl_bin`;
+  my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0";
+  my $headers = "-H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8' -H 'Accept-Language: en-US,en;q=0.5' -H 'Accept-Encoding: gzip, deflate, br' -H 'DNT: 1' -H 'Connection: keep-alive' -H 'Cookie: hlsPlayback=on' -H 'Upgrade-Insecure-Requests: 1' -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' -H 'Sec-Fetch-Site: none' -H 'Sec-Fetch-User: ?1' -H 'Pragma: no-cache' -H 'Cache-Control: no-cache'";
+  chomp $curl_bin_path;
+  if ( not -e $curl_bin_path or not -x $curl_bin_path ) {
+    $curl_bin_path = $ENV{HOME} . "/bin/$curl_bin";
+  }
+  if ( not -e $curl_bin_path or not -x $curl_bin_path ) {
+    print("Warning: unable to find $curl_bin\n");
+    $curl_bin_path = "curl";
+  }
+
   #print "$url\n";
 
-  my $headers = "-H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8' -H 'Accept-Language: en-US,en;q=0.5' -H 'Accept-Encoding: gzip, deflate, br' -H 'DNT: 1' -H 'Connection: keep-alive' -H 'Cookie: hlsPlayback=on' -H 'Upgrade-Insecure-Requests: 1' -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' -H 'Sec-Fetch-Site: none' -H 'Sec-Fetch-User: ?1' -H 'Pragma: no-cache' -H 'Cache-Control: no-cache'";
-
   $timeout = 20;
-
   my $in_main_tweet = 0;
-
   my $fullname = undef;
   my $username = undef;
   my $verified = 0;
@@ -275,7 +285,11 @@ sub doTwitter {
   my ($media, $tco, $rt) = undef;
 
   #print "url: $url\n";
-  open (HTTP, '-|', "curl --max-time $timeout -A '$ua' $headers -L -k -s --compressed '$url'");
+  if ($curl_bin_path eq "curl") {
+    open (HTTP, '-|', "curl --max-time $timeout -A '$ua' $headers -L -k -s --compressed '$url'");
+  } else {
+    open (HTTP, '-|', "$curl_bin_path --max-time $timeout -L -k -s --compressed '$url'");
+  }
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
     #print;
@@ -291,12 +305,14 @@ sub doTwitter {
     }
 
     $in_main_tweet = 1 if not $in_main_tweet and /<div .*?class="main-tweet">/;
-    $in_main_tweet = 0 if $in_main_tweet and /class=".*?after-tweet.*?"/;
+    $in_main_tweet = 0 if $in_main_tweet and /class=".*?replies.*?"/;
     next if not $in_main_tweet;
     if (not defined $fullname and m|<a class="fullname" .*?>(.*?)<|) {
       $fullname = $1;
     }
-    $verified = 1 if /title="Verified account"/;
+    $verified = 1 if /title="Verified blue account"/;
+    $verified = 2 if /title="Verified business account"/;
+    $verified = 3 if /title="Verified government account"/;
     if (not defined $username and m|<a class="username" .*?>@(.*?)<|) {
       $username = $1;
     }
@@ -374,8 +390,14 @@ sub doTwitter {
   #print "MEDIA: $media\n";
   #print "TCO: $tco\n";
 
+  $reply_count = 0 if not defined $reply_count;
+  $retweet_count = 0 if not defined $retweet_count;
+  $favorite_count = 0 if not defined $favorite_count;
+
   my $verifiedText = "";
   $verifiedText = lightblue("✔") if $verified == 1;
+  $verifiedText = yellow("✔") if $verified == 2;
+  $verifiedText = lightGrey("✔") if $verified == 3;
   $text =~ s/^\s*$//g;
   $text =~ s/\n\s*\n/\n/g;
   #$text =~ s/\n/\n  ❝/g;
