@@ -104,9 +104,15 @@ while (<HTTP>) {
   #print;
   chomp;
 
+  if (/challenge-error-text/) {
+    print "error: cloudflare javascript challenge encountered at: $url\n";
+    exit 0
+  }
+
   next if /<!DOCTYPE/;
   next if /<!--/;
   next if /<head/;
+
   if (/<title>pskreporter.info | (.*)<\/title>/) {
     print "error retrieving data from $url: $1\n";
     exit 0
