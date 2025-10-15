@@ -26,8 +26,8 @@ open(HTTP, '-|', "curl --max-time 10 -s -L --insecure '$url' ");
 binmode(HTTP, ":utf8");
 while (<HTTP>) {
   chomp;
-  if (m|<div class="buy buy-sell-blue">([0-9,.+-]+)<br><span class="small">Buy</span></div> <div class="sell buy-sell-blue">([0-9,.+-]+)<br>|) {
-    my ($buyprice, $sellprice) = ($1, $2);
+  if (m|<div class="buy buy-sell-blue"><span class="font-number">([0-9,.+-]+)<small>,([0-9]+)</small></span><br>.*?<div class="sell buy-sell-blue"><span class="font-number">([0-9,.+-]+)<small>,([0-9]+)</small></span><br>|) {
+    my ($buyprice, $sellprice) = (($1 * 1000.0) + ($2 / 100.0), ($3 * 1000.0) + $4 / 100.0);
     print "buy $buyprice / sell $sellprice USDARS 'Informal Price'\n";
     last;
   }
