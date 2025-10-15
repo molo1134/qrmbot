@@ -1694,28 +1694,54 @@ sub doZillowZpid {
     #print "found: ", $j->{data}->{property}->{zpid}, "\n";
     my $p = $j->{data}->{property};
     my $addr = $p->{streetAddress} . "; " . $p->{city} . ", " . $p->{state};
-    my $lotSize = $p->{lotAreaValue} . " " . $p->{lotAreaUnits};
+    my $lotSize = undef;
+    $lotSize = $p->{lotAreaValue} . " " . $p->{lotAreaUnits}
+      if defined $p->{lotAreaValue} and $p->{lotAreaValue} > 0;
     my $photo = shortenUrl($p->{hiResImageLink});
-    my $size = $p->{livingArea};
-    my $px = $p->{price};
+    my $size = defined($p->{livingArea}) ? $p->{livingArea} : "?";
+    my $px = commify($p->{price});
+    $px .= " (Zestimate)" if $p->{hdpTypeDimension} eq "Zestimate";
     my $br = $p->{bedrooms};
     my $ba = $p->{bathrooms};
+    $br = "?" if not defined $br or $br eq "" or $br == 0;
+    $ba = "?" if not defined $ba or $ba eq "" or $br == 0;
     my $hba = $p->{resoFacts}->{bathroomsHalf};
     my $lat = $p->{latitude};
     my $lon = $p->{longitude};
     my $photos = $p->{photoCount};
-    my $type = $p->{listingTypeDimension};
     my $year = $p->{resoFacts}->{yearBuilt};
     my $timeOn = $p->{timeOnZillow};
     my $desc = $p->{description};
-    if (length $desc > 100) {
-      $desc = substr($desc, 0, 100) . "…";
+    $desc =~ s/[\n\r]/ /g;
+    $desc =~ s/\s+/ /g;
+    if (length $desc > 180) {
+      $desc = substr($desc, 0, 180) . "…";
+    }
+    my $hoa = undef;
+    $hoa = red("HOA: \$$p->{monthlyHoaFee}/mo") if defined $p->{monthlyHoaFee};
+    my $status = $p->{homeStatus};
+    $status = green("For Sale") if $status eq "FOR_SALE";
+    $status = red("Off market") if $status eq "OTHER";
+    $status = red("Sold") if $status eq "SOLD";
+    $status = yellow("Foreclosed") if $status eq "FORECLOSED";
+    my $type = $p->{resoFacts}->{homeType};
+
+    if ($url =~ /json$/) {
+      print $json, "\n";
+      return;
     }
 
-    print " $type: ", bold($addr), ": \$", commify($px), ": $br BR / $ba Bath";
+    print "$type $status: ", bold($addr), ": \$$px: $br BR / $ba Bath";
     print " / $hba ½Bath" if defined $hba and $hba > 0;
-    print ", ", commify($size), " sqft on $lotSize;";
+    print ", ", commify($size), " sqft";
+    print " on $lotSize" if defined $lotSize;
+    print ";";
     print " built $year;" if defined $year and $year > 0;
+    print " [FSBO]" if $p->{listingSubType}->{isFSBO};
+    print lightblue(" [New Home]") if $p->{listingSubType}->{isNewHome};
+    print yellow(" [Bank Owned]") if $p->{listingSubType}->{isBankOwned};
+    print yellow(" [Auction]") if $p->{listingSubType}->{isForAuction};
+    print yellow(" [Foreclosure]") if $p->{listingSubType}->{isForclosure};
     print " pic: $photo [of $photos]; \"$desc\"\n";
   }
 }
