@@ -1674,7 +1674,6 @@ sub doZillowZpid {
     my $headers = "-H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0'";
     $headers .= " -H 'Accept: */*'";
     $headers .= " -H 'Accept-Language: en-US,en;q=0.5'";
-    $headers .= " -H 'Accept-Encoding: br, gzip, deflate, zstd'";
     $headers .= " -H 'content-type: application/json'";
     $headers .= " -H 'Referer: $url'";
 
