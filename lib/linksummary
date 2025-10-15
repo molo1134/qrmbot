@@ -121,6 +121,8 @@ while ($i <= $#ARGV) {
     doHtml($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|https://bsky.app/profile/([A-Za-z0-9._-]+)/post/([a-z0-9]+)|) {
     doBlueSky($1, $2);
+  } elsif ($ARGV[$i] =~ m|https://www.zillow.com/homedetails/[A-Za-z0-9-]+/([0-9]+)_zpid/|) {
+    doZillowZpid($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://| and
 	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
     # TODO: HTTP HEAD for these file types ^^ -- get size and last modified date
@@ -1659,6 +1661,63 @@ sub doAe7qCall {
   my $libdir = dirname(realpath(__FILE__));
   if (-e "$libdir/ae7q") {
     exec "$libdir/ae7q", "$call" or die "error execing ae7q for '$call'";
+  }
+}
+
+sub doZillowZpid {
+  my $url = shift;
+
+  if ($url =~ m|https://www\.zillow\.com/homedetails/[0-9A-Za-z-]+/([0-9]+)_zpid/|i) {
+    my $zpid = $1;
+
+    my $jsonUrl = "https://www.zillow.com/graphql/?extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%222d9eda9fd7ee702cf37becf5459c3daa3526606d4b5b7b84a019433fa5d037c6%22%7D%7D&variables=%7B%22zpid%22%3A${zpid}%2C%22platform%22%3A%22DESKTOP_WEB%22%2C%22formType%22%3A%22OPAQUE%22%2C%22contactFormRenderParameter%22%3A%7B%22zpid%22%3A${zpid}%2C%22platform%22%3A%22desktop%22%2C%22isDoubleScroll%22%3Atrue%7D%2C%22skipCFRD%22%3Afalse%7D";
+    my $headers = "-H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0'";
+    $headers .= " -H 'Accept: */*'";
+    $headers .= " -H 'Accept-Language: en-US,en;q=0.5'";
+    $headers .= " -H 'Accept-Encoding: br, gzip, deflate, zstd'";
+    $headers .= " -H 'content-type: application/json'";
+    $headers .= " -H 'Referer: $url'";
+
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    #print "curl --max-time $timeout -L -k -s --compressed '$jsonUrl' $headers\n";
+    open(HTTP, '-|', "curl --max-time $timeout -L -k -s --compressed '$jsonUrl' $headers");
+    binmode(HTTP, ":utf8");
+    my $json = <HTTP>;
+    close(HTTP);
+
+    if ($json =~ /captcha/) {
+      print "error: captcha encountered\n";
+      return;
+    }
+
+    #print "$json\n";
+    my $j = from_json($json);
+    #print "found: ", $j->{data}->{property}->{zpid}, "\n";
+    my $p = $j->{data}->{property};
+    my $addr = $p->{streetAddress} . "; " . $p->{city} . ", " . $p->{state};
+    my $lotSize = $p->{lotAreaValue} . " " . $p->{lotAreaUnits};
+    my $photo = shortenUrl($p->{hiResImageLink});
+    my $size = $p->{livingArea};
+    my $px = $p->{price};
+    my $br = $p->{bedrooms};
+    my $ba = $p->{bathrooms};
+    my $hba = $p->{resoFacts}->{bathroomsHalf};
+    my $lat = $p->{latitude};
+    my $lon = $p->{longitude};
+    my $photos = $p->{photoCount};
+    my $type = $p->{listingTypeDimension};
+    my $year = $p->{resoFacts}->{yearBuilt};
+    my $timeOn = $p->{timeOnZillow};
+    my $desc = $p->{description};
+    if (length $desc > 100) {
+      $desc = substr($desc, 0, 100) . "…";
+    }
+
+    print " $type: ", bold($addr), ": \$", commify($px), ": $br BR / $ba Bath";
+    print " / $hba ½Bath" if defined $hba and $hba > 0;
+    print ", ", commify($size), " sqft on $lotSize;";
+    print " built $year;" if defined $year and $year > 0;
+    print " pic: $photo [of $photos]; \"$desc\"\n";
   }
 }
 
