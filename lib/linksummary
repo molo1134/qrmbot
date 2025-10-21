@@ -1677,9 +1677,14 @@ sub doZillowZpid {
     $headers .= " -H 'content-type: application/json'";
     $headers .= " -H 'Referer: $url'";
 
+    my $curl_bin = "curl-impersonate-chrome";
+    my $curl_bin_path = `which $curl_bin`;
+    chomp $curl_bin_path;
+    $curl_bin_path = "curl" if not -x $curl_bin_path;
+
     local $/;   # read entire file -- FIXME: potentially memory hungry
-    #print "curl --max-time $timeout -L -k -s --compressed '$jsonUrl' $headers\n";
-    open(HTTP, '-|', "curl --max-time $timeout -L -k -s --compressed '$jsonUrl' $headers");
+    #print "$curl_bin_path --max-time $timeout -L -k -s --compressed '$jsonUrl' $headers\n";
+    open(HTTP, '-|', "$curl_bin_path --max-time $timeout -L -k -s --compressed '$jsonUrl' $headers");
     binmode(HTTP, ":utf8");
     my $json = <HTTP>;
     close(HTTP);
