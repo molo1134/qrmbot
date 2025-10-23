@@ -15,8 +15,15 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Util;
 
+use URI::Escape;
 use JSON qw( decode_json );
 use Math::Round;
+
+our $scrapingant_key=undef;
+my $scrapingantfile = $ENV{'HOME'} . "/.qrmbot/keys/scrapingantkey";
+if (-e ($scrapingantfile)) {
+  require($scrapingantfile);
+}
 
 my $url = "https://www.treasurydirect.gov/NP_WS/debt/feeds/recent";
 #my $url = "https://treasurydirect.gov/NP/debt/rss";
@@ -53,17 +60,22 @@ while (<HTTP>) {
 close HTTP;
 
 my $url = "https://www.census.gov/popclock/data/population.php/us";
-my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0";
+my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0";
 
 #if (defined $scrapingant_key) {
 #  $url = "https://api.scrapingant.com/v2/general?url=". uri_escape($url) . "&x-api-key=${scrapingant_key}&browser=false";
 #}
 
 local $/;   # read entire file -- FIXME: potentially memory hungry
-open (JSON, '-|', "curl -4 --compressed --max-time 10 -A '$ua' -s -k -L '$url'");
+open (JSON, '-|', "curl-impersonate-chrome -4 --compressed --max-time 10 -A '$ua' -s -k -L '$url'");
 my $json = <JSON>;
 close(JSON);
 my $j;
+
+if ($json =~ /Sorry, you have been blocked/) {
+  goto SKIP_POP_PARSE;
+}
+
 if (length($json) > 0) {
   $j = decode_json($json) or die "parse error: $json\n";
 }
@@ -72,6 +84,8 @@ if (defined $j->{detail}) {
   print "error: $j->{detail}\n";
   exit 0;
 }
+
+SKIP_POP_PARSE:
 
 my $pop;
 $pop = $j->{us}->{population} if defined $j->{us}->{population};
