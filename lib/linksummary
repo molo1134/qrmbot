@@ -1439,8 +1439,8 @@ sub doImgur {
     $hash = $1;
     $isgal = 1;
   }
-  if ($url =~ m!/a/([0-9A-Za-z_]+)/?$!) {
-    $hash = $1;
+  if ($url =~ m!/a/([a-z0-9-]+-)?([0-9A-Za-z_]+)/?$!) {
+    $hash = $2;
     $isalb = 1;
   }
   if ($url =~ m!imgur\.(com|io)/+([0-9A-Za-z_]+)(\.(png|gifv?|jpe?g|mp4|webp))?(\?.*)?$!i) {
