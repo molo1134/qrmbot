@@ -158,11 +158,14 @@ foreach my $rec (@{$j->{data}->{sunspots}}) {
   $minsn = $spots if $spots < $minsn;
   $sn{"$y-$m"} = $spots;
   $count++;
+  $found = 1;
   $firstmonth = "$y-$m" if not defined $firstmonth;
   $lastmonth = "$y-$m";
 }
-printf "ITU :%s\n", yearMarkers(sort keys %sn);
-printf "SN:  %s : $minsn-$maxsn\n", join("", snToColorBlocks($minsn, $maxsn, \%sn));
+if ($found) {
+  printf "ITU :%s\n", yearMarkers(sort keys %sn);
+  printf "SN:  %s : $minsn-$maxsn\n", join("", snToColorBlocks($minsn, $maxsn, \%sn));
+}
 
 
 
