@@ -4,6 +4,16 @@
 # 2-clause BSD license.
 # Copyright (c) 2019, 2020 molo1134@github. All rights reserved.
 
+# source 1: NOAA SWPC Predicted Solar Cycle
+#   * https://www.swpc.noaa.gov/products/solar-cycle-progression
+
+# source 2: NASA Marshall Solar Cycle Forecast
+#   * https://www.nasa.gov/solar-cycle-progression-and-forecast/
+
+# source 3: ITU HFBC:
+#   * https://www.itu.int/ITU-R/eTerrestrial/eBroadcasting/eHFBC/api/hfbc/reftables/tables/sunspots
+#   * https://www.itu.int/itu-r/eterrestrial/ebroadcasting/ehfbc#/reftables/tables/RefTableOverview
+
 use strict;
 use utf8;
 use feature 'unicode_strings';
@@ -66,51 +76,95 @@ printf "NOAA:%s\n", yearMarkers(sort keys %sfi);
 printf "SFI: %s : $minsfi-$maxsfi\n", join("", sfiToColorBlocks($minsfi, $maxsfi, \%sfi));
 printf "SN:  %s : $minsn-$maxsn\n", join("", snToColorBlocks($minsn, $maxsn, \%sn));
 
-
-my $currmonth = lc strftime("%b%Y", gmtime time);
-my $prevmonth = lc strftime("%b%Y", gmtime time - 30*24*60*60);
-$url = "https://www.nasa.gov/sites/default/files/atoms/files/${currmonth}f10_prd.txt";
-my $url2 = "https://www.nasa.gov/sites/default/files/atoms/files/${prevmonth}f10_prd.txt";
-%sfi = ();
+my $found = 0;
+my $time = time();
 my %ap;
 $maxsfi = -1.0;
 $minsfi = 10000000.0;
 my $maxap = -1.0;
 my $minap = 10000.0;
-$count = 0;
-$firstmonth = undef;
-$firstyear = undef;
 
-open (HTTP, '-|', "curl --max-time 10 -L -k -s -f $url $url2");
-binmode(HTTP, ":utf8");
-while (<HTTP>) {
-  if (/^\s*20/) {
-    my (undef, $y, $m, undef, $flux, undef, undef, $apindex) = split(/\s+/);
-    $count++;
+while (not $found) {
 
-    $y =~ s/\.[0-9]+$//;
-    $firstyear = $y if not defined $firstyear;
-    next if $y > $firstyear + 3; # truncate the forecast to 3 years
-    $m = monToNum($m);
-    $firstmonth = "$y-$m" if not defined $firstmonth;
-    $lastmonth = "$y-$m";
+  my $currmonth = lc strftime("%b%Y", gmtime $time);
+  my $curr_y_m = strftime("%Y/%m", gmtime $time);
+  $url = "https://www.nasa.gov/wp-content/uploads/${curr_y_m}/${currmonth}f10-prd.txt";
+  %sfi = ();
+  $count = 0;
+  $firstmonth = undef;
+  $firstyear = undef;
 
-    $sfi{"$y-$m"} = $flux;
-    $maxsfi = $flux if $flux > $maxsfi;
-    $minsfi = $flux if $flux < $minsfi;
+  #  print"$url\n";
 
-    $ap{"$y-$m"} = $apindex;
-    $maxap = $apindex if $apindex > $maxap;
-    $minap = $apindex if $apindex < $minap;
+  open (HTTP, '-|', "curl --max-time 10 -L -k -s -f $url");
+  binmode(HTTP, ":utf8");
+  while (<HTTP>) {
+    if (/^\s*20/) {
+      my (undef, $y, $m, undef, $flux, undef, undef, $apindex) = split(/\s+/);
+      $count++;
+      $found = 1;
+
+      $y =~ s/\.[0-9]+$//;
+      $firstyear = $y if not defined $firstyear;
+      next if $y > $firstyear + 3; # truncate the forecast to 3 years
+      $m = monToNum($m);
+      $firstmonth = "$y-$m" if not defined $firstmonth;
+      $lastmonth = "$y-$m";
+
+      $sfi{"$y-$m"} = $flux;
+      $maxsfi = $flux if $flux > $maxsfi;
+      $minsfi = $flux if $flux < $minsfi;
+
+      $ap{"$y-$m"} = $apindex;
+      $maxap = $apindex if $apindex > $maxap;
+      $minap = $apindex if $apindex < $minap;
+    }
   }
+  close HTTP;
+
+  $time = $time - (60*60*24*30) if not $found;
 }
-close HTTP;
 
 #print "NASA Monthly forecast as of: $currmonth; $firstmonth to $lastmonth\n";
 
-printf "NASA:%s\n", yearMarkers(sort keys %sfi);
-printf "SFI: %s : $minsfi-$maxsfi\n", join("", sfiToColorBlocks($minsfi, $maxsfi, \%sfi));
-printf "AP:  %s : $minap-$maxap\n", join("", apToColorBlocks($minap, $maxap, \%ap));
+if ($found) {
+  printf "NASA:%s\n", yearMarkers(sort keys %sfi);
+  printf "SFI: %s : $minsfi-$maxsfi\n", join("", sfiToColorBlocks($minsfi, $maxsfi, \%sfi));
+  printf "AP:  %s : $minap-$maxap\n", join("", apToColorBlocks($minap, $maxap, \%ap));
+}
+
+$url = "https://www.itu.int/ITU-R/eTerrestrial/eBroadcasting/eHFBC/api/hfbc/reftables/tables/sunspots";
+open (JSON, '-|', "curl --max-time 10 -L -k -s $url");
+binmode(JSON, ":utf8");
+$json = do { local $/; <JSON> };  # read entire file
+close(JSON);
+$j = decode_json($json) or die "parse error: $json\n";
+#print "$json\n";
+
+$maxsn = -1.0;
+$minsn = 10000.0;
+%sn = ();
+$count = $found = 0;
+my $thisyear = strftime("%Y", gmtime time);
+($datestamp, $lastmonth, $firstmonth, $firstyear) = (undef, undef, undef, undef);
+#print join(" ", keys %{$j->{data}}), "\n";
+foreach my $rec (@{$j->{data}->{sunspots}}) {
+  #print "$rec: $rec->{year}, $rec->{month}, $rec->{sunspotNumber}\n";
+  my ($y, $m) = ($rec->{year}, $rec->{month});
+  $m = sprintf("%02u", $m);
+  my $spots = $rec->{sunspotNumber};
+  next if $y < $thisyear;
+  $maxsn = $spots if $spots > $maxsn;
+  $minsn = $spots if $spots < $minsn;
+  $sn{"$y-$m"} = $spots;
+  $count++;
+  $firstmonth = "$y-$m" if not defined $firstmonth;
+  $lastmonth = "$y-$m";
+}
+printf "ITU :%s\n", yearMarkers(sort keys %sn);
+printf "SN:  %s : $minsn-$maxsn\n", join("", snToColorBlocks($minsn, $maxsn, \%sn));
+
+
 
 sub sfiToColorBlocks {
   my $minsfi = shift;
@@ -293,7 +347,7 @@ sub yearMarkers {
   my $ret = "";
   my $i = 0;
   for ($i = 0; $i < $#vals; $i++) {
-    if ($vals[$i] =~ /(\d{4})-01/) {
+    if ($vals[$i] =~ /(\d{4})-01$/) {
       $ret .= "| $1";
       $i += 4;
     } else {
