@@ -1435,8 +1435,8 @@ sub doImgur {
   my $isimg = 0;
 
   my $hash = undef;
-  if ($url =~ m!/gallery/[a-z0-9-]*-?([0-9A-Za-z_]+)/?(#[0-9A-Za-z_]+)?$!) {
-    $hash = $1;
+  if ($url =~ m!/gallery/([a-z0-9-]*?-)?([0-9A-Za-z_]+)/?(#[0-9A-Za-z_]+)?$!) {
+    $hash = $2;
     $isgal = 1;
   }
   if ($url =~ m!/a/([a-z0-9-]+-)?([0-9A-Za-z_]+)/?$!) {
@@ -1465,6 +1465,8 @@ sub doImgur {
   $apiurl = "https://api.imgur.com/3/album/$hash" if $isalb == 1;
   $apiurl = "https://api.imgur.com/3/gallery/$hash" if $isgal == 1;
 
+  #print "$apiurl\n";
+
   print "unrecognized url: $url\n" if not defined $apiurl;
   return if not defined $apiurl;
 
@@ -1476,35 +1478,22 @@ sub doImgur {
     $header = "Ant-$header";
   }
 
-  my %data;
+  #print "curl --max-time $timeout -L -k -s '$apiurl' --request GET --header '$header'\n";
   open(HTTP, '-|', "curl --max-time $timeout -L -k -s '$apiurl' --request GET --header '$header'");
   binmode(HTTP, ":utf8");
-  while(<HTTP>) {
-    #print;
-    my $lines = $_;
-    $lines =~ s/(null|true|false|"|\d),\s*"/\1,\n"/g;
-    my @vals = split("\n", $lines);
-    foreach my $e (@vals) {
-      #print "$e\n";
-      if ($e =~ /"(\w+)":\s*(\d+|"[^"]+"|true|false|null),/) {
-	my ($k, $v) = ($1, $2);
-	$v =~ s/^"//; $v =~ s/"$//;
-	if (not defined $data{$k}) {
-	  #print "$k==>$v\n";
-	  $data{$k} = $v;
-	  $data{$k} = undef if $v eq "null";
-	}
-      }
-    }
-  }
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  my $json = <HTTP>;
   close(HTTP);
+  #print "$json\n";
+  my $j = from_json($json);
+  my $data = $j->{data};
 
-  return if not defined $data{success} or $data{success} eq "false";
+  return if not defined $j->{success} or $j->{success} eq "false";
 
-  my $title = $data{title};
+  my $title = $data->{title};
   $title = unescape($title) if defined $title;
   $title = "Untitled" if not defined $title;
-  my $desc = $data{description};
+  my $desc = $data->{description};
   if (defined $desc) {
     $desc = unescape($desc);
     if (length $desc > 100) {
@@ -1519,26 +1508,41 @@ sub doImgur {
 
   use integer;
   print bold(" \"$title\"") if defined $title;
-  print " by \@$data{account_url}" if defined $data{account_url};
-#  print " on ", scalar(gmtime($data{datetime})), " UTC;"
-#    if defined $data{datetime};
-  print " $data{views} views" if defined $data{views};
-  print green(" $data{ups}↑") if defined $data{ups};
-  print red(" $data{downs}↓") if defined $data{downs};
-  print " /r/$data{section}" if defined $data{section};
-  print " [$data{images_count} images]"
-    if defined $data{images_count} and $data{images_count} > 1;
-  print " [animated]" if defined $data{animated} and $data{animated} eq "true";
-  print " [$data{width}x$data{height}]"
-    if defined $data{width} and $data{width} > 0;
-  print " (" . $data{size} / 1024 . "kB)"
-    if defined $data{size} and $data{size} > 0;
+  print " by \@$data->{account_url}" if defined $data->{account_url};
+#  print " on ", scalar(gmtime($data->{datetime})), " UTC;"
+#    if defined $data->{datetime};
+  print " $data->{views} views" if defined $data->{views};
+  print green(" $data->{ups}↑") if defined $data->{ups};
+  print red(" $data->{downs}↓") if defined $data->{downs};
+  print " /r/$data->{section}" if defined $data->{section} and $data->{section} ne "";
+  print " [$data->{images_count} images]"
+    if defined $data->{images_count} and $data->{images_count} > 1;
+  print " [animated]" if defined $data->{animated} and $data->{animated} eq "true";
+  print " [$data->{width}x$data->{height}]"
+    if defined $data->{width} and $data->{width} > 0;
+  print " (" . $data->{size} / 1024 . "kB)"
+    if defined $data->{size} and $data->{size} > 0;
   print yellow(" [sound]")
-    if defined $data{has_sound} and $data{has_sound} eq "true";
-  print red(" [NSFW]") if defined $data{nsfw} and $data{nsfw} eq "true";
+    if defined $data->{has_sound} and $data->{has_sound} eq "true";
+  print red(" [NSFW]") if defined $data->{nsfw} and $data->{nsfw} eq "true";
 #  print " preview: http://i.imgur.com/${hash}l.jpg" if $isimg == 1 and
-#	($data{width} > 640 or $data{height} > 640);
+#	($data->{width} > 640 or $data->{height} > 640);
   print ": $desc" if defined $desc;
+  if ($isimg) {
+    $url =~ s|://.*imgur.com/|://imgur.kageurufu.net/|i;
+    print " | alt: $url" if $isimg;
+  }
+  if (defined $data->{images}) {
+    my $i = 0;
+    print " | alt: ";
+    foreach my $e (@{$data->{images}}) {
+      if (defined $e->{link}) {
+	my $link = $e->{link};
+	$link =~ s|://.*imgur.com/|://imgur.kageurufu.net/|i;
+	print ++$i, ": $link ; ";
+      }
+    }
+  }
   print "\n";
 }
 
