@@ -1485,6 +1485,10 @@ sub doImgur {
   my $json = <HTTP>;
   close(HTTP);
   #print "$json\n";
+  if ($json eq "") {
+    print "Error: no api response\n";
+    return;
+  }
   my $j = from_json($json);
   my $data = $j->{data};
 
