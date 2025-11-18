@@ -1239,6 +1239,8 @@ proc brad {nick host hand chan text} {
   if {[expr {(rand()*20) <= 1}]} {
     putchan $chan "https://www.youtube.com/watch?v=J1DAmmROUX8"
   } elseif {[expr {(rand()*10) <= 3}]} {
+    putchan $chan "https://i.imgur.com/BeEMWUy.jpeg"
+  } elseif {[expr {(rand()*10) <= 3}]} {
     #putchan $chan "https://i.imgur.com/Y1UxFds.mp4"
     putchan $chan "https://i.imgur.com/SwCo2ma.jpg"
   } elseif {[expr {(rand()*10) >= 7}]} {
