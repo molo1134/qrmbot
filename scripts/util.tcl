@@ -46,6 +46,7 @@ proc qrz_getgeo { handle } {
 		}
 		set line [gets $gf]
 	}
+	close $gf
 	return ""
 }
 

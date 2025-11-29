@@ -67,6 +67,7 @@ proc q_pubquote { nick uhost hand chan arg } {
         incr j -1
       } else {
         putmsg "$nick" "valid quotes number from 1 to $tmp"
+        close $qf
         return
       }
     }
@@ -150,6 +151,7 @@ proc q_pubquotesearch { nick uhost hand chan arg } {
             }
             incr i
         }
+        close $qf
 
 	putmsg "$nick" "found $j hit(s) for $arg"
 

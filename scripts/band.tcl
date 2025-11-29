@@ -59,6 +59,7 @@ proc b_pubquote { nick uhost hand chan arg } {
         incr j -1
       } else {
         putmsg "$nick" "valid band number from 1 to $tmp"
+        close $qf
         return
       }
     }
@@ -115,6 +116,7 @@ proc b_pubquotesearch { nick uhost hand chan arg } {
             }
             incr i
         }
+        close $qf
 
 	putmsg "$nick" "found $j hit(s) for $arg"
 
