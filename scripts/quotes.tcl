@@ -17,6 +17,7 @@ proc q_addquote { nick uhost hand chan arg } {
   set newarg [string trim "$arg"]
   if { [string length "$newarg"] == 0 } {
     putchan $chan "usage: !addquote <msg>"
+    return
   }
 
   if { [file exists $quotefile] } {

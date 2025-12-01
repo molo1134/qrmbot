@@ -12,6 +12,14 @@ set hofhfile "scripts/hofhlist.txt"
 proc h_addquote { nick uhost hand chan arg } {
   global hofhfile
 
+  putlog "h_addquote pub: $nick $uhost $hand $chan"
+
+  set newarg [string trim "$arg"]
+  if { [string length "$newarg"] == 0 } {
+    putchan $chan "usage: !addhofh <msg>"
+    return
+  }
+
   if { [file exists $hofhfile] } {
     set qf [open $hofhfile a]
   } else {

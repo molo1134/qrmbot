@@ -12,6 +12,14 @@ set bandfile "scripts/bandlist.txt"
 proc b_addquote { nick uhost hand chan arg } {
   global bandfile
 
+  putlog "b_addquote pub: $nick $uhost $hand $chan"
+
+  set newarg [string trim "$arg"]
+  if { [string length "$newarg"] == 0 } {
+    putchan $chan "usage: !addband <msg>"
+    return
+  }
+
   if { [file exists $bandfile] } {
     set qf [open $bandfile a]
   } else {
