@@ -1486,7 +1486,12 @@ sub doImgur {
   close(HTTP);
   #print "$json\n";
   if ($json eq "") {
-    print "Error: no api response\n";
+    if ($isimg) {
+      $url =~ s|://.*imgur.com/|://imgur.kageurufu.net/|i;
+      print "Error: no api response | alt: $url\n";
+    } else {
+      print "Error: no api response\n";
+    }
     return;
   }
   my $j = from_json($json);
