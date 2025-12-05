@@ -1461,6 +1461,7 @@ sub doImgur {
   }
 
   my $apiurl = undef;
+  RETRY:
   $apiurl = "https://api.imgur.com/3/image/$hash" if $isimg == 1;
   $apiurl = "https://api.imgur.com/3/album/$hash" if $isalb == 1;
   $apiurl = "https://api.imgur.com/3/gallery/$hash" if $isgal == 1;
@@ -1496,6 +1497,13 @@ sub doImgur {
   }
   my $j = from_json($json);
   my $data = $j->{data};
+
+  if (defined $j->{detail} and $j->{detail} =~ /concurrency limit reached/) {
+    # scrapingant fail; retry without scrapingant
+    $scrapingant_key = undef;
+    #print("retry...\n");
+    goto RETRY;
+  }
 
   return if not defined $j->{success} or $j->{success} eq "false";
 
