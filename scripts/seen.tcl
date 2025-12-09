@@ -1,7 +1,7 @@
 # a simple seen script
 #
 # 2-clause BSD license.
-# Copyright (c) 2018, 2019 molo1134@github. All rights reserved.
+# Copyright (c) 2018, 2019, 2025 molo1134@github. All rights reserved.
 
 # Returns: number of minutes that person has been idle; 0 if the specified user
 # isn't on the channel
@@ -136,7 +136,7 @@ proc seen_nick { oldnick newnick host hand } {
     set now [clock seconds]
     set scriptfiles [_seen_file_paths]
     set actfile [lindex $scriptfiles 1]
-    set entry "${sold}|${now}|-|${sold} changed nick to ${snew}"
+    set entry "${sold}|${now}|-|changed nick to ${snew}"
     _seen_update_entry $actfile $sold $entry
 }
 
@@ -156,25 +156,7 @@ proc seen_pub { nick host hand chan text } {
         return
     }
 
-    # If the target is on the channel, keep previous idle behavior
-    if { [onchan ${target} $chan] } {
-        set idle [getchanidle ${target} $chan]
-        set d [expr ($idle / 1440) ]
-        set h [expr (($idle % 1440) / 60) ]
-        set m [expr ($idle % 60) ]
-        set desc ""
-        if { $d > 0 } {
-            append desc "${d}d "
-        }
-        if { $d > 0 || $h > 0 } {
-            append desc "${h}h "
-        }
-        append desc "${m}m "
-        putchan $chan "${origQuery} idle ${desc}"
-        return
-    }
-
-    # Otherwise look up last public message and last action from the record files
+    # look up last public message and last action from the record files
     set scriptfiles [_seen_file_paths]
     set pubfile [lindex $scriptfiles 0]
     set actfile [lindex $scriptfiles 1]
@@ -208,7 +190,7 @@ proc seen_pub { nick host hand chan text } {
     }
 
     set parsed [_parse_line $bestLine]
-    set stamp [clock format [dict get $parsed time] -gmt 1 -format "%Y-%m-%d %H:%M:%S %Z"]
+    set stamp [clock format [dict get $parsed time] -gmt 1 -format "%Y-%m-%d %H:%M:%S"]
     set recchan [dict get $parsed chan]
     set recmsg [dict get $parsed msg]
     putchan $chan "${origQuery} last seen at $stamp in $recchan: $recmsg"
