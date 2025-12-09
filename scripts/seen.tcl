@@ -14,14 +14,15 @@
 
 bind pub - !seen seen_pub
 
-# record all public messages to a per-nick file and record joins/parts/quits
+# record all public messages to a per-nick file and record joins/parts/signs
 # to a separate actions file. Each line is in the format:
 # <nick>|<unix timestamp>|<channel>|<message or action>
 # The per-nick record is overwritten on each new event for that nick.
-bind pub - "*" seen_record_pub
+bind pubm - "*" seen_record_pub
 bind join - "*" seen_join
 bind part - "*" seen_part
-bind quit - "*" seen_quit
+bind sign - "*" seen_quit
+bind nick - "*" seen_nick
 
 proc _seen_file_paths {} {
     # place the database files next to this script
@@ -117,12 +118,26 @@ proc seen_quit { nick host hand reason } {
     set r [sanitize_string [string trim $reason]]
     if {$r eq ""} { set r "quit" }
 
-    # quit typically has no single channel; record channel as "-"
+    # sign (quit) typically has no single channel; record channel as "-"
     set now [clock seconds]
     set scriptfiles [_seen_file_paths]
     set actfile [lindex $scriptfiles 1]
     set entry "${snick}|${now}|-|quit: ${r}"
     _seen_update_entry $actfile $snick $entry
+}
+
+proc seen_nick { oldnick newnick host hand } {
+    # sanitize inputs
+    set sold [sanitize_string $oldnick]
+    set snew [sanitize_string $newnick]
+    putlog "seen nick: $sold -> $snew"
+    # Record a new action for the (old) nick indicating the change (do NOT
+    # rewrite prior records for the old nick).
+    set now [clock seconds]
+    set scriptfiles [_seen_file_paths]
+    set actfile [lindex $scriptfiles 1]
+    set entry "${sold}|${now}|-|${sold} changed nick to ${snew}"
+    _seen_update_entry $actfile $sold $entry
 }
 
 proc seen_pub { nick host hand chan text } {
