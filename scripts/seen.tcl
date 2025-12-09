@@ -126,7 +126,7 @@ proc seen_quit { nick host hand reason } {
     _seen_update_entry $actfile $snick $entry
 }
 
-proc seen_nick { oldnick newnick host hand } {
+proc seen_nick { oldnick host hand channel newnick } {
     # sanitize inputs
     set sold [sanitize_string $oldnick]
     set snew [sanitize_string $newnick]
