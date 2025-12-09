@@ -23,6 +23,7 @@ bind join - "*" seen_join
 bind part - "*" seen_part
 bind sign - "*" seen_quit
 bind nick - "*" seen_nick
+bind kick - "*" seen_kick
 
 proc _seen_file_paths {} {
     # place the database files next to this script
@@ -138,6 +139,19 @@ proc seen_nick { oldnick host hand channel newnick } {
     set actfile [lindex $scriptfiles 1]
     set entry "${sold}|${now}|-|changed nick to ${snew}"
     _seen_update_entry $actfile $sold $entry
+}
+
+proc seen_kick { nick host hand channel target reason } {
+    # sanitize inputs
+    set kicker [sanitize_string $nick]
+    set kickee [sanitize_string $target]
+    set sreason [sanitize_string $reason]
+    set schan [sanitize_string $channel]
+    set now [clock seconds]
+    set scriptfiles [_seen_file_paths]
+    set actfile [lindex $scriptfiles 1]
+    set entry "${kickee}|${now}|${schan}|kicked by ${kicker}: $sreason"
+    _seen_update_entry $actfile $kickee $entry
 }
 
 proc seen_pub { nick host hand chan text } {
