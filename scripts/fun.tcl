@@ -825,7 +825,11 @@ proc poker_pub { nick host hand chan text } {
 	
 	# Now evaluate the poker hands
 	if {$poker_input ne ""} {
-		set fd2 [open "|${pokerbin} ${poker_input}" r]
+		# Convert the collected poker input to UTF-8 bytes and pass it safely to the poker binary.
+		# Using [list ...] inside the open's command ensures the argument is properly quoted,
+		# and encoding convertto guarantees the string is encoded as UTF-8.
+		set poker_input_utf8 [encoding convertto utf-8 $poker_input]
+		set fd2 [open "|[list $pokerbin $poker_input_utf8]" r]
 		fconfigure $fd2 -encoding utf-8
 		while {[gets $fd2 line] >= 0} {
 			putchan $chan "$line"
