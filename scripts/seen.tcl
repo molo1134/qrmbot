@@ -113,7 +113,7 @@ proc seen_part { nick host hand chan reason } {
     _seen_update_entry $actfile $snick $entry
 }
 
-proc seen_quit { nick host hand reason } {
+proc seen_quit { nick host hand chan reason } {
     # sanitize inputs before use
     set snick [sanitize_string $nick]
     set r [sanitize_string [string trim $reason]]
@@ -123,7 +123,7 @@ proc seen_quit { nick host hand reason } {
     set now [clock seconds]
     set scriptfiles [_seen_file_paths]
     set actfile [lindex $scriptfiles 1]
-    set entry "${snick}|${now}|-|quit: ${r}"
+    set entry "${snick}|${now}|${chan}|quit: ${r}"
     _seen_update_entry $actfile $snick $entry
 }
 
@@ -215,7 +215,6 @@ proc seen_pub { nick host hand chan text } {
         putchan $chan "${origQuery} not found"
         return
     }
-
 
     set bestLine ""
     if {$publine ne "" && $actline ne ""} {
