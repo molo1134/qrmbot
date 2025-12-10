@@ -14,6 +14,7 @@ use File::Basename;
 use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
+use Util;
 
 # Hand rankings (higher is better)
 use constant {
@@ -236,7 +237,7 @@ if (@ARGV == 0) {
 
 @ARGV = map { decode "utf-8", $_ } @ARGV;
 
-my $input = join(' ', @ARGV);
+my $input = stripIrcColors(join(' ', @ARGV));
 my @players;
 
 # Parse player hands (format: "player: card1 card2 card3 card4 card5")
