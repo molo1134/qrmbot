@@ -1,0 +1,311 @@
+#!/usr/bin/perl
+# poker hand evaluator
+
+# 2-clause BSD license.
+# Copyright (c) 2025 molo1134@github. All rights reserved.
+
+use strict;
+use utf8;
+use Encode qw(decode);
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+
+# Hand rankings (higher is better)
+use constant {
+  HIGH_CARD       => 1,
+  ONE_PAIR        => 2,
+  TWO_PAIR        => 3,
+  THREE_OF_KIND   => 4,
+  STRAIGHT        => 5,
+  FLUSH           => 6,
+  FULL_HOUSE      => 7,
+  FOUR_OF_KIND    => 8,
+  STRAIGHT_FLUSH  => 9,
+  ROYAL_FLUSH     => 10,
+};
+
+my %hand_names = (
+  HIGH_CARD()      => "High Card",
+  ONE_PAIR()       => "One Pair",
+  TWO_PAIR()       => "Two Pair",
+  THREE_OF_KIND()  => "Three of a Kind",
+  STRAIGHT()       => "Straight",
+  FLUSH()          => "Flush",
+  FULL_HOUSE()     => "Full House",
+  FOUR_OF_KIND()   => "Four of a Kind",
+  STRAIGHT_FLUSH() => "Straight Flush",
+  ROYAL_FLUSH()    => "Royal Flush",
+};
+
+# Parse card string (e.g., "A♠" or "10♦")
+sub parse_card {
+  my ($card) = @_;
+  
+  # Strip color codes if present
+  $card =~ s/\x03\d{1,2}(?:,\d{1,2})?//g;
+  
+  # Extract rank and suit
+  my ($rank, $suit) = $card =~ /^([2-9TJQKA]|10)([♠♥♦♣])$/;
+  
+  return undef unless defined $rank && defined $suit;
+  
+  # Convert rank to numeric value (2-14, where 14=Ace)
+  my %rank_values = (
+    '2' => 2, '3' => 3, '4' => 4, '5' => 5, '6' => 6,
+    '7' => 7, '8' => 8, '9' => 9, '10' => 10,
+    'J' => 11, 'Q' => 12, 'K' => 13, 'A' => 14,
+    'T' => 10,
+  );
+  
+  my $rank_val = $rank_values{$rank};
+  return { rank => $rank_val, suit => $suit, display => $card };
+}
+
+# Parse a hand of cards
+sub parse_hand {
+  my ($hand_str) = @_;
+  my @card_strs = split(/\s+/, $hand_str);
+  my @cards = map { parse_card($_) } @card_strs;
+  
+  # Filter out any failed parses
+  @cards = grep { defined $_ } @cards;
+  
+  return \@cards;
+}
+
+# Evaluate poker hand
+sub evaluate_hand {
+  my ($cards) = @_;
+  
+  return (HIGH_CARD, []) unless @$cards == 5;
+  
+  # Sort by rank descending
+  my @sorted = sort { $b->{rank} <=> $a->{rank} } @$cards;
+  
+  # Count ranks and suits
+  my %rank_counts;
+  my %suit_counts;
+  
+  foreach my $card (@sorted) {
+    $rank_counts{$card->{rank}}++;
+    $suit_counts{$card->{suit}}++;
+  }
+  
+  # Check for flush
+  my $is_flush = (keys %suit_counts) == 1;
+  
+  # Check for straight
+  my $is_straight = 0;
+  my $straight_high = 0;
+  
+  # Regular straight check
+  if ($sorted[0]->{rank} - $sorted[4]->{rank} == 4 &&
+      (keys %rank_counts) == 5) {
+    $is_straight = 1;
+    $straight_high = $sorted[0]->{rank};
+  }
+  
+  # Check for wheel straight (A-2-3-4-5)
+  if ($sorted[0]->{rank} == 14 && $sorted[1]->{rank} == 5 &&
+      $sorted[2]->{rank} == 4 && $sorted[3]->{rank} == 3 &&
+      $sorted[4]->{rank} == 2) {
+    $is_straight = 1;
+    $straight_high = 5; # In a wheel, the 5 is high
+  }
+  
+  # Get rank count groups
+  my @counts = sort { $b <=> $a } values %rank_counts;
+  my @ranks_by_count = sort { 
+    $rank_counts{$b} <=> $rank_counts{$a} || $b <=> $a 
+  } keys %rank_counts;
+  
+  # Royal Flush: A-K-Q-J-10 all same suit
+  if ($is_flush && $is_straight && $straight_high == 14) {
+    return (ROYAL_FLUSH, \@ranks_by_count);
+  }
+  
+  # Straight Flush
+  if ($is_flush && $is_straight) {
+    return (STRAIGHT_FLUSH, [$straight_high]);
+  }
+  
+  # Four of a Kind
+  if ($counts[0] == 4) {
+    return (FOUR_OF_KIND, \@ranks_by_count);
+  }
+  
+  # Full House
+  if ($counts[0] == 3 && $counts[1] == 2) {
+    return (FULL_HOUSE, \@ranks_by_count);
+  }
+  
+  # Flush
+  if ($is_flush) {
+    return (FLUSH, \@ranks_by_count);
+  }
+  
+  # Straight
+  if ($is_straight) {
+    return (STRAIGHT, [$straight_high]);
+  }
+  
+  # Three of a Kind
+  if ($counts[0] == 3) {
+    return (THREE_OF_KIND, \@ranks_by_count);
+  }
+  
+  # Two Pair
+  if ($counts[0] == 2 && $counts[1] == 2) {
+    return (TWO_PAIR, \@ranks_by_count);
+  }
+  
+  # One Pair
+  if ($counts[0] == 2) {
+    return (ONE_PAIR, \@ranks_by_count);
+  }
+  
+  # High Card
+  return (HIGH_CARD, \@ranks_by_count);
+}
+
+# Compare two hands
+sub compare_hands {
+  my ($hand1, $rank1, $tiebreak1, $hand2, $rank2, $tiebreak2) = @_;
+  
+  # Compare hand rankings first
+  return 1 if $rank1 > $rank2;
+  return -1 if $rank1 < $rank2;
+  
+  # Same hand type, compare tiebreakers
+  for (my $i = 0; $i < @$tiebreak1 && $i < @$tiebreak2; $i++) {
+    return 1 if $tiebreak1->[$i] > $tiebreak2->[$i];
+    return -1 if $tiebreak1->[$i] < $tiebreak2->[$i];
+  }
+  
+  return 0; # Tie
+}
+
+# Format rank name
+sub rank_name {
+  my ($rank) = @_;
+  my %names = (
+    14 => 'Ace', 13 => 'King', 12 => 'Queen', 11 => 'Jack', 10 => 'Ten',
+    9 => 'Nine', 8 => 'Eight', 7 => 'Seven', 6 => 'Six', 5 => 'Five',
+    4 => 'Four', 3 => 'Three', 2 => 'Two',
+  );
+  return $names{$rank} || $rank;
+}
+
+# Generate explanation for hand
+sub explain_hand {
+  my ($rank, $tiebreak) = @_;
+  
+  if ($rank == ROYAL_FLUSH) {
+    return "Royal Flush (A-K-Q-J-10 suited)";
+  } elsif ($rank == STRAIGHT_FLUSH) {
+    return "Straight Flush (" . rank_name($tiebreak->[0]) . " high)";
+  } elsif ($rank == FOUR_OF_KIND) {
+    return "Four of a Kind (" . rank_name($tiebreak->[0]) . "s)";
+  } elsif ($rank == FULL_HOUSE) {
+    return "Full House (" . rank_name($tiebreak->[0]) . "s over " . rank_name($tiebreak->[1]) . "s)";
+  } elsif ($rank == FLUSH) {
+    return "Flush (" . rank_name($tiebreak->[0]) . " high)";
+  } elsif ($rank == STRAIGHT) {
+    return "Straight (" . rank_name($tiebreak->[0]) . " high)";
+  } elsif ($rank == THREE_OF_KIND) {
+    return "Three of a Kind (" . rank_name($tiebreak->[0]) . "s)";
+  } elsif ($rank == TWO_PAIR) {
+    return "Two Pair (" . rank_name($tiebreak->[0]) . "s and " . rank_name($tiebreak->[1]) . "s)";
+  } elsif ($rank == ONE_PAIR) {
+    return "One Pair (" . rank_name($tiebreak->[0]) . "s)";
+  } else {
+    return "High Card (" . rank_name($tiebreak->[0]) . ")";
+  }
+}
+
+# Main logic
+if (@ARGV == 0) {
+  print "Usage: poker <player1>: <cards> <player2>: <cards> ...\n";
+  exit 1;
+}
+
+my $input = join(' ', @ARGV);
+my @players;
+
+# Parse player hands (format: "player: card1 card2 card3 card4 card5")
+while ($input =~ /([^:]+):\s*([^\n]+?)(?=\s+\w+:|$)/g) {
+  my ($name, $cards) = ($1, $2);
+  $name =~ s/^\s+|\s+$//g;
+  $cards =~ s/^\s+|\s+$//g;
+  
+  my $hand = parse_hand($cards);
+  next unless @$hand == 5;
+  
+  my ($rank, $tiebreak) = evaluate_hand($hand);
+  push @players, {
+    name => $name,
+    cards => $hand,
+    rank => $rank,
+    tiebreak => $tiebreak,
+  };
+}
+
+if (@players == 0) {
+  print "Error: No valid hands found\n";
+  exit 1;
+}
+
+if (@players == 1) {
+  my $p = $players[0];
+  print bold($p->{name}), " has ", explain_hand($p->{rank}, $p->{tiebreak}), "\n";
+  exit 0;
+}
+
+# Sort players by hand strength (best first)
+@players = sort {
+  compare_hands($b->{cards}, $b->{rank}, $b->{tiebreak},
+                $a->{cards}, $a->{rank}, $a->{tiebreak})
+} @players;
+
+# Check for ties at the top
+my @winners;
+push @winners, $players[0];
+
+for (my $i = 1; $i < @players; $i++) {
+  my $cmp = compare_hands($players[0]->{cards}, $players[0]->{rank}, $players[0]->{tiebreak},
+                          $players[$i]->{cards}, $players[$i]->{rank}, $players[$i]->{tiebreak});
+  if ($cmp == 0) {
+    push @winners, $players[$i];
+  } else {
+    last;
+  }
+}
+
+# Output results
+if (@winners > 1) {
+  my @names = map { bold($_->{name}) } @winners;
+  my $names_str = join(", ", @names[0..$#names-1]) . " and " . $names[-1];
+  print "Tie between $names_str with ", explain_hand($winners[0]->{rank}, $winners[0]->{tiebreak}), "\n";
+} else {
+  my $winner = $winners[0];
+  print bold($winner->{name}), " wins with ", explain_hand($winner->{rank}, $winner->{tiebreak});
+  
+  # Show what others had
+  if (@players > 2) {
+    print " (";
+    my @others;
+    for (my $i = 1; $i < @players; $i++) {
+      push @others, $players[$i]->{name} . ": " . explain_hand($players[$i]->{rank}, $players[$i]->{tiebreak});
+    }
+    print join("; ", @others);
+    print ")";
+  } elsif (@players == 2) {
+    print " vs " . $players[1]->{name} . "'s " . explain_hand($players[1]->{rank}, $players[1]->{tiebreak});
+  }
+  print "\n";
+}
