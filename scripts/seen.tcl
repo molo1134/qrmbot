@@ -160,13 +160,13 @@ proc seen_kick { nick host hand channel target reason } {
 proc seen_act { nick host hand dest keyword text } {
     set keyword [sanitize_string $keyword]
     set text [sanitize_string $text]
-    set actor [sanitize_string nick]
+    set actor [sanitize_string $nick]
 
     set now [clock seconds]
     set scriptfiles [_seen_file_paths]
-    set actfile [lindex $scriptfiles 1]
+    set pubfile [lindex $scriptfiles 0]
     set entry "${actor}|${now}|${dest}| * ${actor} ${text}"
-    _seen_update_entry $actfile $actor $entry
+    _seen_update_entry $pubfile $actor $entry
 }
 
 proc _seen_output_line { origQuery chan line } {
