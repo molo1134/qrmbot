@@ -154,6 +154,37 @@ proc seen_kick { nick host hand channel target reason } {
     _seen_update_entry $actfile $kickee $entry
 }
 
+proc _seen_output_line { origQuery chan line } {
+
+    # helper to parse a line into a dict
+    proc _parse_line {line} {
+        set parts [split $line "|"]
+        # nick|timestamp|channel|message
+        dict create nick [lindex $parts 0] time [lindex $parts 1] chan [lindex $parts 2] msg [lindex $parts 3]
+    }
+
+    set parsed [_parse_line $line]
+
+    set stamp [clock format [dict get $parsed time] -gmt 1 -format "%Y-%m-%d %H:%M:%S %Z"]
+    set now [clock seconds]
+    set idle [expr ($now - $stamp) ]
+    set d [expr ($idle / 1440) ]
+    set h [expr (($idle % 1440) / 60) ]
+    set m [expr ($idle % 60) ]
+    set desc ""
+    if { $d > 0 } {
+        append desc "${d}d "
+    }
+    if { $d > 0 || $h > 0 } {
+        append desc "${h}h "
+    }
+    append desc "${m}m"
+
+    set recchan [dict get $parsed chan]
+    set recmsg [dict get $parsed msg]
+    putchan $chan "${origQuery} last seen at $stamp (${desc} ago) in $recchan: $recmsg"
+}
+
 proc seen_pub { nick host hand chan text } {
     global botnick
     putlog "seen pub: $nick $host $hand $chan $text"
@@ -183,12 +214,6 @@ proc seen_pub { nick host hand chan text } {
         return
     }
 
-    # helper to parse a line into a dict
-    proc _parse_line {line} {
-        set parts [split $line "|"]
-        # nick|timestamp|channel|message
-        dict create nick [lindex $parts 0] time [lindex $parts 1] chan [lindex $parts 2] msg [lindex $parts 3]
-    }
 
     set bestLine ""
     if {$publine ne "" && $actline ne ""} {
@@ -196,31 +221,16 @@ proc seen_pub { nick host hand chan text } {
         set aparts [split $actline "|"]
         set ptime [expr {int([lindex $pparts 1])}]
         set atime [expr {int([lindex $aparts 1])}]
-        if {$ptime >= $atime} { set bestLine $publine } else { set bestLine $actline }
+        if {$ptime >= $atime} {
+            set bestLine $publine
+        } else {
+            set bestLine $actline
+        }
     } elseif {$publine ne ""} {
         set bestLine $publine
     } else {
         set bestLine $actline
     }
 
-    set parsed [_parse_line $bestLine]
-
-    set stamp [clock format [dict get $parsed time] -gmt 1 -format "%Y-%m-%d %H:%M:%S %Z"]
-    set now [clock seconds]
-    set idle [expr ($now - $stamp) ]
-    set d [expr ($idle / 1440) ]
-    set h [expr (($idle % 1440) / 60) ]
-    set m [expr ($idle % 60) ]
-    set desc ""
-    if { $d > 0 } {
-	    append desc "${d}d "
-    }
-    if { $d > 0 || $h > 0 } {
-	    append desc "${h}h "
-    }
-    append desc "${m}m"
-
-    set recchan [dict get $parsed chan]
-    set recmsg [dict get $parsed msg]
-    putchan $chan "${origQuery} last seen at $stamp (${desc} ago) in $recchan: $recmsg"
+    _seen_output_line $origQuery $chan $bestLine
 }
