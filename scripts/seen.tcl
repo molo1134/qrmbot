@@ -35,14 +35,14 @@ proc _seen_file_paths {} {
 
 proc _seen_update_entry {file nick entry} {
     # read existing lines, omit any for this nick, then append the new entry
-    set lower [string tolower $nick]
+    set nick [string tolower $nick]
     set lines {}
     if {[file exists $file]} {
         set fh [open $file r]
         while {[gets $fh line] >= 0} {
             if {$line eq ""} continue
             set parts [split $line "|"]
-            if {[string tolower [lindex $parts 0]] ne $lower} {
+            if {[string tolower [lindex $parts 0]] ne $nick} {
                 lappend lines $line
             }
         }
@@ -59,11 +59,11 @@ proc _seen_update_entry {file nick entry} {
 proc _seen_get_record {file target} {
     if {![file exists $file]} { return "" }
     set fh [open $file r]
-    set lower [string tolower $target]
+    set target [string tolower $target]
     while {[gets $fh line] >= 0} {
         if {$line eq ""} continue
         set parts [split $line "|"]
-        if {[string tolower [lindex $parts 0]] eq $lower} {
+        if {[string tolower [lindex $parts 0]] eq $target} {
             close $fh
             return $line
         }
@@ -204,8 +204,23 @@ proc seen_pub { nick host hand chan text } {
     }
 
     set parsed [_parse_line $bestLine]
-    set stamp [clock format [dict get $parsed time] -gmt 1 -format "%Y-%m-%d %H:%M:%S"]
+
+    set stamp [clock format [dict get $parsed time] -gmt 1 -format "%Y-%m-%d %H:%M:%S %Z"]
+    set now [clock seconds]
+    set idle [expr ($now - $stamp) ]
+    set d [expr ($idle / 1440) ]
+    set h [expr (($idle % 1440) / 60) ]
+    set m [expr ($idle % 60) ]
+    set desc ""
+    if { $d > 0 } {
+	    append desc "${d}d "
+    }
+    if { $d > 0 || $h > 0 } {
+	    append desc "${h}h "
+    }
+    append desc "${m}m"
+
     set recchan [dict get $parsed chan]
     set recmsg [dict get $parsed msg]
-    putchan $chan "${origQuery} last seen at $stamp in $recchan: $recmsg"
+    putchan $chan "${origQuery} last seen at $stamp (${desc} ago) in $recchan: $recmsg"
 }
