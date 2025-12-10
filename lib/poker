@@ -234,6 +234,8 @@ if (@ARGV == 0) {
   exit 1;
 }
 
+@ARGV = map { decode "utf-8", $_ } @ARGV;
+
 my $input = join(' ', @ARGV);
 my @players;
 
