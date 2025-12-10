@@ -800,6 +800,39 @@ proc draw_pub { nick host hand chan text } {
 	close $fd
 }
 
+bind pub - !poker poker_pub
+set pokerbin "/home/eggdrop/bin/poker"
+proc poker_pub { nick host hand chan text } {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	global randobin pokerbin
+	set param [sanitize_string [string trim "${text}"]]
+	putlog "poker pub: $nick $host $hand $chan $param"
+	
+	# Default to 5 cards for poker
+	set drawcmd "5 ${param}"
+	
+	# Collect the output from rando (card dealing)
+	set poker_input ""
+	set fd [open "|${randobin} --draw ${drawcmd}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+		append poker_input "$line "
+	}
+	close $fd
+	
+	# Now evaluate the poker hands
+	if {$poker_input ne ""} {
+		set fd2 [open "|${pokerbin} ${poker_input}" r]
+		fconfigure $fd2 -encoding utf-8
+		while {[gets $fd2 line] >= 0} {
+			putchan $chan "$line"
+		}
+		close $fd2
+	}
+}
 
 # load imgur api key if present
 set imgur_key ""
