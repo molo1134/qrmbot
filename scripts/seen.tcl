@@ -24,6 +24,7 @@ bind part - "*" seen_part
 bind sign - "*" seen_quit
 bind nick - "*" seen_nick
 bind kick - "*" seen_kick
+bind ctcp - "ACTION" seen_act
 
 proc _seen_file_paths {} {
     # place the database files next to this script
@@ -154,6 +155,18 @@ proc seen_kick { nick host hand channel target reason } {
     set actfile [lindex $scriptfiles 1]
     set entry "${kickee}|${now}|${schan}|kicked by ${kicker}: $sreason"
     _seen_update_entry $actfile $kickee $entry
+}
+
+proc seen_act { nick host hand dest keyword text } {
+    set keyword [sanitize_string $keyword]
+    set text [sanitize_string $text]
+    set actor [sanitize_string nick]
+
+    set now [clock seconds]
+    set scriptfiles [_seen_file_paths]
+    set actfile [lindex $scriptfiles 1]
+    set entry "${actor}|${now}|${dest}| * ${actor} ${text}"
+    _seen_update_entry $actfile $actor $entry
 }
 
 proc _seen_output_line { origQuery chan line } {
