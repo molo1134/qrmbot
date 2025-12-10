@@ -167,12 +167,14 @@ proc _seen_output_line { origQuery chan line } {
 
     set parsed [_parse_line $line]
 
-    set stamp [clock format [dict get $parsed time] -gmt 1 -format "%Y-%m-%d %H:%M:%S UTC"]
+    set msgtime [expr {int([dict get $parsed time])}]
+    set stamp [clock format $msgtime -gmt 1 -format "%Y-%m-%d %H:%M:%S UTC"]
     set now [clock seconds]
-    set idle [expr ($now - [dict get $parsed time]) ]
-    set d [expr ($idle / 1440) ]
-    set h [expr (($idle % 1440) / 60) ]
-    set m [expr ($idle % 60) ]
+    set idle [expr {$now - $tsec} ]
+    set d [expr {int($idle / 86400) ]
+    set h [expr {int(($idle % 86400) / 3600)} ]
+    set m [expr {int(($idle % 3600) / 60)} ]
+
     set desc ""
     if { $d > 0 } {
         append desc "${d}d "
