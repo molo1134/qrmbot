@@ -218,22 +218,21 @@ proc seen_pub { nick host hand chan text } {
         return
     }
 
-    set bestLine ""
     if {$publine ne "" && $actline ne ""} {
         set pparts [split $publine "|"]
         set aparts [split $actline "|"]
         set ptime [expr {int([lindex $pparts 1])}]
         set atime [expr {int([lindex $aparts 1])}]
         if {$ptime >= $atime} {
-            set bestLine $publine
+            _seen_output_line $origQuery $chan $publine
         } else {
-            set bestLine $actline
+            _seen_output_line $origQuery $chan $actline
+            _seen_output_line $origQuery $chan $publine
         }
     } elseif {$publine ne ""} {
-        set bestLine $publine
+        _seen_output_line $origQuery $chan $publine
     } else {
-        set bestLine $actline
+        _seen_output_line $origQuery $chan $actline
     }
 
-    _seen_output_line $origQuery $chan $bestLine
 }
