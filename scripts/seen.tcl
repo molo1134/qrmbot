@@ -139,6 +139,8 @@ proc seen_nick { oldnick host hand channel newnick } {
     set actfile [lindex $scriptfiles 1]
     set entry "${sold}|${now}|-|changed nick to ${snew}"
     _seen_update_entry $actfile $sold $entry
+    set entry "${snew}|${now}|-|changed nick from ${sold}"
+    _seen_update_entry $actfile $snew $entry
 }
 
 proc seen_kick { nick host hand channel target reason } {
