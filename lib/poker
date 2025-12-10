@@ -29,7 +29,7 @@ use constant {
   ROYAL_FLUSH     => 10,
 };
 
-my %hand_names = (
+my %hand_names = {
   HIGH_CARD()      => "High Card",
   ONE_PAIR()       => "One Pair",
   TWO_PAIR()       => "Two Pair",
