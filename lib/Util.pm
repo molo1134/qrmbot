@@ -12,7 +12,7 @@ use feature 'unicode_strings';
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(decodeEntities getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum shortenUrl isNumeric getEggdropUID getDxccDataRef updateCty checkCtyDat checkMW scrapeMW);
+@EXPORT = qw(decodeEntities stripIrcColors getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum shortenUrl isNumeric getEggdropUID getDxccDataRef updateCty checkCtyDat checkMW scrapeMW);
 
 use URI::Escape;
 use Date::Manip;
@@ -131,6 +131,27 @@ sub decodeEntities {
 
   return $s;
 }
+
+# Strip IRC formatting and color codes from a string.
+# Removes:
+#  - mIRC-style color codes: \x03NN or \x03NN,MM
+#  - formatting control characters used by Colors.pm: \x02 (bold), \x0F (reset),
+#    \x1F (underline), \x16 (inverse), \x1D (italic), \x06 (blink),
+#    \x11 (monospace), \x1E (terminal strikethrough)
+sub stripIrcColors {
+  my $s = shift;
+  return undef unless defined $s;
+
+  # Remove mIRC color codes like \x03<fg>[,<bg>] (where <fg>/<bg> are 1-2 digits)
+  $s =~ s/\x03\d{1,2}(?:,\d{1,2})?//g;
+
+  # Remove common IRC formatting control characters
+  $s =~ s/[\x02\x0F\x1F\x16\x1D\x06\x11\x1E]//g;
+
+  return $s;
+}
+
+
 
 sub getFullWeekendInMonth {
   my $ary = shift;
