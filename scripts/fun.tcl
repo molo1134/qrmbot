@@ -809,6 +809,12 @@ proc poker_pub { nick host hand chan text } {
 	global randobin pokerbin
 	set param [sanitize_string [string trim "${text}"]]
 	putlog "poker pub: $nick $host $hand $chan $param"
+
+	set player_count [llength [split $param]]
+	if {$player_count > 10} {
+	    putchan $chan "Need 10 or fewer players to deal a hand (blame W2XG)"
+	    return
+	}
 	
 	# Default to 5 cards for poker
 	set drawcmd "5 ${param}"
