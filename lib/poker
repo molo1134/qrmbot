@@ -205,28 +205,32 @@ sub rank_name {
 # Generate explanation for hand
 sub explain_hand {
   my ($rank, $tiebreak) = @_;
+
+  my $r = undef;
   
   if ($rank == ROYAL_FLUSH) {
-    return "Royal Flush (A-K-Q-J-10 suited)";
+    $r = "Royal Flush (A-K-Q-J-10 suited)";
   } elsif ($rank == STRAIGHT_FLUSH) {
-    return "Straight Flush (" . rank_name($tiebreak->[0]) . " high)";
+    $r = "Straight Flush (" . rank_name($tiebreak->[0]) . " high)";
   } elsif ($rank == FOUR_OF_KIND) {
-    return "Four of a Kind (" . rank_name($tiebreak->[0]) . "s)";
+    $r = "Four of a Kind (" . rank_name($tiebreak->[0]) . "s)";
   } elsif ($rank == FULL_HOUSE) {
-    return "Full House (" . rank_name($tiebreak->[0]) . "s over " . rank_name($tiebreak->[1]) . "s)";
+    $r = "Full House (" . rank_name($tiebreak->[0]) . "s over " . rank_name($tiebreak->[1]) . "s)";
   } elsif ($rank == FLUSH) {
-    return "Flush (" . rank_name($tiebreak->[0]) . " high)";
+    $r = "Flush (" . rank_name($tiebreak->[0]) . " high)";
   } elsif ($rank == STRAIGHT) {
-    return "Straight (" . rank_name($tiebreak->[0]) . " high)";
+    $r = "Straight (" . rank_name($tiebreak->[0]) . " high)";
   } elsif ($rank == THREE_OF_KIND) {
-    return "Three of a Kind (" . rank_name($tiebreak->[0]) . "s)";
+    $r = "Three of a Kind (" . rank_name($tiebreak->[0]) . "s)";
   } elsif ($rank == TWO_PAIR) {
-    return "Two Pair (" . rank_name($tiebreak->[0]) . "s and " . rank_name($tiebreak->[1]) . "s)";
+    $r = "Two Pair (" . rank_name($tiebreak->[0]) . "s and " . rank_name($tiebreak->[1]) . "s)";
   } elsif ($rank == ONE_PAIR) {
-    return "One Pair (" . rank_name($tiebreak->[0]) . "s)";
+    $r = "One Pair (" . rank_name($tiebreak->[0]) . "s)";
   } else {
-    return "High Card (" . rank_name($tiebreak->[0]) . ")";
+    $r = "High Card (" . rank_name($tiebreak->[0]) . ")";
   }
+  $r =~ s/Sixs/Sixes/g;
+  return $r;
 }
 
 # Main logic
