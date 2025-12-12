@@ -16,6 +16,9 @@ use lib dirname(realpath(__FILE__));
 use Util;
 use Colors;
 
+# disable "experimental" warning on smart match operator use
+no if $] >= 5.018, warnings => "experimental::smartmatch";
+
 @ARGV = map { decode "utf-8", $_ } @ARGV;
 
 # eggdrop doesn't split args on spaces
@@ -130,6 +133,7 @@ while ($i <= $#ARGV) {
     $i++;
     my $n;
     my @draws;       # will hold arrayrefs [ user, count ]
+    my $total = 0;
 
     while ($i <= $#ARGV) {
       if (isNumeric($ARGV[$i])) {
@@ -144,7 +148,14 @@ while ($i <= $#ARGV) {
 	  print "error: must specify a count before users\n";
 	  exit 0;
 	}
-	push @draws, [ $ARGV[$i], $n ]; # array ref
+	if (not ($ARGV[$i] ~~ @draws)) {  # don't draw more than once per user id
+	  push @draws, [ $ARGV[$i], $n ]; # array ref
+	  $total = $total + $n;
+	  if ($total > 52) {
+	    print "error: trying to draw more cards than are in the deck\n";
+	    exit 0;
+	  }
+	}
       }
       $i++;
     }
