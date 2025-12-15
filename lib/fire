@@ -21,6 +21,7 @@ use JSON qw( decode_json );
 use Math::Round;
 use URI::Escape;
 use POSIX qw(strftime);
+use POSIX qw(tzset);
 
 use File::Basename;
 use Cwd 'realpath';
@@ -126,6 +127,7 @@ my $r = $resp->{report};
 print "Fire near ", bold($place), ": \"", bold("$r->{name} Fire"), "\" ($lat,$lon) as of ";
 
 $ENV{TZ} = $resp->{profile}->{tz};
+tzset;
 print strftime("%a %H:%M %Z", localtime($r->{timestamp}));
 
 print "\n" if $username ne getEggdropUID();

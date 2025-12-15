@@ -14,6 +14,7 @@ use JSON qw( decode_json );
 use Math::Round;
 use Math::BigFloat;
 use POSIX qw(strftime);
+use POSIX qw(tzset);
 use URI::Escape;
 
 use File::Basename;
@@ -233,6 +234,7 @@ print " volume: $vol" if defined $vol;
 print " ($name, $r->{fullExchangeName})";
 
 $ENV{TZ} = $r->{exchangeTimezoneName};
+tzset;
 print " as of ", strftime("%H:%M:%S %Z", localtime($r->{regularMarketTime}));
 
 print "\n";

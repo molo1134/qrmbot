@@ -21,6 +21,7 @@ use JSON qw( decode_json );
 use Math::Round;
 use URI::Escape;
 use POSIX qw(strftime);
+use POSIX qw(tzset);
 
 use File::Basename;
 use Cwd 'realpath';
@@ -260,6 +261,7 @@ if ($full == 1) {
   print "; $ob->{trustFactor}% trust" if $ob->{trustFactor} < 100;
 
   $ENV{TZ} = $resp->{profile}->{tz};
+  tzset;
   my $now = time();
   my $delta = $now - $ob->{timestamp};
   #print "), $ob->{dateTimeISO}\n";

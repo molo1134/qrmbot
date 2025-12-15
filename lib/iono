@@ -22,6 +22,7 @@ use Math::Round;
 use Time::Piece ();
 use POSIX qw(floor);
 use POSIX qw(strftime);
+use POSIX qw(tzset);
 
 @ARGV = map { decode "utf-8", $_ } @ARGV;
 # eggdrop doesn't split args on spaces
@@ -113,6 +114,7 @@ while (<JSON>) {
     $cs = $v if $k eq "cs";
     if ($k eq "time") {
       $ENV{TZ} = "UTC";
+      tzset;
       $ts = Time::Piece->strptime($v, "%Y-%m-%dT%H:%M:%S+00:00")->epoch;
     }
   }

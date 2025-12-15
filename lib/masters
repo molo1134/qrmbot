@@ -18,6 +18,7 @@ use lib dirname(realpath(__FILE__));
 use Util;
 
 #$ENV{TZ} = "EST5EDT";
+#tzset;
 
 my $d1 = DateTime->now;
 my ($curryear, $currmon, $currdate) = split / /, strftime("%Y %m %d", gmtime($d1->epoch()));

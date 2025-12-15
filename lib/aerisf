@@ -21,6 +21,7 @@ use JSON qw( decode_json );
 use Math::Round;
 use URI::Escape;
 use POSIX qw(strftime);
+use POSIX qw(tzset);
 
 use File::Basename;
 use Cwd 'realpath';
@@ -227,6 +228,7 @@ if (not $j->{success} or defined $j->{error}) {
 }
 
 $ENV{TZ} = $j->{response}[0]->{profile}->{tz};
+tzset;
 
 $lat = $j->{response}[0]->{loc}->{lat};
 $lon = $j->{response}[0]->{loc}->{long};

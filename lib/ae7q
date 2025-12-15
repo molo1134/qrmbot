@@ -21,6 +21,7 @@ use Time::Local;
 use Time::Piece ();
 use List::Util qw[min max];
 use POSIX qw(strftime);
+use POSIX qw(tzset);
 
 # disable "experimental" warning on smart match operator use
 no if $] >= 5.018, warnings => "experimental::smartmatch";
@@ -388,6 +389,7 @@ sub getAvailDate {
 
   # convert from localtime in washington
   $ENV{TZ} = "EST5EDT";
+  tzset;
   my ($y, $m, $d) = split('-', $exp);
   my $expdate = timelocal(0, 0, 0, $d, $m-1, $y+2);
   #print "exp: $exp $expdate\n";
