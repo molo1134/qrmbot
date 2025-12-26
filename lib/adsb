@@ -29,6 +29,12 @@ STDERR->autoflush();
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
+our $scrapingant_key=undef;
+my $scrapingantfile = $ENV{'HOME'} . "/.qrmbot/keys/scrapingantkey";
+if (-e ($scrapingantfile)) {
+  require($scrapingantfile);
+}
+
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
@@ -505,7 +511,12 @@ sub getAirFrame
 sub getFlightTrack
 {
   my $flight = shift;
+  our $scrapingant_key;
   my $url = "https://flightaware.com/live/flight/$flight";
+
+  if (defined $scrapingant_key) {
+    $url = "https://api.scrapingant.com/v2/general?url=". uri_escape($url) . "&x-api-key=${scrapingant_key}&browser=false";
+  }
   my ($airline, $orig, $dest, $fnum, $eta);
   my $token;
   #print "$url\n";
