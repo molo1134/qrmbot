@@ -227,7 +227,25 @@ proc seen_pub { nick host hand chan text } {
     set actline [_seen_get_record $actfile $origQuery]
 
     if {$publine eq "" && $actline eq ""} {
-        putchan $chan "${origQuery} not found"
+        # no chat or action record of this user, but maybe a historical bot
+        # record exists
+        if { [validuser ${target}] } {
+            set laston [getuser ${target} LASTON $chan]
+            if {$laston != 0} {
+                set stamp [clock format $laston -gmt 1 -format "%Y-%m-%d %H:%M:%S %Z"]
+                putchan $chan "${origQuery} last seen at $stamp"
+            } else {
+                set laston [lindex [getuser ${target} LASTON] 0]
+                if {$laston != 0} {
+                    set stamp [clock format $laston -gmt 1 -format "%Y-%m-%d %H:%M:%S %Z"]
+                    putchan $chan "${origQuery} last seen at $stamp"
+                } else {
+                    putchan $chan "${origQuery} not found"
+                }
+            }
+        } else {
+            putchan $chan "${origQuery} not found"
+        }
         return
     }
 
