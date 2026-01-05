@@ -104,57 +104,61 @@ goto WORLD if $world == 1;
 
 #print "$url\n";
 open (HTTP, '-|', "curl --max-time $http_timeout --retry 1 --insecure -L -s '$url'");
-# TODO: is this actually 1252? or does it lie and do utf-8 as the international page does?
-binmode(HTTP, ":encoding(cp1252)");
-while (<HTTP>) {
-	#print;
+binmode(HTTP, ":utf8");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+my $html = <HTTP>;
+close(HTTP);
+
+foreach (split(/<tr/, $html)) {
   if (/error/ and not /throw/ and not /TypeError/ and not /<script/ and not /addEventListener/) {
 	  s/<\/?b>//g;
 	  s/<\/?\s*br\s*\/?>//g;
-	  print;
+	  print "Error encountered.\n";
 	  exit 1;
   }
 
   chomp;
 
-  if (m|title="View Details.">([0-9.]+)([-+xs])</a>|) {
+  if (m|title="View details">\s*\n*\s*([0-9.]+).*?class="text-muted">([-+xs])</span>|s) {
     $freq = $1;
     $offset = $2;
     #print "freq: $freq\n";
     #print "offset: $offset\n";
   }
-  if (defined($freq) and not defined($squelch) and /^\s*<td>([^<]+?)\s*<\/td>\s*$/) {
+  if (defined($freq) and not defined($squelch) and m|<!-- Tone -->\s*\n*\s*<td>([^<]+?)\s*</td>|s) {
     $squelch = $1;
     #print "squelch: $squelch\n";
   }
-  if (not defined($location) and m|^\s*<td nowrap>([^<]*)</td>\s*$|) {
+  if (not defined($location) and m|<!-- Location.*?<td>\s*\n*\s*([^<]*)\s*</td>|s) {
     $location = $1;
+    $location =~ s/\s*$//;
     #print "loc: $location\n";
-    next;
   }
-  if (defined($location) and m|^\s*<td nowrap class="w3-center">([^<]+)</td>\s*$|){
+  if (defined($location) and m|<!-- State.*?<td>([^<]+)</td>|s){
     $state = $1;
     #print "state: $state\n";
   }
-  if (defined($location) and m|^\s*<td nowrap>([^<]*)</td>\s*$|) {
+  if (defined($location) and m|<!-- County[^\n]*?-->\s*\n*\s*<td>([^<]*)</td>|s) {
     $county = $1;
     #print "county: $county\n";
   }
-  if (defined($location) and not defined($callsign) and /^\s*([^<]+)<\/td>\s*$/) {
+  if (defined($location) and not defined($callsign) and m|<!-- Call.*?<td>([^<]+)</td>|s) {
     $callsign = $1;
     #print "call: $callsign\n";
   }
 
   if (defined($freq) and defined($location) and m|</tr>|) {
     $squelch = "" if not defined($squelch);
+    $county = "" if not defined($county);
     $callsign = "undefined" if not defined $callsign or length $callsign == 0;
     $vals{"$freq,$location"} = join("::", $freq, $offset, $squelch, $location, $state, $county, $callsign);
     #print "added $freq: " . $vals{"$freq,$location"} . "\n";
     $freq = $offset = $squelch = $location = $state = $county = $callsign = undef;
   }
-
+  if (m|</tr>|) {
+    $freq = $offset = $squelch = $location = $state = $county = $callsign = undef;
+  }
 }
-close(HTTP);
 
 my $found = 0;
 
