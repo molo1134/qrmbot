@@ -153,6 +153,7 @@ if ($apitype eq "reapi") {
     print "error1 while retrieving data: from $url : $json\n" if not defined $err;
     exit $exitnonzeroonerror;
   }
+  #print $json, "\n";
   my $j = decode_json($json);
 
   $total = $j->{resultCount};
@@ -172,7 +173,7 @@ if ($apitype eq "reapi") {
   }
   exit $exitnonzeroonerror if $total == 0;
 
-  show($j->{aircraft}->[0], $j->{now}, $lat, $lon);
+  show($j->{aircraft}->[0], $j->{now} / 1000, $lat, $lon);
 
 } elsif ($apitype eq "lol") {
 
@@ -210,6 +211,7 @@ if ($apitype eq "reapi") {
     print "error1 while retrieving data: from $url : $json\n";
     exit $exitnonzeroonerror;
   }
+  #print $json, "\n";
   my $j = decode_json($json);
 
   my $total = $j->{total};
@@ -229,7 +231,7 @@ if ($apitype eq "reapi") {
   }
   exit $exitnonzeroonerror if $total == 0;
 
-  show($j->{ac}->[0], $j->{now}, $lat, $lon);
+  show($j->{ac}->[0], $j->{now} / 1000, $lat, $lon);
 }
 
 sub updateICAOtypes {
