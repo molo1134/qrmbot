@@ -255,15 +255,17 @@ Example:
 
 ```
     <molo1134> !longterm
-    <qrm> NOAA: | 2023       | 2024       | 2025
-    <qrm> SFI: ▄|▄▄▄▄▄▄▃▃▃▃▃▃|▃▃▃▃▃▃▃▃▃▃▃▃|▃▃▃▄▄▄▄▄▄▄▃▃ : 119.9-142.6
-    <qrm> SN:  ▄|▄▄▄▄▄▄▃▂▁▁▁▁|▁▂▃▃▄▅▅▆▆▇▇▇|▇▇▇▇▇▇▇▇▇▇▇▇ : 92.5-114.6
-    <qrm> NASA:  | 2023       | 2024       | 2025
-    <qrm> SFI: ▄▄|▄▄▄▄▄▄▄▅▅▅▅▅|▄▄▄▄▄▄▄▄▄▄▄▄|▄▄▄▄▄▄▄▄▄▃▃▃ : 131.2-155.4
-    <qrm> AP:  ▁▁|▁▁▁▁▁▁▁▂▂▂▂▂|▂▂▂▁▁▁▁▂▂▃▃▃|▃▃▄▅▅▆▇▇▇▇▇▇ : 10.8-13.9
+    <qrm> NOAA:      | 2026       | 2027       | 2028
+    <qrm> SFI: ▅▄▄▄▄▄|▄▄▄▄▄▄▄▄▄▄▄▃|▃▃▃▃▃▃▂▂▂▂▂▂|▂▂▂▂▁▁▁▁▁▁▁▁ : 84.5-155.3
+    <qrm> SN:  ▇▇▇▇▇▇|▇▇▇▇▇▇▇▇▇▇▆▆|▆▆▅▅▅▅▄▄▄▄▃▃|▃▃▂▂▂▂▁▁▁▁▁▁ : 37.2-123.9
+    <qrm> NASA:      | 2026       | 2027       | 2028
+    <qrm> SFI: ▄▄▄▄▄▄|▄▄▄▃▃▃▃▃▃▃▃▃|▃▂▂▂▂▂▂▂▂▂▂▂|▂▁▁▁▁▁▁▁▁▁▁▁ : 82.8-154.3
+    <qrm> AP:  ▅▅▆▆▇▇|▇▇▇▇▇▇▇▇▇▇▇▇|▇▇▇▆▆▅▄▄▄▄▃▃|▂▂▂▂▃▃▃▂▂▁▁▁ : 13.7-16.5
+    <qrm> ITU :| 2026
+    <qrm> SN:  |▇▇▇▇▆▆▅▄▃▃▂▁ : 90-113
 ```
 
-Data sources: NOAA SWPC, NASA MSAFE
+Data sources: NOAA SWPC, NASA MSAFE, ITU HFBC
 
 ### `!activity` -- band activity from pskreporter
 
@@ -346,6 +348,15 @@ Examples:
     <qrm> WP4O    VU2GSM   7004                              0135z 20 Feb d
 ```
 
+Last column indicates the source of the spot as follows:
+
+* `d` -- DX cluster
+* `h` -- HamSpots.net
+* `p` -- PSK Reporter
+* `P` -- POTA
+* `q` -- qrmbot spot added with !spot
+* `r` -- Reverse beacon network
+
 Data sources: dxwatch.com (DX Cluster), ReverseBeacon.net, pskreporter.info, hamspots.net, pota.app
 
 ### `!morse` `!cw` -- convert to morse code
@@ -421,12 +432,16 @@ Examples:
 
 ```
     <molo1134> !iono tokyo
-    <qrm> I-Cheon, South Korea (PM37 1096 km WNW) @ 2024-02-20 0222z: MUF 
-          38.756 MHz, FoF2 11.825 MHz with M(D) 3.277x
+    <qrm> I-Cheon, South Korea (PM37 1096 km WNW) @ 2026-01-18 0307z
+          [confidence: 75]: MUF 37.759 MHz, FoF2 11.1 MHz with M(D) 3.402x
+    <qrm>  prop.kc2g.com model prediction for PM95tq: MUF 35.025 MHz; FoF2
+          10.624 MHz
 
     <molo1134> !iono FN21
-    <qrm> Millstone Hill, MA, USA (FN42 314 km ENE) @ 2024-02-20 0237z: MUF 
-           13.291 MHz, FoF2 3.475 MHz with M(D) 3.825x
+    <qrm> Millstone Hill, MA, USA (FN42 314 km ENE) @ 2026-01-18 0315z
+          [confidence: 60]: MUF 7.634 MHz, FoF2 2.875 MHz with M(D) 2.655x
+    <qrm>  prop.kc2g.com model prediction for FN21mm: MUF 8.973 MHz; FoF2
+          2.965 MHz
 ```
 
 Data source: https://prop.kc2g.com/
