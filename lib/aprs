@@ -202,6 +202,8 @@ sub getvals {
 	my $key = $1;
 	my $val = $2;
 	$val =~ s/,$//;
+	$val =~ s/\\u([0-9a-f]{4})/chr(hex($1))/eg;
+	$val =~ s|\\/|/|g;
 	$$valref{$key} = $val;
 	#print "$key = $val\n";
       }
