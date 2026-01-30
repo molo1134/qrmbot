@@ -14,6 +14,7 @@
  * `!activity` -- band activity from pskreporter
  * `!dxcc` -- display information on a dxcc entity
  * `!spots` -- display spots for a callsign
+ * `!potaspots` -- find POTA activity
  * `!morse` `!cw` -- convert to morse code
  * `!unmorse` `!demorse` -- decode from morse
  * `!repeater` -- search for repeater
@@ -358,6 +359,42 @@ Last column indicates the source of the spot as follows:
 * `r` -- Reverse beacon network
 
 Data sources: dxwatch.com (DX Cluster), ReverseBeacon.net, pskreporter.info, hamspots.net, pota.app
+
+### `!potaspots` -- find POTA activity
+
+Usage:
+
+```
+    !potaspots [--phone|--cw|--digi] [--<band>] [number]
+```
+
+Examples:
+
+```
+    <molo1134> !potaspots
+    <qrm> W2NNN   WK4DS   14043 US-5524 US-FL CW 9 dB 21 WPM 1530z 30 Jan P
+    <qrm> NF5R    K4NYM   24897 US-3627 US-FL CW 5NN TX TU   1530z 30 Jan P
+    <qrm> KM3T-3  NO4D    14074 US-9203 US-SC FT8 -12 dB via 1529z 30 Jan P
+
+    <molo1134> !potaspots 8
+    <qrm> W6YX    WK4DS   14043 US-5524 US-FL CW 8 dB 21 WPM 1530z 30 Jan P
+    <qrm> N4IN    N4IN    14064 US-1267 US-KY CW QRV         1530z 30 Jan P
+    <qrm> NF5R    K4NYM   24897 US-3627 US-FL CW 5NN TX TU   1530z 30 Jan P
+    <qrm> KM3T-3  NO4D    14074 US-9203 US-SC FT8 -12 dB via 1529z 30 Jan P
+    <qrm> K1RA    N8BB     7074 US-4239 US-MI,US-MN,US-ND,US 1529z 30 Jan P
+    <qrm> K3AV    KG1A    14044 US-6305 US-FL CW 559 MD      1529z 30 Jan P
+    <qrm> W8ATE   W9DXP   14080 US-3805 US-KY FT4            1529z 30 Jan P
+    <qrm> N1ECT   KF8FGA  14292 US-1946 US-OH SSB 6/9+ in RI 1529z 30 Jan P
+
+    <molo1134> !potaspots --phone --20m 5
+    <qrm> KC5LL   K4ACJ   14304 US-12107 US-SC SSB 59 Texas  1530z 30 Jan P
+    <qrm> N1ECT   KF8DYB  14292 US-1946 US-OH SSB 5/9+ in RI 1530z 30 Jan P
+    <qrm> N1ECT   KF8FGA  14292 US-1946 US-OH SSB 6/9+ in RI 1529z 30 Jan P
+    <qrm> F4JXY/P F4JXY/P 14330 FR-11340 FR-OCC SSB 5 ref po 1529z 30 Jan P
+    <qrm> K8WAG   K1DLA   14254 US-3014 US-TX SSB [55 OH]    1528z 30 Jan P
+```
+
+Data source: pota.app
 
 ### `!morse` `!cw` -- convert to morse code
 

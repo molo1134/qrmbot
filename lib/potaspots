@@ -108,7 +108,7 @@ while ($i <= $#ARGV) {
 
   if ($ARGV[$i] =~ /^--/) {
     print "unknown option: $ARGV[$i]\n";
-    print "usage: !potaspots [--phone|--cw|--digi] [--<band>]\n";
+    print "usage: !potaspots [--phone|--cw|--digi] [--<band>] [number]\n";
     exit $exitnonzeroonerror;
   }
 
@@ -117,7 +117,7 @@ while ($i <= $#ARGV) {
     $limit = 8 if $limit > 8 and $username eq getEggdropUID();
   } else {
     print "unexpected parameter: $ARGV[$i]\n";
-    print "usage: !potaspots [--phone|--cw|--digi] [--<band>]\n";
+    print "usage: !potaspots [--phone|--cw|--digi] [--<band>] [number]\n";
     exit $exitnonzeroonerror;
   }
   $i++;
