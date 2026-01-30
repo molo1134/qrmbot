@@ -37,34 +37,88 @@ if ($username eq getEggdropUID()) {
 
 ############################
 
+our %megacycles;
+$megacycles{1} = "160m";
+$megacycles{3} = "80m";
+$megacycles{5} = "60m";
+$megacycles{7} = "40m";
+$megacycles{10} = "30m";
+$megacycles{14} = "20m";
+$megacycles{18} = "17m";
+$megacycles{21} = "15m";
+$megacycles{24} = "12m";
+$megacycles{26} = "11m";
+$megacycles{27} = "11m";
+$megacycles{28} = "10m";
+$megacycles{29} = "10m";
+$megacycles{40} = "8m";
+$megacycles{41} = "8m";
+$megacycles{42} = "8m";
+$megacycles{43} = "8m";
+$megacycles{44} = "8m";
+$megacycles{50} = "6m";
+$megacycles{51} = "6m";
+$megacycles{52} = "6m";
+$megacycles{53} = "6m";
+$megacycles{69} = "4m";
+$megacycles{70} = "4m";
+$megacycles{144} = "2m";
+$megacycles{145} = "2m";
+$megacycles{146} = "2m";
+$megacycles{147} = "2m";
+$megacycles{220} = "1.25m";
+$megacycles{221} = "1.25m";
+$megacycles{222} = "1.25m";
+$megacycles{223} = "1.25m";
+$megacycles{224} = "1.25m";
+$megacycles{432} = "0.70m";
+$megacycles{902} = "0.33m";
+$megacycles{1296} = "0.23m";
+
 # when calling from eggdrop, parameters may be packed into first parameter.
 if ($#ARGV == 0 && $ARGV[0] =~ m/ /) {
   @ARGV = split / /, $ARGV[0];
 }
 
-my ($phone, $cw, $digi, $all) = (0, 0, 0, 1);
+my ($phone, $cw, $digi, $band, $all) = (0, 0, 0, undef, 1);
 
 my $i = 0;
 while ($i <= $#ARGV) {
-  if ($ARGV[$i] =~ /--(ssb|phone)/i) {
+  if ($ARGV[$i] =~ /^--(ssb|phone)/i) {
     $phone = 1;
     $all = 0;
     $i++; next;
   }
-  if ($ARGV[$i] =~ /--cw/i) {
+  if ($ARGV[$i] =~ /^--cw/i) {
     $cw = 1;
     $all = 0;
     $i++; next;
   }
-  if ($ARGV[$i] =~ /--digi/i) {
+  if ($ARGV[$i] =~ /^--(digi|data)/i) {
     $digi = 1;
     $all = 0;
     $i++; next;
   }
 
+  if ($ARGV[$i] =~ /^--([0-9]+c?m)/i) {
+    $band = lc($1);
+    $all = 0;
+    $i++; next;
+  }
+
+  if ($ARGV[$i] =~ /^--/) {
+    print "unknown option: $ARGV[$i]\n";
+    print "usage: !potaspots [--phone|--cw|--digi] [--<band>]\n";
+    exit $exitnonzeroonerror;
+  }
+
   if ($ARGV[$i] =~ /^\d+$/) {
     $limit = $ARGV[$i];
     $limit = 8 if $limit > 8 and $username eq getEggdropUID();
+  } else {
+    print "unexpected parameter: $ARGV[$i]\n";
+    print "usage: !potaspots [--phone|--cw|--digi] [--<band>]\n";
+    exit $exitnonzeroonerror;
   }
   $i++;
 }
@@ -89,6 +143,7 @@ foreach my $s (@{$j}) {
   next if not $all and $cw and uc $s->{mode} ne "CW";
   next if not $all and $phone and not $s->{mode} =~ m/(SSB|USB|LSB|FM|AM)/i;
   next if not $all and $digi and not $s->{mode} =~ m/(RTTY|FT8|FT4|JT9|JT65|PSK|JS8)/i;
+  next if not $all and defined $band and freq2band($s->{frequency} * 1000) ne $band;
 
   my $dt = $dtparser->parse_datetime($s->{spotTime});
   my $ts = $dt->epoch();
@@ -124,4 +179,29 @@ sub show
       last;
     }
   }
+}
+
+sub freq2band {
+  my $freq = shift;
+  my $band;
+  our %megacycles;
+
+  if ($freq > 1000000) {
+    my $mc = int ($freq / 1000000);
+    #print "MC: $freq $mc\n";
+    $band = $megacycles{$mc};
+  } else {
+    my $kc = $freq / 1000;
+    if (470 <= $kc and $kc <= 510) {
+      $band = "630m";
+    } elsif (130 <= $kc and $kc <= 140) {
+      $band = "2200m";
+    }
+  }
+
+  if (!defined $band) {
+    #print "unknown band for frequency: $freq\n";
+    return "";
+  }
+  return $band;
 }
