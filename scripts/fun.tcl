@@ -1358,7 +1358,7 @@ proc shartreset {nick uhost hand chan text} {
         return
     }
 
-    set pending_shart_nick $text
+    set pending_shart_nick [sanitize_string [string trim "${text}"]]
     set pending_shart_time [clock seconds]
     putquick "PRIVMSG $chan :$nick has requested to reset the shart timer for $pending_shart_nick."
     putquick "PRIVMSG $chan :Reset request pending for $pending_shart_nick. $pending_shart_nick: Please confirm the shart with !shartconfirm within 24 hours."
