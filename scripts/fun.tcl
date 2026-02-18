@@ -1323,10 +1323,16 @@ proc masters { nick host hand chan text } {
 
 # --- Shart Timer ---
 set shart_data_file "shart_timestamp.txt"
+set shart_metrics_file "shart_metrics.txt"
 set shart_timestamp 0
 set shart_nick ""
 set pending_shart_nick ""
 set pending_shart_time 0
+
+# Metrics storage: nick => {year => count}
+array set shart_metrics {}
+array set shart_monthly {}
+array set shart_leaderboard {}
 
 # Load saved shart timestamp and nickname on start
 if {[file exists $shart_data_file]} {
@@ -1339,11 +1345,63 @@ if {[file exists $shart_data_file]} {
     }
 }
 
+# Load metrics data
+if {[file exists $shart_metrics_file]} {
+    set fp [open $shart_metrics_file r]
+    set metrics_data [read $fp]
+    close $fp
+    # Parse metrics: each line is "nick year month count"
+    foreach line [split $metrics_data "\n"] {
+        if {[string trim $line] ne ""} {
+            set parts [split $line " "]
+            if {[llength $parts] >= 4} {
+                set nick [lindex $parts 0]
+                set year [lindex $parts 1]
+                set month [lindex $parts 2]
+                set count [lindex $parts 3]
+                set key "${nick}_${year}_${month}"
+                set shart_monthly($key) $count
+            }
+        }
+    }
+}
+
 proc save_shart_data {} {
     global shart_timestamp shart_nick shart_data_file
     set fp [open $shart_data_file w]
     puts $fp "$shart_timestamp\n$shart_nick"
     close $fp
+}
+
+# Save metrics to file
+proc save_shart_metrics {} {
+    global shart_metrics_file shart_monthly
+    set fp [open $shart_metrics_file w]
+    foreach key [array names shart_monthly] {
+        set parts [split $key "_"]
+        set nick [lindex $parts 0]
+        set year [lindex $parts 1]
+        set month [lindex $parts 2]
+        set count $shart_monthly($key)
+        puts $fp "$nick $year $month $count"
+    }
+    close $fp
+}
+
+# Record a shart event in metrics
+proc record_shart_event {} {
+    global shart_monthly shart_nick
+    set now [clock seconds]
+    set year [clock format $now -format "%Y"]
+    set month [clock format $now -format "%m"]
+    set key "${shart_nick}_${year}_${month}"
+    
+    if {[info exists shart_monthly($key)]} {
+        incr shart_monthly($key)
+    } else {
+        set shart_monthly($key) 1
+    }
+    save_shart_metrics
 }
 
 # --- Request Reset ---
@@ -1395,6 +1453,7 @@ proc shartconfirm {nick uhost hand chan text} {
     set pending_shart_nick ""
     set pending_shart_time 0
     save_shart_data
+    record_shart_event
 
     putquick "PRIVMSG $chan :$nick has confirmed the shart."
 }
@@ -1450,11 +1509,174 @@ proc shartstatus {nick uhost hand chan text} {
     putquick "PRIVMSG $chan :A shart request is pending for $pending_shart_nick. Time left to confirm: $hours hour(s) and $minutes minute(s)."
 }
 
+# --- Shart Metrics ---
+proc shartmetrics {nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then {
+        return
+    }
+    global shart_monthly
+    
+    set now [clock seconds]
+    set current_year [clock format $now -format "%Y"]
+    
+    # Check if a year was provided
+    if {$text ne ""} {
+        set current_year [string trim $text]
+    }
+    
+    # Collect all nicks and their year totals
+    array set nick_totals {}
+    
+    foreach key [array names shart_monthly] {
+        set parts [split $key "_"]
+        set key_nick [lindex $parts 0]
+        set year [lindex $parts 1]
+        set count $shart_monthly($key)
+        
+        if {$year == $current_year} {
+            if {[info exists nick_totals($key_nick)]} {
+                incr nick_totals($key_nick) $count
+            } else {
+                set nick_totals($key_nick) $count
+            }
+        }
+    }
+    
+    if {[array size nick_totals] == 0} {
+        putquick "PRIVMSG $chan :$nick: No shart data for $current_year yet."
+        return
+    }
+    
+    # Sort by total sharts (descending)
+    set sorted_nicks [lsort -command {proc cmp_nicks {a b} {
+        global nick_totals
+        return [expr {$nick_totals($b) - $nick_totals($a)}]
+    }} [array names nick_totals]]
+    
+    set rank 1
+    set standings_line "Shart standings for $current_year: "
+    foreach shart_nick $sorted_nicks {
+        set total $nick_totals($shart_nick)
+        append standings_line "$rank: $shart_nick $total; "
+        incr rank
+    }
+    
+    putquick "PRIVMSG $chan :[string trimright $standings_line {; }]"
+}
+
+# --- Shart Year Review ---
+proc shartyearreview {nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then {
+        return
+    }
+    global shart_monthly
+    
+    set now [clock seconds]
+    set review_year [clock format $now -format "%Y"]
+    set review_nick ""
+    
+    if {$text ne ""} {
+        set text [string trim $text]
+        set parts [split $text]
+        if {[llength $parts] == 2} {
+            set review_nick [lindex $parts 0]
+            set review_year [lindex $parts 1]
+        } elseif {[llength $parts] == 1} {
+            # Could be a year or a nick
+            if {[string is integer -strict $parts]} {
+                set review_year $parts
+            } else {
+                set review_nick $parts
+            }
+        }
+    }
+    
+    set year_total 0
+    set month_data [list]
+    
+    # Collect monthly data for the year
+    for {set m 1} {$m <= 12} {incr m} {
+        set month_key [format "%s_%s_%02d" $review_nick $review_year $m]
+        if {[info exists shart_monthly($month_key)]} {
+            set count $shart_monthly($month_key)
+        } else {
+            set count 0
+        }
+        incr year_total $count
+        lappend month_data [list $m $count]
+    }
+    
+    if {$year_total == 0} {
+        putquick "PRIVMSG $chan :$nick: No shart data for $review_nick in $review_year."
+        return
+    }
+    
+    putquick "PRIVMSG $chan :Shart Year Review $review_nick ($review_year): Total $year_total"
+    
+    set month_names [list "Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"]
+    
+    foreach entry $month_data {
+        set month [lindex $entry 0]
+        set count [lindex $entry 1]
+        set month_name [lindex $month_names [expr {$month - 1}]]
+        
+        # Create a simple bar chart
+        set bar ""
+        for {set i 0} {$i < $count} {incr i} {
+            append bar "█"
+        }
+        if {$bar eq ""} {
+            set bar "─"
+        }
+        
+        putquick "PRIVMSG $chan :$month_name: $bar ($count)"
+    }
+}
+
+# --- Shart History ---
+proc sharthistory {nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then {
+        return
+    }
+    global shart_monthly
+    
+    set years_data [dict create]
+    
+    # Group by year
+    foreach key [array names shart_monthly] {
+        set parts [split $key "_"]
+        set year [lindex $parts 1]
+        set count $shart_monthly($key)
+        
+        if {[dict exists $years_data $year]} {
+            dict incr years_data $year $count
+        } else {
+            dict set years_data $year $count
+        }
+    }
+    
+    if {[dict size $years_data] == 0} {
+        putquick "PRIVMSG $chan :$nick: No shart history available."
+        return
+    }
+    
+    set history_line "Shart history: "
+    foreach year [lsort -decreasing [dict keys $years_data]] {
+        set total [dict get $years_data $year]
+        append history_line "$year: $total; "
+    }
+    
+    putquick "PRIVMSG $chan :[string trimright $history_line {; }]"
+}
+
 # --- Command Bindings ---
 bind pub - !shartreset shartreset
 bind pub - !shartconfirm shartconfirm
 bind pub - !shart shart
 bind pub - !shartstatus shartstatus
+bind pub - !shartmetrics shartmetrics
+bind pub - !shartyearreview shartyearreview
+bind pub - !sharthistory sharthistory
 
 
 putlog "fun.tcl loaded."
