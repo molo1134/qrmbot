@@ -6,7 +6,7 @@
 # 2-clause BSD license.
 # Copyright (c) 2018,2022 molo1134@github. All rights reserved.
 
-# for hamspots.net, please use a $HOME/.hamspotlogin with the following
+# for hamspots.net, please use a $HOME/.qrmbot/creds/hamspots with the following
 # contents:
 #
 # $login_callsign="YOURCALL";
@@ -35,12 +35,16 @@ our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 my $timestampfile = $ENV{'HOME'}.'/.spottimestamps';
-my $hamspotloginfile = $ENV{'HOME'}.'/.hamspotlogin';
+
+my $old_hamspotloginfile = $ENV{'HOME'}.'/.hamspotlogin';
+my $hamspotloginfile     = $ENV{'HOME'}.'/.qrmbot/creds/hamspots';
 
 my $defaultSpots = 20;
 my $defaultSpotsForEggdrop = 3;
 
 # end config
+
+moveFile($old_hamspotloginfile, $hamspotloginfile);
 
 # TODO: unicode support?
 
@@ -584,18 +588,23 @@ sub doHamspots
 {
   my $baseurl = "https://hamspots.net/";
   our $historyurl = $baseurl . "history";
-  our $cookiefile = $ENV{'HOME'}."/.hamspotcookies";
+  our $old_cookiefile = $ENV{'HOME'}."/.hamspotcookies";
+  our $cookiefile     = $ENV{'HOME'}."/.qrmbot/cache/hamspots.cookies";
+  moveFile($old_cookiefile, $cookiefile);
 
   my $needlogin = 0;
   my $token;
 
-  if (! -e ($hamspotloginfile)) {
+  if (not -e ($hamspotloginfile) and not -e ($old_hamspotloginfile)) {
     print "warning: hamspots disabled\n";
     return;
   }
 
-  if (! -e $cookiefile) {
+  if (not -e $cookiefile and not -e $old_cookiefile) {
     doHamspotsLogin();
+  }
+  if (not -e $cookiefile and -e $old_cookiefile) {
+    $cookiefile = $old_cookiefile;
   }
 
 getHistory:
@@ -726,8 +735,10 @@ sub doHamspotsLogin
   our $login_password = undef;
 
   if (-e ($hamspotloginfile)) {
-	  #chmod 0600, $hamspotloginfile;
+    #chmod 0600, $hamspotloginfile;
     require($hamspotloginfile);
+  } elsif (-e $old_hamspotloginfile) { # fallback
+    require($old_hamspotloginfile);
   } else {
     say "warning: unable to read file $hamspotloginfile";
     return;

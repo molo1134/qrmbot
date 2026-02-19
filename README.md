@@ -73,7 +73,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/keys/coinmarketcap` -- API key for coinmarketcap.com
 * `$HOME/.qrmbot/keys/deepl` -- API key for deepl.com translation
 * `$HOME/.googleapikeys` -- key for Google APIs
-* `$HOME/.hamspotlogin` -- required login credentials for [hamspots.net](http://hamspots.net) use
+* `$HOME/.qrmbot/creds/hamspots` -- required login credentials for [hamspots.net](http://hamspots.net) use
 * `$HOME/.imgurkey` -- API key for imgur.com
 * `$HOME/.nicks.csv` -- irc and reddit nicknames -- optional, will override repository data
 * `$HOME/.qrzlogin` -- required login credentials for [qrz.com](http://qrz.com/) lookup
@@ -85,7 +85,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.cty.dat` -- cached DXCC data from [country-files.com](http://www.country-files.com/)
 * `$HOME/.dmr-id-repeaters.csv` -- cache of DMR repeater IDs
 * `$HOME/.dmr-id-users.csv` -- cache of DMR user IDs
-* `$HOME/.hamspotcookies` -- HTTP cookies for hamspots.net session
+* `$HOME/.qrmbot/cache/hamspots.cookies` -- HTTP cookies for hamspots.net session
 * `$HOME/.icao-types` -- cache of ICAO aircraft type data
 * `$HOME/.lotw-dates.txt` -- cached LOTW upload dates
 * `$HOME/.mostwanted.txt` -- cached DXCC "most wanted" data from [clublog.org](http://clublog.org/)
