@@ -1154,7 +1154,6 @@ account and set your origin.  Note: **only decimal degrees are accepted for !set
 * eqsl status: http://www.eqsl.cc/Member.cfm?CALLSIGN
 * lotw status: https://lotw.arrl.org/lotw-user-activity.csv
 * units: [GNU Units](https://www.gnu.org/software/units/)
-* weather: https://www.wunderground.com/weather/api/
 * aprs: http://aprs.fi/
 * Sats: http://www.amsat.org/amsat/ftp/keps/current/nasabare.txt
 * Cryptocurrency prices: https://coinmarketcap.com/api/
