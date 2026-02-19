@@ -1197,7 +1197,6 @@ proc et_load_metrics {event} {
                     set count [lindex $parts 3]
                     set key   "${event},${mnick}@${year}@${month}"
                     set et_monthly($key) $count
-                    putlog "Loaded $event metrics: $key => $count"
                 }
             }
         }
