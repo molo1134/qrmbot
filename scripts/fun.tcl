@@ -1158,7 +1158,7 @@ if {[file exists $shart_metrics_file]} {
         if {[string trim ${_line}] ne ""} {
             set _parts [split ${_line} " "]
             if {[llength ${_parts}] >= 4} {
-                set _nick [lindex ${_parts} 0]
+                set _nick [string tolower [lindex ${_parts} 0]]
                 set _year [lindex ${_parts} 1]
                 set _month [lindex ${_parts} 2]
                 set _count [lindex ${_parts} 3]
@@ -1184,7 +1184,7 @@ proc save_shart_metrics {} {
     set fp [open $shart_metrics_file w]
     foreach key [array names shart_monthly] {
         set parts [split $key "_"]
-        set nick [lindex $parts 0]
+        set nick [string tolower [lindex $parts 0]]
         set year [lindex $parts 1]
         set month [lindex $parts 2]
         set count $shart_monthly($key)
@@ -1199,7 +1199,7 @@ proc record_shart_event {} {
     set now [clock seconds]
     set year [clock format $now -format "%Y"]
     set month [clock format $now -format "%m"]
-    set key "${shart_nick}_${year}_${month}"
+    set key [string tolower "${shart_nick}_${year}_${month}"]
     
     if {[info exists shart_monthly($key)]} {
         incr shart_monthly($key)
@@ -1401,10 +1401,10 @@ proc shartyearreview {nick uhost hand chan text} {
     
     set now [clock seconds]
     set review_year [clock format $now -format "%Y"]
-    set review_nick $nick
+    set review_nick [string tolower $nick]
     
     if {$text ne ""} {
-        set parts [split $text]
+        set parts [split [string tolower $text]]
         if {[llength $parts] == 2} {
             set review_nick [lindex $parts 0]
             set review_year [lindex $parts 1]
