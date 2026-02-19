@@ -1438,26 +1438,20 @@ proc shartyearreview {nick uhost hand chan text} {
         return
     }
     
-    putquick "PRIVMSG $chan :Shart Year Review $review_nick ($review_year): Total $year_total"
+    putchan $chan "Shart year $review_year in review for $review_nick: total $year_total"
     
     set month_names [list "Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"]
+    set r ""
     
     foreach entry $month_data {
         set month [lindex $entry 0]
         set count [lindex $entry 1]
         set month_name [lindex $month_names [expr {$month - 1}]]
-        
-        # Create a simple bar chart
-        set bar ""
-        for {set i 0} {$i < $count} {incr i} {
-            append bar "█"
-        }
-        if {$bar eq ""} {
-            set bar "─"
-        }
-        
-        putquick "PRIVMSG $chan :$month_name: $bar ($count)"
+
+	append r "$month_name: $count; "
     }
+    set r [string trim "$r"]
+    putchan $chan $r
 }
 
 # --- Shart History ---
