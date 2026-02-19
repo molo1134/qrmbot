@@ -1122,6 +1122,10 @@ proc masters { nick host hand chan text } {
         close $fd
 }
 
+# ============================================================================
+# Everything below here is for sharts
+# ============================================================================
+
 # --- Shart Timer ---
 set shart_data_file "shart_timestamp.txt"
 set shart_metrics_file "shart_metrics.txt"
@@ -1162,7 +1166,7 @@ if {[file exists $shart_metrics_file]} {
                 set _year [lindex ${_parts} 1]
                 set _month [lindex ${_parts} 2]
                 set _count [lindex ${_parts} 3]
-                set _key "${_nick}_${_year}_${_month}"
+                set _key "${_nick}@${_year}@${_month}"
                 set shart_monthly(${_key}) ${_count}
                 putlog "Loaded shart metrics: ${_key} => ${_count}"
             }
@@ -1183,7 +1187,7 @@ proc save_shart_metrics {} {
     global shart_metrics_file shart_monthly
     set fp [open $shart_metrics_file w]
     foreach key [array names shart_monthly] {
-        set parts [split $key "_"]
+        set parts [split $key "@"]
         set nick [string tolower [lindex $parts 0]]
         set year [lindex $parts 1]
         set month [lindex $parts 2]
@@ -1199,7 +1203,7 @@ proc record_shart_event {} {
     set now [clock seconds]
     set year [clock format $now -format "%Y"]
     set month [clock format $now -format "%m"]
-    set key [string tolower "${shart_nick}_${year}_${month}"]
+    set key [string tolower "${shart_nick}@${year}@${month}"]
     
     if {[info exists shart_monthly($key)]} {
         incr shart_monthly($key)
@@ -1354,7 +1358,7 @@ proc shartleague {nick uhost hand chan text} {
     array set nick_totals {}
     
     foreach key [array names shart_monthly] {
-        set parts [split $key "_"]
+        set parts [split $key "@"]
         set key_nick [lindex $parts 0]
         set year [lindex $parts 1]
         set count $shart_monthly($key)
@@ -1423,7 +1427,7 @@ proc shartyearreview {nick uhost hand chan text} {
     
     # Collect monthly data for the year
     for {set m 1} {$m <= 12} {incr m} {
-        set month_key [format "%s_%s_%02d" $review_nick $review_year $m]
+        set month_key [format "%s@%s@%02d" $review_nick $review_year $m]
         if {[info exists shart_monthly($month_key)]} {
             set count $shart_monthly($month_key)
         } else {
@@ -1467,7 +1471,7 @@ proc sharthistory {nick uhost hand chan text} {
     
     # Group by year
     foreach key [array names shart_monthly] {
-        set parts [split $key "_"]
+        set parts [split $key "@"]
         set year [lindex $parts 1]
         set count $shart_monthly($key)
         
