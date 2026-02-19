@@ -75,7 +75,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/keys/google` -- key for Google APIs (geocoding, translation)
 * `$HOME/.qrmbot/creds/hamspots` -- required login credentials for [hamspots.net](http://hamspots.net) use
 * `$HOME/.qrmbot/keys/imgur` -- API key for imgur.com
-* `$HOME/.nicks.csv` -- irc and reddit nicknames -- optional, will override repository data
+* `$HOME/.qrmbot/db/nicks.csv` -- irc and reddit nicknames -- optional, will override repository data
 * `$HOME/.qrzlogin` -- required login credentials for [qrz.com](http://qrz.com/) lookup
 
 ## Cache files / state

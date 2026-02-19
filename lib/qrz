@@ -1113,7 +1113,7 @@ sub getUserInfo {
   return if not defined $call;
   return if not exists $ENV{'HOME'};
   my ($userid, $ircnick) = (undef, undef);
-  my $nickfile = "$ENV{'HOME'}/.nicks.csv";
+  my $nickfile = "$ENV{'HOME'}/.qrmbot/db/nicks.csv";
   if (! -e $nickfile) {
     $nickfile = dirname(realpath(__FILE__)) . "/nicks.csv";
   }
@@ -1147,7 +1147,7 @@ sub getCallForRedditId {
   );
   return $hardcoded{lc $id} if defined $hardcoded{lc $id};
 
-  my $nickfile = "$ENV{'HOME'}/.nicks.csv";
+  my $nickfile = "$ENV{'HOME'}/.qrmbot/db/nicks.csv";
   if (! -e $nickfile) {
     $nickfile = dirname(realpath(__FILE__)) . "/nicks.csv";
   }
