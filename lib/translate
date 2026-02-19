@@ -426,12 +426,18 @@ sub getTranslateAPIKey {
 }
 
 sub getDeepLAPIKey {
-  my $apikeyfile = $ENV{'HOME'} . "/.deeplapikey";
   our $deeplapikey;
-  if (-e ($apikeyfile)) {
-    require($apikeyfile);
+
+  my $newApikeyfile = $ENV{'HOME'} . "/.qrmbot/keys/deepl";
+  my $oldApikeyfile = $ENV{'HOME'} . "/.deeplapikey";
+  moveFile($oldApikeyfile, $newApikeyfile);
+  if (-e ($newApikeyfile)) {
+    require($newApikeyfile);
+  } elsif (-e $oldApikeyfile) { # fallback
+    require($oldApikeyfile);
   } else {
-    print "error: unable to read file $apikeyfile\n";
+    print "error: unable to read file $newApikeyfile\n"
   }
+
   return $deeplapikey;
 }
