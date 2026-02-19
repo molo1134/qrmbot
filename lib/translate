@@ -415,10 +415,14 @@ sub do_google {
 }
 
 sub getTranslateAPIKey {
-  my $apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
+  my $old_apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
+  my $apikeyfile     = $ENV{'HOME'} . "/.qrmbot/keys/google";
+  moveFile($old_apikeyfile, $apikeyfile);
   our $translateapikey;
   if (-e ($apikeyfile)) {
     require($apikeyfile);
+  } elsif (-e ($old_apikeyfile)) {
+    require($old_apikeyfile);
   } else {
     print "error: unable to read file $apikeyfile\n";
   }

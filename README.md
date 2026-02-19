@@ -72,7 +72,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/keys/clublog` -- API key for clublog.org
 * `$HOME/.qrmbot/keys/coinmarketcap` -- API key for coinmarketcap.com
 * `$HOME/.qrmbot/keys/deepl` -- API key for deepl.com translation
-* `$HOME/.googleapikeys` -- key for Google APIs
+* `$HOME/.qrmbot/keys/google` -- key for Google APIs (geocoding, translation)
 * `$HOME/.qrmbot/creds/hamspots` -- required login credentials for [hamspots.net](http://hamspots.net) use
 * `$HOME/.qrmbot/keys/imgur` -- API key for imgur.com
 * `$HOME/.nicks.csv` -- irc and reddit nicknames -- optional, will override repository data

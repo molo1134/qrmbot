@@ -18,11 +18,16 @@ use Math::Trig 'great_circle_destination';
 use URI::Escape;
 use JSON qw( decode_json );
 use Time::HiRes qw(usleep);
+use Util;
 
 sub getGeocodingAPIKey {
-  my $apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
+  my $old_apikeyfile = $ENV{'HOME'} . "/.googleapikeys";
+  my $apikeyfile     = $ENV{'HOME'} . "/.qrmbot/keys/google";
+  moveFile($old_apikeyfile, $apikeyfile);
   if (-e ($apikeyfile)) {
     do $apikeyfile;
+  } elsif (-e ($old_apikeyfile)) {
+    do $old_apikeyfile;
   } else {
     print "error: unable to read file $apikeyfile\n";
   }
