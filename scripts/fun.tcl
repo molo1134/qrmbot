@@ -1220,14 +1220,14 @@ proc shartreset {nick uhost hand chan text} {
     putlog "shartreset pub: $nick $uhost $hand $chan $text"
 
     if {$text eq ""} {
-        putquick "PRIVMSG $chan :$nick: You must specify a nickname! Usage: !shartreset <nickname>"
+        putchan $chan "$nick: You must specify a nickname! Usage: !shartreset <nickname>"
         return
     }
 
     set pending_shart_nick $text
     set pending_shart_time [clock seconds]
-    putquick "PRIVMSG $chan :$nick has requested to reset the shart timer for $pending_shart_nick."
-    putquick "PRIVMSG $chan :Reset request pending for $pending_shart_nick. $pending_shart_nick: Please confirm the shart with !shartconfirm within 24 hours."
+    putchan $chan "$nick has requested to reset the shart timer for $pending_shart_nick."
+    putchan $chan "$pending_shart_nick: Please confirm the shart with !shartconfirm within 24 hours."
 }
 
 # --- Confirm Shart ---
@@ -1241,21 +1241,21 @@ proc shartconfirm {nick uhost hand chan text} {
     putlog "shartconfirm pub: $nick $uhost $hand $chan $text"
 
     if {$pending_shart_nick eq ""} {
-        putquick "PRIVMSG $chan :$nick: There is no pending shart request."
+        putchan $chan "$nick: There is no pending shart request."
         return
     }
 
     # Check expiration (24h = 86400 seconds)
     set now [clock seconds]
     if {[expr {$now - $pending_shart_time}] > 86400} {
-        putquick "PRIVMSG $chan :The shart request for $pending_shart_nick has expired (24h limit). Please request again."
+        putchan $chan "The shart request for $pending_shart_nick has expired (24h limit). Please request again."
         set pending_shart_nick ""
         set pending_shart_time 0
         return
     }
 
     if {![string equal -nocase $nick $pending_shart_nick]} {
-        putquick "PRIVMSG $chan :$nick: Only $pending_shart_nick can confirm this shart!"
+        putchan $chan "$nick: Only $pending_shart_nick can confirm this shart!"
         return
     }
 
@@ -1266,7 +1266,7 @@ proc shartconfirm {nick uhost hand chan text} {
     save_shart_data
     record_shart_event
 
-    putquick "PRIVMSG $chan :$nick has confirmed the shart."
+    putchan $chan "$nick has confirmed the shart."
 }
 
 # --- Show Timer ---
@@ -1280,7 +1280,7 @@ proc shart {nick uhost hand chan text} {
     putlog "shart pub: $nick $uhost $hand $chan $text"
 
     if {$shart_timestamp == 0 || $shart_nick eq ""} {
-        putquick "PRIVMSG $chan :$nick: The shart timer hasn't been started yet! Use !shartreset <nickname>."
+        putchan $chan "$nick: The shart timer hasn't been started yet! Use !shartreset <nickname>."
         return
     }
 
@@ -1292,7 +1292,7 @@ proc shart {nick uhost hand chan text} {
     set hours [expr {($elapsed / (60 * 60)) % 24}]
     set minutes [expr {($elapsed / 60) % 60}]
 
-    putquick "PRIVMSG $chan :$nick: It's been $weeks week(s), $days day(s), $hours hour(s), and $minutes minute(s) since $shart_nick's last shart."
+    putchan $chan "$nick: It's been $weeks week(s), $days day(s), $hours hour(s), and $minutes minute(s) since $shart_nick's last shart."
 }
 
 # --- Shart Status ---
@@ -1306,7 +1306,7 @@ proc shartstatus {nick uhost hand chan text} {
     putlog "shartstatus pub: $nick $uhost $hand $chan $text"
 
     if {$pending_shart_nick eq ""} {
-        putquick "PRIVMSG $chan :$nick: There is no pending shart request."
+        putchan $chan "$nick: There is no pending shart request."
         return
     }
 
@@ -1314,7 +1314,7 @@ proc shartstatus {nick uhost hand chan text} {
     set remaining [expr {86400 - ($now - $pending_shart_time)}]
 
     if {$remaining <= 0} {
-        putquick "PRIVMSG $chan :The shart request for $pending_shart_nick has expired."
+        putchan $chan "The shart request for $pending_shart_nick has expired."
         set pending_shart_nick ""
         set pending_shart_time 0
         return
@@ -1323,7 +1323,7 @@ proc shartstatus {nick uhost hand chan text} {
     set hours [expr {$remaining / 3600}]
     set minutes [expr {($remaining % 3600) / 60}]
 
-    putquick "PRIVMSG $chan :A shart request is pending for $pending_shart_nick. Time left to confirm: $hours hour(s) and $minutes minute(s)."
+    putchan $chan "A shart request is pending for $pending_shart_nick. Time left to confirm: $hours hour(s) and $minutes minute(s)."
 }
 
 proc _cmp_nicks {a b} {
@@ -1369,7 +1369,7 @@ proc shartleague {nick uhost hand chan text} {
     }
     
     if {[array size nick_totals] == 0} {
-        putquick "PRIVMSG $chan :$nick: No shart data for $current_year yet."
+        putchan $chan "$nick: No shart data for $current_year yet."
 	unset nick_totals
         return
     }
@@ -1386,7 +1386,7 @@ proc shartleague {nick uhost hand chan text} {
     }
     
     unset nick_totals
-    putquick "PRIVMSG $chan :[string trimright $standings_line {; }]"
+    putchan $chan "[string trimright $standings_line {; }]"
 }
 
 # --- Shart Year Review ---
@@ -1434,7 +1434,7 @@ proc shartyearreview {nick uhost hand chan text} {
     }
     
     if {$year_total == 0} {
-        putquick "PRIVMSG $chan :$nick: No shart data for $review_nick in $review_year."
+        putchan $chan "$nick: No shart data for $review_nick in $review_year."
         return
     }
     
@@ -1450,8 +1450,7 @@ proc shartyearreview {nick uhost hand chan text} {
 
 	append r "$month_name: $count; "
     }
-    set r [string trim "$r"]
-    putchan $chan $r
+    putchan $chan "[string trimright $r {; }]"
 }
 
 # --- Shart History ---
@@ -1480,7 +1479,7 @@ proc sharthistory {nick uhost hand chan text} {
     }
     
     if {[dict size $years_data] == 0} {
-        putquick "PRIVMSG $chan :$nick: No shart history available."
+        putchan $chan "$nick: No shart history available."
         return
     }
     
@@ -1490,7 +1489,7 @@ proc sharthistory {nick uhost hand chan text} {
         append history_line "$year: $total; "
     }
     
-    putquick "PRIVMSG $chan :[string trimright $history_line {; }]"
+    putchan $chan "[string trimright $history_line {; }]"
 }
 
 # --- Command Bindings ---
