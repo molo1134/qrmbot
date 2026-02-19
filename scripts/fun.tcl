@@ -21,36 +21,16 @@ bind pub - !monkee daveface
 bind pub - !rick rickface
 bind pub - !burn burn
 bind pub - !brexit brexit
-bind pub - !trumpfine trumpfine
 bind pub - !christmas christmas
 bind pub - !halloween spooky
 bind pub - !spooky spooky
 bind pub - !translate translate
-bind pub - !primaries primaries
-bind pub - !fivethirtyeight fivethirtyeight_pub
-bind pub - !538 fivethirtyeight_pub
-bind msg - !fivethirtyeight fivethirtyeight_msg
-bind msg - !538 fivethirtyeight_msg
-bind pub - !senate senate_pub
-bind msg - !senate senate_msg
-bind pub - !house house_pub
-bind msg - !house house_msg
-bind pub - !gov gov_pub
-bind msg - !gov gov_msg
-bind pub - !governor gov_pub
-bind msg - !governor gov_msg
 bind pub - !github github
 bind msg - !github msg_github
-bind pub - !winadmin winadmin
-
 
 set phoneticsbin "/home/eggdrop/bin/phoneticise"
 set brexitbin "/home/eggdrop/bin/brexit"
-set trumpfinebin "/home/eggdrop/bin/trumpfine"
 set translatebin "/home/eggdrop/bin/translate"
-set primariesbin "/home/eggdrop/bin/primaries"
-set fivethirtyeightbin "/home/eggdrop/bin/fivethirtyeight"
-set winadminbin "/home/eggdrop/bin/winadmin"
 
 set githublink "https://github.com/molo1134/qrmbot/"
 
@@ -93,7 +73,6 @@ proc msg_colortest {nick uhand handle input} {
 
 bind pub - !debt debt_pub
 bind msg - !debt debt_msg
-
 set debtbin "/home/eggdrop/bin/debt"
 proc debt_msg {nick uhand handle input} {
 	global debtbin
@@ -219,7 +198,6 @@ proc cape_pub { nick host hand chan text } {
 proc cape_msg {nick uhand handle input} {
 	launch_msg "$nick" $uhand $handle "--cape"
 }
-
 
 bind pub - !stock stock_pub
 bind msg - !stock stock_msg
@@ -425,34 +403,6 @@ proc brexit { nick host hand chan text } {
 	close $fd
 }
 
-proc winadmin { nick host hand chan text } {
-	if [string equal "#amateurradio" $chan] then {
-		return
-	}
-	global winadminbin
-	putlog "winadmin: $nick $host $hand $chan"
-	set fd [open "|${winadminbin}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
-	}
-	close $fd
-}
-
-proc trumpfine { nick host hand chan text } {
-	if [string equal "#amateurradio" $chan] then {
-		return
-	}
-	global trumpfinebin
-	putlog "trumpfine: $nick $host $hand $chan"
-	set fd [open "|${trumpfinebin}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
-	}
-	close $fd
-}
-
 set christmasbin "/home/eggdrop/bin/christmas"
 proc christmas { nick host hand chan text } {
 	if [string equal "#amateurradio" $chan] then {
@@ -476,23 +426,6 @@ proc spooky { nick host hand chan text } {
 	global spookybin
 	putlog "spooky: $nick $host $hand $chan"
 	set fd [open "|${spookybin}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
-	}
-	close $fd
-}
-
-bind pub - !potus potus
-bind pub - !trumpectomy potus
-set potusbin "/home/eggdrop/bin/potus"
-proc potus { nick host hand chan text } {
-	if [string equal "#amateurradio" $chan] then {
-		return
-	}
-	global potusbin
-	putlog "potus: $nick $host $hand $chan"
-	set fd [open "|${potusbin}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
@@ -524,174 +457,6 @@ proc translate { nick host hand chan text } {
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "${line}"
-	}
-	close $fd
-}
-
-bind pub - !qrm chatgpt
-set chatgptbin "/home/eggdrop/bin/chatgpt"
-proc chatgpt { nick host hand chan text } {
-	global chatgptbin
-
-	set cleantext [sanitize_string [string trim "${text}"]]
-
-	putlog "chatgpt pub: $nick $host $hand $chan $cleantext"
-
-	set fd [open "|${chatgptbin} ${cleantext}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "${line}"
-	}
-	close $fd
-}
-
-bind pub - !corona corona_pub
-bind pub - !covid corona_pub
-bind pub - !covid19 corona_pub
-bind pub - !c19 corona_pub
-bind msg - !corona corona_msg
-bind msg - !covid corona_msg
-bind msg - !covid19 corona_msg
-bind msg - !c19 corona_msg
-set coronabin "/home/eggdrop/bin/corona"
-proc corona_pub { nick host hand chan text } {
-	if [string equal "#amateurradio" $chan] then {
-		return
-	}
-	global coronabin
-	set cleantext [sanitize_string [string trim "${text}"]]
-	putlog "corona pub: $nick $host $hand $chan $cleantext"
-	set fd [open "|${coronabin} ${cleantext}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
-	}
-	close $fd
-}
-proc corona_msg {nick uhand handle input} {
-	global coronabin
-	set param [sanitize_string [string trim "${input}"]]
-	putlog "corona msg: $nick $uhand $handle $param"
-	set fd [open "|${coronabin} ${param} " r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putmsg "$nick" "$line"
-	}
-	close $fd
-}
-
-proc primaries { nick host hand chan text } {
-	if [string equal "#amateurradio" $chan] then {
-		return
-	}
-	global primariesbin
-	set cleantext [sanitize_string [string trim "${text}"]]
-	putlog "primaries: $nick $host $hand $chan $cleantext"
-	set fd [open "|${primariesbin} ${cleantext}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
-	}
-	close $fd
-}
-
-proc fivethirtyeight_pub { nick host hand chan text } {
-	if [string equal "#amateurradio" $chan] then {
-		return
-	}
-	global fivethirtyeightbin
-	set param [sanitize_string [string trim "${text}"]]
-	putlog "fivethirtyeight pub: $nick $host $hand $chan $param"
-	set fd [open "|${fivethirtyeightbin} ${param}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
-	}
-	close $fd
-}
-proc fivethirtyeight_msg {nick uhand handle input} {
-	global fivethirtyeightbin
-	set param [sanitize_string [string trim "${input}"]]
-	putlog "fivethirtyeight msg: $nick $uhand $handle $param"
-	set fd [open "|${fivethirtyeightbin} ${param}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putmsg "$nick" "$line"
-	}
-	close $fd
-}
-proc senate_pub { nick host hand chan text } {
-	if [string equal "#amateurradio" $chan] then {
-		return
-	}
-	global fivethirtyeightbin
-	set param [sanitize_string [string trim "${text}"]]
-	putlog "senate pub: $nick $host $hand $chan $param"
-	set fd [open "|${fivethirtyeightbin} --senate ${param}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
-	}
-	close $fd
-}
-proc senate_msg {nick uhand handle input} {
-	global fivethirtyeightbin
-	set param [sanitize_string [string trim "${input}"]]
-	putlog "senate msg: $nick $uhand $handle $param"
-	set fd [open "|${fivethirtyeightbin} --senate ${param}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putmsg "$nick" "$line"
-	}
-	close $fd
-}
-proc house_pub { nick host hand chan text } {
-	if [string equal "#amateurradio" $chan] then {
-		return
-	}
-	global fivethirtyeightbin
-	set param [sanitize_string [string trim "${text}"]]
-	putlog "house pub: $nick $host $hand $chan $param"
-	set fd [open "|${fivethirtyeightbin} --house ${param}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
-	}
-	close $fd
-}
-proc house_msg {nick uhand handle input} {
-	global fivethirtyeightbin
-	set param [sanitize_string [string trim "${input}"]]
-	putlog "house msg: $nick $uhand $handle $param"
-	set fd [open "|${fivethirtyeightbin} --house ${param}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putmsg "$nick" "$line"
-	}
-	close $fd
-}
-proc gov_pub { nick host hand chan text } {
-	if [string equal "#amateurradio" $chan] then {
-		return
-	}
-	global fivethirtyeightbin
-	set param [sanitize_string [string trim "${text}"]]
-	putlog "gov pub: $nick $host $hand $chan $param"
-	set fd [open "|${fivethirtyeightbin} --gov ${param}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
-	}
-	close $fd
-}
-proc gov_msg {nick uhand handle input} {
-	global fivethirtyeightbin
-	set param [sanitize_string [string trim "${input}"]]
-	putlog "gov msg: $nick $uhand $handle $param"
-	set fd [open "|${fivethirtyeightbin} --gov ${param}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putmsg "$nick" "$line"
 	}
 	close $fd
 }
