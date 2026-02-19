@@ -30,13 +30,6 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 # eggdrop doesn't split args on spaces
 @ARGV = split(' ', join(' ', @ARGV));
 
-if ($#ARGV < 0 || length($ARGV[0]) == 0) {
-  print "usage: !steam <game name>\n";
-  exit $exitnonzeroonerror;
-}
-
-my $query = join(" ", @ARGV);
-my $enc_query = uri_escape_utf8($query);
 my $useragent = "Mozilla/5.0 (compatible; qrmbot)";
 
 sub fetchJSON {
@@ -49,39 +42,61 @@ sub fetchJSON {
   return decode_json($res);
 }
 
-# --- 1. Search Steam Store ---
-my $search_url = "https://store.steampowered.com/api/storesearch/?term=${enc_query}&l=english&cc=US";
-my $search = fetchJSON($search_url);
-
-if (!defined $search || !defined $search->{items} || scalar(@{$search->{items}}) == 0) {
-  print "not found: $query\n";
-  exit 0;
-}
-
-# Pick first result that is an app (prefer game over DLC/video/etc.)
-my $item;
-foreach my $i (@{$search->{items}}) {
-  if (defined($i->{type}) && $i->{type} eq "app") {
-    $item = $i;
-    last;
+# Parse --appid flag
+my $appid = undef;
+my @search_args;
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] eq "--appid" && $i + 1 <= $#ARGV) {
+    $appid = $ARGV[$i + 1];
+    $appid =~ s/[^0-9]//g;
+    $i += 2;
+  } else {
+    push @search_args, $ARGV[$i];
+    $i++;
   }
 }
-$item = $search->{items}[0] unless defined $item;
 
-my $appid     = $item->{id};
-my $metascore = (defined $item->{metascore} && $item->{metascore} ne "") ? $item->{metascore} : "";
+# --- 1. Search Steam Store (skipped if --appid supplied) ---
+if (!defined $appid) {
+  my $query = join(" ", @search_args);
+  if (!$query || length($query) == 0) {
+    print "usage: !steam <game name>\n";
+    exit $exitnonzeroonerror;
+  }
+
+  my $enc_query = uri_escape_utf8($query);
+  my $search_url = "https://store.steampowered.com/api/storesearch/?term=${enc_query}&l=english&cc=US";
+  my $search = fetchJSON($search_url);
+
+  if (!defined $search || !defined $search->{items} || scalar(@{$search->{items}}) == 0) {
+    print "not found: $query\n";
+    exit 0;
+  }
+
+  # Pick first result that is an app (prefer game over DLC/video/etc.)
+  my $item;
+  foreach my $si (@{$search->{items}}) {
+    if (defined($si->{type}) && $si->{type} eq "app") {
+      $item = $si;
+      last;
+    }
+  }
+  $item = $search->{items}[0] unless defined $item;
+  $appid = $item->{id};
+}
 
 # --- 2. Fetch app details ---
 my $detail_url = "https://store.steampowered.com/api/appdetails?appids=${appid}&l=english&cc=US";
 my $detail_j   = fetchJSON($detail_url);
 
 if (!defined $detail_j || !$detail_j->{$appid}{success} || !defined $detail_j->{$appid}{data}) {
-  print "error: could not retrieve details for '$query'\n";
+  print "error: could not retrieve details for appid $appid\n";
   exit $exitnonzeroonerror;
 }
 
 my $data = $detail_j->{$appid}{data};
-my $name = $data->{name} // $item->{name};
+my $name = $data->{name};
 
 # Price
 my $price;
@@ -123,13 +138,16 @@ if (defined $review_j && defined $review_j->{query_summary}) {
   }
 }
 
+# Metacritic (from detail response -- available regardless of how appid was obtained)
+my $metascore = "";
+if (defined $data->{metacritic} && defined $data->{metacritic}{score}) {
+  $metascore = $data->{metacritic}{score};
+}
+
 # Build rating string
 my $rating = "";
-if ($review_desc && $review_pct) {
-  $rating = "$review_desc ($review_pct)";
-} elsif ($review_desc) {
-  $rating = $review_desc;
-}
+$rating = "$review_desc ($review_pct)" if $review_desc && $review_pct;
+$rating = $review_desc if $review_desc && !$review_pct;
 if ($metascore ne "") {
   $rating .= " | " if $rating;
   $rating .= "Metacritic: $metascore";

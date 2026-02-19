@@ -92,6 +92,10 @@ while ($i <= $#ARGV) {
     doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://a.co/\w+/?|i) {
     doAmazon($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://store\.steampowered\.com/app/(\d+)|i) {
+    doSteam($1);
+  } elsif ($ARGV[$i] =~ m|^https?://s\.team/a/(\d+)|i) {
+    doSteam($1);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.\|smile\.)?amazon\.(com\|co\.jp\|ca\|co\.uk\|de)/gp/product/\w+/?|i) {
     doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?xkcd.com/(\d+)/?$|) {
@@ -1820,6 +1824,12 @@ sub trim {
   $s =~ s/^\s*//;
   $s =~ s/\s*$//;
   return $s;
+}
+
+sub doSteam {
+  my $appid = shift;
+  my $libdir = dirname(realpath(__FILE__));
+  exec "$libdir/steam", "--appid", "$appid" or die "error execing steam for $appid";
 }
 
 sub is_executable_in_path {
