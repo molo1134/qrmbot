@@ -141,6 +141,7 @@ print bold($name);
 print " | " . bold($price);
 print " | $rating";
 print " | $desc" if $desc;
+print " | https://s.team/a/$appid";
 print "\n";
 
 exit 0;
