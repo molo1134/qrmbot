@@ -607,13 +607,23 @@ proc poker_pub { nick host hand chan text } {
 
 # load imgur api key if present
 set imgur_key ""
-set imgurfile [file join $env(HOME) ".imgurkey"]
+set imgurfile [file join $env(HOME) ".qrmbot/keys/imgur"]
 if {[file exists $imgurfile]} {
     set fd [open $imgurfile r]
     set file_content [read $fd]
     close $fd
     regexp {imgur_key="([^"]+)"} $file_content -> imgur_key
     unset file_content
+} else {
+  # fallback
+  set imgurfile [file join $env(HOME) ".imgurkey"]
+  if {[file exists $imgurfile]} {
+      set fd [open $imgurfile r]
+      set file_content [read $fd]
+      close $fd
+      regexp {imgur_key="([^"]+)"} $file_content -> imgur_key
+      unset file_content
+  }
 }
 
 # load scraping ant api key if present

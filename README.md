@@ -74,7 +74,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/keys/deepl` -- API key for deepl.com translation
 * `$HOME/.googleapikeys` -- key for Google APIs
 * `$HOME/.qrmbot/creds/hamspots` -- required login credentials for [hamspots.net](http://hamspots.net) use
-* `$HOME/.imgurkey` -- API key for imgur.com
+* `$HOME/.qrmbot/keys/imgur` -- API key for imgur.com
 * `$HOME/.nicks.csv` -- irc and reddit nicknames -- optional, will override repository data
 * `$HOME/.qrzlogin` -- required login credentials for [qrz.com](http://qrz.com/) lookup
 * `$HOME/.wunderground` -- required API key for [WUnderground](http://wundergound.com/) weather lookup

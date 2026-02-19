@@ -26,9 +26,13 @@ use Math::Round;
 use MIME::Base64;
 
 our $imgur_key=undef;
-my $imgurfile = $ENV{'HOME'} . "/.imgurkey";
+my $old_imgurfile = $ENV{'HOME'} . "/.imgurkey";
+my $imgurfile     = $ENV{'HOME'} . "/.qrmbot/keys/imgur";
+moveFile($old_imgurfile, $imgurfile);
 if (-e ($imgurfile)) {
   require($imgurfile);
+} elsif (-e ($old_imgurfile)) {
+  require($old_imgurfile);
 }
 
 our $scrapingant_key=undef;
