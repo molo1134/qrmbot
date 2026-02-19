@@ -17,12 +17,17 @@ use Colors;
 use Util;
 
 our $coinmarketcapkey = undef;
-my $coinmarketcapfile = $ENV{'HOME'} . "/.coinmarketcapkey";
-if (-e ($coinmarketcapfile)) {
-  require($coinmarketcapfile);
+
+my $newApikeyfile = $ENV{'HOME'} . "/.qrmbot/keys/coinmarketcap";
+my $oldApikeyfile = $ENV{'HOME'} . "/.coinmarketcapkey";
+moveFile($oldApikeyfile, $newApikeyfile);
+if (-e ($newApikeyfile)) {
+  require($newApikeyfile);
+} elsif (-e $oldApikeyfile) { # fallback
+  require($oldApikeyfile);
 }
 
-print "error: unable to get api key from $coinmarketcapfile\n" if not defined $coinmarketcapkey;
+print "error: unable to get api key from $newApikeyfile\n" if not defined $coinmarketcapkey;
 exit 1 if not defined $coinmarketcapkey;
 
 my $fiat = undef;
