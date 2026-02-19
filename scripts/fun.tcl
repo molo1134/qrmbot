@@ -613,6 +613,7 @@ if {[file exists $imgurfile]} {
     set file_content [read $fd]
     close $fd
     regexp {imgur_key="([^"]+)"} $file_content -> imgur_key
+    unset file_content
 }
 
 # load scraping ant api key if present
@@ -623,6 +624,7 @@ if {[file exists $scrapingantfile]} {
     set file_content [read $fd]
     close $fd
     regexp {scrapingant_key="([^"]+)"} $file_content -> scrapingant_key
+    unset file_content
 }
 
 proc getSubredditImage {subreddit} {
@@ -1107,7 +1109,9 @@ if {[file exists $shart_data_file]} {
     if {[llength ${_data}] >= 2} {
         set shart_timestamp [lindex ${_data} 0]
         set shart_nick [lindex ${_data} 1]
+        putlog "Loaded last shart: $shart_timestamp $shart_nick"
     }
+    unset _data
 }
 
 # Load metrics data
@@ -1126,9 +1130,11 @@ if {[file exists $shart_metrics_file]} {
                 set _count [lindex ${_parts} 3]
                 set _key "${_nick}_${_year}_${_month}"
                 set shart_monthly(${_key}) ${_count}
+                putlog "Loaded shart metrics: ${_key} => ${_count}"
             }
         }
     }
+    unset _metrics_data _line _parts _nick _year _month _count _key
 }
 
 proc save_shart_data {} {
@@ -1176,12 +1182,15 @@ proc shartreset {nick uhost hand chan text} {
     }
     global pending_shart_nick pending_shart_time
 
+    set text [sanitize_string [string trim "${text}"]]
+    putlog "shartreset pub: $nick $uhost $hand $chan $text"
+
     if {$text eq ""} {
         putquick "PRIVMSG $chan :$nick: You must specify a nickname! Usage: !shartreset <nickname>"
         return
     }
 
-    set pending_shart_nick [sanitize_string [string trim "${text}"]]
+    set pending_shart_nick $text
     set pending_shart_time [clock seconds]
     putquick "PRIVMSG $chan :$nick has requested to reset the shart timer for $pending_shart_nick."
     putquick "PRIVMSG $chan :Reset request pending for $pending_shart_nick. $pending_shart_nick: Please confirm the shart with !shartconfirm within 24 hours."
@@ -1193,6 +1202,9 @@ proc shartconfirm {nick uhost hand chan text} {
         return
     }
     global shart_timestamp shart_nick pending_shart_nick pending_shart_time
+
+    set text [sanitize_string [string trim "${text}"]]
+    putlog "shartconfirm pub: $nick $uhost $hand $chan $text"
 
     if {$pending_shart_nick eq ""} {
         putquick "PRIVMSG $chan :$nick: There is no pending shart request."
@@ -1230,6 +1242,9 @@ proc shart {nick uhost hand chan text} {
     }
     global shart_timestamp shart_nick
 
+    set text [sanitize_string [string trim "${text}"]]
+    putlog "shart pub: $nick $uhost $hand $chan $text"
+
     if {$shart_timestamp == 0 || $shart_nick eq ""} {
         putquick "PRIVMSG $chan :$nick: The shart timer hasn't been started yet! Use !shartreset <nickname>."
         return
@@ -1252,6 +1267,9 @@ proc shartstatus {nick uhost hand chan text} {
         return
     }
     global pending_shart_nick pending_shart_time
+
+    set text [sanitize_string [string trim "${text}"]]
+    putlog "shartstatus pub: $nick $uhost $hand $chan $text"
 
     if {$pending_shart_nick eq ""} {
         putquick "PRIVMSG $chan :$nick: There is no pending shart request."
@@ -1280,13 +1298,16 @@ proc shartmetrics {nick uhost hand chan text} {
         return
     }
     global shart_monthly
+
+    set text [sanitize_string [string trim "${text}"]]
+    putlog "shartmetrics pub: $nick $uhost $hand $chan $text"
     
     set now [clock seconds]
     set current_year [clock format $now -format "%Y"]
     
     # Check if a year was provided
     if {$text ne ""} {
-        set current_year [sanitize_string [string trim $text]]
+        set current_year $text
     }
     
     # Collect all nicks and their year totals
@@ -1335,13 +1356,15 @@ proc shartyearreview {nick uhost hand chan text} {
         return
     }
     global shart_monthly
+
+    set text [sanitize_string [string trim "${text}"]]
+    putlog "shartyearreview pub: $nick $uhost $hand $chan $text"
     
     set now [clock seconds]
     set review_year [clock format $now -format "%Y"]
     set review_nick ""
     
     if {$text ne ""} {
-        set text [sanitize_string [string trim $text]]
         set parts [split $text]
         if {[llength $parts] == 2} {
             set review_nick [lindex $parts 0]
@@ -1404,6 +1427,9 @@ proc sharthistory {nick uhost hand chan text} {
         return
     }
     global shart_monthly
+
+    set text [sanitize_string [string trim "${text}"]]
+    putlog "sharthistory pub: $nick $uhost $hand $chan $text"
     
     set years_data [dict create]
     
