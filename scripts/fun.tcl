@@ -1344,7 +1344,7 @@ proc shartyearreview {nick uhost hand chan text} {
     
     set now [clock seconds]
     set review_year [clock format $now -format "%Y"]
-    set review_nick ""
+    set review_nick $nick
     
     if {$text ne ""} {
         set text [sanitize_string [string trim $text]]
