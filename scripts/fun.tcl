@@ -1332,14 +1332,14 @@ proc _cmp_nicks {a b} {
 }
 
 # --- Shart Metrics ---
-proc shartmetrics {nick uhost hand chan text} {
+proc shartleague {nick uhost hand chan text} {
     if [string equal "#amateurradio" $chan] then {
         return
     }
     global shart_monthly
 
     set text [sanitize_string [string trim "${text}"]]
-    putlog "shartmetrics pub: $nick $uhost $hand $chan $text"
+    putlog "shartleague pub: $nick $uhost $hand $chan $text"
     
     set now [clock seconds]
     set current_year [clock format $now -format "%Y"]
@@ -1501,7 +1501,7 @@ bind pub - !shartreset shartreset
 bind pub - !shartconfirm shartconfirm
 bind pub - !shart shart
 bind pub - !shartstatus shartstatus
-bind pub - !shartmetrics shartmetrics
+bind pub - !shartleague shartleague
 bind pub - !shartyearreview shartyearreview
 bind pub - !sharthistory sharthistory
 
