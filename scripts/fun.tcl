@@ -1340,7 +1340,7 @@ proc et_league {event nick uhost hand chan text} {
     putlog "${event}league pub: $nick $uhost $hand $chan $text"
     set now          [clock seconds]
     set current_year [clock format $now -format "%Y"]
-    if {$text ne ""} { set current_year $text }
+    if {$text ne "" && [string is integer -strict $text] } { set current_year $text }
     array set nick_totals {}
     set prefix "${event},"
     set plen [string length $prefix]
@@ -1413,7 +1413,9 @@ proc et_yearreview {event nick uhost hand chan text} {
     foreach entry $month_data {
         set m     [lindex $entry 0]
         set count [lindex $entry 1]
-        append r "[lindex $month_names [expr {$m - 1}]]: $count; "
+	if { $count > 0 } {
+            append r "[lindex $month_names [expr {$m - 1}]]: $count; "
+	}
     }
     putchan $chan "[string trimright $r {; }]"
 }
