@@ -1337,30 +1337,30 @@ array set shart_leaderboard {}
 # Load saved shart timestamp and nickname on start
 if {[file exists $shart_data_file]} {
     set fp [open $shart_data_file r]
-    set data [split [read $fp] "\n"]
+    set _data [split [read $fp] "\n"]
     close $fp
-    if {[llength $data] >= 2} {
-        set shart_timestamp [lindex $data 0]
-        set shart_nick [lindex $data 1]
+    if {[llength ${_data}] >= 2} {
+        set shart_timestamp [lindex ${_data} 0]
+        set shart_nick [lindex ${_data} 1]
     }
 }
 
 # Load metrics data
 if {[file exists $shart_metrics_file]} {
     set fp [open $shart_metrics_file r]
-    set metrics_data [read $fp]
+    set _metrics_data [read $fp]
     close $fp
     # Parse metrics: each line is "nick year month count"
-    foreach line [split $metrics_data "\n"] {
-        if {[string trim $line] ne ""} {
-            set parts [split $line " "]
-            if {[llength $parts] >= 4} {
-                set nick [lindex $parts 0]
-                set year [lindex $parts 1]
-                set month [lindex $parts 2]
-                set count [lindex $parts 3]
-                set key "${nick}_${year}_${month}"
-                set shart_monthly($key) $count
+    foreach _line [split ${_metrics_data} "\n"] {
+        if {[string trim ${_line}] ne ""} {
+            set _parts [split ${_line} " "]
+            if {[llength ${_parts}] >= 4} {
+                set _nick [lindex ${_parts} 0]
+                set _year [lindex ${_parts} 1]
+                set _month [lindex ${_parts} 2]
+                set _count [lindex ${_parts} 3]
+                set _key "${_nick}_${_year}_${_month}"
+                set shart_monthly(${_key}) ${_count}
             }
         }
     }
