@@ -12,12 +12,13 @@ use feature 'unicode_strings';
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(decodeEntities stripIrcColors getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum shortenUrl isNumeric getEggdropUID getDxccDataRef updateCty checkCtyDat checkMW scrapeMW);
+@EXPORT = qw(decodeEntities stripIrcColors getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum moveFile shortenUrl isNumeric getEggdropUID getDxccDataRef updateCty checkCtyDat checkMW scrapeMW);
 
 use URI::Escape;
 use Date::Manip;
 use Math::Round;
 use File::Temp qw(tempfile);
+use File::Copy;
 
 sub decodeEntities {
   my $s = shift;
@@ -328,6 +329,19 @@ sub humanNum {
     return nearest(0.01, $num / 1000.0) . "k";
   }
   return $num;
+}
+
+# move if the file exists and is a regular file, not a symlink
+sub moveFile {
+  my $src = shift;
+  my $dst = shift;
+
+  return if not -e $src;
+  return if not -f $src;
+  return if -e $dst;
+
+  # File::Copy
+  move($src, $dst);
 }
 
 sub shortenUrl {
