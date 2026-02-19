@@ -76,6 +76,7 @@
  * `!define` -- glossary lookup
  * `!phoneticise` -- random phonetics
  * `!imdb` -- movie info
+ * `!steam` -- Steam game info (name, price, rating, description)
  * `!adsb` -- get plane information
  * `!hofh` -- why your radio is broke
  * `!ammo` -- find a price for ammo
@@ -999,6 +1000,7 @@ Example:
 ### `!define` -- glossary lookup
 ### `!phoneticise` -- random phonetics
 ### `!imdb` -- movie info
+### `!steam` -- Steam game info
 ### `!adsb` -- get plane information
 ### `!hofh` -- why your radio is broke
 ### `!ammo` -- find a price for ammo

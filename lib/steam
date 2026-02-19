@@ -1,0 +1,147 @@
+#!/usr/bin/perl -w
+#
+# Look up a game on Steam and display name, price, rating, and description.
+#
+# 2-clause BSD license.
+# Copyright (c) 2025 cjh@github. All rights reserved.
+#
+# Uses the public Steam Store API -- no API key required.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use JSON::PP qw( decode_json );
+use URI::Escape;
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+# eggdrop doesn't split args on spaces
+@ARGV = split(' ', join(' ', @ARGV));
+
+if ($#ARGV < 0 || length($ARGV[0]) == 0) {
+  print "usage: !steam <game name>\n";
+  exit $exitnonzeroonerror;
+}
+
+my $query = join(" ", @ARGV);
+my $enc_query = uri_escape_utf8($query);
+my $useragent = "Mozilla/5.0 (compatible; qrmbot)";
+
+sub fetchJSON {
+  my $url = shift;
+  open(my $fh, '-|', "curl --max-time 10 -s -k -L -A \"$useragent\" '$url'");
+  local $/;
+  binmode($fh, ":utf8");
+  my $res = <$fh>;
+  close($fh);
+  return undef unless defined $res && $res =~ /^\s*\{/;
+  return decode_json($res);
+}
+
+# --- 1. Search Steam Store ---
+my $search_url = "https://store.steampowered.com/api/storesearch/?term=${enc_query}&l=english&cc=US";
+my $search = fetchJSON($search_url);
+
+if (!defined $search || !defined $search->{items} || scalar(@{$search->{items}}) == 0) {
+  print "not found: $query\n";
+  exit 0;
+}
+
+# Pick first result that is an app (prefer game over DLC/video/etc.)
+my $item;
+foreach my $i (@{$search->{items}}) {
+  if (defined($i->{type}) && $i->{type} eq "app") {
+    $item = $i;
+    last;
+  }
+}
+$item = $search->{items}[0] unless defined $item;
+
+my $appid     = $item->{id};
+my $metascore = (defined $item->{metascore} && $item->{metascore} ne "") ? $item->{metascore} : "";
+
+# --- 2. Fetch app details ---
+my $detail_url = "https://store.steampowered.com/api/appdetails?appids=${appid}&l=english&cc=US";
+my $detail_j   = fetchJSON($detail_url);
+
+if (!defined $detail_j || !$detail_j->{$appid}{success} || !defined $detail_j->{$appid}{data}) {
+  print "error: could not retrieve details for '$query'\n";
+  exit $exitnonzeroonerror;
+}
+
+my $data = $detail_j->{$appid}{data};
+my $name = $data->{name} // $item->{name};
+
+# Price
+my $price;
+if ($data->{is_free}) {
+  $price = "Free";
+} elsif (defined $data->{price_overview}) {
+  $price = $data->{price_overview}{final_formatted};
+  my $disc = $data->{price_overview}{discount_percent} // 0;
+  if ($disc > 0) {
+    my $orig = $data->{price_overview}{initial_formatted};
+    $price = "$price ($disc% off $orig)";
+  }
+} else {
+  $price = "N/A";
+}
+
+# Short description -- strip HTML tags and decode entities
+my $desc = $data->{short_description} // "";
+$desc =~ s/<[^>]+>//g;
+$desc = decodeEntities($desc);
+$desc =~ s/\s+/ /g;
+$desc =~ s/^\s+|\s+$//g;
+if (length($desc) > 200) {
+  $desc = substr($desc, 0, 197) . "...";
+}
+
+# --- 3. Fetch review summary ---
+my $review_url = "https://store.steampowered.com/appreviews/${appid}?json=1&language=all&purchase_type=all";
+my $review_j   = fetchJSON($review_url);
+
+my ($review_desc, $review_pct) = ("", "");
+if (defined $review_j && defined $review_j->{query_summary}) {
+  my $qs = $review_j->{query_summary};
+  $review_desc = $qs->{review_score_desc} // "";
+  my $pos   = $qs->{total_positive} // 0;
+  my $total = $qs->{total_reviews}  // 0;
+  if ($total > 0) {
+    $review_pct = int($pos / $total * 100 + 0.5) . "%";
+  }
+}
+
+# Build rating string
+my $rating = "";
+if ($review_desc && $review_pct) {
+  $rating = "$review_desc ($review_pct)";
+} elsif ($review_desc) {
+  $rating = $review_desc;
+}
+if ($metascore ne "") {
+  $rating .= " | " if $rating;
+  $rating .= "Metacritic: $metascore";
+}
+$rating = "No ratings yet" unless $rating;
+
+# --- Output ---
+print bold($name);
+print " | " . bold($price);
+print " | $rating";
+print " | $desc" if $desc;
+print "\n";
+
+exit 0;
