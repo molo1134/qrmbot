@@ -1123,211 +1123,199 @@ proc masters { nick host hand chan text } {
 }
 
 # ============================================================================
-# Everything below here is for sharts
+# Generic Event Timer Engine
+# Supports any number of named events (shart, hangover, puke, ...).
+# Each event gets its own set of IRC commands and persistent data files.
+#
+# Data files (one pair per event):
+#   <event>_timestamp.txt  — last event time and nick (2-line text)
+#   <event>_metrics.txt    — monthly counts: "nick year month count" per line
+#
+# IRC commands registered for each event:
+#   !<event>              — show elapsed time since last event
+#   !<event>reset <nick>  — request a timer reset for <nick>
+#   !<event>confirm       — confirm a pending reset (only the named nick)
+#   !<event>status        — show pending reset request status
+#   !<event>league [year] — leaderboard for the year
+#   !<event>yearreview [nick] [year] — monthly breakdown
+#   !<event>history       — all-time totals by year
 # ============================================================================
 
-# --- Shart Timer ---
-set shart_data_file "shart_timestamp.txt"
-set shart_metrics_file "shart_metrics.txt"
-set shart_timestamp 0
-set shart_nick ""
-set pending_shart_nick ""
-set pending_shart_time 0
+# State arrays — indexed by event name
+array set et_timestamp    {}
+array set et_nick         {}
+array set et_pending_nick {}
+array set et_pending_time {}
+# Monthly metrics: key is "event,nick@year@month", value is count
+array set et_monthly      {}
 
-# Metrics storage: nick => {year => count}
-array set shart_metrics {}
-array set shart_monthly {}
-array set shart_leaderboard {}
+proc et_data_file    {event} { return "${event}_timestamp.txt" }
+proc et_metrics_file {event} { return "${event}_metrics.txt" }
 
-# Load saved shart timestamp and nickname on start
-if {[file exists $shart_data_file]} {
-    set fp [open $shart_data_file r]
-    set _data [split [read $fp] "\n"]
-    close $fp
-    if {[llength ${_data}] >= 2} {
-        set shart_timestamp [lindex ${_data} 0]
-        set shart_nick [lindex ${_data} 1]
-        putlog "Loaded last shart: $shart_timestamp $shart_nick"
+proc et_load_data {event} {
+    global et_timestamp et_nick
+    set f [et_data_file $event]
+    if {[file exists $f]} {
+        set fp [open $f r]
+        set data [split [read $fp] "\n"]
+        close $fp
+        if {[llength $data] >= 2} {
+            set et_timestamp($event) [lindex $data 0]
+            set et_nick($event)      [lindex $data 1]
+            putlog "Loaded last $event: $et_timestamp($event) $et_nick($event)"
+        }
+        unset data
     }
-    unset _data
+    if {![info exists et_timestamp($event)]} { set et_timestamp($event) 0  }
+    if {![info exists et_nick($event)]}      { set et_nick($event)      "" }
 }
 
-# Load metrics data
-if {[file exists $shart_metrics_file]} {
-    set fp [open $shart_metrics_file r]
-    set _metrics_data [read $fp]
-    close $fp
-    # Parse metrics: each line is "nick year month count"
-    foreach _line [split ${_metrics_data} "\n"] {
-        if {[string trim ${_line}] ne ""} {
-            set _parts [split ${_line} " "]
-            if {[llength ${_parts}] >= 4} {
-                set _nick [string tolower [lindex ${_parts} 0]]
-                set _year [lindex ${_parts} 1]
-                set _month [lindex ${_parts} 2]
-                set _count [lindex ${_parts} 3]
-                set _key "${_nick}@${_year}@${_month}"
-                set shart_monthly(${_key}) ${_count}
-                putlog "Loaded shart metrics: ${_key} => ${_count}"
+proc et_load_metrics {event} {
+    global et_monthly
+    set f [et_metrics_file $event]
+    if {[file exists $f]} {
+        set fp [open $f r]
+        set raw [read $fp]
+        close $fp
+        foreach line [split $raw "\n"] {
+            if {[string trim $line] ne ""} {
+                set parts [split $line " "]
+                if {[llength $parts] >= 4} {
+                    set mnick [string tolower [lindex $parts 0]]
+                    set year  [lindex $parts 1]
+                    set month [lindex $parts 2]
+                    set count [lindex $parts 3]
+                    set key   "${event},${mnick}@${year}@${month}"
+                    set et_monthly($key) $count
+                    putlog "Loaded $event metrics: $key => $count"
+                }
             }
         }
+        unset raw
     }
-    unset _metrics_data _line _parts _nick _year _month _count _key
 }
 
-proc save_shart_data {} {
-    global shart_timestamp shart_nick shart_data_file
-    set fp [open $shart_data_file w]
-    puts $fp "$shart_timestamp\n$shart_nick"
+proc et_save_data {event} {
+    global et_timestamp et_nick
+    set fp [open [et_data_file $event] w]
+    puts $fp "$et_timestamp($event)\n$et_nick($event)"
     close $fp
 }
 
-# Save metrics to file
-proc save_shart_metrics {} {
-    global shart_metrics_file shart_monthly
-    set fp [open $shart_metrics_file w]
-    foreach key [array names shart_monthly] {
-        set parts [split $key "@"]
-        set nick [string tolower [lindex $parts 0]]
-        set year [lindex $parts 1]
+proc et_save_metrics {event} {
+    global et_monthly
+    set fp [open [et_metrics_file $event] w]
+    set prefix "${event},"
+    set plen [string length $prefix]
+    foreach key [array names et_monthly "${prefix}*"] {
+        set rest  [string range $key $plen end]
+        set parts [split $rest "@"]
+        set mnick [lindex $parts 0]
+        set year  [lindex $parts 1]
         set month [lindex $parts 2]
-        set count $shart_monthly($key)
-        puts $fp "$nick $year $month $count"
+        puts $fp "$mnick $year $month $et_monthly($key)"
     }
     close $fp
 }
 
-# Record a shart event in metrics
-proc record_shart_event {} {
-    global shart_monthly shart_nick
-    set now [clock seconds]
-    set year [clock format $now -format "%Y"]
+proc et_record_event {event confirmnick} {
+    global et_monthly
+    set now   [clock seconds]
+    set year  [clock format $now -format "%Y"]
     set month [clock format $now -format "%m"]
-    set key [string tolower "${shart_nick}@${year}@${month}"]
-    
-    if {[info exists shart_monthly($key)]} {
-        incr shart_monthly($key)
+    set key   "${event},[string tolower $confirmnick]@${year}@${month}"
+    if {[info exists et_monthly($key)]} {
+        incr et_monthly($key)
     } else {
-        set shart_monthly($key) 1
+        set et_monthly($key) 1
     }
-    save_shart_metrics
+    et_save_metrics $event
 }
 
-# --- Request Reset ---
-proc shartreset {nick uhost hand chan text} {
-    if [string equal "#amateurradio" $chan] then {
-        return
-    }
-    global pending_shart_nick pending_shart_time
+# --- Generic command implementations ---
 
-    set text [sanitize_string [string trim "${text}"]]
-    putlog "shartreset pub: $nick $uhost $hand $chan $text"
-
+proc et_reset {event nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then { return }
+    global et_pending_nick et_pending_time
+    set text [sanitize_string [string trim $text]]
+    putlog "${event}reset pub: $nick $uhost $hand $chan $text"
     if {$text eq ""} {
-        putchan $chan "$nick: You must specify a nickname! Usage: !shartreset <nickname>"
+        putchan $chan "$nick: You must specify a nickname! Usage: !${event}reset <nickname>"
         return
     }
-
-    set pending_shart_nick $text
-    set pending_shart_time [clock seconds]
-    putchan $chan "$nick has requested to reset the shart timer for $pending_shart_nick."
-    putchan $chan "$pending_shart_nick: Please confirm the shart with !shartconfirm within 24 hours."
+    set et_pending_nick($event) $text
+    set et_pending_time($event) [clock seconds]
+    putchan $chan "$nick has requested to reset the $event timer for $et_pending_nick($event)."
+    putchan $chan "$et_pending_nick($event): Please confirm with !${event}confirm within 24 hours."
 }
 
-# --- Confirm Shart ---
-proc shartconfirm {nick uhost hand chan text} {
-    if [string equal "#amateurradio" $chan] then {
+proc et_confirm {event nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then { return }
+    global et_timestamp et_nick et_pending_nick et_pending_time
+    set text [sanitize_string [string trim $text]]
+    putlog "${event}confirm pub: $nick $uhost $hand $chan $text"
+    if {$et_pending_nick($event) eq ""} {
+        putchan $chan "$nick: There is no pending $event request."
         return
     }
-    global shart_timestamp shart_nick pending_shart_nick pending_shart_time
-
-    set text [sanitize_string [string trim "${text}"]]
-    putlog "shartconfirm pub: $nick $uhost $hand $chan $text"
-
-    if {$pending_shart_nick eq ""} {
-        putchan $chan "$nick: There is no pending shart request."
-        return
-    }
-
-    # Check expiration (24h = 86400 seconds)
     set now [clock seconds]
-    if {[expr {$now - $pending_shart_time}] > 86400} {
-        putchan $chan "The shart request for $pending_shart_nick has expired (24h limit). Please request again."
-        set pending_shart_nick ""
-        set pending_shart_time 0
+    if {[expr {$now - $et_pending_time($event)}] > 86400} {
+        putchan $chan "The $event request for $et_pending_nick($event) has expired (24h limit). Please request again."
+        set et_pending_nick($event) ""
+        set et_pending_time($event) 0
         return
     }
-
-    if {![string equal -nocase $nick $pending_shart_nick]} {
-        putchan $chan "$nick: Only $pending_shart_nick can confirm this shart!"
+    if {![string equal -nocase $nick $et_pending_nick($event)]} {
+        putchan $chan "$nick: Only $et_pending_nick($event) can confirm this $event!"
         return
     }
-
-    set shart_timestamp $now
-    set shart_nick $nick
-    set pending_shart_nick ""
-    set pending_shart_time 0
-    save_shart_data
-    record_shart_event
-
-    putchan $chan "$nick has confirmed the shart."
+    set et_timestamp($event) $now
+    set et_nick($event)      $nick
+    set et_pending_nick($event) ""
+    set et_pending_time($event) 0
+    et_save_data $event
+    et_record_event $event $nick
+    putchan $chan "$nick has confirmed the $event."
 }
 
-# --- Show Timer ---
-proc shart {nick uhost hand chan text} {
-    if [string equal "#amateurradio" $chan] then {
+proc et_show {event nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then { return }
+    global et_timestamp et_nick
+    set text [sanitize_string [string trim $text]]
+    putlog "${event} pub: $nick $uhost $hand $chan $text"
+    if {$et_timestamp($event) == 0 || $et_nick($event) eq ""} {
+        putchan $chan "$nick: The $event timer hasn't been started yet! Use !${event}reset <nickname>."
         return
     }
-    global shart_timestamp shart_nick
-
-    set text [sanitize_string [string trim "${text}"]]
-    putlog "shart pub: $nick $uhost $hand $chan $text"
-
-    if {$shart_timestamp == 0 || $shart_nick eq ""} {
-        putchan $chan "$nick: The shart timer hasn't been started yet! Use !shartreset <nickname>."
-        return
-    }
-
-    set now [clock seconds]
-    set elapsed [expr {$now - $shart_timestamp}]
-
-    set weeks [expr {$elapsed / (60 * 60 * 24 * 7)}]
-    set days [expr {($elapsed / (60 * 60 * 24)) % 7}]
-    set hours [expr {($elapsed / (60 * 60)) % 24}]
+    set now     [clock seconds]
+    set elapsed [expr {$now - $et_timestamp($event)}]
+    set weeks   [expr {$elapsed / (60 * 60 * 24 * 7)}]
+    set days    [expr {($elapsed / (60 * 60 * 24)) % 7}]
+    set hours   [expr {($elapsed / (60 * 60)) % 24}]
     set minutes [expr {($elapsed / 60) % 60}]
-
-    putchan $chan "$nick: It's been $weeks week(s), $days day(s), $hours hour(s), and $minutes minute(s) since $shart_nick's last shart."
+    putchan $chan "$nick: It's been $weeks week(s), $days day(s), $hours hour(s), and $minutes minute(s) since $et_nick($event)'s last $event."
 }
 
-# --- Shart Status ---
-proc shartstatus {nick uhost hand chan text} {
-    if [string equal "#amateurradio" $chan] then {
+proc et_status {event nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then { return }
+    global et_pending_nick et_pending_time
+    set text [sanitize_string [string trim $text]]
+    putlog "${event}status pub: $nick $uhost $hand $chan $text"
+    if {$et_pending_nick($event) eq ""} {
+        putchan $chan "$nick: There is no pending $event request."
         return
     }
-    global pending_shart_nick pending_shart_time
-
-    set text [sanitize_string [string trim "${text}"]]
-    putlog "shartstatus pub: $nick $uhost $hand $chan $text"
-
-    if {$pending_shart_nick eq ""} {
-        putchan $chan "$nick: There is no pending shart request."
-        return
-    }
-
-    set now [clock seconds]
-    set remaining [expr {86400 - ($now - $pending_shart_time)}]
-
+    set now       [clock seconds]
+    set remaining [expr {86400 - ($now - $et_pending_time($event))}]
     if {$remaining <= 0} {
-        putchan $chan "The shart request for $pending_shart_nick has expired."
-        set pending_shart_nick ""
-        set pending_shart_time 0
+        putchan $chan "The $event request for $et_pending_nick($event) has expired."
+        set et_pending_nick($event) ""
+        set et_pending_time($event) 0
         return
     }
-
-    set hours [expr {$remaining / 3600}]
+    set hours   [expr {$remaining / 3600}]
     set minutes [expr {($remaining % 3600) / 60}]
-
-    putchan $chan "A shart request is pending for $pending_shart_nick. Time left to confirm: $hours hour(s) and $minutes minute(s)."
+    putchan $chan "A $event request is pending for $et_pending_nick($event). Time left to confirm: $hours hour(s) and $minutes minute(s)."
 }
 
 proc _cmp_nicks {a b} {
@@ -1335,85 +1323,61 @@ proc _cmp_nicks {a b} {
     return [expr {$nick_totals($b) - $nick_totals($a)}]
 }
 
-# --- Shart Metrics ---
-proc shartleague {nick uhost hand chan text} {
-    if [string equal "#amateurradio" $chan] then {
-        return
-    }
-    global shart_monthly
-
-    set text [sanitize_string [string trim "${text}"]]
-    putlog "shartleague pub: $nick $uhost $hand $chan $text"
-    
-    set now [clock seconds]
+proc et_league {event nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then { return }
+    global et_monthly nick_totals
+    set text [sanitize_string [string trim $text]]
+    putlog "${event}league pub: $nick $uhost $hand $chan $text"
+    set now          [clock seconds]
     set current_year [clock format $now -format "%Y"]
-    
-    # Check if a year was provided
-    if {$text ne ""} {
-        set current_year $text
-    }
-    
-    # Collect all nicks and their year totals
-    global nick_totals
+    if {$text ne ""} { set current_year $text }
     array set nick_totals {}
-    
-    foreach key [array names shart_monthly] {
-        set parts [split $key "@"]
-        set key_nick [lindex $parts 0]
-        set year [lindex $parts 1]
-        set count $shart_monthly($key)
-        
+    set prefix "${event},"
+    set plen [string length $prefix]
+    foreach key [array names et_monthly "${prefix}*"] {
+        set rest  [string range $key $plen end]
+        set parts [split $rest "@"]
+        set mnick [lindex $parts 0]
+        set year  [lindex $parts 1]
+        set count $et_monthly($key)
         if {$year == $current_year} {
-            if {[info exists nick_totals($key_nick)]} {
-                incr nick_totals($key_nick) $count
+            if {[info exists nick_totals($mnick)]} {
+                incr nick_totals($mnick) $count
             } else {
-                set nick_totals($key_nick) $count
+                set nick_totals($mnick) $count
             }
         }
     }
-    
     if {[array size nick_totals] == 0} {
-        putchan $chan "$nick: No shart data for $current_year yet."
-	unset nick_totals
+        putchan $chan "$nick: No $event data for $current_year yet."
+        unset nick_totals
         return
     }
-    
-    # Sort by total sharts (descending)
     set sorted_nicks [lsort -command _cmp_nicks [array names nick_totals]]
-    
     set rank 1
-    set standings_line "Shart standings for $current_year: "
-    foreach shart_nick $sorted_nicks {
-        set total $nick_totals($shart_nick)
-        append standings_line "$rank: $shart_nick $total; "
+    set line "[string totitle $event] standings for $current_year: "
+    foreach mnick $sorted_nicks {
+        append line "$rank: $mnick $nick_totals($mnick); "
         incr rank
     }
-    
     unset nick_totals
-    putchan $chan "[string trimright $standings_line {; }]"
+    putchan $chan "[string trimright $line {; }]"
 }
 
-# --- Shart Year Review ---
-proc shartyearreview {nick uhost hand chan text} {
-    if [string equal "#amateurradio" $chan] then {
-        return
-    }
-    global shart_monthly
-
-    set text [sanitize_string [string trim "${text}"]]
-    putlog "shartyearreview pub: $nick $uhost $hand $chan $text"
-    
-    set now [clock seconds]
+proc et_yearreview {event nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then { return }
+    global et_monthly
+    set text [sanitize_string [string trim $text]]
+    putlog "${event}yearreview pub: $nick $uhost $hand $chan $text"
+    set now         [clock seconds]
     set review_year [clock format $now -format "%Y"]
     set review_nick [string tolower $nick]
-    
     if {$text ne ""} {
         set parts [split [string tolower $text]]
         if {[llength $parts] == 2} {
             set review_nick [lindex $parts 0]
             set review_year [lindex $parts 1]
         } elseif {[llength $parts] == 1} {
-            # Could be a year or a nick
             if {[string is integer -strict $parts]} {
                 set review_year $parts
             } else {
@@ -1421,89 +1385,91 @@ proc shartyearreview {nick uhost hand chan text} {
             }
         }
     }
-    
     set year_total 0
     set month_data [list]
-    
-    # Collect monthly data for the year
     for {set m 1} {$m <= 12} {incr m} {
-        set month_key [format "%s@%s@%02d" $review_nick $review_year $m]
-        if {[info exists shart_monthly($month_key)]} {
-            set count $shart_monthly($month_key)
-        } else {
-            set count 0
-        }
+        set month_key [format "%s,%s@%s@%02d" $event $review_nick $review_year $m]
+        set count [expr {[info exists et_monthly($month_key)] ? $et_monthly($month_key) : 0}]
         incr year_total $count
         lappend month_data [list $m $count]
     }
-    
     if {$year_total == 0} {
-        putchan $chan "$nick: No shart data for $review_nick in $review_year."
+        putchan $chan "$nick: No $event data for $review_nick in $review_year."
         return
     }
-    
-    putchan $chan "Shart year $review_year in review for $review_nick: total $year_total"
-    
+    putchan $chan "[string totitle $event] year $review_year in review for $review_nick: total $year_total"
     set month_names [list "Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"]
     set r ""
-    
     foreach entry $month_data {
-        set month [lindex $entry 0]
+        set m     [lindex $entry 0]
         set count [lindex $entry 1]
-        set month_name [lindex $month_names [expr {$month - 1}]]
-
-	append r "$month_name: $count; "
+        append r "[lindex $month_names [expr {$m - 1}]]: $count; "
     }
     putchan $chan "[string trimright $r {; }]"
 }
 
-# --- Shart History ---
-proc sharthistory {nick uhost hand chan text} {
-    if [string equal "#amateurradio" $chan] then {
-        return
-    }
-    global shart_monthly
-
-    set text [sanitize_string [string trim "${text}"]]
-    putlog "sharthistory pub: $nick $uhost $hand $chan $text"
-    
+proc et_history {event nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then { return }
+    global et_monthly
+    set text [sanitize_string [string trim $text]]
+    putlog "${event}history pub: $nick $uhost $hand $chan $text"
     set years_data [dict create]
-    
-    # Group by year
-    foreach key [array names shart_monthly] {
-        set parts [split $key "@"]
-        set year [lindex $parts 1]
-        set count $shart_monthly($key)
-        
+    set prefix "${event},"
+    set plen [string length $prefix]
+    foreach key [array names et_monthly "${prefix}*"] {
+        set rest  [string range $key $plen end]
+        set parts [split $rest "@"]
+        set year  [lindex $parts 1]
+        set count $et_monthly($key)
         if {[dict exists $years_data $year]} {
             dict incr years_data $year $count
         } else {
             dict set years_data $year $count
         }
     }
-    
     if {[dict size $years_data] == 0} {
-        putchan $chan "$nick: No shart history available."
+        putchan $chan "$nick: No $event history available."
         return
     }
-    
-    set history_line "Shart history: "
+    set line "[string totitle $event] history: "
     foreach year [lsort -decreasing [dict keys $years_data]] {
-        set total [dict get $years_data $year]
-        append history_line "$year: $total; "
+        append line "$year: [dict get $years_data $year]; "
     }
-    
-    putchan $chan "[string trimright $history_line {; }]"
+    putchan $chan "[string trimright $line {; }]"
 }
 
-# --- Command Bindings ---
-bind pub - !shartreset shartreset
-bind pub - !shartconfirm shartconfirm
-bind pub - !shart shart
-bind pub - !shartstatus shartstatus
-bind pub - !shartleague shartleague
-bind pub - !shartyearreview shartyearreview
-bind pub - !sharthistory sharthistory
+# --- Register events ---
+# To add a new event, just append its name to this list.
+foreach _event {shart hangover puke} {
+    # Initialise state for this event
+    set et_timestamp($_event)    0
+    set et_nick($_event)         ""
+    set et_pending_nick($_event) ""
+    set et_pending_time($_event) 0
+
+    # Load persisted data
+    et_load_data    $_event
+    et_load_metrics $_event
+
+    # Create thin wrapper procs so eggdrop bind can find them by name,
+    # with the event name baked in at definition time.
+    proc ${_event}reset      {nick uhost hand chan text} "et_reset      [list $_event] \$nick \$uhost \$hand \$chan \$text"
+    proc ${_event}confirm    {nick uhost hand chan text} "et_confirm    [list $_event] \$nick \$uhost \$hand \$chan \$text"
+    proc ${_event}           {nick uhost hand chan text} "et_show       [list $_event] \$nick \$uhost \$hand \$chan \$text"
+    proc ${_event}status     {nick uhost hand chan text} "et_status     [list $_event] \$nick \$uhost \$hand \$chan \$text"
+    proc ${_event}league     {nick uhost hand chan text} "et_league     [list $_event] \$nick \$uhost \$hand \$chan \$text"
+    proc ${_event}yearreview {nick uhost hand chan text} "et_yearreview [list $_event] \$nick \$uhost \$hand \$chan \$text"
+    proc ${_event}history    {nick uhost hand chan text} "et_history    [list $_event] \$nick \$uhost \$hand \$chan \$text"
+
+    bind pub - !${_event}reset      ${_event}reset
+    bind pub - !${_event}confirm    ${_event}confirm
+    bind pub - !${_event}           ${_event}
+    bind pub - !${_event}status     ${_event}status
+    bind pub - !${_event}league     ${_event}league
+    bind pub - !${_event}yearreview ${_event}yearreview
+    bind pub - !${_event}history    ${_event}history
+}
+unset _event
 
 
 putlog "fun.tcl loaded."
