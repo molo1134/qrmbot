@@ -1510,7 +1510,7 @@ proc shartstatus {nick uhost hand chan text} {
 }
 
 # --- Shart Metrics ---
-proc shartmetrics {nick uhost hand chan text} {
+proc shartleague {nick uhost hand chan text} {
     if [string equal "#amateurradio" $chan] then {
         return
     }
@@ -1573,7 +1573,7 @@ proc shartyearreview {nick uhost hand chan text} {
     
     set now [clock seconds]
     set review_year [clock format $now -format "%Y"]
-    set review_nick ""
+    set review_nick $nick
     
     if {$text ne ""} {
         set text [sanitize_string [string trim $text]]
@@ -1674,7 +1674,7 @@ bind pub - !shartreset shartreset
 bind pub - !shartconfirm shartconfirm
 bind pub - !shart shart
 bind pub - !shartstatus shartstatus
-bind pub - !shartmetrics shartmetrics
+bind pub - !shartleague shartleague
 bind pub - !shartyearreview shartyearreview
 bind pub - !sharthistory sharthistory
 
