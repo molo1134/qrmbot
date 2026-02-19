@@ -92,6 +92,8 @@ while ($i <= $#ARGV) {
     doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://a.co/\w+/?|i) {
     doAmazon($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://store\.steampowered\.com/app/(\d+)|i) {
+    doSteam($1);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.\|smile\.)?amazon\.(com\|co\.jp\|ca\|co\.uk\|de)/gp/product/\w+/?|i) {
     doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?xkcd.com/(\d+)/?$|) {
@@ -1820,6 +1822,88 @@ sub trim {
   $s =~ s/^\s*//;
   $s =~ s/\s*$//;
   return $s;
+}
+
+sub doSteam {
+  my $appid = shift;
+  my $useragent = "Mozilla/5.0 (compatible; qrmbot)";
+
+  # App details
+  my $detail_url = "https://store.steampowered.com/api/appdetails?appids=${appid}&l=english&cc=US";
+  open(HTTP, '-|', "curl --max-time $timeout -s -k -L -A \"$useragent\" '$detail_url'");
+  local $/;
+  my $res = <HTTP>;
+  close(HTTP);
+  return if !defined $res || $res !~ /^\s*\{/;
+  my $detail_j = decode_json($res);
+  return if !defined $detail_j || !$detail_j->{$appid}{success} || !defined $detail_j->{$appid}{data};
+
+  my $data = $detail_j->{$appid}{data};
+  my $name = $data->{name};
+
+  # Price
+  my $price;
+  if ($data->{is_free}) {
+    $price = "Free";
+  } elsif (defined $data->{price_overview}) {
+    $price = $data->{price_overview}{final_formatted};
+    my $disc = $data->{price_overview}{discount_percent} // 0;
+    if ($disc > 0) {
+      my $orig = $data->{price_overview}{initial_formatted};
+      $price = "$price ($disc% off $orig)";
+    }
+  } else {
+    $price = "N/A";
+  }
+
+  # Short description
+  my $desc = $data->{short_description} // "";
+  $desc =~ s/<[^>]+>//g;
+  $desc = decodeEntities($desc);
+  $desc =~ s/\s+/ /g;
+  $desc =~ s/^\s+|\s+$//g;
+  if (length($desc) > 200) {
+    $desc = substr($desc, 0, 197) . "...";
+  }
+
+  # Review summary
+  my $review_url = "https://store.steampowered.com/appreviews/${appid}?json=1&language=all&purchase_type=all";
+  open(HTTP, '-|', "curl --max-time $timeout -s -k -L -A \"$useragent\" '$review_url'");
+  $res = <HTTP>;
+  close(HTTP);
+  my ($review_desc, $review_pct) = ("", "");
+  if (defined $res && $res =~ /^\s*\{/) {
+    my $review_j = decode_json($res);
+    if (defined $review_j->{query_summary}) {
+      my $qs = $review_j->{query_summary};
+      $review_desc = $qs->{review_score_desc} // "";
+      my $pos   = $qs->{total_positive} // 0;
+      my $total = $qs->{total_reviews}  // 0;
+      $review_pct = int($pos / $total * 100 + 0.5) . "%" if $total > 0;
+    }
+  }
+
+  # Metacritic
+  my $metascore = "";
+  if (defined $data->{metacritic} && defined $data->{metacritic}{score}) {
+    $metascore = $data->{metacritic}{score};
+  }
+
+  # Rating string
+  my $rating = "";
+  $rating = "$review_desc ($review_pct)" if $review_desc && $review_pct;
+  $rating = $review_desc if $review_desc && !$review_pct;
+  if ($metascore ne "") {
+    $rating .= " | " if $rating;
+    $rating .= "Metacritic: $metascore";
+  }
+  $rating = "No ratings yet" unless $rating;
+
+  print bold($name);
+  print " | " . bold($price);
+  print " | $rating";
+  print " | $desc" if $desc;
+  print "\n";
 }
 
 sub is_executable_in_path {
