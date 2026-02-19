@@ -1292,6 +1292,11 @@ proc shartstatus {nick uhost hand chan text} {
     putquick "PRIVMSG $chan :A shart request is pending for $pending_shart_nick. Time left to confirm: $hours hour(s) and $minutes minute(s)."
 }
 
+proc _cmp_nicks {a b} {
+    global nick_totals
+    return [expr {$nick_totals($b) - $nick_totals($a)}]
+}
+
 # --- Shart Metrics ---
 proc shartmetrics {nick uhost hand chan text} {
     if [string equal "#amateurradio" $chan] then {
@@ -1334,10 +1339,7 @@ proc shartmetrics {nick uhost hand chan text} {
     }
     
     # Sort by total sharts (descending)
-    set sorted_nicks [lsort -command {proc cmp_nicks {a b} {
-        global nick_totals
-        return [expr {$nick_totals($b) - $nick_totals($a)}]
-    }} [array names nick_totals]]
+    set sorted_nicks [lsort -command _cmp_nicks [array names nick_totals]]
     
     set rank 1
     set standings_line "Shart standings for $current_year: "
