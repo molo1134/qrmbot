@@ -1120,12 +1120,12 @@ if {[file exists $shart_metrics_file]} {
         if {[string trim ${_line}] ne ""} {
             set _parts [split ${_line} " "]
             if {[llength ${_parts}] >= 4} {
-                set _nick [lindex ${_parts} 0]
-                set _year [lindex ${_parts} 1]
-                set _month [lindex ${_parts} 2]
-                set _count [lindex ${_parts} 3]
-                set _key "${_nick}_${_year}_${_month}"
-                set shart_monthly(${_key}) ${_count}
+                set shart_nick [lindex ${_parts} 0]
+                set shart_year [lindex ${_parts} 1]
+                set shart_month [lindex ${_parts} 2]
+                set shart_count [lindex ${_parts} 3]
+                set shart_key "${shart_nick}_${shart_year}_${shart_month}"
+                set shart_monthly(${shart_key}) ${shart_count}
             }
         }
     }
@@ -1143,12 +1143,12 @@ proc save_shart_metrics {} {
     global shart_metrics_file shart_monthly
     set fp [open $shart_metrics_file w]
     foreach key [array names shart_monthly] {
-        set parts [split $key "_"]
-        set nick [lindex $parts 0]
-        set year [lindex $parts 1]
-        set month [lindex $parts 2]
-        set count $shart_monthly($key)
-        puts $fp "$nick $year $month $count"
+        set shart_parts [split $key "_"]
+        set shart_nick [lindex $shart_parts 0]
+        set shart_year [lindex $shart_parts 1]
+        set shart_month [lindex $shart_parts 2]
+        set shart_count $shart_monthly($key)
+        puts $fp "$shart_nick $shart_year $shart_month $shart_count"
     }
     close $fp
 }
@@ -1274,12 +1274,14 @@ proc shartstatus {nick uhost hand chan text} {
     putquick "PRIVMSG $chan :A shart request is pending for $pending_shart_nick. Time left to confirm: $hours hour(s) and $minutes minute(s)."
 }
 
-# --- Shart Metrics ---
-proc shartmetrics {nick uhost hand chan text} {
+# --- Shart League ---
+proc shartleague {nick uhost hand chan text} {
     if [string equal "#amateurradio" $chan] then {
         return
     }
     global shart_monthly
+    
+    putlog "shartleague: $nick $uhost $hand $chan $text"
     
     set now [clock seconds]
     set current_year [clock format $now -format "%Y"]
@@ -1312,16 +1314,18 @@ proc shartmetrics {nick uhost hand chan text} {
         return
     }
     
-    # Sort by total sharts (descending)
-    set sorted_nicks [lsort -command {proc cmp_nicks {a b} {
-        global nick_totals
-        return [expr {$nick_totals($b) - $nick_totals($a)}]
-    }} [array names nick_totals]]
+    # Sort by total sharts (descending) using a list of value-nick pairs
+    set sorted_pairs [list]
+    foreach nick_key [array names nick_totals] {
+        lappend sorted_pairs [list $nick_totals($nick_key) $nick_key]
+    }
+    set sorted_pairs [lsort -integer -index 0 -decreasing $sorted_pairs]
     
     set rank 1
     set standings_line "Shart standings for $current_year: "
-    foreach shart_nick $sorted_nicks {
-        set total $nick_totals($shart_nick)
+    foreach pair $sorted_pairs {
+        set total [lindex $pair 0]
+        set shart_nick [lindex $pair 1]
         append standings_line "$rank: $shart_nick $total; "
         incr rank
     }
@@ -1335,6 +1339,8 @@ proc shartyearreview {nick uhost hand chan text} {
         return
     }
     global shart_monthly
+    
+    putlog "shartyearreview: $nick $uhost $hand $chan $text"
     
     set now [clock seconds]
     set review_year [clock format $now -format "%Y"]
@@ -1405,6 +1411,8 @@ proc sharthistory {nick uhost hand chan text} {
     }
     global shart_monthly
     
+    putlog "sharthistory: $nick $uhost $hand $chan $text"
+    
     set years_data [dict create]
     
     # Group by year
@@ -1439,7 +1447,7 @@ bind pub - !shartreset shartreset
 bind pub - !shartconfirm shartconfirm
 bind pub - !shart shart
 bind pub - !shartstatus shartstatus
-bind pub - !shartmetrics shartmetrics
+bind pub - !shartleague shartleague
 bind pub - !shartyearreview shartyearreview
 bind pub - !sharthistory sharthistory
 
