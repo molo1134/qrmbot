@@ -349,10 +349,13 @@ sub shortenUrl {
   return undef if length($url) < 30;
   my $timeout = 4;	# max 4 seconds
 
-  our $bitly_apikey=undef;
-  my $bitlykeyfile = $ENV{'HOME'} . "/.bitlyapikey";
-  if (-e ($bitlykeyfile)) {
-    do $bitlykeyfile;
+  my $newApikeyfile = $ENV{'HOME'} . "/.qrmbot/keys/bitly";
+  my $oldApikeyfile = $ENV{'HOME'} . "/.bitlyapikey";
+  moveFile($oldApikeyfile, $newApikeyfile);
+  if (-e ($newApikeyfile)) {
+    do $newApikeyfile;
+  } elsif (-e $oldApikeyfile) { # fallback
+    do $oldApikeyfile;
   }
   return undef if not defined($bitly_apikey);
 
