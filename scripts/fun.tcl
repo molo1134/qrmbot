@@ -1576,17 +1576,17 @@ proc shartyearreview {nick uhost hand chan text} {
     set review_nick ""
     
     if {$text ne ""} {
-        set text [string trim $text]
+        set text [sanitize_string [string trim $text]]
         set parts [split $text]
         if {[llength $parts] == 2} {
-            set review_nick [sanitize_string [lindex $parts 0]]
-            set review_year [sanitize_string [lindex $parts 1]]
+            set review_nick [lindex $parts 0]
+            set review_year [lindex $parts 1]
         } elseif {[llength $parts] == 1} {
             # Could be a year or a nick
             if {[string is integer -strict $parts]} {
-                set review_year [sanitize_string $parts]
+                set review_year $parts
             } else {
-                set review_nick [sanitize_string $parts]
+                set review_nick $parts
             }
         }
     }
