@@ -43,7 +43,6 @@ sub fetchJSON {
   my $url = shift;
   open(my $fh, '-|', "curl --max-time 10 -s -k -L -A \"$useragent\" '$url'");
   local $/;
-  binmode($fh, ":utf8");
   my $res = <$fh>;
   close($fh);
   return undef unless defined $res && $res =~ /^\s*\{/;
