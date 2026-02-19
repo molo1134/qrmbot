@@ -1521,7 +1521,7 @@ proc shartmetrics {nick uhost hand chan text} {
     
     # Check if a year was provided
     if {$text ne ""} {
-        set current_year [string trim $text]
+        set current_year [sanitize_string [string trim $text]]
     }
     
     # Collect all nicks and their year totals
@@ -1579,14 +1579,14 @@ proc shartyearreview {nick uhost hand chan text} {
         set text [string trim $text]
         set parts [split $text]
         if {[llength $parts] == 2} {
-            set review_nick [lindex $parts 0]
-            set review_year [lindex $parts 1]
+            set review_nick [sanitize_string [lindex $parts 0]]
+            set review_year [sanitize_string [lindex $parts 1]]
         } elseif {[llength $parts] == 1} {
             # Could be a year or a nick
             if {[string is integer -strict $parts]} {
-                set review_year $parts
+                set review_year [sanitize_string $parts]
             } else {
-                set review_nick $parts
+                set review_nick [sanitize_string $parts]
             }
         }
     }
