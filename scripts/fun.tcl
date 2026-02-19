@@ -1149,22 +1149,26 @@ array set et_pending_time {}
 # Monthly metrics: key is "event,nick@year@month", value is count
 array set et_monthly      {}
 
-proc et_data_file    {event} { return "${event}_timestamp.txt" }
-proc et_metrics_file {event} { return "${event}_metrics.txt" }
+proc et_data_file    {event} { return [file join [file dirname [info script]] "${event}_timestamp.txt"] }
+proc et_metrics_file {event} { return [file join [file dirname [info script]] "${event}_metrics.txt"] }
 
 proc et_load_data {event} {
     global et_timestamp et_nick
     set f [et_data_file $event]
     if {[file exists $f]} {
-        set fp [open $f r]
-        set data [split [read $fp] "\n"]
-        close $fp
-        if {[llength $data] >= 2} {
-            set et_timestamp($event) [lindex $data 0]
-            set et_nick($event)      [lindex $data 1]
-            putlog "Loaded last $event: $et_timestamp($event) $et_nick($event)"
+        if {[catch {
+            set fp [open $f r]
+            set data [split [read $fp] "\n"]
+            close $fp
+            if {[llength $data] >= 2} {
+                set et_timestamp($event) [lindex $data 0]
+                set et_nick($event)      [lindex $data 1]
+                putlog "Loaded last $event: $et_timestamp($event) $et_nick($event)"
+            }
+            unset data
+        } err]} {
+            putlog "Error loading $event data: $err"
         }
-        unset data
     }
     if {![info exists et_timestamp($event)]} { set et_timestamp($event) 0  }
     if {![info exists et_nick($event)]}      { set et_nick($event)      "" }
@@ -1174,48 +1178,63 @@ proc et_load_metrics {event} {
     global et_monthly
     set f [et_metrics_file $event]
     if {[file exists $f]} {
-        set fp [open $f r]
-        set raw [read $fp]
-        close $fp
-        foreach line [split $raw "\n"] {
-            if {[string trim $line] ne ""} {
-                set parts [split $line " "]
-                if {[llength $parts] >= 4} {
-                    set mnick [string tolower [lindex $parts 0]]
-                    set year  [lindex $parts 1]
-                    set month [lindex $parts 2]
-                    set count [lindex $parts 3]
-                    set key   "${event},${mnick}@${year}@${month}"
-                    set et_monthly($key) $count
-                    putlog "Loaded $event metrics: $key => $count"
+        if {[catch {
+            set fp [open $f r]
+            set raw [read $fp]
+            close $fp
+            set count_loaded 0
+            foreach line [split $raw "\n"] {
+                if {[string trim $line] ne ""} {
+                    set parts [split $line " "]
+                    if {[llength $parts] >= 4} {
+                        set mnick [string tolower [lindex $parts 0]]
+                        set year  [lindex $parts 1]
+                        set month [lindex $parts 2]
+                        set count [lindex $parts 3]
+                        set key   "${event},${mnick}@${year}@${month}"
+                        set et_monthly($key) $count
+                        incr count_loaded
+                    }
                 }
             }
+            putlog "Loaded $count_loaded $event metrics entries"
+            unset raw
+        } err]} {
+            putlog "Error loading $event metrics: $err"
         }
-        unset raw
     }
 }
 
 proc et_save_data {event} {
     global et_timestamp et_nick
-    set fp [open [et_data_file $event] w]
-    puts $fp "$et_timestamp($event)\n$et_nick($event)"
-    close $fp
+    if {[catch {
+        set fp [open [et_data_file $event] w]
+        puts $fp $et_timestamp($event)
+        puts $fp $et_nick($event)
+        close $fp
+    } err]} {
+        putlog "Error saving $event data: $err"
+    }
 }
 
 proc et_save_metrics {event} {
     global et_monthly
-    set fp [open [et_metrics_file $event] w]
-    set prefix "${event},"
-    set plen [string length $prefix]
-    foreach key [array names et_monthly "${prefix}*"] {
-        set rest  [string range $key $plen end]
-        set parts [split $rest "@"]
-        set mnick [lindex $parts 0]
-        set year  [lindex $parts 1]
-        set month [lindex $parts 2]
-        puts $fp "$mnick $year $month $et_monthly($key)"
+    if {[catch {
+        set fp [open [et_metrics_file $event] w]
+        set prefix "${event},"
+        set plen [string length $prefix]
+        foreach key [array names et_monthly "${prefix}*"] {
+            set rest  [string range $key $plen end]
+            set parts [split $rest "@"]
+            set mnick [lindex $parts 0]
+            set year  [lindex $parts 1]
+            set month [lindex $parts 2]
+            puts $fp "$mnick $year $month $et_monthly($key)"
+        }
+        close $fp
+    } err]} {
+        putlog "Error saving $event metrics: $err"
     }
-    close $fp
 }
 
 proc et_record_event {event confirmnick} {
