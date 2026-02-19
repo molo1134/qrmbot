@@ -1350,6 +1350,7 @@ proc shartleague {nick uhost hand chan text} {
     }
     
     # Collect all nicks and their year totals
+    global nick_totals
     array set nick_totals {}
     
     foreach key [array names shart_monthly] {
@@ -1369,6 +1370,7 @@ proc shartleague {nick uhost hand chan text} {
     
     if {[array size nick_totals] == 0} {
         putquick "PRIVMSG $chan :$nick: No shart data for $current_year yet."
+	unset nick_totals
         return
     }
     
@@ -1383,6 +1385,7 @@ proc shartleague {nick uhost hand chan text} {
         incr rank
     }
     
+    unset nick_totals
     putquick "PRIVMSG $chan :[string trimright $standings_line {; }]"
 }
 
