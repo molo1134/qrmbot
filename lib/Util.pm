@@ -336,6 +336,13 @@ sub moveFile {
   my $src = shift;
   my $dst = shift;
 
+  my $dstDir = $dst;
+  $dstDir =~ s|^(.*/)[^/]*$|$1|;
+  if (not -d $dstDir) {
+    system("mkdir -p $dstDir\n");
+    return if not -d $dstDir;
+  }
+
   return if not -e $src;
   return if not -f $src;
   return if -e $dst;
