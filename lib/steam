@@ -99,18 +99,20 @@ my $data = $detail_j->{$appid}{data};
 my $name = $data->{name};
 
 # Price
-my $price;
+my $colored_price;
 if ($data->{is_free}) {
-  $price = "Free";
+  $colored_price = green("Free");
 } elsif (defined $data->{price_overview}) {
-  $price = $data->{price_overview}{final_formatted};
   my $disc = $data->{price_overview}{discount_percent} // 0;
   if ($disc > 0) {
     my $orig = $data->{price_overview}{initial_formatted};
-    $price = "$price ($disc% off $orig)";
+    my $final = $data->{price_overview}{final_formatted};
+    $colored_price = bold($final) . green(" (-$disc% off $orig)");
+  } else {
+    $colored_price = $data->{price_overview}{final_formatted};
   }
 } else {
-  $price = "N/A";
+  $colored_price = "N/A";
 }
 
 # Short description -- strip HTML tags and decode entities
@@ -127,14 +129,14 @@ if (length($desc) > 200) {
 my $review_url = "https://store.steampowered.com/appreviews/${appid}?json=1&language=all&purchase_type=all";
 my $review_j   = fetchJSON($review_url);
 
-my ($review_desc, $review_pct) = ("", "");
+my ($review_desc, $review_pct, $review_total) = ("", "", 0);
 if (defined $review_j && defined $review_j->{query_summary}) {
   my $qs = $review_j->{query_summary};
-  $review_desc = $qs->{review_score_desc} // "";
-  my $pos   = $qs->{total_positive} // 0;
-  my $total = $qs->{total_reviews}  // 0;
-  if ($total > 0) {
-    $review_pct = int($pos / $total * 100 + 0.5) . "%";
+  $review_desc  = $qs->{review_score_desc} // "";
+  my $pos       = $qs->{total_positive} // 0;
+  $review_total = $qs->{total_reviews}  // 0;
+  if ($review_total > 0) {
+    $review_pct = int($pos / $review_total * 100 + 0.5) . "%";
   }
 }
 
@@ -144,22 +146,46 @@ if (defined $data->{metacritic} && defined $data->{metacritic}{score}) {
   $metascore = $data->{metacritic}{score};
 }
 
-# Build rating string
-my $rating = "";
-$rating = "$review_desc ($review_pct)" if $review_desc && $review_pct;
-$rating = $review_desc if $review_desc && !$review_pct;
-if ($metascore ne "") {
-  $rating .= " | " if $rating;
-  $rating .= "Metacritic: $metascore";
+# Build colored rating string
+my $colored_rating = "";
+if ($review_desc && $review_pct) {
+  (my $count_fmt = $review_total) =~ s/(\d)(?=(\d{3})+(?!\d))/$1,/g;
+  my $review_str = "$review_desc ($review_pct \x{00B7} $count_fmt reviews)";
+  if ($review_desc =~ /Overwhelmingly Positive|Very Positive/i) {
+    $colored_rating = green($review_str);
+  } elsif ($review_desc =~ /Mostly Positive|^Positive$/i) {
+    $colored_rating = lightgreen($review_str);
+  } elsif ($review_desc =~ /Mixed/i) {
+    $colored_rating = yellow($review_str);
+  } elsif ($review_desc =~ /Negative/i) {
+    $colored_rating = red($review_str);
+  } else {
+    $colored_rating = $review_str;
+  }
+} elsif ($review_desc) {
+  $colored_rating = $review_desc;
 }
-$rating = "No ratings yet" unless $rating;
+if ($metascore ne "") {
+  my $meta_colored;
+  if ($metascore >= 80) {
+    $meta_colored = green("Metacritic: $metascore");
+  } elsif ($metascore >= 60) {
+    $meta_colored = yellow("Metacritic: $metascore");
+  } else {
+    $meta_colored = red("Metacritic: $metascore");
+  }
+  $colored_rating .= " | " if $colored_rating;
+  $colored_rating .= $meta_colored;
+}
+$colored_rating = "No ratings yet" unless $colored_rating;
 
 # --- Output ---
-print bold($name);
-print " | " . bold($price);
-print " | $rating";
-print " | $desc" if $desc;
-print " | https://s.team/a/$appid";
+my $sep = " \x{00B7} ";  # · middle dot separator
+print "🎮 " . bold($name);
+print $sep . $colored_price;
+print $sep . $colored_rating;
+print $sep . italic($desc) if $desc;
+print $sep . "https://s.team/a/$appid";
 print "\n";
 
 exit 0;
