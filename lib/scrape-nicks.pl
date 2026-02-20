@@ -119,7 +119,7 @@ our @blacklist = (
   "N4ADK");
 
 # load nicks
-our $nickfile = "$ENV{'HOME'}/.nicks.csv";
+our $nickfile = "$ENV{'HOME'}/.qrmbot/db/nicks.csv";
 $nickfile = dirname(realpath(__FILE__)) . "/nicks.csv" if (! -e $nickfile);
 our @headers; 	# keep headers for when we rewrite the nicks.csv file.
 if (-e $nickfile) {
