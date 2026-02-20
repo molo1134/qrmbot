@@ -6,7 +6,7 @@
 # Copyright (c) 2017, 2018, 2019, 2020, 2021, 2022 molo1134@github. All rights reserved.
 
 # in order to retrieve info from qrz.com, you need to put these two lines in
-# $HOME/.qrzlogin:
+# $HOME/.qrmbot/creds/qrz :
 
 # $login_callsign="YOURCALL";
 # $login_password="yourpass";
@@ -63,9 +63,11 @@ our $login_password = undef;
 our $usexml = 0;
 our $autoxml = 0;
 my $loginfile = undef;
+my $old_loginfile = $ENV{'HOME'} . "/.qrzlogin";
 my $cookiefile = undef;
-if (exists $ENV{'HOME'}) {
-  $loginfile = $ENV{'HOME'} . "/.qrzlogin";
+if (-d $ENV{'HOME'}) {
+  $loginfile     = $ENV{'HOME'} . "/.qrmbot/creds/qrz";
+  moveFile($old_loginfile, $loginfile);
   $cookiefile = $ENV{'HOME'} . "/.qrzcookies";
 } else {
   $loginfile = "./.qrzlogin";
@@ -76,6 +78,9 @@ my $baseurl = "https://www.qrz.com";
 if (-e ($loginfile)) {
   chmod 0600, $loginfile;
   require($loginfile);
+} elsif (-e $old_loginfile) {
+  chmod 0600, $old_loginfile;
+  require($old_loginfile);
 } else {
   die "error: unable to read file $loginfile"
 }
