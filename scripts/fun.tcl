@@ -1249,13 +1249,13 @@ proc et_reset {event nick uhost hand chan text} {
     set text [sanitize_string [string trim $text]]
     putlog "${event}reset pub: $nick $uhost $hand $chan $text"
     if {$text eq ""} {
-        putchan $chan "$nick: You must specify a nickname! Usage: !${event}reset <nickname>"
+        putchan $chan "$nick: You must specify a nickname. Usage: \u0002!${event}reset\u0002 <nickname>"
         return
     }
     set et_pending_nick($event) $text
     set et_pending_time($event) [clock seconds]
-    putchan $chan "$nick has requested to reset the $event timer for $et_pending_nick($event)."
-    putchan $chan "$et_pending_nick($event): Please confirm with !${event}confirm within 24 hours."
+    putchan $chan "⚠️ \u0002$nick\u0002 has requested to reset the \u0002$event\u0002 timer for \u0002$et_pending_nick($event)\u0002."
+    putchan $chan "\u0002$et_pending_nick($event)\u0002: please confirm with \u0002!${event}confirm\u0002 within 24 hours."
 }
 
 proc et_confirm {event nick uhost hand chan text} {
@@ -1264,18 +1264,18 @@ proc et_confirm {event nick uhost hand chan text} {
     set text [sanitize_string [string trim $text]]
     putlog "${event}confirm pub: $nick $uhost $hand $chan $text"
     if {$et_pending_nick($event) eq ""} {
-        putchan $chan "$nick: There is no pending $event request."
+        putchan $chan "$nick: There is no pending \u0002$event\u0002 request."
         return
     }
     set now [clock seconds]
     if {[expr {$now - $et_pending_time($event)}] > 86400} {
-        putchan $chan "The $event request for $et_pending_nick($event) has expired (24h limit). Please request again."
+        putchan $chan "The \u0002$event\u0002 request for \u0002$et_pending_nick($event)\u0002 has expired (24h limit). Please request again."
         set et_pending_nick($event) ""
         set et_pending_time($event) 0
         return
     }
     if {![string equal -nocase $nick $et_pending_nick($event)]} {
-        putchan $chan "$nick: Only $et_pending_nick($event) can confirm this $event!"
+        putchan $chan "$nick: Only \u0002$et_pending_nick($event)\u0002 can confirm this \u0002$event\u0002!"
         return
     }
     set et_timestamp($event) $now
@@ -1284,7 +1284,7 @@ proc et_confirm {event nick uhost hand chan text} {
     set et_pending_time($event) 0
     et_save_data $event
     et_record_event $event $nick
-    putchan $chan "$nick has confirmed the $event."
+    putchan $chan "✅ \u0002$nick\u0002 has confirmed the \u0002$event\u0002. Timer reset!"
 }
 
 proc et_show {event nick uhost hand chan text} {
@@ -1293,7 +1293,7 @@ proc et_show {event nick uhost hand chan text} {
     set text [sanitize_string [string trim $text]]
     putlog "${event} pub: $nick $uhost $hand $chan $text"
     if {$et_timestamp($event) == 0 || $et_nick($event) eq ""} {
-        putchan $chan "$nick: The $event timer hasn't been started yet! Use !${event}reset <nickname>."
+        putchan $chan "$nick: The \u0002$event\u0002 timer hasn't been started yet! Use \u0002!${event}reset\u0002 <nickname>."
         return
     }
     set now     [clock seconds]
@@ -1302,7 +1302,7 @@ proc et_show {event nick uhost hand chan text} {
     set days    [expr {($elapsed / (60 * 60 * 24)) % 7}]
     set hours   [expr {($elapsed / (60 * 60)) % 24}]
     set minutes [expr {($elapsed / 60) % 60}]
-    putchan $chan "$nick: It's been $weeks week(s), $days day(s), $hours hour(s), and $minutes minute(s) since $et_nick($event)'s last $event."
+    putchan $chan "⏱️ $nick: It's been \u0002$weeks\u0002 week(s), \u0002$days\u0002 day(s), \u0002$hours\u0002 hour(s), and \u0002$minutes\u0002 minute(s) since \u0002$et_nick($event)\u0002's last \u0002$event\u0002."
 }
 
 proc et_status {event nick uhost hand chan text} {
@@ -1311,20 +1311,20 @@ proc et_status {event nick uhost hand chan text} {
     set text [sanitize_string [string trim $text]]
     putlog "${event}status pub: $nick $uhost $hand $chan $text"
     if {$et_pending_nick($event) eq ""} {
-        putchan $chan "$nick: There is no pending $event request."
+        putchan $chan "$nick: There is no pending \u0002$event\u0002 request."
         return
     }
     set now       [clock seconds]
     set remaining [expr {86400 - ($now - $et_pending_time($event))}]
     if {$remaining <= 0} {
-        putchan $chan "The $event request for $et_pending_nick($event) has expired."
+        putchan $chan "The \u0002$event\u0002 request for \u0002$et_pending_nick($event)\u0002 has expired."
         set et_pending_nick($event) ""
         set et_pending_time($event) 0
         return
     }
     set hours   [expr {$remaining / 3600}]
     set minutes [expr {($remaining % 3600) / 60}]
-    putchan $chan "A $event request is pending for $et_pending_nick($event). Time left to confirm: $hours hour(s) and $minutes minute(s)."
+    putchan $chan "⏳ A \u0002$event\u0002 request is pending for \u0002$et_pending_nick($event)\u0002. Time left to confirm: \u0002${hours}h ${minutes}m\u0002."
 }
 
 proc _cmp_nicks {a b} {
@@ -1358,19 +1358,24 @@ proc et_league {event nick uhost hand chan text} {
         }
     }
     if {[array size nick_totals] == 0} {
-        putchan $chan "$nick: No $event data for $current_year yet."
+        putchan $chan "$nick: No \u0002$event\u0002 data for $current_year yet."
         unset nick_totals
         return
     }
     set sorted_nicks [lsort -command _cmp_nicks [array names nick_totals]]
+    set medals [list "🥇" "🥈" "🥉"]
     set rank 1
-    set line "[string totitle $event] standings for $current_year: "
+    set parts_list {}
     foreach mnick $sorted_nicks {
-        append line "$rank: $mnick $nick_totals($mnick); "
+        if {$rank <= 3} {
+            lappend parts_list "[lindex $medals [expr {$rank - 1}]] \u0002$mnick\u0002 ($nick_totals($mnick))"
+        } else {
+            lappend parts_list "$rank. \u0002$mnick\u0002 ($nick_totals($mnick))"
+        }
         incr rank
     }
     unset nick_totals
-    putchan $chan "[string trimright $line {; }]"
+    putchan $chan "🏆 \u0002[string totitle $event] standings for $current_year:\u0002 [join $parts_list " · "]"
 }
 
 proc et_yearreview {event nick uhost hand chan text} {
@@ -1403,20 +1408,20 @@ proc et_yearreview {event nick uhost hand chan text} {
         lappend month_data [list $m $count]
     }
     if {$year_total == 0} {
-        putchan $chan "$nick: No $event data for $review_nick in $review_year."
+        putchan $chan "$nick: No \u0002$event\u0002 data for \u0002$review_nick\u0002 in $review_year."
         return
     }
-    putchan $chan "[string totitle $event] year $review_year in review for $review_nick: total $year_total"
+    putchan $chan "📅 \u0002[string totitle $event]\u0002 year \u0002$review_year\u0002 in review for \u0002$review_nick\u0002 — total: \u0002$year_total\u0002"
     set month_names [list "Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"]
-    set r ""
+    set r {}
     foreach entry $month_data {
         set m     [lindex $entry 0]
         set count [lindex $entry 1]
-	if { $count > 0 } {
-            append r "[lindex $month_names [expr {$m - 1}]]: $count; "
-	}
+        if { $count > 0 } {
+            lappend r "[lindex $month_names [expr {$m - 1}]]: \u0002$count\u0002"
+        }
     }
-    putchan $chan "[string trimright $r {; }]"
+    putchan $chan "[join $r " · "]"
 }
 
 proc et_history {event nick uhost hand chan text} {
@@ -1439,26 +1444,19 @@ proc et_history {event nick uhost hand chan text} {
         }
     }
     if {[dict size $years_data] == 0} {
-        putchan $chan "$nick: No $event history available."
+        putchan $chan "$nick: No \u0002$event\u0002 history available."
         return
     }
-    set line "[string totitle $event] history: "
+    set parts_list {}
     foreach year [lsort -decreasing [dict keys $years_data]] {
-        append line "$year: [dict get $years_data $year]; "
+        lappend parts_list "$year: \u0002[dict get $years_data $year]\u0002"
     }
-    putchan $chan "[string trimright $line {; }]"
+    putchan $chan "📊 \u0002[string totitle $event] history:\u0002 [join $parts_list " · "]"
 }
 
 proc et_help {event nick uhost hand chan text} {
     if [string equal "#amateurradio" $chan] then { return }
-    putchan $chan "$nick: ${event} commands: \
-!${event} (show timer) | \
-!${event}reset <nick> (report a ${event}) | \
-!${event}confirm (confirm reset) | \
-!${event}status (pending request) | \
-!${event}league \[year\] (monthly rankings) | \
-!${event}yearreview \[year\] (yearly totals) | \
-!${event}history <nick> (personal history)"
+    putchan $chan "ℹ️ $nick: \u0002${event}\u0002 commands: \u0002!${event}\u0002 (timer) · \u0002!${event}reset\u0002 <nick> · \u0002!${event}confirm\u0002 · \u0002!${event}status\u0002 · \u0002!${event}league\u0002 \[year\] · \u0002!${event}yearreview\u0002 \[year\] · \u0002!${event}history\u0002 <nick>"
 }
 
 # --- Register events ---
