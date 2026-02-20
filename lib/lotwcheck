@@ -17,7 +17,9 @@ use Util;
 
 # config
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
-my $cachefile = $ENV{'HOME'} . "/.lotw-dates.txt";
+my $old_cachefile = $ENV{'HOME'} . "/.lotw-dates.txt";
+my $cachefile     = $ENV{'HOME'} . "/.qrmbot/cache/lotw-dates.txt";
+moveFile($old_cachefile, $cachefile);
 
 my $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();

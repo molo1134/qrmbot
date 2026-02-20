@@ -87,7 +87,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/cache/dmr-id-users.csv` -- cache of DMR user IDs
 * `$HOME/.qrmbot/cache/hamspots.cookies` -- HTTP cookies for hamspots.net session
 * `$HOME/.icao-types` -- cache of ICAO aircraft type data
-* `$HOME/.lotw-dates.txt` -- cached LOTW upload dates
+* `$HOME/.qrmbot/cache/lotw-dates.txt` -- cached LOTW upload dates
 * `$HOME/.mostwanted.txt` -- cached DXCC "most wanted" data from [clublog.org](http://clublog.org/)
 * `$HOME/.qrzcookies` -- HTTP cookies for qrz.com session
 * `$HOME/.spottimestamps` -- used for spots monitor mode; safe to remove
