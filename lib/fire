@@ -5,7 +5,7 @@
 # 2-clause BSD license.
 # Copyright (c) 2021 molo1134@github. All rights reserved.
 #
-# requires an API key from aerisweather.com  Place into the file $HOME/.aerisweather as follows:
+# requires an API key from aerisweather.com  Place into the file $HOME/.qrmbot/keys/aerisweather as follows:
 #
 # $client_id = "0123456789abcdef";
 # $client_secret = "0123456789abcdef";
@@ -39,11 +39,15 @@ our $client_secret = undef;
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
-my $apikeyfile = $ENV{'HOME'} . "/.aerisweather";
-if (-e ($apikeyfile)) {
-  require($apikeyfile);
+my $newApikeyfile = $ENV{'HOME'} . "/.qrmbot/keys/aerisweather";
+my $oldApikeyfile = $ENV{'HOME'} . "/.aerisweather";
+moveFile($oldApikeyfile, $newApikeyfile);
+if (-e ($newApikeyfile)) {
+  require($newApikeyfile);
+} elsif (-e $oldApikeyfile) { # fallback
+  require($oldApikeyfile);
 } else {
-  die "error: unable to read file $apikeyfile"
+  die "error: unable to read file $newApikeyfile"
 }
 die "error: no API key set" unless defined($client_id) and defined($client_secret);
 
