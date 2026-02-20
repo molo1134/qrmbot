@@ -237,7 +237,9 @@ if ($apitype eq "reapi") {
 sub updateICAOtypes {
   #my $url = "https://www4.icao.int/doc8643/External/AircraftTypes";
   my $url = "https://web.archive.org/web/20230101013553/https://www4.icao.int/doc8643/External/AircraftTypes";
-  my $typesfile = $ENV{'HOME'} . "/.icao-types";
+  my $old_typesfile = $ENV{'HOME'} . "/.icao-types";
+  my $typesfile     = $ENV{'HOME'} . "/.qrmbot/cache/icao-types";
+  moveFile($old_typesfile, $typesfile);
   my $needICAO = 0;
   my $now = time;
   my $maxage=604800; # 1 week
