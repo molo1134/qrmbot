@@ -83,8 +83,8 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 
 * `$HOME/.qrmbot/cache/clublogusers.gz` -- cache of clublog.org user data
 * `$HOME/.cty.dat` -- cached DXCC data from [country-files.com](http://www.country-files.com/)
-* `$HOME/.dmr-id-repeaters.csv` -- cache of DMR repeater IDs
-* `$HOME/.dmr-id-users.csv` -- cache of DMR user IDs
+* `$HOME/.qrmbot/cache/dmr-id-repeaters.csv` -- cache of DMR repeater IDs
+* `$HOME/.qrmbot/cache/dmr-id-users.csv` -- cache of DMR user IDs
 * `$HOME/.qrmbot/cache/hamspots.cookies` -- HTTP cookies for hamspots.net session
 * `$HOME/.icao-types` -- cache of ICAO aircraft type data
 * `$HOME/.lotw-dates.txt` -- cached LOTW upload dates

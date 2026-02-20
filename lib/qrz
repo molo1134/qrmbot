@@ -1175,8 +1175,12 @@ sub getCallForRedditId {
 }
 
 sub updateDMRfiles {
-  my $userFile="$ENV{HOME}/.dmr-id-users.csv";
-  my $rptrFile="$ENV{HOME}/.dmr-id-repeaters.csv";
+  my $old_userFile="$ENV{HOME}/.dmr-id-users.csv";
+  my $userFile    ="$ENV{HOME}/.qrmbot/cache/dmr-id-users.csv";
+  my $old_rptrFile="$ENV{HOME}/.dmr-id-repeaters.csv";
+  my $rptrFile    ="$ENV{HOME}/.qrmbot/cache/dmr-id-repeaters.csv";
+  moveFile($old_userFile, $userFile);
+  moveFile($old_rptrFile, $rptrFile);
 
   my $usersUrl="https://www.radioid.net/static/cbridge_simple_user.csv";
   my $rptrsUrl="https://www.radioid.net/static/cbridge_simple_rptr.csv";
@@ -1218,8 +1222,12 @@ sub updateDMRfiles {
 sub getDMRidsForCall {
   my $call = uc shift;
 
-  my $userFile="$ENV{HOME}/.dmr-id-users.csv";
-  my $rptrFile="$ENV{HOME}/.dmr-id-repeaters.csv";
+  my $old_userFile="$ENV{HOME}/.dmr-id-users.csv";
+  my $userFile    ="$ENV{HOME}/.qrmbot/cache/dmr-id-users.csv";
+  my $old_rptrFile="$ENV{HOME}/.dmr-id-repeaters.csv";
+  my $rptrFile    ="$ENV{HOME}/.qrmbot/cache/dmr-id-repeaters.csv";
+  moveFile($old_userFile, $userFile);
+  moveFile($old_rptrFile, $rptrFile);
 
   my @results;
 
@@ -1250,8 +1258,12 @@ sub getDMRidsForCall {
 
 sub findCallForDmr {
   my $dmr = shift;
-  my $userFile="$ENV{HOME}/.dmr-id-users.csv";
-  my $rptrFile="$ENV{HOME}/.dmr-id-repeaters.csv";
+  my $old_userFile="$ENV{HOME}/.dmr-id-users.csv";
+  my $userFile    ="$ENV{HOME}/.qrmbot/cache/dmr-id-users.csv";
+  my $old_rptrFile="$ENV{HOME}/.dmr-id-repeaters.csv";
+  my $rptrFile    ="$ENV{HOME}/.qrmbot/cache/dmr-id-repeaters.csv";
+  moveFile($old_userFile, $userFile);
+  moveFile($old_rptrFile, $rptrFile);
 
   my @results;
 
