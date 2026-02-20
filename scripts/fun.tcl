@@ -1449,6 +1449,18 @@ proc et_history {event nick uhost hand chan text} {
     putchan $chan "[string trimright $line {; }]"
 }
 
+proc et_help {event nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then { return }
+    putchan $chan "$nick: ${event} commands: \
+!${event} (show timer) | \
+!${event}reset <nick> (report a ${event}) | \
+!${event}confirm (confirm reset) | \
+!${event}status (pending request) | \
+!${event}league \[year\] (monthly rankings) | \
+!${event}yearreview \[year\] (yearly totals) | \
+!${event}history <nick> (personal history)"
+}
+
 # --- Register events ---
 # To add a new event, just append its name to this list.
 foreach _event {shart hangover puke} {
@@ -1471,6 +1483,7 @@ foreach _event {shart hangover puke} {
     proc ${_event}league     {nick uhost hand chan text} "et_league     [list $_event] \$nick \$uhost \$hand \$chan \$text"
     proc ${_event}yearreview {nick uhost hand chan text} "et_yearreview [list $_event] \$nick \$uhost \$hand \$chan \$text"
     proc ${_event}history    {nick uhost hand chan text} "et_history    [list $_event] \$nick \$uhost \$hand \$chan \$text"
+    proc ${_event}help       {nick uhost hand chan text} "et_help       [list $_event] \$nick \$uhost \$hand \$chan \$text"
 
     bind pub - !${_event}reset      ${_event}reset
     bind pub - !${_event}confirm    ${_event}confirm
@@ -1479,6 +1492,7 @@ foreach _event {shart hangover puke} {
     bind pub - !${_event}league     ${_event}league
     bind pub - !${_event}yearreview ${_event}yearreview
     bind pub - !${_event}history    ${_event}history
+    bind pub - !${_event}help       ${_event}help
 }
 unset _event
 
