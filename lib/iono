@@ -150,6 +150,7 @@ open (JSON, '-|', "curl -s -k -L --max-time $timeout --retry 1 \"${url}\"");
 local $/;   # read entire file -- FIXME: potentially memory hungry
 binmode(JSON, ":utf8");
 my $json = <JSON>;
+close(JSON);
 my $j = from_json($json) or die "error: could not decode response\n";
 
 my $grid = substr(coordToGrid($lat, $lon), 0, 4);
