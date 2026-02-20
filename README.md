@@ -66,18 +66,18 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 
 ## Configuration files
 
+* `$HOME/.qrmbot/conf/qth` -- set your default geographic coordinates, for command line use
+* `$HOME/.qrmbot/creds/hamspots` -- required login credentials for [hamspots.net](http://hamspots.net) use
+* `$HOME/.qrmbot/creds/qrz` -- required login credentials for [qrz.com](http://qrz.com/) lookup
+* `$HOME/.qrmbot/db/nicks.csv` -- irc and reddit nicknames -- optional, will override repository data
 * `$HOME/.qrmbot/keys/aerisweather` -- API key for aerisweather.com
 * `$HOME/.qrmbot/keys/aprs.fi` -- required [aprs.fi](http://aprs.fi/) API key for `aprs` tool
-* `$HOME/.qrmbot/keys/bitly` -- key for bit.ly API
-* `$HOME/.qrmbot/keys/clublog` -- API key for clublog.org
-* `$HOME/.qrmbot/keys/coinmarketcap` -- API key for coinmarketcap.com
-* `$HOME/.qrmbot/keys/deepl` -- API key for deepl.com translation
-* `$HOME/.qrmbot/keys/google` -- key for Google APIs (geocoding, translation)
-* `$HOME/.qrmbot/creds/hamspots` -- required login credentials for [hamspots.net](http://hamspots.net) use
-* `$HOME/.qrmbot/keys/imgur` -- API key for imgur.com
-* `$HOME/.qrmbot/db/nicks.csv` -- irc and reddit nicknames -- optional, will override repository data
-* `$HOME/.qrmbot/creds/qrz` -- required login credentials for [qrz.com](http://qrz.com/) lookup
-* `$HOME/.qrmbot/conf/qth` -- set your default geographic coordinates, for command line use
+* `$HOME/.qrmbot/keys/bitly` -- key for [bit.ly](https://bit.ly/) API
+* `$HOME/.qrmbot/keys/clublog` -- API key for [clublog.org](https://clublog.org/)
+* `$HOME/.qrmbot/keys/coinmarketcap` -- API key for [coinmarketcap.com](https://coinmarketcap.com/)
+* `$HOME/.qrmbot/keys/deepl` -- API key for [deepl.com](https://deepl.com/) translation
+* `$HOME/.qrmbot/keys/google` -- keys for Google APIs (geocoding, translation)
+* `$HOME/.qrmbot/keys/imgur` -- API key for [imgur.com](https://imgur.com/)
 
 ## Cache files / state
 
