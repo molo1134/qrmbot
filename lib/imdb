@@ -6,7 +6,7 @@
 # Copyright (c) 2022 KN6RAP. All rights reserved.
 # Copyright (c) 2022 molo1134@github. All rights reserved.
 #
-# requires an API key from www.omdbapi.com  Place into the file $HOME/.omdbapi
+# requires an API key from www.omdbapi.com  Place into the file $HOME/.qrmbot/keys/omdbapi
 # as follows:
 #
 # $apikey = "0123456789abcdef";
@@ -42,9 +42,13 @@ if ( $#main::ARGV < 0 ) {
   exit $exitnonzeroonerror;
 }
 
-my $apikeyfile = $ENV{'HOME'} . "/.omdbapi";
+my $old_apikeyfile = $ENV{'HOME'} . "/.omdbapi";
+my $apikeyfile     = $ENV{'HOME'} . "/.qrmbot/keys/omdbapi";
+moveFile($old_apikeyfile, $apikeyfile);
 if (-e ($apikeyfile)) {
   require($apikeyfile);
+} elsif (-e $old_apikeyfile) {
+  require($old_apikeyfile);
 } else {
   print "error: unable to read file $apikeyfile\n";
   exit $exitnonzeroonerror;

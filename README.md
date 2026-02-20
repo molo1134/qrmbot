@@ -71,14 +71,15 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/creds/qrz` -- required login credentials for [qrz.com](http://qrz.com/) lookup
 * `$HOME/.qrmbot/db/nicks.csv` -- irc and reddit nicknames -- optional, will override repository data
 * `$HOME/.qrmbot/keys/aerisweather` -- API key for aerisweather.com
-* `$HOME/.qrmbot/keys/aprs.fi` -- required [aprs.fi](http://aprs.fi/) API key for `aprs` tool
 * `$HOME/.qrmbot/keys/adsb.fi` -- key for [adsb.fi](https://adsb.fi/) aircraft tracking (optional)
+* `$HOME/.qrmbot/keys/aprs.fi` -- required [aprs.fi](http://aprs.fi/) API key for `aprs` tool
 * `$HOME/.qrmbot/keys/bitly` -- key for [bit.ly](https://bit.ly/) API
 * `$HOME/.qrmbot/keys/clublog` -- API key for [clublog.org](https://clublog.org/)
 * `$HOME/.qrmbot/keys/coinmarketcap` -- API key for [coinmarketcap.com](https://coinmarketcap.com/)
 * `$HOME/.qrmbot/keys/deepl` -- API key for [deepl.com](https://deepl.com/) translation
 * `$HOME/.qrmbot/keys/google` -- keys for Google APIs (geocoding, translation)
 * `$HOME/.qrmbot/keys/imgur` -- API key for [imgur.com](https://imgur.com/)
+* `$HOME/.qrmbot/keys/omdbapi` -- API key for [omdbapi.com](https://www.omdbapi.com/)
 
 ## Cache files / state
 
