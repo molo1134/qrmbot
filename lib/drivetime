@@ -30,9 +30,9 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 our $mylat = undef;
 our $mylon = undef;
 
-my $loginfile = $ENV{'HOME'} . "/.qrzlogin";
-if (-e ($loginfile)) {
-  require($loginfile);
+my $qthfile = $ENV{'HOME'} . "/.qrmbot/conf/qth";
+if (-e ($qthfile)) {
+  require($qthfile);
 }
 
 @ARGV = map { decode "utf-8", $_ } @ARGV;

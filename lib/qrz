@@ -39,12 +39,15 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 our $useragent = "Mozilla/5.0 (X11; U; Linux i686 (x86_64); en-US; rv:1.9.2) Gecko/20100115 Firefox/3.6";
 
 # in order to calculate distance and bearing to the other station, set origin
-# latitude and longitude here, or in $HOME/.qrzlogin:
+# latitude and longitude here, or in $HOME/.qrmbot/conf/qth :
 #our $mylat=40.7655;
 #our $mylon=-73.9742;
 our $mylat = undef;
 our $mylon = undef;
-
+my $qthfile = $ENV{'HOME'} . "/.qrmbot/conf/qth";
+if (-e $qthfile) {
+  require($qthfile);
+}
 
 # you can use your choice of wget or curl
 our $httptool = "curl";
