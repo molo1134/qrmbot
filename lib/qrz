@@ -68,10 +68,12 @@ our $autoxml = 0;
 my $loginfile = undef;
 my $old_loginfile = $ENV{'HOME'} . "/.qrzlogin";
 my $cookiefile = undef;
+my $old_cookiefile = $ENV{'HOME'} . "/.qrzcookies";
 if (-d $ENV{'HOME'}) {
-  $loginfile     = $ENV{'HOME'} . "/.qrmbot/creds/qrz";
+  $loginfile = $ENV{'HOME'} . "/.qrmbot/creds/qrz";
   moveFile($old_loginfile, $loginfile);
-  $cookiefile = $ENV{'HOME'} . "/.qrzcookies";
+  $cookiefile = $ENV{'HOME'} . "/.qrmbot/cache/qrz.cookies";
+  moveFile($old_cookiefile, $cookiefile);
 } else {
   $loginfile = "./.qrzlogin";
   $cookiefile = "/tmp/.qrzcookies";
