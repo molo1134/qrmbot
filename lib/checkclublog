@@ -18,13 +18,16 @@ use File::Temp qw(tempfile);
 use strict;
 
 my $url = 'https://clublog.org/clublog-users.json.zip';
-my $userfile=$ENV{'HOME'} . "/.clublogusers.gz";
+my $old_userfile=$ENV{'HOME'} . "/.clublogusers.gz";
+my $userfile    =$ENV{'HOME'} . "/.qrmbot/cache/clublogusers.gz";
 my $maxage=604800; # 1 week
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
 my $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+moveFile($old_userfile, $userfile);
 
 sub updatezip {
   my (undef, $tmpfile) = tempfile();

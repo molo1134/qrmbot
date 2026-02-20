@@ -81,7 +81,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 
 ## Cache files / state
 
-* `$HOME/.clublogusers.gz` -- cache of clublog.org user data
+* `$HOME/.qrmbot/cache/clublogusers.gz` -- cache of clublog.org user data
 * `$HOME/.cty.dat` -- cached DXCC data from [country-files.com](http://www.country-files.com/)
 * `$HOME/.dmr-id-repeaters.csv` -- cache of DMR repeater IDs
 * `$HOME/.dmr-id-users.csv` -- cache of DMR user IDs
