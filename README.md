@@ -72,6 +72,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/db/nicks.csv` -- irc and reddit nicknames -- optional, will override repository data
 * `$HOME/.qrmbot/keys/aerisweather` -- API key for aerisweather.com
 * `$HOME/.qrmbot/keys/aprs.fi` -- required [aprs.fi](http://aprs.fi/) API key for `aprs` tool
+* `$HOME/.qrmbot/keys/adsb.fi` -- key for [adsb.fi](https://adsb.fi/) aircraft tracking (optional)
 * `$HOME/.qrmbot/keys/bitly` -- key for [bit.ly](https://bit.ly/) API
 * `$HOME/.qrmbot/keys/clublog` -- API key for [clublog.org](https://clublog.org/)
 * `$HOME/.qrmbot/keys/coinmarketcap` -- API key for [coinmarketcap.com](https://coinmarketcap.com/)

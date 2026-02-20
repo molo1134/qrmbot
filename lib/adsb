@@ -47,9 +47,13 @@ my $apitype = "lol";
 #my $apitype = "reapi";
 
 our $apikey_adsb_fi;
-my $apikeyfile = $ENV{'HOME'} . "/.adsb-api-keys";
+my $old_apikeyfile = $ENV{'HOME'} . "/.adsb-api-keys";
+my $apikeyfile     = $ENV{'HOME'} . "/.qrmbot/keys/adsb.fi";
+moveFile($old_apikeyfile, $apikeyfile);
 if ( -e ($apikeyfile)) {
   require ($apikeyfile);
+} elsif ( -e ($old_apikeyfile)) {
+  require ($old_apikeyfile);
 } else {
   print "warning: unable to read file $apikeyfile\n"
 }
