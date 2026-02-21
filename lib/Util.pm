@@ -19,6 +19,7 @@ use Date::Manip;
 use Math::Round;
 use File::Temp qw(tempfile);
 use File::Copy;
+use JSON qw( from_json );
 
 sub decodeEntities {
   my $s = shift;
@@ -412,9 +413,10 @@ our $_ctydat=$ENV{'HOME'} . "/.cty.dat";
 our $_cty_maxage=604800; # 1 week
 our $_cty_handle = undef;
 
-# load mostwanted summary from $HOME/.mostwanted.txt, which will be populated
-# by the scrapeMW() subroutine.
-our $_mostwantedfile=$ENV{'HOME'} . "/.mostwanted.txt";
+# load mostwanted summary from $HOME/.qrmbot/cache/mostwanted.txt, which will
+# be populated by the scrapeMW() subroutine.
+our $_cachedir = $ENV{'HOME'} . "/.qrmbot/cache/";
+our $_mostwantedfile = $_cachedir . "mostwanted.txt";
 our $_mw_maxage=604800; # 1 week
 
 sub getDxccDataRef {
@@ -509,29 +511,29 @@ sub getDxccDataRef {
 
   # ----------------
 
-  # load mostwanted summary from $HOME/.mostwanted.txt, if present
+  # load mostwanted summary from $HOME/.qrmbot/cache/mostwanted.txt, if present
   my %mostwantedByPrefix;
   my %mostwantedByName;
   open(MW, "<", $_mostwantedfile) or goto SKIPMW;
   while (<MW>) {
     chomp;
     if (/^\d/) {
-      my ($rank, $prefix, $name) = split /,/;
+      my ($rank, $dxxcnum, $prefix, $name) = split /,/;
       #print "$prefix => $rank\n";
       $mostwantedByPrefix{$prefix} = $rank;
-      $mostwantedByName{$name} = $rank;
+      $mostwantedByName{uc $name} = $rank;
 
       # hack. this place is called 'San Andres & Providencia' in cty.dat, but
       # 'SAN ANDRES ISLAND' by clublog and LoTW.
-      if ($name eq "SAN ANDRES ISLAND") {
+      if (uc $name eq "SAN ANDRES ISLAND") {
 	$mostwantedByName{"SAN ANDRES & PROVIDENCIA"} = $rank;
       }
       # hack. this place is 3B6 in cty.dat but 3B7 in clublog.
-      if ($name eq "AGALEGA & ST BRANDON ISLANDS") {
+      if (uc $name eq "AGALEGA & ST BRANDON ISLANDS") {
 	$mostwantedByPrefix{"3B6"} = $rank;
 	$mostwantedByName{"AGALEGA & ST. BRANDON"} = $rank;
       }
-      if ($name eq "VIET NAM") {
+      if (uc $name eq "VIET NAM") {
 	$mostwantedByName{"VIETNAM"} = $rank;
       }
     }
@@ -645,28 +647,83 @@ sub checkMW {
 }
 
 sub scrapeMW {
-  my $mwurl = "https://clublog.org/mostwanted.php";
+  my $mwurl = "https://clublog.org/mostwanted.php?api=1";
+  my $dxccUrl = "https://www.arrl.org/files/file/DXCC/2022_Current_Deleted.txt";
 
-  open(MWFILE, ">", $_mostwantedfile) or die "Can't open for writing: $!";
-
-  #print "$mwurl\n";
-  open (HTTP, '-|', "curl -s -k -L --max-time 4 --retry 1 '$mwurl'");
+  my %dxcc;
+  open (HTTP, '-|', "curl -s -k -L --max-time 4 --retry 1 '$dxccUrl'");
   binmode(HTTP, ":utf8");
-  while(<HTTP>) {
-    chomp;
-    if ( /<p><table>/ ) {
-      my @rows = split /<tr>/i;
-      foreach my $row (@rows) {
-	#print "$row\n";
-	if ($row =~ /<td>([0-9]+)\.<\/td><td>([^<]+)<\/td><td><a href='mostwanted2.php\?dxcc=[0-9]+'>([^<]+)<\/a>.*?<\/tr>/i) {
-	  my ($rank, $prefix, $name) = ($1, $2, $3);
-	  print MWFILE "$rank,$prefix,$name\n";
-	}
-      }
+  my $in_dxccs = 0;
+  while (<HTTP>) {
+    chomp; chomp; # DOS text
+    $in_dxccs = 1 if /^\s+_[_ ]+_\s*$/;
+    $in_dxccs = 0 if /NOTES:/;
+    last if /NOTES:/;
+    next if $in_dxccs == 0;
+    next if /_________/;
+    next if /^\s*$/;
+    s/^\s+//;
+    my @line = unpack("A20 A35 A6 A6 A6 A3"); # split by columns
+    my ($pfx, $name, $dxccnum) = ($line[0], $line[1], int($line[5]));
+    $pfx =~ s/[,(*#_^-].*$//;
+    #print "$pfx\t$dxccnum\t$name\n";
+    #print "0: $line[0]\n";
+    #print "1: $line[1]\n";
+    #print "2: $line[2]\n";
+    #print "3: $line[3]\n";
+    #print "4: $line[4]\n";
+    #print "5: $line[5]\n";
 
-    }
+    $pfx =~ s|(/.*)$|uc($1)|e;
+    $pfx = "FO/A" if $name =~ /Austral I/i;
+    $pfx = "FK/C" if $name =~ /Chesterfield/i;
+    $pfx = "FO/C" if $name =~ /Clipperton/i;
+    $pfx = "VP6/D" if $name =~ /Ducie/i;
+    $pfx = "CE0Y" if $name =~ /Easter/i;
+    $pfx = "DL" if $name =~ /Federal Republic of Germany/i;
+    $pfx = "VK0H" if $name =~ /Heard/i;
+    $pfx = "CE0Z" if $name =~ /Juan Fernandez/i;
+    $pfx = "VK0M" if $name =~ /Macquarie/i;
+    $pfx = "HK0/M" if $name =~ /Malpelo/i;
+    $pfx = "FO/M" if $name =~ /Marquesas/i;
+    $pfx = "E5/N" if $name =~ /North Cook/i;
+    $pfx = "3Y/P" if $name =~ /Peter 1/i;
+    $pfx = "3D2/R" if $name =~ /Rotuma/i;
+    $pfx = "ZS" if $name =~ /South Africa/i;
+    $pfx = "E5/S" if $name =~ /South Cook/i;
+    $pfx = "VP8/G" if $name =~ /South Georgia/i;
+    $pfx = "VP8/O" if $name =~ /South Orkney/i;
+    $pfx = "VP8/S" if $name =~ /South Sandwich/i;
+    $pfx = "VP8/H" if $name =~ /South Shetland/i;
+    $pfx = "1S" if $name =~ /Spratly/i;
+    $pfx = "PY0S" if $name =~ /Peter.*Paul/i;
+    $pfx = "KH8/S" if $name =~ /Swains/i;
+    $pfx = "PY0T" if $name =~ /(Trindade|Vaz)/i;
+
+    $name =~s/I\.$/Island/;
+    $name = uc $name;
+
+    $dxcc{$dxccnum} = "${pfx}_${name}";
   }
   close(HTTP);
+
+  ####
+
+  open(MWFILE, ">", $_mostwantedfile) or die "Can't open for writing: $!";
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+
+  open (HTTP, '-|', "curl -s -k -L --max-time 4 --retry 1 '$mwurl'");
+  binmode(HTTP, ":utf8");
+  $json = <HTTP>;
+  close(HTTP);
+
+  my $j = from_json($json);
+  foreach my $rank (sort {$a <=> $b} keys %{$j}) {
+    $dxccnum = int($j->{$rank});
+    my ($pfx, $name) = split /_/, $dxcc{$dxccnum};
+    print MWFILE "$rank,$dxccnum,$pfx,$name\n";
+  }
+
   close(MWFILE);
 }
 

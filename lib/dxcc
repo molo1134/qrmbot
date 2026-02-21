@@ -20,9 +20,8 @@ use Util;
 # Retrieve from here: http://www.country-files.com/big-cty/
 my $ctydat=$ENV{'HOME'} . "/.cty.dat";
 
-# load mostwanted summary from $HOME/.mostwanted.txt, which will be populated
-# by the scrapeMW() subroutine.
-my $mostwantedfile=$ENV{'HOME'} . "/.mostwanted.txt";
+my $oldmostwantedfile = $ENV{'HOME'} . "/.mostwanted.txt";
+unlink $oldmostwantedfile if -e $oldmostwantedfile;
 
 my $maxage=604800; # 1 week
 
@@ -102,15 +101,16 @@ scrapeMW() if (checkMW() == 1);
 my $ref = getDxccDataRef(); # load data
 
 # for debug
-#foreach my $rec (@{$ref->{rec}}) {
-#  #print "$prefix\n";
-#  my ($length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz) = split /\|/,$rec;
-#
-#  my $mw = $ref->{mwPfx}->{uc($dxcc)} || $ref->{mwNm}->{uc($name)};
-#  if (!defined($mw)) {
-#    #print "missing MW: $name: $dxcc\n" unless $name =~ /not DXCC/;
-#  }
-#}
+foreach my $rec (@{$ref->{rec}}) {
+  #print "$prefix\n";
+  my ($length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz) = split /\|/,$rec;
+  #print "$length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz\n";
+
+  my $mw = $ref->{mwPfx}->{uc($dxcc)} || $ref->{mwNm}->{uc($name)};
+  if (!defined($mw)) {
+    print "missing MW: $name: $dxcc\n" unless $name =~ /not DXCC/;
+  }
+}
 
 # check if exact prefix found
 if (defined $ref->{map}->{$term}) {

@@ -28,18 +28,20 @@ use POSIX qw(strftime);
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
-# load mostwanted summary from $HOME/.mostwanted.txt, which will be populated
+# load mostwanted summary from $HOME/.qrmbot/cache/mostwanted.txt, which will be populated
 # by the scrapeMW() subroutine.
-my $mostwantedfile=$ENV{'HOME'} . "/.mostwanted.txt";
+my $old_mostwantedfile=$ENV{'HOME'} . "/.mostwanted.txt";
+unlink $old_mostwantedfile if -e $old_mostwantedfile;
+my $mostwantedfile=$ENV{'HOME'} . "/.qrmbot/cache/mostwanted.txt";
 
-# load mostwanted summary from $HOME/.mostwanted.txt, if present
+# load mostwanted summary from $HOME/.qrmbot/cache/mostwanted.txt, if present
 my %mostwantedByPrefix;
 my %mostwantedByName;
 open(MW, "<", $mostwantedfile) or goto SKIPMW;
 while (<MW>) {
   chomp;
   if (/^\d/) {
-    my ($rank, $prefix, $name) = split /,/;
+    my ($rank, $dxccnum, $prefix, $name) = split /,/;
     #print "$prefix => $rank\n";
     $mostwantedByPrefix{$prefix} = $rank;
     $mostwantedByName{$name} = $rank;

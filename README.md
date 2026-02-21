@@ -90,7 +90,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/cache/hamspots.cookies` -- HTTP cookies for hamspots.net session
 * `$HOME/.qrmbot/cache/icao-types` -- cache of ICAO aircraft type data
 * `$HOME/.qrmbot/cache/lotw-dates.txt` -- cached LOTW upload dates
-* `$HOME/.mostwanted.txt` -- cached DXCC "most wanted" data from [clublog.org](http://clublog.org/)
+* `$HOME/.qrmbot/cache/mostwanted.txt` -- cached DXCC "most wanted" data from [clublog.org](http://clublog.org/)
 * `$HOME/.qrmbot/cache/qrz.cookies` -- HTTP cookies for qrz.com session
 * `$HOME/.qrmbot/cache/spot_timestamps` -- used for spots monitor mode; safe to remove
 * `$HOME/.qrmbot/cache/radmon.txt` -- cached rad monitor data; safe to remove
