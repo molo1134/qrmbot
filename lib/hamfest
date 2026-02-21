@@ -207,9 +207,13 @@ if (@events == 0) {
   exit 0;
 }
 
-# Sort nearest-first, filter to within MAX_DIST_MI, cap at MAX_RESULTS
-@events = sort { $a->{dist_mi} <=> $b->{dist_mi} } @events;
+# Filter to within MAX_DIST_MI, sort soonest-first, cap at MAX_RESULTS
 @events = grep { $_->{dist_mi} <= $MAX_DIST_MI } @events;
+@events = sort {
+  my ($am, $ad, $ay) = split('/', $a->{date});
+  my ($bm, $bd, $by) = split('/', $b->{date});
+  "$ay$am$ad" cmp "$by$bm$bd"
+} @events;
 
 if (@events == 0) {
   print "📻 No hamfests found within $MAX_DIST_MI miles in the next $DAYS_AHEAD days\n";
