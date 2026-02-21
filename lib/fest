@@ -59,8 +59,8 @@ my $query = join(" ", @text_args);
 my ($user_lat, $user_lon, $state_code, $location_name);
 
 if ($query && length($query) > 0) {
-  # Forward geocode via Location.pm (Google Maps)
-  my $coords = qthToCoords($query);
+  # Forward geocode via Location.pm (handles grid squares, geo:lat,lon, or plain text QTH)
+  my $coords = argToCoords($query);
   if (!defined $coords) {
     print "error: location not found: $query\n";
     exit $exitnonzeroonerror;
