@@ -456,42 +456,6 @@ proc translate { nick host hand chan text } {
 	close $fd
 }
 
-bind pub - !ammo ammo_pub
-bind msg - !ammo ammo_msg
-set ammobin "/home/eggdrop/bin/ammo"
-proc ammo_pub { nick host hand chan text } {
-	if [string equal "#amateurradio" $chan] then {
-		return
-	}
-	global ammobin
-	set param [sanitize_string [string trim "${text}"]]
-	putlog "ammo pub: $nick $host $hand $chan $param"
-	set params [split $param]
-	set count [lindex $params 1]
-	if { $count > 3 } {
-		lset params 1 "3"
-		set param [join $params]
-	}
-
-	set fd [open "|${ammobin} ${param} " r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
-	}
-	close $fd
-}
-proc ammo_msg {nick uhand handle input} {
-	global ammobin
-	set param [sanitize_string [string trim "${input}"]]
-	putlog "ammo msg: $nick $uhand $handle $param"
-	set fd [open "|${ammobin} ${param} " r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putmsg "$nick" "$line"
-	}
-	close $fd
-}
-
 set randobin "/home/eggdrop/bin/rando"
 bind pub - !rand rando_pub
 proc rando_pub { nick host hand chan text } {

@@ -81,7 +81,6 @@
  * `!fest` -- find upcoming hamfests near your location (uses !setgeo)
  * `!adsb` -- get plane information
  * `!hofh` -- why your radio is broke
- * `!ammo` -- find a price for ammo
  * `!launch` -- search for upcoming rocket launch
  * `!spacex` -- next spacex launch
  * `!translate` -- translate text
@@ -1031,15 +1030,12 @@ Example:
 ### `!fest` -- find upcoming hamfests near your location
 ### `!adsb` -- get plane information
 ### `!hofh` -- why your radio is broke
-### `!ammo` -- find a price for ammo
 ### `!launch` -- search for upcoming rocket launch
 ### `!spacex` -- next spacex launch
 ### `!translate` -- translate text
 ### `!rand` `!dice` `!flip` `!8ball` `!orb` -- random
 
 <!-- !amcon - - some dumb prepper shit -->
-<!-- !c19 !corona - - coronavirus stats -->
-
 
 * `!activity` -- band activity from pskreporter
 * `!bands` -- display propagation information
