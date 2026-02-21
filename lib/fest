@@ -34,9 +34,11 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 @ARGV = split(' ', join(' ', @ARGV));
 
 my $useragent  = "Mozilla/5.0 (compatible; qrmbot)";
-my $MAX_RESULTS  = 5;
+my $MAX_RESULTS  = 3;
 my $DAYS_AHEAD   = 90;   # search window
 my $MAX_DIST_MI  = 200;  # ignore hamfests farther than this
+
+$MAX_RESULTS = 10 if $username ne getEggdropUID();
 
 # --- Parse args: --geo lat,lon  and optional text location ---
 my $geo_arg = undef;
