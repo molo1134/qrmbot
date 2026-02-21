@@ -88,6 +88,258 @@ my @wheel = (
       blackOnWhite("13"),
       red("1"));
 
+# ── Orb legendary responses ───────────────────────────────────────────────────
+# Each entry is a sub($is_yes) returning a list of formatted output lines.
+my @orb_legendary = (
+
+  # ═══ BLUE TIER — Cosmic Wonder ═══════════════════════════════════════════
+
+  # The Ancient Prophecy
+  sub { my $y = shift;
+    (italic(grey("the orb shudders...")),
+     italic(grey("dust of a thousand ages rises from its surface...")),
+     bold(lightblue("it glows \x{2014} slowly, deeply \x{2014} BLUE")),
+     lightblue('"In the age before memory, this question was carved into the bones of the earth."'),
+     $y ? bold(green('"The answer has always been: YES."'))
+        : bold(red('"The answer has always been: NO."'))) },
+
+  # The Reluctant Oracle
+  sub { my $y = shift;
+    (italic(grey("the orb goes dark")),
+     italic(grey("...")),
+     italic(grey("it fights it. you can tell. it doesn't want to show you this.")),
+     bold(lightblue("the blue light wins.")),
+     lightblue('"...Fine. You deserve to know. But do not ask again."'),
+     $y ? bold(green('"YES."')) : bold(red('"NO. And I mean it."'))) },
+
+  # The Cosmic Horror
+  sub { my $y = shift;
+    (italic(grey("the orb reaches out... further than it usually does...")),
+     italic(grey("something reached back")),
+     bold(lightblue("it glows blue but the light feels wrong")),
+     $y ? bold(green('"I looked. I saw. The answer is YES."'))
+        : bold(red('"I looked. I saw. The answer is NO."')),
+     lightblue('"Please do not ask what else I saw."')) },
+
+  # The Joyful Burst
+  sub { my $y = shift;
+    (bold(lightblue("THE ORB WAKES UP")),
+     bold(lightblue("IT HAS BEEN WAITING FOR THIS EXACT QUESTION")),
+     bold(lightblue("BLUE. SO MUCH BLUE. GLORIOUS BLUE.")),
+     lightblue('"OH THIS ONE. THIS IS A GOOD ONE."'),
+     $y ? bold(green('"YES. YES YES YES."'))
+        : bold(red('"No. But asked so beautifully."'))) },
+
+  # The Ominous Agreement
+  sub { my $y = shift;
+    (italic(grey("the orb is very still")),
+     bold(lightblue("the orb glows blue \x{2014} not warm. cold. certain.")),
+     $y ? bold(green('"...Yes."')) : bold(red('"...No."')),
+     lightblue('"I just want you to sit with that for a moment."')) },
+
+  # The Weary God
+  sub { my $y = shift;
+    (italic(grey("the orb has seen empires. it has seen them fall.")),
+     italic(grey("it glows blue, tired blue, the blue of something very old")),
+     $y ? lightblue('"You want to know if YES?"') : lightblue('"You want to know if NO?"'),
+     $y ? bold(green('"Sure. Fine. It\'s YES."')) : bold(red('"No. As it always was."')),
+     lightblue('"The orb will now rest."')) },
+
+  # The Hype Man
+  sub { my $y = shift;
+    (bold(lightblue("YOOOO")),
+     bold(lightblue("THE ORB IS GLOWING BLUE ARE YOU SEEING THIS")),
+     bold(lightblue("THIS IS A LEGENDARY PROPHECY CHAT")),
+     lightblue('"Okay okay okay. The answer?"'),
+     $y ? bold(green('"IT\'S YES."')) : bold(red('"It\'s no. But still legendary tho."'))) },
+
+  # ═══ RED TIER — Cursed Doom ═══════════════════════════════════════════════
+
+  # The Warning
+  sub { my $y = shift;
+    (italic(grey("the orb flickers")),
+     italic(grey("something is wrong")),
+     bold(red("it glows RED")),
+     darkRed('"This question should not have been asked."'),
+     $y ? bold(green('"YES."')) : bold(red('"NO."')),
+     darkRed('"The orb will not say more. For your sake."')) },
+
+  # The Curse
+  sub { my $y = shift;
+    (italic(grey("the orb goes cold")),
+     italic(grey("the red comes from somewhere deep. somewhere bad.")),
+     darkRed('"Seven people asked this question before you."'),
+     $y ? bold(green('"YES."')) : bold(red('"NO."')),
+     darkRed('"You are the eighth."')) },
+
+  # The Reluctant Truth
+  sub { my $y = shift;
+    (italic(grey("the orb tries to show you blue")),
+     italic(grey("it cannot")),
+     bold(red("RED. it's RED. it's always been RED for this one.")),
+     darkRed('"I tried to protect you from this answer."'),
+     $y ? bold(green('"YES. God help you, yes."')) : bold(red('"NO."'))) },
+
+  # The Void Stares Back
+  sub { my $y = shift;
+    (italic(grey("the orb reaches out to find your answer")),
+     italic(grey("something on the other side noticed")),
+     bold(red("RED. wrong. all wrong.")),
+     $y ? bold(green('"YES."')) : bold(red('"NO."')),
+     darkRed('"It knows you asked."')) },
+
+  # The Omen
+  sub { my $y = shift;
+    (italic(grey("the orb begins to spin \x{2014} slowly \x{2014} without being touched")),
+     italic(grey("it stops")),
+     bold(red("RED")),
+     darkRed('"The birds knew. They left this morning."'),
+     $y ? bold(green('"The answer is YES."')) : bold(red('"The answer is NO."')),
+     darkRed('"You\'ll understand later."')) },
+
+  # The Disappointed Elder
+  sub { my $y = shift;
+    (italic(grey("the orb has seen this before")),
+     italic(grey("it glows red, slow and heavy, like a dying star")),
+     darkRed('"Oh, child."'),
+     $y ? bold(green('"YES."')) : bold(red('"NO."')),
+     darkRed('"The orb will light a candle for you."')) },
+
+  # The Understated Doom
+  sub { my $y = shift;
+    (bold(red("red")),
+     $y ? bold(green('"YES."')) : bold(red('"NO."')),
+     darkRed('"Anyway."')) },
+
+  # The Regret
+  sub { my $y = shift;
+    (italic(grey("the orb glows red and does not stop")),
+     italic(grey("it's been a long time since it glowed red this long")),
+     darkRed('"You asked. That means something."'),
+     $y ? bold(green('"YES."')) : bold(red('"NO."')),
+     darkRed('"The orb is sorry. It really is."')) },
+
+  # ═══ ELECTRIC TIER — Chaotic Gremlin Energy ═══════════════════════════════
+
+  # The Surge
+  sub { my $y = shift;
+    (bold(yellow("the orb CRACKS")),
+     italic(grey("sparks. actual sparks.")),
+     italic(grey("it's doing it again")),
+     $y ? bold(green('"THE ANSWER IS YES"')) : bold(red('"THE ANSWER IS NO"')),
+     bold(yellow('"THE ORB DOES NOT APOLOGIZE FOR THE SPARKS"'))) },
+
+  # The Short Circuit
+  sub { my $y = shift;
+    (italic(grey("the orb flickers \x{2014} on \x{2014} off \x{2014} on \x{2014} off \x{2014}")),
+     bold(yellow("zzzt")),
+     bold(yellow("zzzzZZZZT")),
+     italic(grey("........okay it's fine")),
+     $y ? bold(green('"Yes."')) : bold(red('"No."')),
+     yellow('"The orb is fine."')) },
+
+  # The Overload
+  sub { my $y = shift;
+    (italic(grey("something is building in the orb")),
+     italic(grey("it's too much. it's way too much.")),
+     bold(yellow("CRACK. ZAP. the air smells like ozone.")),
+     $y ? bold(green('"YOUR ANSWER IS YES AND IT ARRIVES WITH VOLTAGE"'))
+        : bold(red('"NO. ALSO VOLTAGE."'))) },
+
+  # The Unstable Prophet
+  sub { my $y = shift;
+    (italic(grey("the orb crackles")),
+     italic(grey("it crackles more")),
+     italic(grey("it crackles so much you start to question your life choices")),
+     $y ? bold(green('"yES"')) : bold(red('"nO"')),
+     $y ? bold(green('"sorry. still sparking. yES."')) : bold(red('"sorry. still sparking. nO."'))) },
+
+  # The Power It Cannot Control
+  sub { my $y = shift;
+    (italic(grey("the orb didn't mean to do this")),
+     italic(grey("the electricity just \x{2014} it just happens sometimes")),
+     bold(yellow("ZAP")),
+     $y ? bold(green('"The orb would like YES on the record."'))
+        : bold(red('"The orb would like NO on the record."')),
+     yellow('"It would also like to apologize for your eyebrows."')) },
+
+  # The Ancient Machine
+  sub { my $y = shift;
+    (italic(grey("deep within the orb, something mechanical stirs")),
+     italic(grey("gears that shouldn't exist. coils. voltage.")),
+     bold(yellow("K\x{0335}\x{0336}R\x{0336}K\x{0336}K\x{0335}K\x{0336}")),
+     $y ? bold(green('"YES."')) : bold(red('"NO."')),
+     yellow('"The machine has spoken. Do not tap the glass."')) },
+
+  # The Reluctant Lightning
+  sub { my $y = shift;
+    (italic(grey("the orb is calm")),
+     italic(grey("it is still calm")),
+     italic(grey("it is \x{2014} ZZT \x{2014} still \x{2014} CRACK \x{2014} calm \x{2014}")),
+     $y ? bold(green('"...YES."')) : bold(red('"...NO."')),
+     italic(grey("the orb is calm again")),
+     italic(grey("mostly"))) },
+
+  # The Meltdown
+  sub { my $y = shift;
+    (bold(yellow("WARNING")),
+     bold(yellow("WARNING")),
+     italic(grey("crackling intensifies")),
+     $y ? bold(green('"THE ANSWER IS YES"')) : bold(red('"THE ANSWER IS NO"')),
+     bold(yellow('"THE ORB NEEDS A MOMENT"')),
+     italic(grey("the crackling stops")),
+     italic(grey("the orb smells like burnt toast"))) },
+
+  # ═══ FIRE TIER — Ancient, Biblical Energy ════════════════════════════════
+
+  # The Pyre
+  sub { my $y = shift;
+    (italic(grey("the orb begins to warm")),
+     italic(grey("it gets warmer")),
+     bold(darkYellow("it gets much warmer")),
+     darkYellow('"Something burns in the orb that does not go out."'),
+     $y ? bold(green('"YES."')) : bold(red('"NO."')),
+     darkYellow('"It has always been burning. You just couldn\'t see it before."')) },
+
+  # The Consumed
+  sub { my $y = shift;
+    (bold(darkYellow("the orb ignites")),
+     bold(darkYellow("it should not be doing this")),
+     bold(darkYellow("it does not care")),
+     darkYellow('"ASK AGAIN AND I WILL ASK THE FIRE."'),
+     $y ? bold(green('"The fire says YES."')) : bold(red('"The fire says NO."')),
+     darkYellow('"The fire is satisfied."')) },
+
+  # The Offering
+  sub { my $y = shift;
+    (bold(darkYellow("the orb glows orange. then gold. then white.")),
+     italic(grey("the heat reaches through the screen")),
+     darkYellow('"Your question has been received."'),
+     darkYellow('"Your question has been burned."'),
+     $y ? bold(green('"YES."')) : bold(red('"NO."')),
+     darkYellow('"The smoke carries it to wherever answers go."')) },
+
+  # The Old God
+  sub { my $y = shift;
+    (italic(grey("something ancient stirs in the orb")),
+     italic(grey("it remembers when they built fires for it")),
+     bold(darkYellow("it misses the fires")),
+     $y ? bold(green('"YES."')) : bold(red('"NO."')),
+     darkYellow('"The orb would appreciate a small fire in its honor."'),
+     darkYellow('"This is not a joke."')) },
+
+  # The Calm Inferno
+  sub { my $y = shift;
+    (bold(darkYellow("the orb is on fire")),
+     bold(darkYellow("completely on fire")),
+     bold(darkYellow("it seems fine with this")),
+     $y ? bold(green('"Yes."')) : bold(red('"No."')),
+     darkYellow('"The orb is fine."'),
+     darkYellow('"The fire is fine."'),
+     darkYellow('"Everything is fine."')) },
+
+);
+
 my $i = 0;
 my $intermediates = 0;
 my $unicode = 0;
@@ -102,6 +354,35 @@ while ($i <= $#ARGV) {
     $unicode = 1;
     $intermediates = 1;
   } elsif ($ARGV[$i] eq "--8ball") {
+    @list = ("It is certain.",
+      "It is decidedly so.",
+      "Without a doubt.",
+      "Yes - definitely.",
+      "You may rely on it.",
+      "As I see it, yes.",
+      "Most likely.",
+      "Outlook good.",
+      "Yes.",
+      "Signs point to yes.",
+      "Reply hazy, try again.",
+      "Ask again later.",
+      "Better not tell you now.",
+      "Cannot predict now.",
+      "Concentrate and ask again.",
+      "Don't count on it.",
+      "My reply is no.",
+      "My sources say no.",
+      "Outlook not so good.",
+      "Very doubtful.");
+  } elsif ($ARGV[$i] eq "--orb") {
+    if (int(rand(50)) == 0) {
+      # 2% chance: legendary response
+      my $is_yes = int(rand(2));
+      my $resp = $orb_legendary[int(rand(scalar @orb_legendary))];
+      print "$_\n" for $resp->($is_yes);
+      exit 0;
+    }
+    # Standard 8-ball response
     @list = ("It is certain.",
       "It is decidedly so.",
       "Without a doubt.",

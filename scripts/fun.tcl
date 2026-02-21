@@ -519,7 +519,7 @@ proc dice_pub { nick host hand chan text } {
 	rando_pub "$nick" $host $hand $chan "--dice"
 }
 bind pub - !8ball eightball_pub
-bind pub - !orb orb2_pub
+bind pub - !orb orb_pub
 bind pub - !magic8ball eightball_pub
 bind pub - !eightball eightball_pub
 proc eightball_pub { nick host hand chan text } {
@@ -528,18 +528,11 @@ proc eightball_pub { nick host hand chan text } {
 	}
 	rando_pub "$nick" $host $hand $chan "--8ball"
 }
-set orbbin "/home/eggdrop/bin/orb"
-proc orb2_pub { nick host hand chan text } {
+proc orb_pub { nick host hand chan text } {
 	if [string equal "#amateurradio" $chan] then {
 		return
 	}
-	global orbbin
-	set fd [open "|${orbbin} --orb" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$nick: $line"
-	}
-	close $fd
+	rando_pub "$nick" $host $hand $chan "--orb"
 }
 bind pub - !card card_pub
 proc card_pub { nick host hand chan text } {
