@@ -44,7 +44,7 @@ if (-e ($qthfile)) {
 
 if (($#ARGV < 0 || length($ARGV[0]) == 0) and not defined $mylat) {
   if ($username eq getEggdropUID()) {
-    print "usage: !potapark <grid>|<lat>,<lon>|<qth>\n";
+    print "usage: !potapark <grid>|<lat>,<lon>|<qth> [count]\n";
   } else {
     print "usage: $0 <grid>|<lat>,<lon>|<qth>\n";
   }
@@ -53,6 +53,8 @@ if (($#ARGV < 0 || length($ARGV[0]) == 0) and not defined $mylat) {
 
 my $query = undef;
 my $de = undef;
+my $max = 10;
+$max = 3 if $username eq getEggdropUID();
 
 # eggdrop doesn't split args on spaces
 @ARGV=split(' ', join(' ',@ARGV));
@@ -70,6 +72,11 @@ while ($i <= $#ARGV) {
   }
   if (defined($de)) {
     $de = $de . " " . $ARGV[$i];
+    $i++;
+    next;
+  }
+  if (isNumeric($ARGV[$i])) {
+    $max = int($ARGV[$i]);
     $i++;
     next;
   }
@@ -130,8 +137,9 @@ foreach my $f (@{$j->{features}}) {
 }
 
 my $count = 0;
-my $max = 10;
-$max = 3 if $username eq getEggdropUID();
+my $limit = undef;
+$limit = 8 if $username eq getEggdropUID();
+$max = $limit if defined $limit and $max > $limit;
 
 foreach my $d (sort { $a <=> $b } keys %results) {
   my $f = $results{$d};
