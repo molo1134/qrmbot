@@ -4,9 +4,9 @@
 # Uses the ARRL hamfest search (https://www.arrl.org/hamfests/search)
 # and Nominatim (OpenStreetMap) for geocoding -- no API key required.
 #
-# Searches by ARRL division (derived from user's state) and sorts results
-# by distance from the user. Division-based search returns upcoming events
-# months out, while national search only returns the near-term.
+# Searches by ARRL division (derived from user's state) and also by state,
+# then merges and deduplicates results. Sorts by distance from the user.
+# Division-based search returns upcoming events months out.
 #
 # 2-clause BSD license.
 # Copyright (c) 2026 cjh@github. All rights reserved.
@@ -38,21 +38,6 @@ my $useragent  = "Mozilla/5.0 (compatible; qrmbot)";
 my $MAX_RESULTS  = 5;
 my $DAYS_AHEAD   = 90;   # search window
 my $MAX_DIST_MI  = 200;  # ignore hamfests farther than this
-
-# US state -> ARRL division ID mapping
-my %state_to_division = (
-  AL => 'SE', AK => 'NW', AZ => 'SW', AR => 'DL', CA => 'PC',
-  CO => 'RM', CT => 'NE', DE => 'AT', DC => 'AT', FL => 'SE',
-  GA => 'SE', HI => 'PC', ID => 'NW', IL => 'CL', IN => 'CL',
-  IA => 'MW', KS => 'MW', KY => 'GL', LA => 'DL', ME => 'NE',
-  MD => 'AT', MA => 'NE', MI => 'GL', MN => 'DK', MS => 'DL',
-  MO => 'MW', MT => 'NW', NE => 'MW', NV => 'SW', NH => 'NE',
-  NJ => 'AT', NM => 'RM', NY => 'HU', NC => 'RK', ND => 'DK',
-  OH => 'GL', OK => 'WG', OR => 'NW', PA => 'AT', RI => 'NE',
-  SC => 'SE', SD => 'DK', TN => 'DL', TX => 'WG', UT => 'RM',
-  VT => 'NE', VA => 'RK', WA => 'NW', WV => 'RK', WI => 'CL',
-  WY => 'RM',
-);
 
 # --- Parse args: --geo lat,lon  and optional text location ---
 my $geo_arg = undef;
@@ -116,6 +101,21 @@ if ($query && length($query) > 0) {
   print "usage: !hamfest [location] -- set your QTH with !setgeo for automatic lookup\n";
   exit $exitnonzeroonerror;
 }
+
+# US state -> ARRL division ID mapping
+my %state_to_division = (
+  AL => 'SE', AK => 'NW', AZ => 'SW', AR => 'DL', CA => 'PC',
+  CO => 'RM', CT => 'NE', DE => 'AT', DC => 'AT', FL => 'SE',
+  GA => 'SE', HI => 'PC', ID => 'NW', IL => 'CL', IN => 'CL',
+  IA => 'MW', KS => 'MW', KY => 'GL', LA => 'DL', ME => 'NE',
+  MD => 'AT', MA => 'NE', MI => 'GL', MN => 'DK', MS => 'DL',
+  MO => 'MW', MT => 'NW', NE => 'MW', NV => 'SW', NH => 'NE',
+  NJ => 'AT', NM => 'RM', NY => 'HU', NC => 'RK', ND => 'DK',
+  OH => 'GL', OK => 'WG', OR => 'NW', PA => 'AT', RI => 'NE',
+  SC => 'SE', SD => 'DK', TN => 'DL', TX => 'WG', UT => 'RM',
+  VT => 'NE', VA => 'RK', WA => 'NW', WV => 'RK', WI => 'CL',
+  WY => 'RM',
+);
 
 # --- Search ARRL hamfest database by division + state, merge results ---
 my $today    = strftime("%m/%d/%Y", localtime);
