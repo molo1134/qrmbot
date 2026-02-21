@@ -409,7 +409,8 @@ sub getEggdropUID {
 
 
 # Retrieve from here: http://www.country-files.com/big-cty/
-our $_ctydat=$ENV{'HOME'} . "/.cty.dat";
+our $_old_ctydat=$ENV{'HOME'} . "/.cty.dat";
+our $_ctydat    =$ENV{'HOME'} . "/.qrmbot/cache/cty.dat";
 our $_cty_maxage=604800; # 1 week
 our $_cty_handle = undef;
 
@@ -428,7 +429,10 @@ sub getDxccDataRef {
   my @records;
   my %dxccmap;
   our $_ctydat;
+  our $_old_ctydat;
   our $_mostwantedfile;
+
+  moveFile($_old_ctydat, $_ctydat);
 
   open(CTYDAT, "<", $_ctydat) or die "unable to find cty.dat file: $_ctydat ";
   while (<CTYDAT>) {

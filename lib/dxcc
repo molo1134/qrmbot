@@ -17,8 +17,8 @@ use Colors;
 use Location;
 use Util;
 
-# Retrieve from here: http://www.country-files.com/big-cty/
-my $ctydat=$ENV{'HOME'} . "/.cty.dat";
+# cty.dat loaded from ~/.qrmbot/cache/cty.dat
+# which is automatically populated by updateCty()
 
 my $oldmostwantedfile = $ENV{'HOME'} . "/.mostwanted.txt";
 unlink $oldmostwantedfile if -e $oldmostwantedfile;

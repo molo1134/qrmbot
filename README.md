@@ -70,8 +70,8 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/creds/hamspots` -- required login credentials for [hamspots.net](http://hamspots.net) use
 * `$HOME/.qrmbot/creds/qrz` -- required login credentials for [qrz.com](http://qrz.com/) lookup
 * `$HOME/.qrmbot/db/nicks.csv` -- irc and reddit nicknames -- optional, will override repository data
-* `$HOME/.qrmbot/keys/aerisweather` -- API key for aerisweather.com
 * `$HOME/.qrmbot/keys/adsb.fi` -- key for [adsb.fi](https://adsb.fi/) aircraft tracking (optional)
+* `$HOME/.qrmbot/keys/aerisweather` -- API key for aerisweather.com
 * `$HOME/.qrmbot/keys/aprs.fi` -- required [aprs.fi](http://aprs.fi/) API key for `aprs` tool
 * `$HOME/.qrmbot/keys/bitly` -- key for [bit.ly](https://bit.ly/) API
 * `$HOME/.qrmbot/keys/clublog` -- API key for [clublog.org](https://clublog.org/)
@@ -84,7 +84,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 ## Cache files / state
 
 * `$HOME/.qrmbot/cache/clublogusers.gz` -- cache of clublog.org user data
-* `$HOME/.cty.dat` -- cached DXCC data from [country-files.com](http://www.country-files.com/)
+* `$HOME/.qrmbot/cache/cty.dat` -- cached DXCC data from [country-files.com](http://www.country-files.com/)
 * `$HOME/.qrmbot/cache/dmr-id-repeaters.csv` -- cache of DMR repeater IDs
 * `$HOME/.qrmbot/cache/dmr-id-users.csv` -- cache of DMR user IDs
 * `$HOME/.qrmbot/cache/hamspots.cookies` -- HTTP cookies for hamspots.net session
@@ -92,8 +92,8 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/cache/lotw-dates.txt` -- cached LOTW upload dates
 * `$HOME/.qrmbot/cache/mostwanted.txt` -- cached DXCC "most wanted" data from [clublog.org](http://clublog.org/)
 * `$HOME/.qrmbot/cache/qrz.cookies` -- HTTP cookies for qrz.com session
-* `$HOME/.qrmbot/cache/spot_timestamps` -- used for spots monitor mode; safe to remove
 * `$HOME/.qrmbot/cache/radmon.txt` -- cached rad monitor data; safe to remove
+* `$HOME/.qrmbot/cache/spot_timestamps` -- used for spots monitor mode; safe to remove
 * `$HOME/.qrmbot/db/spots.sqlite` -- database of user-added radio spots
 
 
