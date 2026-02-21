@@ -1035,8 +1035,6 @@ Example:
 ### `!translate` -- translate text
 ### `!rand` `!dice` `!flip` `!8ball` `!orb` -- random
 
-`!orb` is a yes/no oracle like `!8ball`, with a 2% chance of a multi-line legendary response (across blue/cosmic, red/cursed, electric/chaotic, and fire tiers).
-
 <!-- !amcon - - some dumb prepper shit -->
 <!-- !c19 !corona - - coronavirus stats -->
 

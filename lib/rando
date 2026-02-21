@@ -28,6 +28,27 @@ my $a = 1;
 my $x = 100;
 my @list = ();
 
+my @eightball = ("It is certain.",
+  "It is decidedly so.",
+  "Without a doubt.",
+  "Yes - definitely.",
+  "You may rely on it.",
+  "As I see it, yes.",
+  "Most likely.",
+  "Outlook good.",
+  "Yes.",
+  "Signs point to yes.",
+  "Reply hazy, try again.",
+  "Ask again later.",
+  "Better not tell you now.",
+  "Cannot predict now.",
+  "Concentrate and ask again.",
+  "Don't count on it.",
+  "My reply is no.",
+  "My sources say no.",
+  "Outlook not so good.",
+  "Very doubtful.");
+
 my @carddeck = (
       blackOnWhite("2♣"), blackOnWhite("3♣"), blackOnWhite("4♣"),
       blackOnWhite("5♣"), blackOnWhite("6♣"), blackOnWhite("7♣"),
@@ -354,26 +375,7 @@ while ($i <= $#ARGV) {
     $unicode = 1;
     $intermediates = 1;
   } elsif ($ARGV[$i] eq "--8ball") {
-    @list = ("It is certain.",
-      "It is decidedly so.",
-      "Without a doubt.",
-      "Yes - definitely.",
-      "You may rely on it.",
-      "As I see it, yes.",
-      "Most likely.",
-      "Outlook good.",
-      "Yes.",
-      "Signs point to yes.",
-      "Reply hazy, try again.",
-      "Ask again later.",
-      "Better not tell you now.",
-      "Cannot predict now.",
-      "Concentrate and ask again.",
-      "Don't count on it.",
-      "My reply is no.",
-      "My sources say no.",
-      "Outlook not so good.",
-      "Very doubtful.");
+    @list = @eightball;
   } elsif ($ARGV[$i] eq "--orb") {
     if (int(rand(50)) == 0) {
       # 2% chance: legendary response
@@ -382,27 +384,7 @@ while ($i <= $#ARGV) {
       print "$_\n" for $resp->($is_yes);
       exit 0;
     }
-    # Standard 8-ball response
-    @list = ("It is certain.",
-      "It is decidedly so.",
-      "Without a doubt.",
-      "Yes - definitely.",
-      "You may rely on it.",
-      "As I see it, yes.",
-      "Most likely.",
-      "Outlook good.",
-      "Yes.",
-      "Signs point to yes.",
-      "Reply hazy, try again.",
-      "Ask again later.",
-      "Better not tell you now.",
-      "Cannot predict now.",
-      "Concentrate and ask again.",
-      "Don't count on it.",
-      "My reply is no.",
-      "My sources say no.",
-      "Outlook not so good.",
-      "Very doubtful.");
+    @list = @eightball;
   } elsif ($ARGV[$i] eq "--card") {
     @list = @carddeck;
   } elsif ($ARGV[$i] eq "--coinflip") {
