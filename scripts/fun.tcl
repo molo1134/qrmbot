@@ -6,37 +6,13 @@
 # Copyright (c) 2019 OliverUK. All rights reserved.
 # Copyright (c) 2021, 2022 molo1134@github. All rights reserved.
 
-bind pub - !phonetics phoneticise
-bind pub - !phoneticise phoneticise
-bind pub - !phoneticize phoneticise
-bind pub - !metard metard
-bind pub - !truck truck
-bind pub - !friday friday
-bind pub - !aaa aaaaaaa
-bind pub - !really really
-bind pub - !ooo ooooooo
-bind pub - !monke robface
-bind pub - !robface robface
-bind pub - !monkee daveface
-bind pub - !rick rickface
-bind pub - !burn burn
-bind pub - !brexit brexit
-bind pub - !christmas christmas
-bind pub - !halloween spooky
-bind pub - !spooky spooky
-bind pub - !translate translate
-bind pub - !github github
-bind msg - !github msg_github
-
-set phoneticsbin "/home/eggdrop/bin/phoneticise"
-set brexitbin "/home/eggdrop/bin/brexit"
-set translatebin "/home/eggdrop/bin/translate"
-
-set githublink "https://github.com/molo1134/qrmbot/"
-
 # load utility methods
 source scripts/util.tcl
 
+bind pub - !phonetics phoneticise
+bind pub - !phoneticise phoneticise
+bind pub - !phoneticize phoneticise
+set phoneticsbin "/home/eggdrop/bin/phoneticise"
 proc phoneticise { nick host hand chan text } {
 	global phoneticsbin
 	set param [sanitize_string [string trim "${text}"]]
@@ -278,6 +254,7 @@ proc do_wwv_beep_pub { chan } {
 	putchan $chan "<beep>"
 }
 
+bind pub - !metard metard
 proc metard { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -289,6 +266,7 @@ proc metard { nick host hand chan text} {
 	}
 }
 
+bind pub - !truck truck
 proc truck { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -296,6 +274,7 @@ proc truck { nick host hand chan text} {
 	putchan $chan "truck you, $nick"
 }
 
+bind pub - !friday friday
 proc friday { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -303,6 +282,7 @@ proc friday { nick host hand chan text} {
 	putchan $chan "Fri-Yay! https://www.youtube.com/watch?v=kfVsfOSbJY0"
 }
 
+bind pub - !ooo ooooooo
 proc ooooooo { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -315,6 +295,7 @@ proc ooooooo { nick host hand chan text} {
 	}
 }
 
+bind pub - !aaa aaaaaaa
 proc aaaaaaa { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -329,6 +310,7 @@ proc aaaaaaa { nick host hand chan text} {
 	}
 }
 
+bind pub - !really really
 proc really { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -342,6 +324,9 @@ proc really { nick host hand chan text} {
 		putchan $chan "https://i.imgur.com/Wok2ms7.mp4"
 	}
 }
+
+bind pub - !monke robface
+bind pub - !robface robface
 proc robface { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -350,6 +335,7 @@ proc robface { nick host hand chan text} {
 	putchan $chan "https://i.imgur.com/cS9qmCH.jpg"
 }
 
+bind pub - !rick rickface
 proc rickface { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -362,6 +348,7 @@ proc rickface { nick host hand chan text} {
  	}
 }
 
+bind pub - !monkee daveface
 proc daveface { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -380,6 +367,7 @@ proc junk { nick host hand chan text} {
 }
 
 
+bind pub - !burn burn
 proc burn { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -389,6 +377,8 @@ proc burn { nick host hand chan text} {
 	putchan $chan "🔥 sick burn bro - https://i.imgur.com/rK6Oj0P.png"
 }
 
+bind pub - !brexit brexit
+set brexitbin "/home/eggdrop/bin/brexit"
 proc brexit { nick host hand chan text } {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -403,6 +393,7 @@ proc brexit { nick host hand chan text } {
 	close $fd
 }
 
+bind pub - !christmas christmas
 set christmasbin "/home/eggdrop/bin/christmas"
 proc christmas { nick host hand chan text } {
 	if [string equal "#amateurradio" $chan] then {
@@ -418,6 +409,8 @@ proc christmas { nick host hand chan text } {
 	close $fd
 }
 
+bind pub - !halloween spooky
+bind pub - !spooky spooky
 set spookybin "/home/eggdrop/bin/spooky"
 proc spooky { nick host hand chan text } {
 	if [string equal "#amateurradio" $chan] then {
@@ -442,6 +435,8 @@ proc chars2hexlist {string} {
 	set list; # faster than return...
 }
 
+bind pub - !translate translate
+set translatebin "/home/eggdrop/bin/translate"
 proc translate { nick host hand chan text } {
 	global translatebin
 
@@ -794,6 +789,9 @@ proc argpeso_pub { nick host hand chan text } {
 }
 
 
+bind pub - !github github
+bind msg - !github msg_github
+set githublink "https://github.com/molo1134/qrmbot/"
 proc github { nick host hand chan text } {
 	global githublink
 	putlog "github pub: $nick $host $hand $chan"
