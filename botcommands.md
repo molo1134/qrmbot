@@ -85,6 +85,7 @@
  * `!spacex` -- next spacex launch
  * `!translate` -- translate text
  * `!rand` `!dice` `!flip` `!8ball` -- random
+ * `!orb` -- mystic orb yes/no oracle with rare legendary responses
 
 ## Radio-related commands:
 
@@ -1034,6 +1035,9 @@ Example:
 ### `!spacex` -- next spacex launch
 ### `!translate` -- translate text
 ### `!rand` `!dice` `!flip` `!8ball` -- random
+
+### `!orb` -- mystic orb yes/no oracle
+Standard 8-ball style responses, with a 2% chance of a "legendary" multi-line theatrical response (28 possible, across blue/cosmic, red/cursed, electric/chaotic, and fire tiers).
 
 <!-- !amcon - - some dumb prepper shit -->
 <!-- !c19 !corona - - coronavirus stats -->
