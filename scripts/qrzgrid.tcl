@@ -1928,6 +1928,48 @@ proc pota_msg {nick uhand handle input} {
 	close $fd
 }
 
+bind msg - !potapark potapark_msg
+bind pub - !potapark potapark_pub
+set potaparkbin "/home/eggdrop/bin/potapark"
+proc potapark_pub { nick host hand chan text } {
+	global potaparkbin
+	set call [sanitize_string [string trim "${text}"]]
+	set geo [qrz_getgeo $hand]
+
+	putlog "potapark pub: $nick $host $hand $chan $call"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${potaparkbin} ${call}" r]
+	} else {
+		set fd [open "|${potaparkbin} ${call} --geo $geo" r]
+	}
+
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc msg_potapark {nick uhand handle input} {
+	global potaparkbin
+	set call [sanitize_string [string trim "${input}"]]
+	set geo [qrz_getgeo $handle]
+
+	putlog "potapark msg: $nick $uhand $handle $call"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${potaparkbin} ${call}" r]
+	} else {
+		set fd [open "|${potaparkbin} ${call} --geo $geo" r]
+	}
+
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
 proc potaspots_pub { nick host hand chan text } {
 	global potaspotsbin
 	set params [sanitize_string [string trim "${text}"]]

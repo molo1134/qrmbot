@@ -35,6 +35,7 @@
  * `!qsl` -- check all of the above qsl methods
  * `!league` -- report clublog league standings
  * `!pota` -- search POTA parks and users
+ * `!potapark` -- find POTA parks near a given location
  * `!sota` -- search SOTA summits
  * `!iota` -- search IOTA islands
  * `!1x1` -- search 1x1 special event stations
