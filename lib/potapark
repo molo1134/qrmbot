@@ -101,8 +101,8 @@ if (not defined $de and not defined $query and defined $mylat and defined $mylon
   ($lat, $lon) = ($mylat, $mylon);
 }
 
-print "me: $mylat, $mylon\n";
-print "dx: $lat, $lon\n";
+#print "me: $mylat, $mylon\n";
+#print "dx: $lat, $lon\n";
 
 # bounding box: ±0.5 degree lat/long
 my ($n, $s, $e, $w) = ($lat + 0.5, $lat - 0.5, $lon + 0.5, $lon - 0.5);
