@@ -4,8 +4,9 @@
 # Uses the ARRL hamfest search (https://www.arrl.org/hamfests/search)
 # and Nominatim (OpenStreetMap) for geocoding -- no API key required.
 #
-# Searches nationally and sorts results by distance from the user,
-# since the ARRL database only has a handful of events at any given time.
+# Searches by ARRL division (derived from user's state) and sorts results
+# by distance from the user. Division-based search returns upcoming events
+# months out, while national search only returns the near-term.
 #
 # 2-clause BSD license.
 # Copyright (c) 2026 cjh@github. All rights reserved.
@@ -38,6 +39,21 @@ my $MAX_RESULTS  = 5;
 my $DAYS_AHEAD   = 90;   # search window
 my $MAX_DIST_MI  = 200;  # ignore hamfests farther than this
 
+# US state -> ARRL division ID mapping
+my %state_to_division = (
+  AL => 'SE', AK => 'NW', AZ => 'SW', AR => 'DL', CA => 'PC',
+  CO => 'RM', CT => 'NE', DE => 'AT', DC => 'AT', FL => 'SE',
+  GA => 'SE', HI => 'PC', ID => 'NW', IL => 'CL', IN => 'CL',
+  IA => 'MW', KS => 'MW', KY => 'GL', LA => 'DL', ME => 'NE',
+  MD => 'AT', MA => 'NE', MI => 'GL', MN => 'DK', MS => 'DL',
+  MO => 'MW', MT => 'NW', NE => 'MW', NV => 'SW', NH => 'NE',
+  NJ => 'AT', NM => 'RM', NY => 'HU', NC => 'RK', ND => 'DK',
+  OH => 'GL', OK => 'WG', OR => 'NW', PA => 'AT', RI => 'NE',
+  SC => 'SE', SD => 'DK', TN => 'DL', TX => 'WG', UT => 'RM',
+  VT => 'NE', VA => 'RK', WA => 'NW', WV => 'RK', WI => 'CL',
+  WY => 'RM',
+);
+
 # --- Parse args: --geo lat,lon  and optional text location ---
 my $geo_arg = undef;
 my @text_args;
@@ -53,8 +69,8 @@ while ($i <= $#ARGV) {
 }
 my $query = join(" ", @text_args);
 
-# --- Resolve user lat/lon and a display name ---
-my ($user_lat, $user_lon, $location_name);
+# --- Resolve user lat/lon, state code, and display name ---
+my ($user_lat, $user_lon, $state_code, $location_name);
 
 if ($query && length($query) > 0) {
   # Forward geocode via Nominatim
@@ -70,13 +86,12 @@ if ($query && length($query) > 0) {
   $user_lat = $j->[0]{lat};
   $user_lon = $j->[0]{lon};
   my $addr  = $j->[0]{address} // {};
-  my $state = undef;
 
-  if (defined $addr->{"ISO3166-2-lvl4"} && $addr->{"ISO3166-2-lvl4"} =~ /^[A-Z]{2}-([A-Z0-9]{2,3})$/) {
-    $state = $1;
+  if (defined $addr->{"ISO3166-2-lvl4"} && $addr->{"ISO3166-2-lvl4"} =~ /^US-([A-Z]{2})$/) {
+    $state_code = $1;
   }
   $location_name  = $addr->{city} // $addr->{town} // $addr->{county} // $query;
-  $location_name .= ", $state" if defined $state;
+  $location_name .= ", $state_code" if defined $state_code;
 
 } elsif (defined $geo_arg && $geo_arg =~ /^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/) {
   # Reverse geocode via Nominatim
@@ -86,13 +101,12 @@ if ($query && length($query) > 0) {
   my $j   = fetchJSON($url);
 
   if (defined $j && defined $j->{address}) {
-    my $addr  = $j->{address};
-    my $state = undef;
-    if (defined $addr->{"ISO3166-2-lvl4"} && $addr->{"ISO3166-2-lvl4"} =~ /^[A-Z]{2}-([A-Z0-9]{2,3})$/) {
-      $state = $1;
+    my $addr = $j->{address};
+    if (defined $addr->{"ISO3166-2-lvl4"} && $addr->{"ISO3166-2-lvl4"} =~ /^US-([A-Z]{2})$/) {
+      $state_code = $1;
     }
     $location_name  = $addr->{city} // $addr->{town} // $addr->{county};
-    $location_name .= ", $state" if defined $location_name && defined $state;
+    $location_name .= ", $state_code" if defined $location_name && defined $state_code;
     $location_name  = "your location" unless defined $location_name;
   } else {
     $location_name = "your location";
@@ -103,30 +117,52 @@ if ($query && length($query) > 0) {
   exit $exitnonzeroonerror;
 }
 
-# --- Search ARRL hamfest database nationally ---
+# --- Search ARRL hamfest database by division + state, merge results ---
 my $today    = strftime("%m/%d/%Y", localtime);
 my @end_tm   = localtime(time + $DAYS_AHEAD * 86400);
 my $end_date = sprintf("%02d/%02d/%04d", $end_tm[4]+1, $end_tm[3], $end_tm[5]+1900);
 
 my $enc_start = uri_escape($today);
 my $enc_end   = uri_escape($end_date);
-
-my $post_data = "_method=POST"
+my $date_params = "_method=POST"
   . "&data%5BDate%5D%5Bstart%5D=${enc_start}"
   . "&data%5BDate%5D%5Bend%5D=${enc_end}";
 
-my $html = fetchPOST("https://www.arrl.org/hamfests/search", $post_data);
+my $division = defined $state_code ? $state_to_division{$state_code} : undef;
 
-if (!defined $html) {
+# Fetch division results (broad regional coverage) and state results
+# (catches any events the division search might miss), then deduplicate.
+my $combined_html = "";
+if (defined $division) {
+  my $h = fetchPOST("https://www.arrl.org/hamfests/search",
+    $date_params . "&data%5BLocation%5D%5Bdivision_id%5D=${division}");
+  $combined_html .= $h if defined $h;
+}
+if (defined $state_code) {
+  my $h = fetchPOST("https://www.arrl.org/hamfests/search",
+    $date_params . "&data%5BLocation%5D%5Bstate%5D=${state_code}");
+  $combined_html .= $h if defined $h;
+}
+if (!length($combined_html)) {
   print "error: could not reach ARRL hamfest search\n";
   exit $exitnonzeroonerror;
 }
 
-# --- Parse <li> results ---
+# --- Parse <li> results, deduplicate by ARRL event slug ---
 my @events;
-while ($html =~ m|(<li>\s*<div class="img">.*?</li>)|gsi) {
+my %seen;
+while ($combined_html =~ m|(<li>\s*<div class="img">.*?</li>)|gsi) {
   my $item = $1;
   my %ev;
+
+  # Unique key: the ARRL hamfest URL slug
+  if ($item =~ m|href="/hamfests/([^"]+)"\s+title="(?!Learn More)|) {
+    my $slug = $1;
+    next if $seen{$slug}++;
+    $ev{slug} = $slug;
+  } else {
+    next;
+  }
 
   # Lat/lon from Google Maps static map img
   if ($item =~ /markers=color:[^|]+\|(-?\d+\.?\d*),(-?\d+\.?\d*)/) {
