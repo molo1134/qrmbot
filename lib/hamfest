@@ -34,8 +34,9 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 @ARGV = split(' ', join(' ', @ARGV));
 
 my $useragent  = "Mozilla/5.0 (compatible; qrmbot)";
-my $MAX_RESULTS = 5;
-my $DAYS_AHEAD  = 90;  # search window
+my $MAX_RESULTS  = 5;
+my $DAYS_AHEAD   = 90;   # search window
+my $MAX_DIST_MI  = 200;  # ignore hamfests farther than this
 
 # --- Parse args: --geo lat,lon  and optional text location ---
 my $geo_arg = undef;
@@ -172,8 +173,15 @@ if (@events == 0) {
   exit 0;
 }
 
-# Sort nearest-first, cap at MAX_RESULTS
+# Sort nearest-first, filter to within MAX_DIST_MI, cap at MAX_RESULTS
 @events = sort { $a->{dist_mi} <=> $b->{dist_mi} } @events;
+@events = grep { $_->{dist_mi} <= $MAX_DIST_MI } @events;
+
+if (@events == 0) {
+  print "📻 No hamfests found within $MAX_DIST_MI miles in the next $DAYS_AHEAD days\n";
+  exit 0;
+}
+
 my $count = @events < $MAX_RESULTS ? scalar @events : $MAX_RESULTS;
 
 # --- Output ---
