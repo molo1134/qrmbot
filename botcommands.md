@@ -85,7 +85,7 @@
  * `!launch` -- search for upcoming rocket launch
  * `!spacex` -- next spacex launch
  * `!translate` -- translate text
- * `!rand` `!dice` `!flip` `!8ball` -- random
+ * `!rand` `!dice` `!flip` `!8ball` `!orb` -- random
 
 ## Radio-related commands:
 
@@ -1035,7 +1035,7 @@ Example:
 ### `!launch` -- search for upcoming rocket launch
 ### `!spacex` -- next spacex launch
 ### `!translate` -- translate text
-### `!rand` `!dice` `!flip` `!8ball` -- random
+### `!rand` `!dice` `!flip` `!8ball` `!orb` -- random
 
 <!-- !amcon - - some dumb prepper shit -->
 <!-- !c19 !corona - - coronavirus stats -->
