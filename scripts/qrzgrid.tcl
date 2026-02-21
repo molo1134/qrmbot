@@ -2171,5 +2171,48 @@ proc msg_spot {nick uhand handle input} {
 	close $fd
 }
 
+bind pub - !fest fest_pub
+bind msg - !fest fest_msg
+
+set festbin "/home/eggdrop/bin/fest"
+
+proc fest_pub { nick host hand chan text } {
+	global festbin
+	set loc [sanitize_string [string trim "${text}"]]
+	set geo [qrz_getgeo $hand]
+
+	putlog "fest pub: $nick $host $hand $chan $loc $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${festbin} ${loc}" r]
+	} else {
+		set fd [open "|${festbin} ${loc} --geo ${geo}" r]
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc fest_msg { nick uhand handle input } {
+	global festbin
+	set loc [sanitize_string [string trim "${input}"]]
+	set geo [qrz_getgeo $handle]
+
+	putlog "fest msg: $nick $uhand $handle $loc $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${festbin} ${loc}" r]
+	} else {
+		set fd [open "|${festbin} ${loc} --geo ${geo}" r]
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
 putlog "Ham utils loaded."
 
