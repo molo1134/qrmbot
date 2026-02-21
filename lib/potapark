@@ -153,6 +153,11 @@ foreach my $d (sort { $a <=> $b } keys %results) {
   $dist = nearest(0.1, $dist);
   my $dir = azToNEWS($bearing);
 
+  $name =~ s/\t/ /g;
+  $name =~ s/\s+/ /g;
+  $name =~ s/^\s*//g;
+  $name =~ s/\s*$//g;
+
   my $placename = geolocate($plat, $plon);
 
   print "$ref: $name";
