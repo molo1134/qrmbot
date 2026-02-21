@@ -805,6 +805,31 @@ Examples:
       3,546 QSOs -- 21.1 km, 125° from FN21wb
 ```
 
+### `!potapark` -- find POTA parks near a given location
+
+Usage:
+
+```
+    !potapark <grid>|<lat>,<lon>|<qth> [count]
+```
+
+Examples:
+
+```
+    <molo1134> !potapark
+    <qrm> US-4998: Ramapo Mountain State Forest -- Wanaque, NJ, USA -- 11.5 km W
+    <qrm> US-1630: Ringwood State Park -- Ringwood, NJ, USA -- 12.2 km NW
+    <qrm> US-2069: Harriman State Park -- Ramapo, NY, USA -- 13.3 km NNW
+
+    <molo1134> !potapark san francisco
+    <qrm> US-0757: San Francisco Maritime National Historical Park -- Fort
+        Mason, San Francisco, CA 94109, USA -- 3.6 km N
+    <qrm> US-7889: Presidio of SF National Historic Site -- Presidio of San
+        Francisco, San Francisco, CA, USA -- 4.5 km NW
+    <qrm> US-7888: Alcatraz Island National Historic Site -- San Francisco,
+        CA, USA -- 5.8 km N
+```
+
 ### `!sota` -- search SOTA summits
 
 Usage:
