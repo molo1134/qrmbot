@@ -117,7 +117,7 @@ needed.
 9. ~~Add [clublog log check](https://clublog.freshdesk.com/support/solutions/articles/96841-checking-logs-for-the-existence-of-a-qso) or [clublog log search](https://clublog.freshdesk.com/support/solutions/articles/3000071078-performing-a-log-search-using-json)~~
 10. Add [clublog DXCC activity data](https://clublog.freshdesk.com/support/solutions/articles/55364-activity-data-json-api)
 11. ~~Add POTA~~
-12. Move dotfiles to a dot dir
+12. ~~Move dotfiles to a dot dir~~
 13. ~~Add [clublog league status](https://bbs.km8v.com/bot/league?call=)~~
 14. ~~Add free space path loss calculation using gnu units.~~
 15. Add wavelength and frequency calculation (free space and in-wire w/ velocity factor).
