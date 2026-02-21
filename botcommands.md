@@ -77,7 +77,7 @@
  * `!phoneticise` -- random phonetics
  * `!imdb` -- movie info
  * `!steam` -- Steam game info (name, price, rating, description)
- * `!hamfest` -- find upcoming hamfests near your location (uses !setgeo)
+ * `!fest` -- find upcoming hamfests near your location (uses !setgeo)
  * `!adsb` -- get plane information
  * `!hofh` -- why your radio is broke
  * `!ammo` -- find a price for ammo
@@ -1002,7 +1002,7 @@ Example:
 ### `!phoneticise` -- random phonetics
 ### `!imdb` -- movie info
 ### `!steam` -- Steam game info
-### `!hamfest` -- find upcoming hamfests near your location
+### `!fest` -- find upcoming hamfests near your location
 ### `!adsb` -- get plane information
 ### `!hofh` -- why your radio is broke
 ### `!ammo` -- find a price for ammo
