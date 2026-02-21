@@ -134,14 +134,12 @@ my $division = defined $state_code ? $state_to_division{$state_code} : undef;
 # (catches any events the division search might miss), then deduplicate.
 my $combined_html = "";
 if (defined $division) {
-  my $h = fetchPOST("https://www.arrl.org/hamfests/search",
+  $combined_html .= fetchARRL(
     $date_params . "&data%5BLocation%5D%5Bdivision_id%5D=${division}");
-  $combined_html .= $h if defined $h;
 }
 if (defined $state_code) {
-  my $h = fetchPOST("https://www.arrl.org/hamfests/search",
+  $combined_html .= fetchARRL(
     $date_params . "&data%5BLocation%5D%5Bstate%5D=${state_code}");
-  $combined_html .= $h if defined $h;
 }
 if (!length($combined_html)) {
   print "error: could not reach ARRL hamfest search\n";
@@ -264,6 +262,36 @@ sub fetchPOST {
   close($fh);
   return undef unless defined $res && length($res) > 0;
   return $res;
+}
+
+sub fetchGET {
+  my $url = shift;
+  open(my $fh, '-|', "curl --max-time 15 -s -k -L -A \"$useragent\" '$url'");
+  binmode($fh, ":utf8");
+  local $/;
+  my $res = <$fh>;
+  close($fh);
+  return undef unless defined $res && length($res) > 0;
+  return $res;
+}
+
+# Fetch page 1 via POST, then follow any "next" pagination links via GET.
+sub fetchARRL {
+  my ($post_data) = @_;
+  my $combined = "";
+
+  my $html = fetchPOST("https://www.arrl.org/hamfests/search", $post_data);
+  return "" unless defined $html;
+  $combined .= $html;
+
+  while ($html =~ m|href="(/hamfests/search/page:\d+/[^"]+)"\s+class="next"|) {
+    my $next_path = $1;
+    $html = fetchGET("https://www.arrl.org$next_path");
+    last unless defined $html;
+    $combined .= $html;
+  }
+
+  return $combined;
 }
 
 sub haversine_mi {
