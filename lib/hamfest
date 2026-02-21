@@ -1,0 +1,231 @@
+#!/usr/bin/perl -w
+#
+# Search for upcoming hamfests near the user's location.
+# Uses the ARRL hamfest search (https://www.arrl.org/hamfests/search)
+# and Nominatim (OpenStreetMap) for geocoding -- no API key required.
+#
+# Searches nationally and sorts results by distance from the user,
+# since the ARRL database only has a handful of events at any given time.
+#
+# 2-clause BSD license.
+# Copyright (c) 2026 cjh@github. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use JSON::PP qw(decode_json);
+use URI::Escape;
+use POSIX qw(strftime);
+use Math::Trig qw(deg2rad great_circle_distance);
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+@ARGV = split(' ', join(' ', @ARGV));
+
+my $useragent  = "Mozilla/5.0 (compatible; qrmbot)";
+my $MAX_RESULTS = 5;
+my $DAYS_AHEAD  = 90;  # search window
+
+# --- Parse args: --geo lat,lon  and optional text location ---
+my $geo_arg = undef;
+my @text_args;
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] eq "--geo" && $i + 1 <= $#ARGV) {
+    $geo_arg = $ARGV[$i + 1];
+    $i += 2;
+  } else {
+    push @text_args, $ARGV[$i];
+    $i++;
+  }
+}
+my $query = join(" ", @text_args);
+
+# --- Resolve user lat/lon and a display name ---
+my ($user_lat, $user_lon, $location_name);
+
+if ($query && length($query) > 0) {
+  # Forward geocode via Nominatim
+  my $enc = uri_escape_utf8($query);
+  my $url = "https://nominatim.openstreetmap.org/search?q=${enc}&format=json&limit=1&addressdetails=1";
+  my $j = fetchJSON($url);
+
+  if (!defined $j || ref($j) ne 'ARRAY' || @$j == 0) {
+    print "error: location not found: $query\n";
+    exit $exitnonzeroonerror;
+  }
+
+  $user_lat = $j->[0]{lat};
+  $user_lon = $j->[0]{lon};
+  my $addr  = $j->[0]{address} // {};
+  my $state = undef;
+
+  if (defined $addr->{"ISO3166-2-lvl4"} && $addr->{"ISO3166-2-lvl4"} =~ /^[A-Z]{2}-([A-Z0-9]{2,3})$/) {
+    $state = $1;
+  }
+  $location_name  = $addr->{city} // $addr->{town} // $addr->{county} // $query;
+  $location_name .= ", $state" if defined $state;
+
+} elsif (defined $geo_arg && $geo_arg =~ /^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/) {
+  # Reverse geocode via Nominatim
+  ($user_lat, $user_lon) = ($1, $2);
+
+  my $url = "https://nominatim.openstreetmap.org/reverse?format=json&lat=${user_lat}&lon=${user_lon}&zoom=10&addressdetails=1";
+  my $j   = fetchJSON($url);
+
+  if (defined $j && defined $j->{address}) {
+    my $addr  = $j->{address};
+    my $state = undef;
+    if (defined $addr->{"ISO3166-2-lvl4"} && $addr->{"ISO3166-2-lvl4"} =~ /^[A-Z]{2}-([A-Z0-9]{2,3})$/) {
+      $state = $1;
+    }
+    $location_name  = $addr->{city} // $addr->{town} // $addr->{county};
+    $location_name .= ", $state" if defined $location_name && defined $state;
+    $location_name  = "your location" unless defined $location_name;
+  } else {
+    $location_name = "your location";
+  }
+
+} else {
+  print "usage: !hamfest [location] -- set your QTH with !setgeo for automatic lookup\n";
+  exit $exitnonzeroonerror;
+}
+
+# --- Search ARRL hamfest database nationally ---
+my $today    = strftime("%m/%d/%Y", localtime);
+my @end_tm   = localtime(time + $DAYS_AHEAD * 86400);
+my $end_date = sprintf("%02d/%02d/%04d", $end_tm[4]+1, $end_tm[3], $end_tm[5]+1900);
+
+my $enc_start = uri_escape($today);
+my $enc_end   = uri_escape($end_date);
+
+my $post_data = "_method=POST"
+  . "&data%5BDate%5D%5Bstart%5D=${enc_start}"
+  . "&data%5BDate%5D%5Bend%5D=${enc_end}";
+
+my $html = fetchPOST("https://www.arrl.org/hamfests/search", $post_data);
+
+if (!defined $html) {
+  print "error: could not reach ARRL hamfest search\n";
+  exit $exitnonzeroonerror;
+}
+
+# --- Parse <li> results ---
+my @events;
+while ($html =~ m|(<li>\s*<div class="img">.*?</li>)|gsi) {
+  my $item = $1;
+  my %ev;
+
+  # Lat/lon from Google Maps static map img
+  if ($item =~ /markers=color:[^|]+\|(-?\d+\.?\d*),(-?\d+\.?\d*)/) {
+    ($ev{lat}, $ev{lon}) = ($1, $2);
+  } else {
+    next;
+  }
+
+  # Event name (title attribute of the detail link)
+  if ($item =~ m|href="/hamfests/[^"]*"\s+title="([^"]+)"|) {
+    $ev{name} = decodeEntities($1);
+  }
+  next unless defined $ev{name};
+  next if $ev{name} eq "Learn More";
+
+  # Start date (in <span>)
+  if ($item =~ m|<span>\s*(\d{1,2}/\d{1,2}/\d{4})|) {
+    $ev{date} = $1;
+  }
+  next unless defined $ev{date};
+
+  # City, State
+  if ($item =~ m|<strong>Location:\s*</strong>\s*([^<]+)|) {
+    ($ev{location} = $1) =~ s/\s+$//;
+  }
+
+  # Type (ARRL Hamfest / ARRL Convention / etc.)
+  if ($item =~ m|<strong>Type:</strong>\s*([^<]+)|) {
+    ($ev{type} = $1) =~ s/\s+$//;
+  }
+
+  # External website
+  if ($item =~ m|<strong>Website:</strong>\s*<a href="([^"]+)"|) {
+    $ev{website} = $1;
+  }
+
+  $ev{dist_mi} = haversine_mi($user_lat, $user_lon, $ev{lat}, $ev{lon});
+
+  push @events, \%ev;
+}
+
+if (@events == 0) {
+  print "📻 No upcoming hamfests found in the ARRL database for the next $DAYS_AHEAD days\n";
+  exit 0;
+}
+
+# Sort nearest-first, cap at MAX_RESULTS
+@events = sort { $a->{dist_mi} <=> $b->{dist_mi} } @events;
+my $count = @events < $MAX_RESULTS ? scalar @events : $MAX_RESULTS;
+
+# --- Output ---
+my @month_abbr = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+my $sep = " \x{00B7} ";
+
+print "📻 Upcoming hamfests near " . bold($location_name) . ":\n";
+
+for my $ev (@events[0..$count-1]) {
+  my ($mon, $day, $yr) = split('/', $ev->{date});
+  my $date_fmt = $month_abbr[$mon - 1] . " " . int($day);
+
+  print "📅 " . bold($date_fmt) . " \x{2014} " . bold($ev->{name});
+  print ", " . $ev->{location} if defined $ev->{location};
+  print " (" . $ev->{dist_mi} . " mi)";
+  print $sep . $ev->{type}    if defined $ev->{type};
+  print $sep . $ev->{website} if defined $ev->{website};
+  print "\n";
+}
+
+exit 0;
+
+# ---- Helpers ----
+
+sub fetchJSON {
+  my $url = shift;
+  open(my $fh, '-|', "curl --max-time 10 -s -k -L -A \"$useragent\" '$url'");
+  local $/;
+  my $res = <$fh>;
+  close($fh);
+  return undef unless defined $res && $res =~ /^\s*[\[{]/;
+  return decode_json($res);
+}
+
+sub fetchPOST {
+  my ($url, $data) = @_;
+  open(my $fh, '-|', "curl --max-time 15 -s -k -L -A \"$useragent\" "
+    . "-X POST --data '$data' "
+    . "-H 'Content-Type: application/x-www-form-urlencoded' "
+    . "'$url'");
+  binmode($fh, ":utf8");
+  local $/;
+  my $res = <$fh>;
+  close($fh);
+  return undef unless defined $res && length($res) > 0;
+  return $res;
+}
+
+sub haversine_mi {
+  my ($lat1, $lon1, $lat2, $lon2) = @_;
+  my @p1 = (deg2rad($lon1), deg2rad(90 - $lat1));
+  my @p2 = (deg2rad($lon2), deg2rad(90 - $lat2));
+  my $dist_km = great_circle_distance(@p1, @p2, 6378.1);
+  return int($dist_km * 0.621371 + 0.5);
+}
