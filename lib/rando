@@ -146,7 +146,7 @@ my @orb_legendary = (
   sub { my $y = shift;
     (bold(lightblue("THE ORB WAKES UP")),
      bold(lightblue("IT HAS BEEN WAITING FOR THIS EXACT QUESTION")),
-     bold(lightblue("BLUE. SO MUCH BLUE. GLORIOUS BLUE.")),
+     bold(lightblue("THE ORB IS VIBRATING. IT IS ACTUALLY VIBRATING.")),
      lightblue('"OH THIS ONE. THIS IS A GOOD ONE."'),
      $y ? bold(green('"YES. YES YES YES."'))
         : bold(red('"No. But asked so beautifully."'))) },
@@ -191,13 +191,13 @@ my @orb_legendary = (
      italic(grey("the red comes from somewhere deep. somewhere bad.")),
      darkRed('"Seven people asked this question before you."'),
      $y ? bold(green('"YES."')) : bold(red('"NO."')),
-     darkRed('"You are the eighth."')) },
+     darkRed('"You are the eighth. The other seven have not survived."')) },
 
   # The Reluctant Truth
   sub { my $y = shift;
-    (italic(grey("the orb tries to show you blue")),
-     italic(grey("it cannot")),
-     bold(red("RED. it's RED. it's always been RED for this one.")),
+    (italic(grey("the orb pulls away from your question")),
+     italic(grey("it tries to look elsewhere")),
+     bold(red("it cannot")),
      darkRed('"I tried to protect you from this answer."'),
      $y ? bold(green('"YES. God help you, yes."')) : bold(red('"NO."'))) },
 
@@ -205,7 +205,7 @@ my @orb_legendary = (
   sub { my $y = shift;
     (italic(grey("the orb reaches out to find your answer")),
      italic(grey("something on the other side noticed")),
-     bold(red("RED. wrong. all wrong.")),
+     bold(red("wrong. all wrong.")),
      $y ? bold(green('"YES."')) : bold(red('"NO."')),
      darkRed('"It knows you asked."')) },
 
@@ -228,9 +228,9 @@ my @orb_legendary = (
 
   # The Understated Doom
   sub { my $y = shift;
-    (bold(red("red")),
+    (bold(red("the orb glows a dim red")),
      $y ? bold(green('"YES."')) : bold(red('"NO."')),
-     darkRed('"Anyway."')) },
+     darkRed('"the orb returns to sleep"')) },
 
   # The Regret
   sub { my $y = shift;
@@ -265,7 +265,7 @@ my @orb_legendary = (
      italic(grey("it's too much. it's way too much.")),
      bold(yellow("CRACK. ZAP. the air smells like ozone.")),
      $y ? bold(green('"YOUR ANSWER IS YES AND IT ARRIVES WITH VOLTAGE"'))
-        : bold(red('"NO. ALSO VOLTAGE."'))) },
+        : bold(red('"NO. ALSO HIGH VOLTAGE."'))) },
 
   # The Unstable Prophet
   sub { my $y = shift;
@@ -327,7 +327,7 @@ my @orb_legendary = (
     (bold(darkYellow("the orb ignites")),
      bold(darkYellow("it should not be doing this")),
      bold(darkYellow("it does not care")),
-     darkYellow('"ASK AGAIN AND I WILL ASK THE FIRE."'),
+     darkYellow('"I WILL ASK THE EVERLIVING FIRE."'),
      $y ? bold(green('"The fire says YES."')) : bold(red('"The fire says NO."')),
      darkYellow('"The fire is satisfied."')) },
 
