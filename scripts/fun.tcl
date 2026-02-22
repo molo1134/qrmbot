@@ -1424,7 +1424,7 @@ proc et_history {event nick uhost hand chan text} {
 
 proc et_help {event nick uhost hand chan text} {
     if [string equal "#amateurradio" $chan] then { return }
-    putchan $chan "ℹ️ $nick: \u0002${event}\u0002 commands: \u0002!${event}\u0002 (timer) · \u0002!${event}reset\u0002 <nick> · \u0002!${event}confirm\u0002 · \u0002!${event}status\u0002 · \u0002!${event}league\u0002 \[year\] · \u0002!${event}yearreview\u0002 \[year\] · \u0002!${event}history\u0002 <nick>"
+    putchan $chan "ℹ️ $nick: \u0002${event}\u0002 commands: \u0002!${event}\u0002 (timer) · \u0002!${event}reset\u0002 <nick> · \u0002!${event}confirm\u0002 · \u0002!${event}status\u0002 · \u0002!${event}league\u0002 \[year\] · \u0002!${event}yearreview\u0002 \[year\] · \u0002!${event}history\u0002"
 }
 
 # --- Register events ---
