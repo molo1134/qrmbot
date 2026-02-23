@@ -227,7 +227,7 @@ if (not $json =~ /^\s*{/) {
 my $j = decode_json($json);
 
 if (not $j->{success} or defined $j->{error}) {
-  print "error2 while retrieving data: $j->{error}\n";
+  print "error2 while retrieving data: $j->{error}->{code}: $j->{error}->{description}\n";
   exit $exitnonzeroonerror;
 }
 
@@ -271,7 +271,7 @@ if (not $json =~ /^\s*{/) {
 $j = decode_json($json);
 
 if (not $j->{success} or (defined $j->{error} and $j->{error}->{code} ne "warn_no_data")) {
-  print "error2 while retrieving data: $j->{error}\n";
+  print "error2 while retrieving data: $j->{error}->{code}: $j->{error}->{description}\n";
   exit $exitnonzeroonerror;
 }
 
