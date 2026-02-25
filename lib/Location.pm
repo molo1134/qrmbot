@@ -245,7 +245,7 @@ sub argToCoords {
   if ($arg =~ /^(grid:)? ?([A-R]{2}[0-9]{2}([a-x]{2})?)/i) {
     $arg = $2;
     $type = "grid";
-  } elsif ($arg =~ /^(geo:)? ?([-+]?\d+(.\d+)?,\s?[-+]?\d+(.\d+)?)/i) {
+  } elsif ($arg =~ /^(geo:)? ?([-+]?\d+(\.\d+)?,\s?[-+]?\d+(\.\d+)?)/i) {
     $arg = $2;
     $type = "geo";
   } else {
