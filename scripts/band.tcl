@@ -46,7 +46,6 @@ proc b_pubquote { nick uhost hand chan arg } {
   if { [file exists $bandfile] } {
 
     set qf [open $bandfile r]
-    set done 0
 
     set fd [open "|wc -l $bandfile" r]
     while {![eof $fd]} {

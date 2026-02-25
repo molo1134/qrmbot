@@ -47,7 +47,6 @@ proc q_pubquote { nick uhost hand chan arg } {
 
     set qf [open $quotefile r]
     fconfigure $qf -encoding utf-8
-    set done 0
 
     set fd [open "|wc -l $quotefile" r]
     while {![eof $fd]} {

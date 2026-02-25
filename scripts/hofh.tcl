@@ -43,7 +43,6 @@ proc h_pubquote { nick uhost hand chan arg } {
   if { [file exists $hofhfile] } {
 
     set qf [open $hofhfile r]
-    set done 0
 
     set fd [open "|wc -l $hofhfile" r]
     while {![eof $fd]} {
