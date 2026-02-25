@@ -61,7 +61,7 @@ foreach my $subreddit (@subreddits) {
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/8ydhs6/2way_radio_recommendations/e2a6fcq/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/ayyp9l/calibration_instructions_for_a_daiwa_cn501h/.json";
 #push @baseurls, "https://www.reddit.com/r/amateurradio/comments/bewqre/morsecodeme_online_morse_code_radio/.json";
-+#push @baseurls, "https://www.reddit.com/r/amateurradio/comments/eklvpm/i_dropped_my_ft60_and_now_the_dial_knob_and/.json";
+#push @baseurls, "https://www.reddit.com/r/amateurradio/comments/eklvpm/i_dropped_my_ft60_and_now_the_dial_knob_and/.json";
 
 our %nicks;
 our %results;
