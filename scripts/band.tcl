@@ -59,8 +59,6 @@ proc b_pubquote { nick uhost hand chan arg } {
       return
     }
 
-    set i 0
-
     if { [string trim "$arg"] == "" } {
       set j [rand $tmp]
       #putmsg "$nick" "picked band [expr $j + 1] of $tmp"
@@ -76,13 +74,11 @@ proc b_pubquote { nick uhost hand chan arg } {
       }
     }
 
+    set i 0
     while { $j >= $i } {
-
       set line [gets $qf]
       incr i
-
     }
-
     close $qf
 
     putchan $chan "[lindex $line 0]"

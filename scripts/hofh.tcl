@@ -56,8 +56,6 @@ proc h_pubquote { nick uhost hand chan arg } {
       return
     }
 
-    set i 0
-
     if { [string trim "$arg"] == "" } {
       set j [rand $tmp]
       #putmsg "$nick" "picked hofh [expr $j + 1] of $tmp"
@@ -73,11 +71,10 @@ proc h_pubquote { nick uhost hand chan arg } {
       }
     }
 
+    set i 0
     while { $j >= $i } {
-
       set line [gets $qf]
       incr i
-
     }
 
     close $qf
