@@ -315,7 +315,7 @@ sub rangeAndBearing {
   my $diro = deg2rad($bearing);
   my $distance = $range / 6378.1; # in radians
 
-  ($thetad, $phid, $dird) = great_circle_destination(@origin, $diro, $distance);
+  my ($thetad, $phid, $dird) = great_circle_destination(@origin, $diro, $distance);
   my ($lon2, $lat2) = (rad2deg($thetad), rad2deg($phid)); # note order
 
   return ($lat2, $lon2);
@@ -350,7 +350,7 @@ sub coordToTZ {
   open (HTTP, '-|', "curl --stderr - -N -k -s -L --max-time 5 '$url'");
   binmode(HTTP, ":utf8");
   local $/; # read entire output -- potentially memory hungry
-  $json = <HTTP>;
+  my $json = <HTTP>;
   close(HTTP);
   my $j = decode_json($json);
 

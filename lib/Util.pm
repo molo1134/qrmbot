@@ -267,8 +267,8 @@ sub aryToIter {
 }
 
 sub getYearForDate {
-  $m = shift;
-  $d = shift;
+  my $m = shift;
+  my $d = shift;
 
   my $today = ParseDate("today");
   my $today_ts = UnixDate($today, "%s");
@@ -718,7 +718,7 @@ sub scrapeMW {
 
   open (HTTP, '-|', "curl -s -k -L --max-time 4 --retry 1 '$mwurl'");
   binmode(HTTP, ":utf8");
-  $json = <HTTP>;
+  my $json = <HTTP>;
   close(HTTP);
 
   my $j = from_json($json);
