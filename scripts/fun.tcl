@@ -317,7 +317,7 @@ proc really { nick host hand chan text} {
 	}
 
 	if [ expr (rand()*100) <= 1 ] then {
-		putchan $chan "https://i.imgur.com/ygyYn1n.mp4"  
+		putchan $chan "https://i.imgur.com/ygyYn1n.mp4"
 	} elseif [ expr (rand()*10) <= 3 ] then {
 		putchan $chan "https://i.imgur.com/icBPoib.mp4"
 	} else {
@@ -341,11 +341,11 @@ proc rickface { nick host hand chan text} {
 		return
 	}
 
- 	if [string equal "#dayton" $chan] then {
-  		putchan $chan "https://i.imgur.com/rWqnVT1.png"
+	if [string equal "#dayton" $chan] then {
+		putchan $chan "https://i.imgur.com/rWqnVT1.png"
 	} else {
- 		putchan $chan "https://i.imgur.com/VmiWh7r.png"
- 	}
+		putchan $chan "https://i.imgur.com/VmiWh7r.png"
+	}
 }
 
 bind pub - !monkee daveface
@@ -545,10 +545,10 @@ proc poker_pub { nick host hand chan text } {
 	    putchan $chan "Need 10 or fewer players to deal a hand (blame W2XG)"
 	    return
 	}
-	
+
 	# Default to 5 cards for poker
 	set drawcmd "5 ${param}"
-	
+
 	# Collect the output from rando (card dealing)
 	set poker_input ""
 	set fd [open "|${randobin} --draw ${drawcmd}" r]
@@ -558,7 +558,7 @@ proc poker_pub { nick host hand chan text } {
 		append poker_input "$line "
 	}
 	close $fd
-	
+
 	# Now evaluate the poker hands
 	if {$poker_input ne ""} {
 		set fd2 [open "|${pokerbin} ${poker_input}" r]
