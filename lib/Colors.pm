@@ -128,9 +128,9 @@ sub bold {
   my $s = shift;
   return undef if not defined($s);
   if ($highlight eq "irc") {
-    return "\x02$s\x0F"
+    return "\x02$s\x0F";
   } elsif ($highlight eq "vt220") {
-    return "\e[1m$s\e[0m"
+    return "\e[1m$s\e[0m";
   } else {
     return $s;
   }
@@ -140,9 +140,9 @@ sub underline {
   my $s = shift;
   return undef if not defined($s);
   if ($highlight eq "irc") {
-    return "\x1F$s\x0F"
+    return "\x1F$s\x0F";
   } elsif ($highlight eq "vt220") {
-    return "\e[4m$s\e[0m"
+    return "\e[4m$s\e[0m";
   } else {
     return $s;
   }
@@ -152,9 +152,9 @@ sub inverse {
   my $s = shift;
   return undef if not defined($s);
   if ($highlight eq "irc") {
-    return "\x16$s\x0F"
+    return "\x16$s\x0F";
   } elsif ($highlight eq "vt220") {
-    return "\e[7m$s\e[0m"
+    return "\e[7m$s\e[0m";
   } else {
     return $s;
   }
@@ -164,9 +164,9 @@ sub italic {
   my $s = shift;
   return undef if not defined($s);
   if ($highlight eq "irc") {
-    return "\x1D$s\x0F"
+    return "\x1D$s\x0F";
   } elsif ($highlight eq "vt220") {
-    return "\e[3m$s\e[0m"
+    return "\e[3m$s\e[0m";
   } else {
     return $s;
   }
@@ -182,9 +182,9 @@ sub terminalStrikethrough {
   my $s = shift;
   return undef if not defined($s);
   if ($highlight eq "irc") {
-    return "\x1E$s\x0F"
+    return "\x1E$s\x0F";
   } elsif ($highlight eq "vt220") {
-    return "\e[9m$s\e[0m"
+    return "\e[9m$s\e[0m";
   } else {
     return $s;
   }
@@ -213,9 +213,9 @@ sub blink {
   my $s = shift;
   return undef if not defined($s);
   if ($highlight eq "irc") {
-    return "\x06$s\x0F"
+    return "\x06$s\x0F";
   } elsif ($highlight eq "vt220") {
-    return "\e[5m$s\e[0m"
+    return "\e[5m$s\e[0m";
   } else {
     return $s;
   }
@@ -226,7 +226,7 @@ sub monospace {
   my $s = shift;
   return undef if not defined($s);
   if ($highlight eq "irc") {
-    return "\x11$s\x0F"
+    return "\x11$s\x0F";
   } else {
     return $s;
   }
