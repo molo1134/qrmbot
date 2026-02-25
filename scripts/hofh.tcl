@@ -52,7 +52,7 @@ proc h_pubquote { nick uhost hand chan arg } {
     close $fd
 
     if { $tmp == 0 } {
-      putchan "no hofh recorded"
+      putchan $chan "no hofh recorded"
       return
     }
 

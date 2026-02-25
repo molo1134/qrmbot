@@ -55,7 +55,7 @@ proc b_pubquote { nick uhost hand chan arg } {
     close $fd
 
     if { $tmp == 0 } {
-      putchan "no bands recorded"
+      putchan $chan "no bands recorded"
       return
     }
 
