@@ -123,10 +123,10 @@ sub qthToCoords {
 	usleep 1000 if $tries + 1 < $maxtries;
 	last GET;
       }
-      if (/<lat>([+-]?\d+.\d+)<\/lat>/) {
+      if (/<lat>([+-]?\d+\.\d+)<\/lat>/) {
 	$lat = $1;
       }
-      if (/<lng>([+-]?\d+.\d+)<\/lng>/) {
+      if (/<lng>([+-]?\d+\.\d+)<\/lng>/) {
 	$lon = $1;
       }
       if (defined($lat) and defined($lon)) {
