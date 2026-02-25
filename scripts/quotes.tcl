@@ -109,6 +109,7 @@ proc q_pebus { nick uhost hand chan arg } {
 
         set i 0
 
+        set found [list]
         while {$i < $tmp} {
             set line [gets $qf]
 	    if { [regexp -nocase {n0rua|ae0kw|tonyc} [lindex $line 0]] } then {
