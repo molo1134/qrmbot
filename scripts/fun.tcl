@@ -1361,9 +1361,9 @@ proc et_yearreview {event nick uhost hand chan text} {
             set review_year [lindex $parts 1]
         } elseif {[llength $parts] == 1} {
             if {[string is integer -strict [lindex $parts 0]} {
-                set review_year $parts
+                set review_year [lindex $parts 0]
             } else {
-                set review_nick $parts
+                set review_nick [lindex $parts 0]
             }
         }
     }
