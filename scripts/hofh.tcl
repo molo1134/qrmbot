@@ -51,6 +51,11 @@ proc h_pubquote { nick uhost hand chan arg } {
     }
     close $fd
 
+    if { $tmp == 0 } {
+      putchan "no hofh recorded"
+      return
+    }
+
     set i 0
 
     if { [string trim "$arg"] == "" } {

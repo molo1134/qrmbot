@@ -55,6 +55,11 @@ proc q_pubquote { nick uhost hand chan arg } {
     }
     close $fd
 
+    if { $tmp == 0 } {
+      putchan "no quotes recorded for $chan"
+      return
+    }
+
     set i 0
 
     if { ! [string is integer -strict [string trim "$arg"]] } {
