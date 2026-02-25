@@ -65,7 +65,7 @@ proc delFromRegistered {nick} {
   if { $index != -1 } {
     # delete from list
     putlog "removing registered nick: $nick #$index"
-    set registerednicks [lreplace $registerednicks[set registerednicks {}] $index $index]
+    set registerednicks [lreplace $registerednicks $index $index]
   }
 }
 
