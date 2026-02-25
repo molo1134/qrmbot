@@ -118,6 +118,10 @@ proc q_pebus { nick uhost hand chan arg } {
         }
 	close $qf
 
+	if { [llength $found] == 0 } {
+	    putchan $chan "no relevant quotes found for $chan"
+	}
+
 	set quotenum [lindex $found [expr int(rand() * [llength $found])]]
 
 	return [q_pubquote $nick $uhost $hand $chan $quotenum]
