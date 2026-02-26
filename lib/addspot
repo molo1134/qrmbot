@@ -40,7 +40,7 @@ my $dbh = DBI->connect("dbi:SQLite:db", '', '', {
     AutoCommit => 1,
     PrintError => 0,
     RaiseError => 1,
-    sqlite_use_immediate_transaction => 0,
+    sqlite_use_immediate_transaction => 1,
   }
 ) or die "unable to load sqlite";
 
