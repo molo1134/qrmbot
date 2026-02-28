@@ -85,6 +85,7 @@
  * `!spacex` -- next spacex launch
  * `!translate` -- translate text
  * `!rand` `!dice` `!flip` `!8ball` `!orb` -- random
+ * `bskymon` -- background monitor: announces new posts from @bnonews.com to #redditnet
 
 ## Radio-related commands:
 
@@ -1034,6 +1035,23 @@ Example:
 ### `!spacex` -- next spacex launch
 ### `!translate` -- translate text
 ### `!rand` `!dice` `!flip` `!8ball` `!orb` -- random
+
+### `bskymon` -- Bluesky account monitor (background, no IRC trigger)
+
+Polls `https://bsky.app/profile/bnonews.com` every 5 minutes and announces
+new original posts (reposts excluded) to `#redditnet`.
+
+State is stored in `~/.qrmbot/cache/bskymon_bnonews.com`. On first run, the
+current feed is recorded and nothing is announced (sync mode). Delete the state
+file to re-announce the most recent posts on the next poll.
+
+Output format:
+```
+[BNO News] "text" — @bnonews.com (BNO News), DATE UTC (↩ N; ↺ N; ★ N) URL
+```
+
+Scripts: `lib/bskymon`, `scripts/bskymon.tcl`
+Add `source scripts/bskymon.tcl` to the Eggdrop config to enable.
 
 <!-- !amcon - - some dumb prepper shit -->
 

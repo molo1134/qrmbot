@@ -1,0 +1,228 @@
+#!/usr/bin/perl
+# Bluesky account monitor -- polls a Bluesky account for new posts and
+# prints them to stdout in doBlueSky format (see lib/linksummary).
+#
+# State file: ~/.qrmbot/cache/bskymon_<actor>
+# First run: records current feed state, prints nothing (sync mode).
+# Subsequent runs: prints new original posts (no reposts) oldest-first.
+#
+# 2-clause BSD license.
+# Copyright (c) 2025 molo1134@github. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+use JSON::PP qw(decode_json);
+use URI::Escape;
+use Time::Local;
+use Math::Round;
+
+# eggdrop passes all args as one string
+@ARGV = split(' ', join(' ', @ARGV));
+
+my $timeout = 10;
+my $actor   = "bnonews.com";
+my $limit   = 20;
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] eq '--actor') { $actor = $ARGV[$i+1]; $i += 2; next; }
+  $i++;
+}
+
+my $cachedir  = $ENV{'HOME'} . "/.qrmbot/cache";
+my $statefile = "$cachedir/bskymon_$actor";
+
+mkdir $cachedir unless -d $cachedir;
+
+# Load last-seen post URI from state file
+my $last_uri = undef;
+if (-e $statefile) {
+  open(my $sf, "<", $statefile) or die "Cannot open $statefile: $!";
+  chomp($last_uri = <$sf>);
+  close($sf);
+}
+my $first_run = !defined($last_uri) || $last_uri eq "";
+
+# Fetch author feed (unauthenticated public API, no API key needed)
+my $url = "https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed"
+        . "?actor=" . uri_escape($actor)
+        . "&limit=$limit"
+        . "&filter=posts_no_replies";
+
+local $/;
+open(my $HTTP, '-|',
+  "curl --compressed -H 'Accept: application/json'"
+  . " --max-time $timeout -L -k -s '$url'")
+  or exit 0;
+my $json = <$HTTP>;
+close($HTTP);
+
+# Silent fail on network error or empty response
+exit 0 unless defined $json && $json ne "";
+
+my $j = eval { decode_json($json) };
+exit 0 if $@ || !defined($j) || ref($j->{feed}) ne 'ARRAY';
+
+my @feed = @{$j->{feed}};
+
+# Find top original post URI to save as new state
+my $feed_top_uri = undef;
+for my $item (@feed) {
+  next if defined $item->{reason};    # skip reposts
+  my $post = $item->{post} or next;
+  if (defined $post->{uri}) {
+    $feed_top_uri = $post->{uri};
+    last;
+  }
+}
+
+# Collect new posts (stop at last-seen URI)
+my @new_posts;
+for my $item (@feed) {
+  next if defined $item->{reason};    # skip reposts
+  my $post = $item->{post} or next;
+  last if defined($last_uri) && defined($post->{uri}) && $post->{uri} eq $last_uri;
+  push @new_posts, $post;
+}
+
+# Update state file before printing (crash-safe: avoids re-announcing on next run)
+if (defined $feed_top_uri) {
+  open(my $sf, ">", $statefile) or die "Cannot write $statefile: $!";
+  print $sf "$feed_top_uri\n";
+  close($sf);
+}
+
+# First run: sync only, announce nothing
+exit 0 if $first_run;
+
+# Print new posts oldest-first so IRC channel reads chronologically
+for my $post (reverse @new_posts) {
+  format_post($post);
+}
+
+exit 0;
+
+# ---------------------------------------------------------------
+
+sub toHumanReadableNum {
+  my $val = shift;
+  return undef if not defined $val;
+  return $val if not isNumeric($val);
+  return $val if $val < 1000;
+  return nearest(0.1, ($val/1000)) . "k" if $val < 1000000;
+  return nearest(0.1, ($val/1000000)) . "M" if $val < 1000000000;
+  return nearest(0.1, ($val/1000000000)) . "B";
+}
+
+sub format_post {
+  my $post = shift;
+
+  my $handle   = $post->{author}{handle}      // "unknown";
+  my $fullname = $post->{author}{displayName};
+  my $text     = $post->{record}{text}        // "";
+
+  # Normalize whitespace (same regexes as doBlueSky in linksummary)
+  $text =~ s/^\s*$//g;
+  $text =~ s/\n\s*\n/\n/sg;
+  $text =~ s/\n/ /sg;
+  $text =~ s/(\S)\n(\S)/$1 $2/sg;
+  $text =~ s/\n/ /sg;
+
+  # Parse ISO 8601 timestamp (e.g. "2024-12-05T21:59:16.214Z")
+  my $datestr = $post->{record}{createdAt};
+  my $date = undef;
+  if (defined $datestr) {
+    my ($y, $mon, $d, $h, $m, $s, undef) = split /[-T:.Z]/, $datestr;
+    my $time = eval { timegm($s, $m, $h, $d, $mon - 1, $y) };
+    $date = scalar(gmtime($time)) . " UTC" if defined $time;
+  }
+
+  # Media attachments (images and video, same logic as doBlueSky)
+  my @mediaTypes;
+  my @mediaUrls;
+  my @mediaAlts;
+  my @mediaAttachments;
+
+  if (defined $post->{embed}) {
+    my $etype = $post->{embed}{'$type'} // "";
+
+    if ($etype eq "app.bsky.embed.video#view") {
+      my $i = 0;
+      $mediaTypes[$i] = "vid";
+      $mediaUrls[$i]  = shortenUrl($post->{embed}{playlist}) // $post->{embed}{playlist};
+      my $alt = $post->{embed}{alt} // "";
+      $alt =~ s/\s+/ /g;
+      $alt = undef if $alt eq "";
+      if (defined $alt && length($alt) > 80) {
+        $alt = substr($alt, 0, 80) . "\x{2026}";
+      }
+      $mediaAlts[$i] = $alt;
+      my $char = chr(0x2460 + $i);
+      $mediaAttachments[$i] = "$char $mediaTypes[$i]: ";
+      $mediaAttachments[$i] .= $mediaAlts[$i] . ": " if defined $mediaAlts[$i];
+      $mediaAttachments[$i] .= $mediaUrls[$i] if defined $mediaUrls[$i];
+
+    } elsif ($etype eq "app.bsky.embed.images#view") {
+      for (my $i = 0; $i < scalar @{$post->{embed}{images}}; $i++) {
+        my $image = $post->{embed}{images}[$i];
+        $mediaTypes[$i] = "img";
+        $mediaUrls[$i]  = shortenUrl($image->{fullsize}) // $image->{fullsize};
+        my $alt = $image->{alt} // "";
+        $alt = undef if $alt eq "";
+        if (defined $alt) {
+          $alt =~ s/\n\s*\n/\n/sg;
+          $alt =~ s/\n/ /sg;
+          $alt =~ s/(\S)\n(\S)/$1 $2/sg;
+          $alt =~ s/\n/ /sg;
+          $alt =~ s/\s\s+/ /g;
+          if (length($alt) > 80) {
+            $alt = substr($alt, 0, 80) . "\x{2026}";
+          }
+        }
+        $mediaAlts[$i] = $alt;
+        my $char = chr(0x2460 + $i);
+        $mediaAttachments[$i] = "$char $mediaTypes[$i]: ";
+        $mediaAttachments[$i] .= $mediaAlts[$i] . ": " if defined $mediaAlts[$i];
+        $mediaAttachments[$i] .= $mediaUrls[$i] if defined $mediaUrls[$i];
+      }
+    }
+  }
+
+  # Construct post URL from AT URI (at://did:.../app.bsky.feed.post/<rkey>)
+  my $uri  = $post->{uri} // "";
+  my $rkey = "";
+  $rkey = $1 if $uri =~ m|/([^/]+)$|;
+  my $post_url = "https://bsky.app/profile/$handle/post/$rkey";
+
+  # Engagement counts
+  my $reply_count  = $post->{replyCount}  // 0;
+  my $repost_count = $post->{repostCount} // 0;
+  my $like_count   = $post->{likeCount}   // 0;
+
+  # Output line — prefix with display name so each account is identifiable
+  my $label = defined($fullname) ? $fullname : "\@$handle";
+  print bold("[$label]"), " ";
+  print "\"$text\" ";
+  if (@mediaAttachments) {
+    for my $att (@mediaAttachments) {
+      print "$att " if defined $att;
+    }
+  }
+  print "— \@$handle";
+  print " ($fullname)" if defined $fullname;
+  print ", $date" if defined $date;
+  print " (↩ ", toHumanReadableNum($reply_count),
+        "; ↺ ", toHumanReadableNum($repost_count),
+        "; ★ ", toHumanReadableNum($like_count), ")";
+  print " $post_url";
+  print "\n";
+}
