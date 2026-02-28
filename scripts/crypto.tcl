@@ -83,5 +83,34 @@ proc crypto_pub { nick host hand chan input } {
 	close $fd
 }
 
+set polymarketbin "/home/eggdrop/bin/polymarket"
+
+bind pub - !polymarket polymarket_pub
+bind msg - !polymarket polymarket_msg
+
+proc polymarket_msg {nick uhand handle input} {
+	global polymarketbin
+	set input [sanitize_string [string trim "${input}"]]
+	putlog "polymarket msg: $nick $uhand $handle $input"
+	set fd [open "|${polymarketbin} ${input}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
+proc polymarket_pub { nick host hand chan input } {
+	global polymarketbin
+	set input [sanitize_string [string trim "${input}"]]
+	putlog "polymarket pub: $nick $host $hand $chan $input"
+	set fd [open "|${polymarketbin} ${input}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
 putlog "Crypto utils loaded."
 
