@@ -145,14 +145,14 @@ if (defined $event_slug) {
     exit 0;
   }
 
-  # Multi-market event: show title + top 3 markets by volume
-  my @sorted = sort { ($b->{volumeNum} // ($b->{volume} // 0) + 0)
-                  <=> ($a->{volumeNum} // ($a->{volume} // 0) + 0) } @markets;
+  # Multi-market event: show title + top 5 markets by yes-probability
+  my @sorted = sort { ($b->{outcomePrices} ? (decode_json($b->{outcomePrices}))->[0] + 0 : 0)
+                  <=> ($a->{outcomePrices} ? (decode_json($a->{outcomePrices}))->[0] + 0 : 0) } @markets;
 
   my $sep = " \x{00B7} ";
   print bold($title);
 
-  for my $m (@sorted[0..2]) {
+  for my $m (@sorted[0..4]) {
     last unless defined $m;
     my $q       = $m->{question} // "";
     my $outcomes = decode_json($m->{outcomes} // '["Yes","No"]');
@@ -216,11 +216,11 @@ if (defined $events_data && ref($events_data) eq 'ARRAY') {
     if (@markets == 1) {
       print_market($markets[0], $event_url);
     } elsif (@markets > 1) {
-      my @sorted_m = sort { ($b->{volumeNum} // ($b->{volume} // 0) + 0)
-                        <=> ($a->{volumeNum} // ($a->{volume} // 0) + 0) } @markets;
+      my @sorted_m = sort { ($b->{outcomePrices} ? (decode_json($b->{outcomePrices}))->[0] + 0 : 0)
+                        <=> ($a->{outcomePrices} ? (decode_json($a->{outcomePrices}))->[0] + 0 : 0) } @markets;
       my $sep = " \x{00B7} ";
       print bold($event->{title});
-      for my $m (@sorted_m[0..2]) {
+      for my $m (@sorted_m[0..4]) {
         last unless defined $m;
         my $outcomes = decode_json($m->{outcomes} // '["Yes","No"]');
         my $prices   = decode_json($m->{outcomePrices} // '[0,0]');
