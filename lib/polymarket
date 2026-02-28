@@ -192,25 +192,18 @@ if (!$query || length($query) == 0) {
   exit $exitnonzeroonerror;
 }
 
-# The Gamma API _q param doesn't filter -- fetch top events by volume, match client-side.
-# Try events first (they have descriptive titles), then fall back to markets.
-my @words = map { lc } split(/\s+/, $query);
+# Use the public-search endpoint for real text search.
+my $enc_q = uri_escape_utf8($query);
+my $search_url = "https://gamma-api.polymarket.com/public-search?q=$enc_q&limit_per_type=5&events_status=active";
+my $search_data = fetchJSON($search_url);
 
-sub matches_query {
-  my ($text) = @_;
-  $text = lc($text // "");
-  return (grep { index($text, $_) >= 0 } @words) == scalar(@words);
-}
+if (defined $search_data && ref($search_data) eq 'HASH') {
+  my @events = @{$search_data->{events} // []};
 
-my $events_url = "https://gamma-api.polymarket.com/events?active=true&closed=false&limit=200&order=volume&ascending=false";
-my $events_data = fetchJSON($events_url);
-
-if (defined $events_data && ref($events_data) eq 'ARRAY') {
-  my @matches = grep { matches_query($_->{title}) } @$events_data;
-  if (@matches) {
-    my $event = $matches[0];  # already sorted by volume desc
-    my $eslug  = $event->{slug} // "";
-    my @markets = @{$event->{markets} // []};
+  if (@events) {
+    my $event     = $events[0];
+    my $eslug     = $event->{slug} // "";
+    my @markets   = @{$event->{markets} // []};
     my $event_url = "https://polymarket.com/event/$eslug";
 
     if (@markets == 1) {
@@ -235,18 +228,6 @@ if (defined $events_data && ref($events_data) eq 'ARRAY') {
     } else {
       print "polymarket: no markets in event: " . $event->{title} . "\n";
     }
-    exit 0;
-  }
-}
-
-# Fall back to searching markets by question
-my $markets_url = "https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=200&order=volume&ascending=false";
-my $markets_data = fetchJSON($markets_url);
-
-if (defined $markets_data && ref($markets_data) eq 'ARRAY') {
-  my @matches = grep { matches_query($_->{question}) } @$markets_data;
-  if (@matches) {
-    print_market($matches[0], undef);
     exit 0;
   }
 }
