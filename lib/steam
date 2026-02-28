@@ -179,11 +179,29 @@ if ($metascore ne "") {
 }
 $colored_rating = "No ratings yet" unless $colored_rating;
 
+# --- 4. Fetch ProtonDB tier ---
+my $proton_url = "https://www.protondb.com/api/v1/reports/summaries/${appid}.json";
+my $proton_j   = fetchJSON($proton_url);
+my $proton_str = "";
+if (defined $proton_j && defined $proton_j->{tier}) {
+  my $tier = lc($proton_j->{tier});
+  my $label = ucfirst($tier);
+  if    ($tier eq "native")   { $proton_str = green($label); }
+  elsif ($tier eq "platinum") { $proton_str = lightGrey($label); }
+  elsif ($tier eq "gold")     { $proton_str = yellow($label); }
+  elsif ($tier eq "silver")   { $proton_str = grey($label); }
+  elsif ($tier eq "bronze")   { $proton_str = darkYellow($label); }
+  elsif ($tier eq "borked")   { $proton_str = red($label); }
+  else                        { $proton_str = grey($label); }  # pending / unknown
+  $proton_str = "ProtonDB: $proton_str";
+}
+
 # --- Output ---
 my $sep = " \x{00B7} ";  # · middle dot separator
 print "🎮 " . bold($name);
 print $sep . $colored_price;
 print $sep . $colored_rating;
+print $sep . $proton_str if $proton_str;
 print $sep . italic($desc) if $desc;
 print $sep . "https://s.team/a/$appid";
 print "\n";
