@@ -1,0 +1,236 @@
+#!/usr/bin/perl -w
+#
+# Look up prediction markets on Polymarket.
+#
+# 2-clause BSD license.
+# Copyright (c) 2025 cjh@github. All rights reserved.
+#
+# Uses the Polymarket Gamma API -- no API key required.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use JSON::PP qw( decode_json );
+use URI::Escape;
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+# eggdrop passes all args as one string
+@ARGV = split(' ', join(' ', @ARGV));
+
+my $useragent = "Mozilla/5.0 (compatible; qrmbot)";
+
+sub fetchJSON {
+  my $url = shift;
+  open(my $fh, '-|', "curl --max-time 10 -s -k -L -A \"$useragent\" '$url'");
+  local $/;
+  my $res = <$fh>;
+  close($fh);
+  return undef unless defined $res && length($res) > 0;
+  return decode_json($res);
+}
+
+# Parse flags
+my ($slug, $event_slug);
+my @search_args;
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] eq "--slug" && $i + 1 <= $#ARGV) {
+    $slug = $ARGV[$i + 1];
+    $i += 2;
+  } elsif ($ARGV[$i] eq "--event" && $i + 1 <= $#ARGV) {
+    $event_slug = $ARGV[$i + 1];
+    $i += 2;
+  } else {
+    push @search_args, $ARGV[$i];
+    $i++;
+  }
+}
+
+sub fmt_vol {
+  my $v = shift // 0;
+  return sprintf('$%.1fM', $v / 1_000_000) if $v >= 1_000_000;
+  return sprintf('$%.0fK', $v / 1_000)     if $v >= 1_000;
+  return sprintf('$%.0f', $v);
+}
+
+sub fmt_pct {
+  my $p = shift // 0;
+  return sprintf('%.0f%%', $p * 100);
+}
+
+sub color_pct {
+  my $p = shift // 0;
+  my $str = fmt_pct($p);
+  return green($str)  if $p >= 0.6;
+  return yellow($str) if $p >= 0.35;
+  return red($str);
+}
+
+# Build a short "outcome: pct | outcome: pct" string from a market hash.
+# For binary Yes/No markets, shows YES: 96% | NO: 4%
+# For multi-outcome markets, shows top 3 by probability.
+sub outcome_str {
+  my $market = shift;
+  my $outcomes = decode_json($market->{outcomes} // '["Yes","No"]');
+  my $prices   = decode_json($market->{outcomePrices} // '[0,0]');
+
+  # pair outcomes with prices, sort descending by price
+  my @pairs = map { { name => $outcomes->[$_], p => $prices->[$_] + 0 } } 0..$#$outcomes;
+  @pairs = sort { $b->{p} <=> $a->{p} } @pairs if @pairs > 2;
+
+  my $limit = (@pairs > 2) ? 3 : scalar @pairs;
+  my @parts;
+  for my $j (0..$limit-1) {
+    push @parts, bold($pairs[$j]{name}) . ": " . color_pct($pairs[$j]{p});
+  }
+  return join(" | ", @parts);
+}
+
+sub print_market {
+  my ($market, $url) = @_;
+
+  my $question = $market->{question} // "Unknown";
+  my $volume   = $market->{volumeNum} // ($market->{volume} // 0) + 0;
+
+  unless (defined $url) {
+    my @eslugs = map { $_->{slug} } @{$market->{events} // []};
+    $url = @eslugs
+      ? "https://polymarket.com/event/$eslugs[0]"
+      : "https://polymarket.com/" . ($market->{slug} // "");
+  }
+
+  my $sep = " \x{00B7} ";
+  print bold($question);
+  print $sep . outcome_str($market);
+  print $sep . "Vol: " . fmt_vol($volume);
+  print $sep . $url;
+  print "\n";
+}
+
+# --- Event lookup ---
+if (defined $event_slug) {
+  my $url = "https://gamma-api.polymarket.com/events?slug=" . uri_escape($event_slug);
+  my $data = fetchJSON($url);
+
+  if (!defined $data || ref($data) ne 'ARRAY' || scalar(@$data) == 0) {
+    print "polymarket: event not found: $event_slug\n";
+    exit $exitnonzeroonerror;
+  }
+
+  my $event = $data->[0];
+  my $title = $event->{title} // "Unknown";
+  my @markets = @{$event->{markets} // []};
+  my $event_url = "https://polymarket.com/event/$event_slug";
+
+  if (@markets == 0) {
+    print "polymarket: no markets in event: $title\n";
+    exit 0;
+  }
+
+  # Single market -- just show it directly
+  if (@markets == 1) {
+    print_market($markets[0], $event_url);
+    exit 0;
+  }
+
+  # Multi-market event: show title + top 5 markets by yes-probability
+  my @sorted = sort { ($b->{outcomePrices} ? (decode_json($b->{outcomePrices}))->[0] + 0 : 0)
+                  <=> ($a->{outcomePrices} ? (decode_json($a->{outcomePrices}))->[0] + 0 : 0) } @markets;
+
+  my $sep = " \x{00B7} ";
+  print bold($title);
+
+  for my $m (@sorted[0..4]) {
+    last unless defined $m;
+    my $q       = $m->{question} // "";
+    my $outcomes = decode_json($m->{outcomes} // '["Yes","No"]');
+    my $prices   = decode_json($m->{outcomePrices} // '[0,0]');
+
+    # For binary yes/no, just show "Question: YES%"
+    if (@$outcomes == 2 && lc($outcomes->[0]) eq 'yes') {
+      print $sep . $q . " " . color_pct($prices->[0] + 0);
+    } else {
+      print $sep . outcome_str($m);
+    }
+  }
+
+  print $sep . $event_url;
+  print "\n";
+  exit 0;
+}
+
+# --- Market slug lookup ---
+if (defined $slug) {
+  my $url = "https://gamma-api.polymarket.com/markets?slug=" . uri_escape($slug);
+  my $data = fetchJSON($url);
+
+  if (!defined $data || ref($data) ne 'ARRAY' || scalar(@$data) == 0) {
+    print "polymarket: market not found: $slug\n";
+    exit $exitnonzeroonerror;
+  }
+
+  print_market($data->[0], undef);
+  exit 0;
+}
+
+# --- Text search ---
+my $query = join(" ", @search_args);
+if (!$query || length($query) == 0) {
+  print "usage: !polymarket <search term>\n";
+  exit $exitnonzeroonerror;
+}
+
+# Use the public-search endpoint for real text search.
+my $enc_q = uri_escape_utf8($query);
+my $search_url = "https://gamma-api.polymarket.com/public-search?q=$enc_q&limit_per_type=5&events_status=active";
+my $search_data = fetchJSON($search_url);
+
+if (defined $search_data && ref($search_data) eq 'HASH') {
+  my @events = @{$search_data->{events} // []};
+
+  if (@events) {
+    my $event     = $events[0];
+    my $eslug     = $event->{slug} // "";
+    my @markets   = @{$event->{markets} // []};
+    my $event_url = "https://polymarket.com/event/$eslug";
+
+    if (@markets == 1) {
+      print_market($markets[0], $event_url);
+    } elsif (@markets > 1) {
+      my @sorted_m = sort { ($b->{outcomePrices} ? (decode_json($b->{outcomePrices}))->[0] + 0 : 0)
+                        <=> ($a->{outcomePrices} ? (decode_json($a->{outcomePrices}))->[0] + 0 : 0) } @markets;
+      my $sep = " \x{00B7} ";
+      print bold($event->{title});
+      for my $m (@sorted_m[0..4]) {
+        last unless defined $m;
+        my $outcomes = decode_json($m->{outcomes} // '["Yes","No"]');
+        my $prices   = decode_json($m->{outcomePrices} // '[0,0]');
+        if (@$outcomes == 2 && lc($outcomes->[0]) eq 'yes') {
+          print $sep . $m->{question} . " " . color_pct($prices->[0] + 0);
+        } else {
+          print $sep . outcome_str($m);
+        }
+      }
+      print $sep . $event_url;
+      print "\n";
+    } else {
+      print "polymarket: no markets in event: " . $event->{title} . "\n";
+    }
+    exit 0;
+  }
+}
+
+print "polymarket: no markets found for: $query\n";
+exit 0;

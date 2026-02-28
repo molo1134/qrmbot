@@ -83,5 +83,6 @@ proc crypto_pub { nick host hand chan input } {
 	close $fd
 }
 
+
 putlog "Crypto utils loaded."
 
