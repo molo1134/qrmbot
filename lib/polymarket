@@ -119,34 +119,27 @@ sub print_market {
   print "\n";
 }
 
-# --- Event lookup ---
-if (defined $event_slug) {
-  my $url = "https://gamma-api.polymarket.com/events?slug=" . uri_escape($event_slug);
-  my $data = fetchJSON($url);
-
-  if (!defined $data || ref($data) ne 'ARRAY' || scalar(@$data) == 0) {
-    print "polymarket: event not found: $event_slug\n";
-    exit $exitnonzeroonerror;
-  }
-
-  my $event = $data->[0];
-  my $title = $event->{title} // "Unknown";
+# Print a multi-market event intelligently:
+#   - Sports moneyline (non-Yes/No) + O/U/Spread props → show moneyline only
+#   - Soccer 1X2 (all Yes/No, has a draw market) → compact "Team: pct | Draw: pct | Team: pct"
+#   - Anything else → top 5 by yes-probability
+sub print_event {
+  my ($event, $event_url) = @_;
+  my $title   = $event->{title} // "Unknown";
   my @markets = @{$event->{markets} // []};
-  my $event_url = "https://polymarket.com/event/$event_slug";
+  my $sep     = " \x{00B7} ";
 
   if (@markets == 0) {
     print "polymarket: no markets in event: $title\n";
-    exit 0;
+    return;
   }
 
-  # Single market -- just show it directly
   if (@markets == 1) {
     print_market($markets[0], $event_url);
-    exit 0;
+    return;
   }
 
-  # Sports event detection: look for a moneyline (2 non-Yes/No outcomes, no O/U/Spread in question)
-  # alongside O/U or Spread markets. If found, just show the moneyline.
+  # Sports moneyline: non-Yes/No 2-outcome market alongside O/U or Spread markets
   my @moneyline = grep {
     my $outcomes = decode_json($_->{outcomes} // '["Yes","No"]');
     my $q = $_->{question} // "";
@@ -157,41 +150,75 @@ if (defined $event_slug) {
   } @markets;
 
   if (@moneyline && @prop_markets) {
-    # Sports event: show title + moneyline only
     my $ml  = $moneyline[0];
     my $vol = ($ml->{volumeNum} // ($ml->{volume} // 0)) + 0;
-    my $sep = " \x{00B7} ";
     print bold($title);
     print $sep . outcome_str($ml);
     print $sep . "Vol: " . fmt_vol($vol);
     print $sep . $event_url;
     print "\n";
-    exit 0;
+    return;
   }
 
-  # Multi-market event: show title + top 5 markets by yes-probability
+  # Soccer/football 1X2: all Yes/No binary markets, one asking about a draw
+  my $all_binary = !grep {
+    my $o = decode_json($_->{outcomes} // '["Yes","No"]');
+    !(@$o == 2 && lc($o->[0]) eq 'yes')
+  } @markets;
+  my $has_draw = grep { ($_->{question} // "") =~ /\bdraw\b/i } @markets;
+
+  if ($all_binary && $has_draw) {
+    my @parts;
+    for my $m (@markets) {
+      my $q      = $m->{question} // "";
+      my $prices = decode_json($m->{outcomePrices} // '[0,0]');
+      my $label;
+      if    ($q =~ /\bdraw\b/i)          { $label = "Draw" }
+      elsif ($q =~ /^Will (.+?) win\b/i) { $label = $1 }
+      else                               { $label = $q }
+      push @parts, { label => $label, p => $prices->[0] + 0 };
+    }
+    @parts = sort { $b->{p} <=> $a->{p} } @parts;
+    my $vol = ($event->{volume} // 0) + 0;
+    print bold($title);
+    print $sep . join(" | ", map { bold($_->{label}) . ": " . color_pct($_->{p}) } @parts);
+    print $sep . "Vol: " . fmt_vol($vol);
+    print $sep . $event_url;
+    print "\n";
+    return;
+  }
+
+  # Default: top 5 markets by yes-probability
   my @sorted = sort { ($b->{outcomePrices} ? (decode_json($b->{outcomePrices}))->[0] + 0 : 0)
                   <=> ($a->{outcomePrices} ? (decode_json($a->{outcomePrices}))->[0] + 0 : 0) } @markets;
-
-  my $sep = " \x{00B7} ";
   print bold($title);
-
   for my $m (@sorted[0..4]) {
     last unless defined $m;
     my $q        = $m->{question} // "";
     my $outcomes = decode_json($m->{outcomes} // '["Yes","No"]');
     my $prices   = decode_json($m->{outcomePrices} // '[0,0]');
-
-    # For binary yes/no, just show "Question: YES%"
     if (@$outcomes == 2 && lc($outcomes->[0]) eq 'yes') {
       print $sep . $q . " " . color_pct($prices->[0] + 0);
     } else {
       print $sep . outcome_str($m);
     }
   }
-
   print $sep . $event_url;
   print "\n";
+}
+
+# --- Event lookup ---
+if (defined $event_slug) {
+  my $url = "https://gamma-api.polymarket.com/events?slug=" . uri_escape($event_slug);
+  my $data = fetchJSON($url);
+
+  if (!defined $data || ref($data) ne 'ARRAY' || scalar(@$data) == 0) {
+    print "polymarket: event not found: $event_slug\n";
+    exit $exitnonzeroonerror;
+  }
+
+  my $event_url = "https://polymarket.com/event/$event_slug";
+  print_event($data->[0], $event_url);
   exit 0;
 }
 
@@ -230,28 +257,7 @@ if (defined $search_data && ref($search_data) eq 'HASH') {
     my @markets   = @{$event->{markets} // []};
     my $event_url = "https://polymarket.com/event/$eslug";
 
-    if (@markets == 1) {
-      print_market($markets[0], $event_url);
-    } elsif (@markets > 1) {
-      my @sorted_m = sort { ($b->{outcomePrices} ? (decode_json($b->{outcomePrices}))->[0] + 0 : 0)
-                        <=> ($a->{outcomePrices} ? (decode_json($a->{outcomePrices}))->[0] + 0 : 0) } @markets;
-      my $sep = " \x{00B7} ";
-      print bold($event->{title});
-      for my $m (@sorted_m[0..4]) {
-        last unless defined $m;
-        my $outcomes = decode_json($m->{outcomes} // '["Yes","No"]');
-        my $prices   = decode_json($m->{outcomePrices} // '[0,0]');
-        if (@$outcomes == 2 && lc($outcomes->[0]) eq 'yes') {
-          print $sep . $m->{question} . " " . color_pct($prices->[0] + 0);
-        } else {
-          print $sep . outcome_str($m);
-        }
-      }
-      print $sep . $event_url;
-      print "\n";
-    } else {
-      print "polymarket: no markets in event: " . $event->{title} . "\n";
-    }
+    print_event($event, $event_url);
     exit 0;
   }
 }
