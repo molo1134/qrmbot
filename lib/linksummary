@@ -96,6 +96,10 @@ while ($i <= $#ARGV) {
     doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://a.co/\w+/?|i) {
     doAmazon($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?polymarket\.com/event/([\w-]+)|i) {
+    doPolymarketEvent($2);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?polymarket\.com/([\w-]+)|i) {
+    doPolymarketSlug($2);
   } elsif ($ARGV[$i] =~ m|^https?://store\.steampowered\.com/app/(\d+)|i) {
     doSteam($1);
   } elsif ($ARGV[$i] =~ m|^https?://s\.team/a/(\d+)|i) {
@@ -1834,6 +1838,18 @@ sub doSteam {
   my $appid = shift;
   my $libdir = dirname(realpath(__FILE__));
   exec "$libdir/steam", "--appid", "$appid" or die "error execing steam for $appid";
+}
+
+sub doPolymarketEvent {
+  my $slug = shift;
+  my $libdir = dirname(realpath(__FILE__));
+  exec "$libdir/polymarket", "--event", "$slug" or die "error execing polymarket for event $slug";
+}
+
+sub doPolymarketSlug {
+  my $slug = shift;
+  my $libdir = dirname(realpath(__FILE__));
+  exec "$libdir/polymarket", "--slug", "$slug" or die "error execing polymarket for slug $slug";
 }
 
 sub is_executable_in_path {
