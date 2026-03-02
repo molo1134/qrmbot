@@ -145,6 +145,30 @@ if (defined $event_slug) {
     exit 0;
   }
 
+  # Sports event detection: look for a moneyline (2 non-Yes/No outcomes, no O/U/Spread in question)
+  # alongside O/U or Spread markets. If found, just show the moneyline.
+  my @moneyline = grep {
+    my $outcomes = decode_json($_->{outcomes} // '["Yes","No"]');
+    my $q = $_->{question} // "";
+    @$outcomes == 2 && lc($outcomes->[0]) ne 'yes' && $q !~ /\bO\/U\b|\bSpread\b|\bTotal\b/i
+  } @markets;
+  my @prop_markets = grep {
+    ($_->{question} // "") =~ /\bO\/U\b|\bSpread\b|\bTotal\b/i
+  } @markets;
+
+  if (@moneyline && @prop_markets) {
+    # Sports event: show title + moneyline only
+    my $ml  = $moneyline[0];
+    my $vol = ($ml->{volumeNum} // ($ml->{volume} // 0)) + 0;
+    my $sep = " \x{00B7} ";
+    print bold($title);
+    print $sep . outcome_str($ml);
+    print $sep . "Vol: " . fmt_vol($vol);
+    print $sep . $event_url;
+    print "\n";
+    exit 0;
+  }
+
   # Multi-market event: show title + top 5 markets by yes-probability
   my @sorted = sort { ($b->{outcomePrices} ? (decode_json($b->{outcomePrices}))->[0] + 0 : 0)
                   <=> ($a->{outcomePrices} ? (decode_json($a->{outcomePrices}))->[0] + 0 : 0) } @markets;
@@ -154,7 +178,7 @@ if (defined $event_slug) {
 
   for my $m (@sorted[0..4]) {
     last unless defined $m;
-    my $q       = $m->{question} // "";
+    my $q        = $m->{question} // "";
     my $outcomes = decode_json($m->{outcomes} // '["Yes","No"]');
     my $prices   = decode_json($m->{outcomePrices} // '[0,0]');
 
