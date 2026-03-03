@@ -98,6 +98,8 @@ while ($i <= $#ARGV) {
     doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?polymarket\.com/event/([\w-]+)|i) {
     doPolymarketEvent($2);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?polymarket\.com/sports/[\w-]+/([\w-]+)|i) {
+    doPolymarketEvent($2);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?polymarket\.com/([\w-]+)|i) {
     doPolymarketSlug($2);
   } elsif ($ARGV[$i] =~ m|^https?://store\.steampowered\.com/app/(\d+)|i) {
