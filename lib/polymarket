@@ -110,6 +110,7 @@ sub print_market {
       ? "https://polymarket.com/event/$eslugs[0]"
       : "https://polymarket.com/" . ($market->{slug} // "");
   }
+  $url = shortenUrl($url) if length($url) > 30;
 
   my $sep = " \x{00B7} ";
   print bold($question);
