@@ -310,6 +310,14 @@ proc aaaaaaa { nick host hand chan text} {
 	}
 }
 
+bind pub - !proud proud
+proc proud { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	putchan $chan "https://i.imgur.com/1y8bOzN.mp4"
+}
+
 bind pub - !really really
 proc really { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
