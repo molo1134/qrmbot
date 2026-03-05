@@ -150,6 +150,7 @@ sub print_event {
     ($_->{question} // "") =~ /\bO\/U\b|\bSpread\b|\bTotal\b/i
   } @markets;
 
+  $event_url = shortenUrl($event_url) if length($event_url) > 30;
   if (@moneyline && @prop_markets) {
     my $ml  = $moneyline[0];
     my $vol = ($ml->{volumeNum} // ($ml->{volume} // 0)) + 0;
