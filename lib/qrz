@@ -709,9 +709,9 @@ sub getAndParseData {
 
     if (/matches for:/) {
       if ($type eq "name") {
-	print $call, ": possible matches:\n";
+	print $call, ": possible matches:\n" unless $xml;
       } elsif ($type eq "grid") {
-	print $call, " matches:\n";
+	print $call, " matches:\n" unless $xml;
       }
       my $count = 0;
       my $limit = 100000;
@@ -723,7 +723,7 @@ sub getAndParseData {
       if (/([0-9]+) matches/) {
 	$matches = $1;
 	if ($doCount == 1) {
-	  print "$call,$matches\n";
+	  print "$call,$matches\n" unless $xml;
 	  exit 0;
 	}
       }
@@ -753,7 +753,7 @@ sub getAndParseData {
 	  }
 
 	  if (++$count < $limit) {
-	    print "$resultcall: $resultdetail\n";
+	    print "$resultcall: $resultdetail\n" unless $xml;
 	    #} else {
 	    #print ".. results truncated. see $url\n";
 	    #exit $exitnonzeroonerror;
@@ -761,7 +761,7 @@ sub getAndParseData {
 	}
       }
       if ($matches >= $limit or $count < $matches) {
-	print "truncated. $matches matches found. see $url\n";
+	print "truncated. $matches matches found. see $url\n" unless $xml;
       }
       exit $exitnonzeroonerror;
     }
