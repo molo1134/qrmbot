@@ -139,6 +139,7 @@ foreach my $f (@{$j->{features}}) {
 my $count = 0;
 my $limit = undef;
 $limit = 8 if $username eq getEggdropUID();
+$max = 3 if $max < 1;
 $max = $limit if defined $limit and $max > $limit;
 
 foreach my $d (sort { $a <=> $b } keys %results) {
