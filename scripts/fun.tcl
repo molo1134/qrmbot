@@ -356,6 +356,15 @@ proc rickface { nick host hand chan text} {
 	}
 }
 
+bind pub - !goose goose
+proc goose { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+
+	putchan $chan "https://i.imgur.com/B4WRvHE.jpeg"
+}
+
 bind pub - !monkee daveface
 proc daveface { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
