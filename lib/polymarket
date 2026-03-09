@@ -70,6 +70,13 @@ sub fmt_pct {
   return sprintf('%.0f%%', $p * 100);
 }
 
+sub visible_len {
+  my $s = shift // '';
+  $s =~ s/\x03\d{1,2}(,\d{1,2})?//g;  # IRC color codes
+  $s =~ s/[\x02\x0F\x16\x1F]//g;       # bold, reset, reverse, underline
+  return length($s);
+}
+
 sub color_pct {
   my $p = shift // 0;
   my $str = fmt_pct($p);
@@ -110,7 +117,7 @@ sub print_market {
       ? "https://polymarket.com/event/$eslugs[0]"
       : "https://polymarket.com/" . ($market->{slug} // "");
   }
-  $url = shortenUrl($url) if length($url) > 30;
+  { my $s = shortenUrl($url); $url = $s if defined $s; }
 
   my $sep = " \x{00B7} ";
   print bold($question);
@@ -120,6 +127,41 @@ sub print_market {
   print "\n";
 }
 
+sub longest_common_prefix {
+  my @strs = @_;
+  return "" unless @strs >= 2;
+  my $prefix = $strs[0];
+  for my $s (@strs[1..$#strs]) {
+    while (length($prefix) && index($s, $prefix) != 0) {
+      chop $prefix;
+    }
+    last unless length($prefix);
+  }
+  # trim back to a word boundary: only strip a partial trailing word
+  if ($prefix =~ /\S$/) {
+    $prefix =~ s/\s*\S+$//;
+  }
+  $prefix =~ s/\s+$//;
+  return $prefix;
+}
+
+sub longest_common_suffix {
+  my @strs = @_;
+  return "" unless @strs >= 2;
+  my $suffix = $strs[0];
+  for my $s (@strs[1..$#strs]) {
+    while (length($suffix) && substr($s, -length($suffix)) ne $suffix) {
+      $suffix = substr($suffix, 1);
+    }
+    last unless length($suffix);
+  }
+  # trim partial leading word (but keep leading space so it peels off cleanly)
+  if ($suffix =~ /^\S/) {
+    $suffix =~ s/^\S+//;
+  }
+  return $suffix;
+}
+
 # Print a multi-market event intelligently:
 #   - Sports moneyline (non-Yes/No) + O/U/Spread props → show moneyline only
 #   - Soccer 1X2 (all Yes/No, has a draw market) → compact "Team: pct | Draw: pct | Team: pct"
@@ -127,7 +169,7 @@ sub print_market {
 sub print_event {
   my ($event, $event_url) = @_;
   my $title   = $event->{title} // "Unknown";
-  my @markets = @{$event->{markets} // []};
+  my @markets = grep { !$_->{archived} } @{$event->{markets} // []};
   my $sep     = " \x{00B7} ";
 
   if (@markets == 0) {
@@ -150,7 +192,7 @@ sub print_event {
     ($_->{question} // "") =~ /\bO\/U\b|\bSpread\b|\bTotal\b/i
   } @markets;
 
-  $event_url = shortenUrl($event_url) if length($event_url) > 30;
+  { my $s = shortenUrl($event_url); $event_url = $s if defined $s; }
   if (@moneyline && @prop_markets) {
     my $ml  = $moneyline[0];
     my $vol = ($ml->{volumeNum} // ($ml->{volume} // 0)) + 0;
@@ -190,21 +232,65 @@ sub print_event {
     return;
   }
 
-  # Default: top 5 markets by yes-probability
+  # Default: show as many markets as fit within the visible character budget
+  my $CHAR_BUDGET = 300;  # max visible characters for message content
+  my $MIN_ENTRIES = 3;    # always show at least this many
+  my $MAX_ENTRIES = 10;   # never show more than this many
+
   my @sorted = sort { ($b->{outcomePrices} ? (decode_json($b->{outcomePrices}))->[0] + 0 : 0)
                   <=> ($a->{outcomePrices} ? (decode_json($a->{outcomePrices}))->[0] + 0 : 0) } @markets;
-  print bold($title);
-  for my $m (@sorted[0..4]) {
-    last unless defined $m;
+
+  # Compute prefix/suffix from the top candidates (capped at MAX_ENTRIES)
+  # so outlier low-probability markets don't corrupt the common prefix
+  # Note: avoid slice beyond $#sorted — Perl extends arrays with undef when over-sliced
+  my @top_candidates = @sorted > $MAX_ENTRIES ? @sorted[0..$MAX_ENTRIES-1] : @sorted;
+  my @questions = map { $_->{question} // "" } @top_candidates;
+  my $prefix    = longest_common_prefix(@questions);
+  my $suffix    = longest_common_suffix(@questions);
+  my $pfxlen    = length($prefix);
+  my $sfxlen    = length($suffix);
+  my $strip_pfx = $pfxlen > 10 || ($pfxlen > 2 && $sfxlen > 15);
+  my $strip_sfx = $sfxlen > 15;
+
+  # Shorten URL now so we can account for its length in the budget
+  { my $s = shortenUrl($event_url); $event_url = $s if defined $s; }
+
+  # Fixed overhead: title + trailing sep + URL
+  my $used = visible_len(bold($title)) + visible_len($sep . $event_url);
+
+  # Greedily add entries until budget is exhausted or limits are hit
+  my @entries;
+  for my $m (@sorted) {
+    last if @entries >= $MAX_ENTRIES;
+    next unless defined $m;
     my $q        = $m->{question} // "";
     my $outcomes = decode_json($m->{outcomes} // '["Yes","No"]');
     my $prices   = decode_json($m->{outcomePrices} // '[0,0]');
+    my $entry;
     if (@$outcomes == 2 && lc($outcomes->[0]) eq 'yes') {
-      print $sep . $q . " " . color_pct($prices->[0] + 0);
+      my $label = $q;
+      if ($strip_pfx && index($q, $prefix) == 0) {
+        $label = substr($label, $pfxlen);
+        $label =~ s/^\s+//;
+      }
+      if ($strip_sfx && length($label) > $sfxlen && substr($label, -$sfxlen) eq $suffix) {
+        $label = substr($label, 0, length($label) - $sfxlen);
+        $label =~ s/\s+$//;
+      }
+      $label = "\x{2026}$label" if $strip_pfx;
+      $entry = $sep . $label . " " . color_pct($prices->[0] + 0);
     } else {
-      print $sep . outcome_str($m);
+      $entry = $sep . outcome_str($m);
     }
+    if (@entries >= $MIN_ENTRIES && $used + visible_len($entry) > $CHAR_BUDGET) {
+      last;
+    }
+    $used += visible_len($entry);
+    push @entries, $entry;
   }
+
+  print bold($title);
+  print $_ for @entries;
   print $sep . $event_url;
   print "\n";
 }
