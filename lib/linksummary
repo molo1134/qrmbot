@@ -102,6 +102,8 @@ while ($i <= $#ARGV) {
     doPolymarketEvent($2);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?polymarket\.com/([\w-]+)|i) {
     doPolymarketSlug($2);
+  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?openlibrary\.org/works/(OL\w+)|i) {
+    doBook($2);
   } elsif ($ARGV[$i] =~ m|^https?://store\.steampowered\.com/app/(\d+)|i) {
     doSteam($1);
   } elsif ($ARGV[$i] =~ m|^https?://s\.team/a/(\d+)|i) {
@@ -1834,6 +1836,12 @@ sub trim {
   $s =~ s/^\s*//;
   $s =~ s/\s*$//;
   return $s;
+}
+
+sub doBook {
+  my $olid = shift;
+  my $libdir = dirname(realpath(__FILE__));
+  exec "$libdir/book", "--olid", "$olid" or die "error execing book for $olid";
 }
 
 sub doSteam {

@@ -887,6 +887,40 @@ proc polymarket_msg { nick uhand handle input } {
 	close $fd
 }
 
+bind pub - !book book_pub
+bind msg - !book book_msg
+set bookbin "/home/eggdrop/bin/book"
+proc book_pub { nick host hand chan text } {
+	global bookbin
+	set query [sanitize_string [string trim "${text}"]]
+	putlog "book pub: $nick $host $hand $chan $query"
+	if [string equal "" $query] then {
+		putchan $chan "usage: !book <title or author>"
+		return
+	}
+	set fd [open "|${bookbin} ${query}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc book_msg { nick uhand handle input } {
+	global bookbin
+	set query [sanitize_string [string trim "${input}"]]
+	putlog "book msg: $nick $uhand $handle $query"
+	if [string equal "" $query] then {
+		putmsg "$nick" "usage: !book <title or author>"
+		return
+	}
+	set fd [open "|${bookbin} ${query}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
 bind msg - !gas gas_msg
 bind pub - !gas gas_pub
 bind msg - !diesel diesel_msg

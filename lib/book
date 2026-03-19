@@ -1,0 +1,205 @@
+#!/usr/bin/perl -w
+#
+# Look up a book on Open Library and display title, author, year, rating, and description.
+#
+# 2-clause BSD license.
+# Copyright (c) 2025 cjh@github. All rights reserved.
+#
+# Uses the public Open Library API -- no API key required.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use JSON::PP qw( decode_json );
+use URI::Escape;
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+# eggdrop doesn't split args on spaces
+@ARGV = split(' ', join(' ', @ARGV));
+
+my $useragent = "Mozilla/5.0 (compatible; qrmbot)";
+
+sub fetchJSON {
+  my $url = shift;
+  open(my $fh, '-|', "curl --max-time 10 -s -k -L -A \"$useragent\" '$url'");
+  local $/;
+  my $res = <$fh>;
+  close($fh);
+  return undef unless defined $res && $res =~ /^\s*\{/;
+  return decode_json($res);
+}
+
+# Parse --olid flag (Open Library work ID, e.g. OL45804W)
+my $olid = undef;
+my @search_args;
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] eq "--olid" && $i + 1 <= $#ARGV) {
+    $olid = $ARGV[$i + 1];
+    $olid =~ s|^/works/||;     # strip leading /works/ if present
+    $olid =~ s/[^A-Za-z0-9]//g;
+    $i += 2;
+  } else {
+    push @search_args, $ARGV[$i];
+    $i++;
+  }
+}
+
+my ($title, $author_str, $year, $desc);
+my @subjects;
+my $work_key;
+
+# --- 1. Search Open Library (skipped if --olid supplied) ---
+if (!defined $olid) {
+  my $query = join(" ", @search_args);
+  if (!$query || length($query) == 0) {
+    print "usage: !book <title or author>\n";
+    exit $exitnonzeroonerror;
+  }
+
+  my $enc_query = uri_escape_utf8($query);
+  my $fields = "key,title,author_name,first_publish_year,subject";
+  my $search_url = "https://openlibrary.org/search.json?q=${enc_query}&limit=5&fields=${fields}";
+  my $search = fetchJSON($search_url);
+
+  if (!defined $search || !defined $search->{docs} || scalar(@{$search->{docs}}) == 0) {
+    print "not found: $query\n";
+    exit 0;
+  }
+
+  my $doc = $search->{docs}[0];
+  $work_key = $doc->{key} // "";
+  $work_key =~ s|^/works/||;
+
+  $title = $doc->{title} // "Unknown";
+
+  if (defined $doc->{author_name} && @{$doc->{author_name}}) {
+    my @names = @{$doc->{author_name}};
+    @names = @names[0..1] if @names > 2;
+    $author_str = join(", ", @names);
+  }
+
+  $year = $doc->{first_publish_year} if defined $doc->{first_publish_year};
+
+  if (defined $doc->{subject} && @{$doc->{subject}}) {
+    my $count = 0;
+    foreach my $s (@{$doc->{subject}}) {
+      next if length($s) > 30;
+      push @subjects, $s;
+      last if ++$count >= 3;
+    }
+  }
+}
+
+# --- 2. Fetch work details ---
+$work_key = $olid if defined $olid;
+
+if (!$work_key) {
+  print "error: no work key found\n";
+  exit $exitnonzeroonerror;
+}
+
+my $work_url = "https://openlibrary.org/works/${work_key}.json";
+my $work = fetchJSON($work_url);
+
+if (!defined $work) {
+  print "error: could not retrieve details for $work_key\n";
+  exit $exitnonzeroonerror;
+}
+
+# If --olid: get metadata from work JSON since we skipped the search
+if (defined $olid) {
+  $title = $work->{title} // "Unknown";
+
+  if (defined $work->{subjects} && @{$work->{subjects}}) {
+    my $count = 0;
+    foreach my $s (@{$work->{subjects}}) {
+      next if length($s) > 30;
+      push @subjects, $s;
+      last if ++$count >= 3;
+    }
+  }
+
+  # Fetch author names from the author keys in the work JSON
+  if (defined $work->{authors}) {
+    my @authors;
+    foreach my $a (@{$work->{authors}}) {
+      next unless defined $a->{author} && defined $a->{author}{key};
+      my $akey = $a->{author}{key};
+      my $author_j = fetchJSON("https://openlibrary.org${akey}.json");
+      push @authors, $author_j->{name} if defined $author_j && defined $author_j->{name};
+      last if @authors >= 2;
+    }
+    $author_str = join(", ", @authors) if @authors;
+  }
+}
+
+# Description from work JSON
+if (defined $work->{description}) {
+  if (ref($work->{description}) eq "HASH") {
+    $desc = $work->{description}{value} // "";
+  } else {
+    $desc = $work->{description};
+  }
+  $desc =~ s/<[^>]+>//g;
+  $desc = decodeEntities($desc);
+  $desc =~ s/\*\*([^*]+)\*\*/$1/g;  # **bold**
+  $desc =~ s/\*([^*]+)\*/$1/g;      # *italic*
+  $desc =~ s/__([^_]+)__/$1/g;      # __bold__
+  $desc =~ s/_([^_]+)_/$1/g;        # _italic_
+  $desc =~ s/\[([^\]]+)\]\[[^\]]*\]/$1/g;  # [text][ref] reference-style links
+  $desc =~ s/\[([^\]]+)\]\([^)]*\)/$1/g;   # [text](url) inline links
+  $desc =~ s/\s+/ /g;
+  $desc =~ s/^\s+|\s+$//g;
+  $desc =~ s/^\(from [^)]+\)\s*//i;  # strip "(from back cover)" etc.
+  $desc =~ s/[-=*]{5,}.*//s;         # strip "----------" dividers and trailing junk
+  $desc = substr($desc, 0, 297) . "..." if length($desc) > 300;
+}
+
+# --- 3. Fetch ratings ---
+my $ratings_url = "https://openlibrary.org/works/${work_key}/ratings.json";
+my $ratings_j = fetchJSON($ratings_url);
+
+my ($rating_avg, $rating_count) = (undef, 0);
+if (defined $ratings_j && defined $ratings_j->{summary}) {
+  $rating_avg = $ratings_j->{summary}{average};
+  $rating_count = $ratings_j->{summary}{count} // 0;
+}
+
+# --- Output ---
+my $sep = " \x{00B7} ";
+print "📚 " . bold($title);
+print $sep . bold(italic($author_str)) if $author_str;
+print $sep . grey($year) if $year;
+
+if (defined $rating_avg && $rating_avg && $rating_count > 0) {
+  my $avg_str = sprintf("%.1f", $rating_avg);
+  (my $count_fmt = $rating_count) =~ s/(\d)(?=(\d{3})+(?!\d))/$1,/g;
+  my $rating_str = "\x{2605} $avg_str ($count_fmt ratings)";
+  if ($rating_avg >= 4.0) {
+    print $sep . green($rating_str);
+  } elsif ($rating_avg >= 3.0) {
+    print $sep . yellow($rating_str);
+  } else {
+    print $sep . red($rating_str);
+  }
+}
+
+print $sep . italic($desc) if $desc;
+print $sep . "https://openlibrary.org/works/$work_key";
+print "\n";
+
+exit 0;
