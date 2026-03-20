@@ -35,7 +35,7 @@ my $geo = undef;
 my $query = undef;
 
 my $fuelId = 1; # TODO
-my $dist = 10; # km TODO
+my $dist = 5; # km TODO
 
 my $curl_impersonate = "curl-impersonate-chrome";
 my $curl_impersonate_path = `which $curl_impersonate`;
@@ -60,6 +60,9 @@ while ($i <= $#ARGV) {
     $fuelId = 4;
     $i++;
     next;
+  }
+  if (isNumeric($ARGV[$i])) {
+    $dist = $ARGV[$i];
   }
   if (defined($query)) {
     $query = $query ." ". $ARGV[$i];
@@ -104,7 +107,7 @@ open (JSON, '-|', "curl --compressed --max-time 10 -s -k -L -H '${ct}' --data '$
 my $json = <JSON>;
 close(JSON);
 my $j = decode_json($json) or die "parse error: $json\n";
-#print $json, "\n";
+print $json, "\n";
 
 my $stationsref = [];
 my ($m, $n);
@@ -122,6 +125,7 @@ for ($m = 0; $m < scalar (@{$j->{secondaryStations}}); $m++, $n++) {
 # find cheapest prices within returned data
 my ($cheapestCashPx, $cheapestCreditPx) = (9999.99, 9999.99);
 for ($n = 0; $n < scalar @{$stationsref}; $n++) {
+  next if not defined $stationsref->[$n]->{price};
   next if $stationsref->[$n]->{price} eq "--";
   if ($stationsref->[$n]->{iscash}) {
     if ($stationsref->[$n]->{price} < $cheapestCashPx) {
@@ -139,6 +143,7 @@ my ($nearestCash, $nearestCredit);
 my ($distCash, $bearingCash) = (99999.9, undef);
 my ($distCredit, $bearingCredit) = (99999.9, undef);
 for ($n = 0; $n < scalar @{$stationsref}; $n++) {
+  next if not defined $stationsref->[$n]->{price};
   next if $stationsref->[$n]->{price} eq "--";
   if ($stationsref->[$n]->{iscash}) {
     if ($stationsref->[$n]->{price} == $cheapestCashPx) {
@@ -179,7 +184,8 @@ if (defined $nearestCash) {
   open (JSON, '-|', "$curl_impersonate_path -X POST --compressed --max-time 10 -s -k -L  -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0' -H '${ct}' --data '${req}' $url");
   $json = <JSON>;
   close(JSON);
-  if ($json =~ /Cloudflare/) {
+  #print $json, "\n";
+  if ($json =~ /(Cloudflare|challenge-error-text)/) {
     print "Error: unable to retrieve station details\n";
     $cloudflareError = 1;
   } else {
@@ -200,7 +206,7 @@ if (defined $nearestCredit) {
   $json = <JSON>;
   close(JSON);
   #print $json, "\n";
-  if ($json =~ /Cloudflare/) {
+  if ($json =~ /(Cloudflare|challenge-error-text)/) {
     print "Error: unable to retrieve station details\n" if $cloudflareError == 0;
   } else {
     $d = decode_json($json) or die "parse error: $json\n";
