@@ -108,6 +108,10 @@ local $/;   # read entire file -- FIXME: potentially memory hungry
 open (JSON, '-|', "curl --compressed --max-time 10 -s -k -L -H '${ct}' --data '${req}' $url");
 my $json = <JSON>;
 close(JSON);
+if ($json =~ /(Cloudflare|challenge-error-text)/) {
+  print "Error: unable to retrieve price list\n";
+  exit $exitnonzeroonerror;
+}
 my $j = decode_json($json) or die "parse error: $json\n";
 #print $json, "\n";
 
