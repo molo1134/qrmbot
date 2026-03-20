@@ -63,6 +63,8 @@ while ($i <= $#ARGV) {
   }
   if (isNumeric($ARGV[$i])) {
     $dist = $ARGV[$i];
+    $i++;
+    next;
   }
   if (defined($query)) {
     $query = $query ." ". $ARGV[$i];
