@@ -107,7 +107,7 @@ open (JSON, '-|', "curl --compressed --max-time 10 -s -k -L -H '${ct}' --data '$
 my $json = <JSON>;
 close(JSON);
 my $j = decode_json($json) or die "parse error: $json\n";
-print $json, "\n";
+#print $json, "\n";
 
 my $stationsref = [];
 my ($m, $n);
