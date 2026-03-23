@@ -741,6 +741,7 @@ proc amcon_msg {nick uhand handle input} {
 
 set amcornbin "/home/eggdrop/bin/amcorn"
 bind pub - !amcorn amcorn_pub
+bind pub - !corn amcorn_pub
 proc amcorn_pub { nick host hand chan text } {
 	if [string equal "#amateurradio" $chan] then {
 		return
@@ -1116,12 +1117,13 @@ set yellowjacket_facts {
   {Early in the year, yellowjackets seek protein.}
   {Late in the year, yellowjackets crave sugar.}
   {Yellowjackets aggressively defend their nests.}
-  {Yellowjacket larvae feed workers sugary liquids.}
+  {Yellowjacket larvae feed workers sugary liquids in exchange for raw meat the workers bring them.}
   {In late summer, yellowjackets produce new queens and males.}
   {Only the yellowjacket queen survives the winter.}
   {Most yellowjacket nests have a single guarded entrance.}
   {Yellowjackets chew into fruit to reach the juice.}
   {Cool mornings slow yellowjacket activity.}
+  {If you squish a yellowjacket, it releases a death pheromone that acts like a chemical alarm.}
 }
 
 proc brad {nick host hand chan text} {
