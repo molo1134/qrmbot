@@ -1549,5 +1549,13 @@ foreach _event {shart hangover puke} {
 }
 unset _event
 
+# !shame — show both shartleague and hangoverleague
+proc shame {nick uhost hand chan text} {
+    if [string equal "#amateurradio" $chan] then { return }
+    et_league shart   $nick $uhost $hand $chan $text
+    et_league hangover $nick $uhost $hand $chan $text
+}
+bind pub - !shame shame
+
 
 putlog "fun.tcl loaded."
