@@ -519,10 +519,16 @@ sub doRBN {
     return;
   }
   if ($json =~ /^{"error":(.*?)}/) {
-    # TODO FIXME: on error # 888, invalidate the RBN version hash cache and try again
     my $error = $1;
-    print "warning: RBN: error $error\n";
-    return;
+    if ($error =~ /^888,/) {
+      # on error # 888, invalidate the RBN version hash cache and try again
+      print "warning: RBN: invalidating cached version hash\n";
+      unlink $cachedRbnHashFile or die "could not remove $cachedRbnHashFile";
+      doRBN();
+    } else {
+      print "warning: RBN: error $error\n";
+      return;
+    }
   }
   return if $json eq "";
 
