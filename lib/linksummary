@@ -137,7 +137,7 @@ while ($i <= $#ARGV) {
     doHtml($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|https://bsky.app/profile/([A-Za-z0-9._-]+)/post/([a-z0-9]+)|) {
     doBlueSky($1, $2);
-  } elsif ($ARGV[$i] =~ m|https://www.zillow.com/homedetails/[A-Za-z0-9-]+/([0-9]+)_zpid/|) {
+  } elsif ($ARGV[$i] =~ m|https://www.zillow.com/homedetails/[A-Za-z0-9-]+/([0-9]+)_zpid/?|) {
     doZillowZpid($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://| and
 	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
@@ -1704,7 +1704,7 @@ sub doAe7qCall {
 sub doZillowZpid {
   my $url = shift;
 
-  if ($url =~ m|https://www\.zillow\.com/homedetails/[0-9A-Za-z-]+/([0-9]+)_zpid/|i) {
+  if ($url =~ m|https://www\.zillow\.com/homedetails/[0-9A-Za-z-]+/([0-9]+)_zpid/?|i) {
     my $zpid = $1;
 
     my $jsonUrl = "https://www.zillow.com/graphql/?extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%222d9eda9fd7ee702cf37becf5459c3daa3526606d4b5b7b84a019433fa5d037c6%22%7D%7D&variables=%7B%22zpid%22%3A${zpid}%2C%22platform%22%3A%22DESKTOP_WEB%22%2C%22formType%22%3A%22OPAQUE%22%2C%22contactFormRenderParameter%22%3A%7B%22zpid%22%3A${zpid}%2C%22platform%22%3A%22desktop%22%2C%22isDoubleScroll%22%3Atrue%7D%2C%22skipCFRD%22%3Afalse%7D";
