@@ -364,7 +364,7 @@ proc goose { nick host hand chan text} {
 	if [ expr (rand()*10) <= 1 ] then {
 		putchan $chan "https://i.imgur.com/fBIYpa2.png"
 	} else {
-	putchan $chan "https://i.imgur.com/B4WRvHE.jpeg"
+		putchan $chan "https://i.imgur.com/B4WRvHE.jpeg"
 	}
 }
 
