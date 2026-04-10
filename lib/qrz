@@ -855,6 +855,7 @@ sub getAndParseData {
       $nickname = $7;
       $mail =~ s/<br *\/>/; /g;
       $mail =~ s/<\/p>//g;
+      $mail =~ s/\s*$//;
       $attn =~ s/^\s+//;
       $mail = "Attn: $attn; $mail" if defined $attn and length($attn) > 0;
       $addr1 =~ s/^([^<]*)<br *\/>.*$/$1/;
@@ -863,6 +864,7 @@ sub getAndParseData {
 	($addr2, $state, $zip) = ($1, $2, $3)
       }
       $mailcountry =~ s/^.*<br *\/>(.*?)<\/p>/$1/;
+      $mailcountry =~ s/\s*$//;
       next;
     }
 
