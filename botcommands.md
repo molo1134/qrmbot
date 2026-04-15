@@ -86,6 +86,7 @@
  * `!spacex` -- next spacex launch
  * `!translate` -- translate text
  * `!rand` `!dice` `!flip` `!8ball` `!orb` -- random
+ * `!no` -- random rejection reason from No-as-a-Service
 
 ## Radio-related commands:
 
@@ -1036,6 +1037,10 @@ Example:
 ### `!spacex` -- next spacex launch
 ### `!translate` -- translate text
 ### `!rand` `!dice` `!flip` `!8ball` `!orb` -- random
+
+### `!no` -- random rejection reason
+
+Returns a random, humorous reason to say no, via the No-as-a-Service API.
 
 <!-- !amcon - - some dumb prepper shit -->
 

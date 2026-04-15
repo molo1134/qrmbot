@@ -1560,5 +1560,17 @@ proc shame {nick uhost hand chan text} {
 }
 bind pub - !shame shame
 
+bind pub - !no no_pub
+set nobin "/home/eggdrop/bin/no"
+proc no_pub { nick host hand chan text } {
+	global nobin
+	putlog "no pub: $nick $host $hand $chan"
+	set fd [open "|${nobin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
 
 putlog "fun.tcl loaded."

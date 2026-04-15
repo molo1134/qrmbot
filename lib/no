@@ -1,0 +1,47 @@
+#!/usr/bin/perl -w
+#
+# Returns a random rejection reason from the No-as-a-Service API.
+# https://naas.isalman.dev/no
+#
+# 2-clause BSD license.
+# Copyright (c) 2025 cjh@github. All rights reserved.
+
+use strict;
+use JSON::PP qw( decode_json );
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+my $useragent = "qrmbot";
+my $url = 'https://naas.isalman.dev/no';
+
+my $raw = `curl --max-time 10 -s -k -L -A "$useragent" '$url'`;
+
+if (!defined $raw || $raw eq '') {
+  print red("Error: no response from No-as-a-Service API") . "\n";
+  exit $exitnonzeroonerror;
+}
+
+my $data = eval { decode_json($raw) };
+if ($@) {
+  print red("Error: failed to parse response") . "\n";
+  exit $exitnonzeroonerror;
+}
+
+my $reason = $data->{'reason'};
+if (!defined $reason || $reason eq '') {
+  print red("Error: no reason returned") . "\n";
+  exit $exitnonzeroonerror;
+}
+
+print bold("No.") . " " . $reason . "\n";
+
+exit 0;
