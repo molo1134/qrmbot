@@ -1573,4 +1573,54 @@ proc no_pub { nick host hand chan text } {
 	close $fd
 }
 
+# NHL scores: !nhl <team> plus common aliases
+set nhlbin "/home/eggdrop/bin/nhl"
+bind pub - !nhl nhl_pub
+bind msg - !nhl nhl_msg
+proc nhl_pub { nick host hand chan text } {
+	global nhlbin
+	set param [sanitize_string [string trim "${text}"]]
+	putlog "nhl pub: $nick $host $hand $chan $param"
+	set fd [open "|${nhlbin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putchan $chan "$line" }
+	close $fd
+}
+proc nhl_msg { nick uhand handle input } {
+	global nhlbin
+	set param [sanitize_string [string trim "${input}"]]
+	putlog "nhl msg: $nick $uhand $handle $param"
+	set fd [open "|${nhlbin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putmsg "$nick" "$line" }
+	close $fd
+}
+
+foreach _team {flyers leafs bruins rangers penguins capitals blackhawks kings ducks
+               avalanche lightning panthers canadiens senators sabres wings
+               preds blues stars wild jets oilers canucks flames sharks kraken
+               knights canes jackets isles devils} {
+	bind pub - "!${_team}" nhl_team_pub
+	bind msg - "!${_team}" nhl_team_msg
+}
+unset _team
+proc nhl_team_pub { nick host hand chan text } {
+	global nhlbin lastbind
+	set team [string range $lastbind 1 end]
+	putlog "nhl team pub: $nick $host $hand $chan $team"
+	set fd [open "|${nhlbin} ${team}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putchan $chan "$line" }
+	close $fd
+}
+proc nhl_team_msg { nick uhand handle input } {
+	global nhlbin lastbind
+	set team [string range $lastbind 1 end]
+	putlog "nhl team msg: $nick $uhand $handle $team"
+	set fd [open "|${nhlbin} ${team}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putmsg "$nick" "$line" }
+	close $fd
+}
+
 putlog "fun.tcl loaded."

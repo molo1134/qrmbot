@@ -1,0 +1,242 @@
+#!/usr/bin/perl -w
+# NHL game scores and schedule lookup.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+use JSON::PP qw(decode_json);
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+# eggdrop passes all args as one string
+@ARGV = split(' ', join(' ', @ARGV));
+
+my $input = lc(join(' ', @ARGV));
+$input =~ s/^\s+|\s+$//g;
+
+my %teammap = (
+  # abbreviations
+  'phi' => 'PHI', 'tor' => 'TOR', 'bos' => 'BOS', 'nyr' => 'NYR',
+  'pit' => 'PIT', 'wsh' => 'WSH', 'chi' => 'CHI', 'lak' => 'LAK',
+  'ana' => 'ANA', 'col' => 'COL', 'tbl' => 'TBL', 'fla' => 'FLA',
+  'mtl' => 'MTL', 'ott' => 'OTT', 'buf' => 'BUF', 'det' => 'DET',
+  'nsh' => 'NSH', 'stl' => 'STL', 'dal' => 'DAL', 'min' => 'MIN',
+  'wpg' => 'WPG', 'edm' => 'EDM', 'van' => 'VAN', 'cgy' => 'CGY',
+  'sjs' => 'SJS', 'sea' => 'SEA', 'vgk' => 'VGK', 'uta' => 'UTA',
+  'car' => 'CAR', 'cbj' => 'CBJ', 'nyi' => 'NYI', 'njd' => 'NJD',
+  # nicknames
+  'flyers'           => 'PHI', 'philadelphia'     => 'PHI',
+  'maple leafs'      => 'TOR', 'leafs'            => 'TOR', 'toronto' => 'TOR',
+  'bruins'           => 'BOS', 'boston'           => 'BOS',
+  'rangers'          => 'NYR', 'new york rangers' => 'NYR',
+  'penguins'         => 'PIT', 'pens'             => 'PIT', 'pittsburgh' => 'PIT',
+  'capitals'         => 'WSH', 'caps'             => 'WSH', 'washington' => 'WSH',
+  'blackhawks'       => 'CHI', 'hawks'            => 'CHI', 'chicago'    => 'CHI',
+  'kings'            => 'LAK', 'la kings'         => 'LAK', 'los angeles' => 'LAK',
+  'ducks'            => 'ANA', 'anaheim'          => 'ANA',
+  'avalanche'        => 'COL', 'avs'              => 'COL', 'colorado' => 'COL',
+  'lightning'        => 'TBL', 'bolts'            => 'TBL', 'tampa bay' => 'TBL', 'tampa' => 'TBL',
+  'panthers'         => 'FLA', 'florida'          => 'FLA',
+  'canadiens'        => 'MTL', 'habs'             => 'MTL', 'montreal' => 'MTL',
+  'senators'         => 'OTT', 'sens'             => 'OTT', 'ottawa'   => 'OTT',
+  'sabres'           => 'BUF', 'buffalo'          => 'BUF',
+  'red wings'        => 'DET', 'wings'            => 'DET', 'detroit'  => 'DET',
+  'predators'        => 'NSH', 'preds'            => 'NSH', 'nashville' => 'NSH',
+  'blues'            => 'STL', 'st. louis'        => 'STL', 'st louis' => 'STL', 'saint louis' => 'STL',
+  'stars'            => 'DAL', 'dallas'           => 'DAL',
+  'wild'             => 'MIN', 'minnesota'        => 'MIN',
+  'jets'             => 'WPG', 'winnipeg'         => 'WPG',
+  'oilers'           => 'EDM', 'edmonton'         => 'EDM',
+  'canucks'          => 'VAN', 'vancouver'        => 'VAN',
+  'flames'           => 'CGY', 'calgary'          => 'CGY',
+  'sharks'           => 'SJS', 'san jose'         => 'SJS',
+  'kraken'           => 'SEA', 'seattle'          => 'SEA',
+  'golden knights'   => 'VGK', 'knights'          => 'VGK', 'vegas' => 'VGK', 'las vegas' => 'VGK',
+  'utah hockey club' => 'UTA', 'utah'             => 'UTA', 'coyotes' => 'UTA',
+  'hurricanes'       => 'CAR', 'canes'            => 'CAR', 'carolina' => 'CAR',
+  'blue jackets'     => 'CBJ', 'jackets'          => 'CBJ', 'columbus' => 'CBJ',
+  'islanders'        => 'NYI', 'isles'            => 'NYI', 'new york islanders' => 'NYI',
+  'devils'           => 'NJD', 'new jersey'       => 'NJD',
+);
+
+if (!defined($input) || $input eq '') {
+  print "Usage: !nhl <team>  (e.g. flyers, PHI, maple leafs)\n";
+  exit 0;
+}
+
+my $abbrev = $teammap{$input};
+unless (defined $abbrev) {
+  (my $stripped = $input) =~ s/^the\s+//i;
+  $abbrev = $teammap{$stripped};
+}
+
+unless (defined $abbrev) {
+  print "Unknown team: $input\n";
+  exit 0;
+}
+
+my $useragent = "Mozilla/5.0 (compatible; qrmbot)";
+my $url = "https://api-web.nhle.com/v1/scoreboard/$abbrev/now";
+
+my $raw = '';
+open(my $fh, '-|', "curl --max-time 10 -s -k -L -A \"$useragent\" '$url'");
+while (<$fh>) { $raw .= $_; }
+close($fh);
+
+my $data;
+eval { $data = decode_json($raw); };
+if ($@ || !defined($data)) {
+  print "error: failed to fetch NHL data\n";
+  exit 0;
+}
+
+my $gamesByDate = $data->{gamesByDate} // [];
+
+my ($liveGame, $lastGame, $nextGame);
+
+foreach my $dayEntry (@$gamesByDate) {
+  my $games = $dayEntry->{games} // [];
+  foreach my $game (@$games) {
+    my $state = $game->{gameState} // '';
+    if ($state eq 'LIVE' || $state eq 'CRIT') {
+      $liveGame = $game;
+    } elsif (($state eq 'FUT' || $state eq 'PRE') && !defined($nextGame)) {
+      $nextGame = $game;
+    } elsif ($state eq 'FINAL' || $state eq 'OFF') {
+      $lastGame = $game;
+    }
+  }
+}
+
+sub periodLabel {
+  my ($num, $type) = @_;
+  return 'OT'  if ($type // '') eq 'OT';
+  return 'SO'  if ($type // '') eq 'SO';
+  return '1st' if $num == 1;
+  return '2nd' if $num == 2;
+  return '3rd' if $num == 3;
+  return "${num}OT";
+}
+
+sub finishLabel {
+  my ($num, $type) = @_;
+  return '/OT' if ($type // '') eq 'OT' || (defined($num) && $num > 3 && ($type // '') eq 'REG');
+  return '/SO' if ($type // '') eq 'SO';
+  return '';
+}
+
+sub fmtDate {
+  my $d = shift // '';
+  return $d unless $d =~ /^(\d{4})-(\d{2})-(\d{2})$/;
+  my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+  return $mon[$2 - 1] . " " . int($3);
+}
+
+sub fmtStartTime {
+  my $utc = shift // '';
+  return '' unless $utc =~ /T(\d{2}):(\d{2})/;
+  my ($h, $m) = ($1 + 0, $2 + 0);
+  $h = ($h - 4) % 24;  # UTC to EDT
+  my $ap = $h >= 12 ? 'PM' : 'AM';
+  $h = $h % 12 || 12;
+  return sprintf("%d:%02d %s ET", $h, $m, $ap);
+}
+
+sub teamScore {
+  my ($team, $win) = @_;
+  my $abbr  = $team->{abbrev} // '???';
+  my $score = $team->{score}  // 0;
+  return $win ? bold($abbr) . " " . green($score)
+              : bold($abbr) . " $score";
+}
+
+if (defined $liveGame) {
+  my $away  = $liveGame->{awayTeam} // {};
+  my $home  = $liveGame->{homeTeam} // {};
+  my $aScore = $away->{score} // 0;
+  my $hScore = $home->{score} // 0;
+
+  my $pNum  = $liveGame->{periodDescriptor}{number}     // 0;
+  my $pType = $liveGame->{periodDescriptor}{periodType} // 'REG';
+  my $clock = $liveGame->{clock} // {};
+  my $timeLeft     = $clock->{timeRemaining}  // '';
+  my $inInter      = $clock->{inIntermission} // 0;
+  my $isPlayoffs   = ($liveGame->{gameType} // 2) == 3;
+
+  my $periodStr = periodLabel($pNum, $pType);
+  my $status;
+  if ($inInter) {
+    $status = yellow("Intermission") . " after $periodStr";
+  } else {
+    $status = yellow("LIVE") . "  $periodStr  $timeLeft";
+  }
+
+  my $awaySOG = $away->{sog} // '';
+  my $homeSOG = $home->{sog} // '';
+  my $sogStr  = ($awaySOG ne '' && $homeSOG ne '')
+    ? "  " . grey("SOG") . "  " . bold($away->{abbrev}//'') . " $awaySOG  " . bold($home->{abbrev}//'') . " $homeSOG"
+    : '';
+
+  my $seriesStr = '';
+  if ($isPlayoffs && defined $liveGame->{seriesStatus}) {
+    my $s = $liveGame->{seriesStatus};
+    my $round = $s->{round}  // '';
+    my $game  = $s->{game}   // '';
+    my $top   = $s->{topSeedTeamAbbrev}    // '';
+    my $tW    = $s->{topSeedWins}          // 0;
+    my $bot   = $s->{bottomSeedTeamAbbrev} // '';
+    my $bW    = $s->{bottomSeedWins}       // 0;
+    my ($leader, $trailer, $lW, $trl) = $tW > $bW
+      ? ($top, $bot, $tW, $bW) : ($bot, $top, $bW, $tW);
+    $seriesStr = "  " . grey("| Playoffs R$round G$game: ");
+    if ($lW == $trl) {
+      $seriesStr .= grey("Tied $lW-$trl");
+    } else {
+      $seriesStr .= bold($leader) . grey(" leads $lW-$trl");
+    }
+  }
+
+  print teamScore($away, $aScore > $hScore) . "  at  " . teamScore($home, $hScore > $aScore)
+      . "  |  $status" . $sogStr . $seriesStr . "\n";
+
+} elsif (defined($lastGame) || defined($nextGame)) {
+  if (defined $lastGame) {
+    my $away  = $lastGame->{awayTeam} // {};
+    my $home  = $lastGame->{homeTeam} // {};
+    my $aScore = $away->{score} // 0;
+    my $hScore = $home->{score} // 0;
+    my $date   = fmtDate($lastGame->{gameDate});
+    my $suffix = finishLabel(
+      $lastGame->{periodDescriptor}{number},
+      $lastGame->{periodDescriptor}{periodType}
+    );
+    my $isPlayoffs = ($lastGame->{gameType} // 2) == 3;
+    my $label = $isPlayoffs ? "Playoffs" : "Last";
+
+    print "$label ($date): "
+        . teamScore($away, $aScore > $hScore) . "  at  "
+        . teamScore($home, $hScore > $aScore)
+        . grey("  (Final$suffix)") . "\n";
+  }
+
+  if (defined $nextGame) {
+    my $away = $nextGame->{awayTeam} // {};
+    my $home = $nextGame->{homeTeam} // {};
+    my $date = fmtDate($nextGame->{gameDate});
+    my $time = fmtStartTime($nextGame->{startTimeUTC});
+    my $isPlayoffs = ($nextGame->{gameType} // 2) == 3;
+    my $label = $isPlayoffs ? "Next (playoffs)" : "Next";
+
+    print "$label ($date): " . bold($away->{abbrev}//'???')
+        . "  at  " . bold($home->{abbrev}//'???')
+        . ($time ? "  —  $time" : '') . "\n";
+  }
+} else {
+  print "No recent or upcoming games found for $abbrev.\n";
+}
+
+exit 0;

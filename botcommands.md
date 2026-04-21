@@ -79,6 +79,7 @@
  * `!imdb` -- movie info
  * `!steam` -- Steam game info (name, price, rating, description)
  * `!book` -- book info from Open Library (title, author, year, rating, description)
+ * `!nhl` -- NHL scores: live game or last/next game for a team (e.g. `!nhl flyers`, `!flyers`)
  * `!fest` -- find upcoming hamfests near your location (uses !setgeo)
  * `!adsb` -- get plane information
  * `!hofh` -- why your radio is broke
