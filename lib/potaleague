@@ -217,13 +217,17 @@ my @sorted = sort {
     || $stats{$b}{qsos} <=> $stats{$a}{qsos}
 } keys %stats;
 
+my @medals = ("🥇", "🥈", "🥉");
 print "POTA League $year: ";
 my $sep = "";
+my $rank = 1;
 for my $call (@sorted) {
+  my $medal = $rank <= 3 ? $medals[$rank - 1] : "$rank.";
   print $sep;
-  print bold($call) . " "
-      . $stats{$call}{activations} . "A,"
-      . commify($stats{$call}{qsos}) . "Q";
-  $sep = " - ";
+  print "$medal " . bold($call) . " ("
+      . $stats{$call}{activations} . "A; "
+      . commify($stats{$call}{qsos}) . "Q)";
+  $sep = " \x{B7} ";
+  $rank++;
 }
 print "\n";
