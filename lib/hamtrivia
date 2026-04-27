@@ -1,0 +1,165 @@
+#!/usr/bin/perl -w
+#
+# Select random FCC amateur radio exam questions from cached question pools.
+# Pools (Technician, General, Extra) are downloaded from the
+# russolsen/ham_radio_question_pool GitHub repository.
+# Questions that reference figures/diagrams are excluded.
+#
+# Output format (one line per question):
+#   correct_idx|[ID Class] question|opt1|opt2|opt3|opt4
+# where correct_idx is 1-based.
+#
+# Usage: hamtrivia --fetch [--count N]
+#
+# 2-clause BSD license.
+# Copyright (c) 2026 MonkeybutlerCJH. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use JSON::PP qw(decode_json);
+use List::Util qw(shuffle);
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Util;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+# eggdrop passes all args as one string
+@ARGV = split(' ', join(' ', @ARGV));
+
+my $useragent = "qrmbot hamtrivia/1.0";
+my $cache_dir = "$ENV{HOME}/.qrmbot/cache";
+my $cache_ttl = 30 * 86400;  # 30 days
+my $base_url  = "https://raw.githubusercontent.com/russolsen/ham_radio_question_pool/master";
+
+my %pool_urls = (
+    tech    => "$base_url/technician-2026-2030/technician-2026-2030.json",
+    general => "$base_url/general-2023-2027/general-2023-2027.json",
+    extra   => "$base_url/extra-2024-2028/extra-2024-2028.json",
+);
+
+my %pool_label = (
+    tech    => "Technician",
+    general => "General",
+    extra   => "Extra",
+);
+
+my $default_count = 10;
+my $count    = $default_count;
+my $do_fetch = 0;
+
+while (@ARGV) {
+    my $arg = shift @ARGV;
+    if ($arg eq "--fetch") {
+        $do_fetch = 1;
+    } elsif ($arg eq "--count") {
+        $count = shift @ARGV;
+    }
+}
+
+unless ($do_fetch) {
+    print STDERR "Usage: hamtrivia --fetch [--count N]\n";
+    exit($exitnonzeroonerror ? 1 : 0);
+}
+
+fetch_questions($count);
+
+sub load_pool {
+    my ($class) = @_;
+    my $cache_file = "$cache_dir/hamtrivia_${class}.json";
+
+    # Use cache if fresh enough
+    if (-f $cache_file && (time() - (stat($cache_file))[9]) < $cache_ttl) {
+        local $/;
+        open(my $fh, '<:utf8', $cache_file) or return ();
+        my $json = <$fh>;
+        close $fh;
+        my $data = eval { decode_json($json) };
+        return @$data if !$@ && ref($data) eq 'ARRAY';
+    }
+
+    # Download fresh copy
+    my $json = curl_get($pool_urls{$class});
+
+    if (defined $json) {
+        my $data = eval { decode_json($json) };
+        if (!$@ && ref($data) eq 'ARRAY') {
+            mkdir $cache_dir unless -d $cache_dir;
+            if (open(my $fh, '>:utf8', $cache_file)) {
+                print $fh $json;
+                close $fh;
+            }
+            return @$data;
+        }
+    }
+
+    # Fall back to stale cache rather than fail silently
+    if (-f $cache_file) {
+        local $/;
+        open(my $fh, '<:utf8', $cache_file) or return ();
+        my $json = <$fh>;
+        close $fh;
+        my $data = eval { decode_json($json) };
+        return @$data if !$@ && ref($data) eq 'ARRAY';
+    }
+
+    return ();
+}
+
+sub fetch_questions {
+    my ($n) = @_;
+
+    my @all;
+    for my $class (sort keys %pool_urls) {
+        for my $q (load_pool($class)) {
+            # Skip questions that require a figure/diagram
+            next if defined $q->{figure} && $q->{figure} ne '';
+            next if $q->{question} =~ /figure/i;
+            next if grep { /figure/i } @{$q->{answers} // []};
+
+            push @all, { %$q, _class => $class };
+        }
+    }
+
+    unless (@all) {
+        print STDERR "hamtrivia: no questions available\n";
+        exit($exitnonzeroonerror ? 1 : 0);
+    }
+
+    my @shuffled = shuffle(@all);
+    my $take = ($n <= scalar(@shuffled)) ? $n : scalar(@shuffled);
+    my @selected = @shuffled[0 .. $take - 1];
+
+    for my $q (@selected) {
+        my $id      = $q->{id} // '?';
+        my $class   = $pool_label{$q->{_class}} // $q->{_class};
+        my $correct = $q->{correct};         # 0-based integer from pool data
+        my $question = $q->{question};
+        my @answers  = @{$q->{answers}};
+
+        # Sanitize pipe characters used as field delimiter
+        $question =~ s/\|/\//g;
+        @answers  = map { s/\|/\//gr } @answers;
+        $id       =~ s/\|/\//g;
+
+        # Prefix question with ID and license class for educational context
+        my $full_question = "[$id $class] $question";
+
+        # Output: 1-based correct index, question, then 4 answer choices
+        print join("|", $correct + 1, $full_question, @answers), "\n";
+    }
+}
+
+sub curl_get {
+    my ($url) = @_;
+    my $out = `curl --max-time 30 -s -k -L -A "$useragent" '$url'`;
+    return undef if $? != 0 || !defined $out || $out eq '';
+    return $out;
+}
