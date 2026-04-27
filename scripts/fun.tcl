@@ -1628,7 +1628,16 @@ proc trivia_clear {chan} {
 proc trivia_pub {nick host hand chan text} {
     global trivia_active trivia_starting trivia_last_game
     global trivia_cooldown_secs trivia_rounds trivia_round_secs trivia_start_delay
+    global hamtrivia_active hamtrivia_starting
 
+    if {[info exists hamtrivia_active($chan)] && $hamtrivia_active($chan)} {
+        putchan $chan "⚠️ A Ham Radio Trivia game is in progress. Use !a <number> to play!"
+        return
+    }
+    if {[info exists hamtrivia_starting($chan)] && $hamtrivia_starting($chan)} {
+        putchan $chan "⚠️ A Ham Radio Trivia game is starting soon. Get ready!"
+        return
+    }
     if {[info exists trivia_active($chan)] && $trivia_active($chan)} {
         putchan $chan "⚠️ A trivia game is already in progress. Use !a <number> to play!"
         return
@@ -2099,6 +2108,12 @@ proc hamtrivia_ask {chan} {
 proc hamtrivia_answer_pub {nick host hand chan text} {
     global hamtrivia_active hamtrivia_tiebreak hamtrivia_tienicks
     global hamtrivia_answered hamtrivia_correct hamtrivia_scores hamtrivia_questions hamtrivia_round_correct hamtrivia_qindex
+    global trivia_active
+
+    if {[info exists trivia_active($chan)] && $trivia_active($chan)} {
+        trivia_answer_pub $nick $host $hand $chan $text
+        return
+    }
 
     if {![info exists hamtrivia_active($chan)] || !$hamtrivia_active($chan)} { return }
 
