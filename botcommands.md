@@ -91,6 +91,7 @@
  * `!translate` -- translate text
  * `!rand` `!dice` `!flip` `!8ball` `!orb` -- random
  * `!trivia` `!answer` -- IRC trivia game (Open Trivia Database, 3 rounds, 30 min cooldown)
+ * `!hamtrivia` `!answer` -- ham radio exam trivia game (Technician/General/Extra pools, 3 rounds, 30 min cooldown)
 
 ## Radio-related commands:
 
@@ -1123,6 +1124,43 @@ Example:
     ...
     < qrm> Final scores: 1. Crossbar: 2 | 2. molo: 1
     < qrm> Winner: Crossbar! Congratulations!
+```
+
+### `!hamtrivia` `!answer` -- ham radio exam trivia game
+
+Usage:
+```
+    !hamtrivia            start a ham radio trivia game in the channel
+    !answer <number>      submit your answer during a round
+    !hamtriviastop        abort the current game (molo/Crossbar only)
+```
+
+Starts a 3-round multiple-choice trivia game using FCC amateur radio exam
+questions drawn from the Technician, General, and Amateur Extra question pools.
+Questions that reference figures or diagrams are excluded since they cannot be
+displayed in IRC. Each question is labeled with its pool ID and license class
+(e.g. `[T1A01 Technician]`) for study reference.
+
+After `!hamtrivia`, there is a 30-second countdown before the first question.
+Each round shows a question with numbered options; players type `!answer <n>`
+(or `!a <n>`) to submit. Tie-break and scoring rules are the same as `!trivia`.
+
+Cooldown: 30 minutes per channel between games. molo and Crossbar are exempt.
+Question pools are downloaded from the
+[russolsen/ham_radio_question_pool](https://github.com/russolsen/ham_radio_question_pool)
+repository and cached locally for 30 days.
+
+Example:
+```
+    < W1AW> !hamtrivia
+    < qrm> 📡 Ham Radio Trivia starting in 30s! 3 rounds, 20s each. Type !a <number> to answer.
+    < qrm> 📡 Round 1/3 — [T1A01 Technician] Which of the following is a purpose of the Amateur Radio Service?
+    < qrm>   1) Advancing skills in technical and communication phases of the radio art  2) Providing communications for international non-profit organizations  3) Providing personal radio communications for as many citizens as possible  4) All of these choices are correct
+    < W1AW> !a 1
+    < qrm> Time! The correct answer was 1) Advancing skills...
+    ...
+    < qrm> 📊 Final scores: 1. W1AW: 2 | 2. KD9ABC: 1
+    < qrm> 🏆 Winner: W1AW! Elmer of the day! 73!
 ```
 
 <!-- !amcon - - some dumb prepper shit -->
