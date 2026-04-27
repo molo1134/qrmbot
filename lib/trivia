@@ -166,7 +166,8 @@ sub fetch_questions {
 
     for my $q (@results) {
         my $category = decode('UTF-8', decode_base64($q->{category}));
-        next if $category =~ /Entertainment/i;
+        next if $category =~ /Entertainment/i and
+		not $category =~ /(Books|Movies|Television|Music)/i;
 
         my $question = decode('UTF-8', decode_base64($q->{question}));
         my $correct  = decode('UTF-8', decode_base64($q->{correct_answer}));
