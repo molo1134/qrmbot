@@ -65,7 +65,7 @@ sub load_token {
 
 sub save_token {
     my ($token) = @_;
-    my $dir = "$ENV{HOME}/.qrmbot";
+    my $dir = "$ENV{HOME}/.qrmbot/cache";
     mkdir $dir unless -d $dir;
     open(my $fh, '>', $token_file) or die "Cannot write token file: $!";
     print $fh "$token\n", time(), "\n";
@@ -165,6 +165,9 @@ sub fetch_questions {
     }
 
     for my $q (@results) {
+        my $category = decode('UTF-8', decode_base64($q->{category}));
+        next if $category =~ /Entertainment/i;
+
         my $question = decode('UTF-8', decode_base64($q->{question}));
         my $correct  = decode('UTF-8', decode_base64($q->{correct_answer}));
         my @wrong    = map { decode('UTF-8', decode_base64($_)) } @{ $q->{incorrect_answers} };
