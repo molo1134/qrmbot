@@ -554,8 +554,8 @@ if (!defined($input) || $input eq '') {
 
     my $snippet;
     if ($state eq 'Live') {
-      my $inn = $half eq 'Top'    ? "T$inning" :
-                $half eq 'Bottom' ? "B$inning" :
+      my $inn = $half eq 'Top'    ? "↑$inning" :
+                $half eq 'Bottom' ? "↓$inning" :
                 $half eq 'Middle' ? "Mid$inning" :
                 $inning ? "$inning" : 'Live';
       $snippet = bold($aAbbr) . "($aScore) @ " . bold($hAbbr) . "($hScore) " . yellow($inn);
