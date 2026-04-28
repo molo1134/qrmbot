@@ -112,7 +112,10 @@ sub fetch_questions {
         exit($exitnonzeroonerror ? 1 : 0);
     }
 
-    my $url  = "$api_base/api.php?amount=${n}&encode=base64&token=${token}";
+    # Request more than needed to compensate for category filtering
+    # (some categories are skipped below). The API max is 50.
+    my $fetch_amount = $n < 50 ? 50 : $n;
+    my $url  = "$api_base/api.php?amount=${fetch_amount}&encode=base64&token=${token}";
     my $json = curl_get($url);
     unless (defined $json) {
         print STDERR "trivia: API request failed\n";
@@ -134,7 +137,7 @@ sub fetch_questions {
             print STDERR "trivia: could not get new session token\n";
             exit($exitnonzeroonerror ? 1 : 0);
         }
-        $url  = "$api_base/api.php?amount=${n}&encode=base64&token=${token}";
+        $url  = "$api_base/api.php?amount=${fetch_amount}&encode=base64&token=${token}";
         $json = curl_get($url);
         $data = eval { decode_json($json) } if defined $json;
         $rc   = defined $data ? ($data->{response_code} // -1) : -1;
@@ -147,7 +150,7 @@ sub fetch_questions {
             print STDERR "trivia: could not reset session token\n";
             exit($exitnonzeroonerror ? 1 : 0);
         }
-        $url  = "$api_base/api.php?amount=${n}&encode=base64&token=${token}";
+        $url  = "$api_base/api.php?amount=${fetch_amount}&encode=base64&token=${token}";
         $json = curl_get($url);
         $data = eval { decode_json($json) } if defined $json;
         $rc   = defined $data ? ($data->{response_code} // -1) : -1;
@@ -164,6 +167,7 @@ sub fetch_questions {
         exit($exitnonzeroonerror ? 1 : 0);
     }
 
+    my $output_count = 0;
     for my $q (@results) {
         my $category = decode('UTF-8', decode_base64($q->{category}));
         next if $category =~ /Entertainment/i and
@@ -189,6 +193,8 @@ sub fetch_questions {
         @options  = map { s/\|/\//gr } @options;
 
         print join("|", $correct_idx, $question, @options), "\n";
+        $output_count++;
+        last if $output_count >= $n;
     }
 }
 

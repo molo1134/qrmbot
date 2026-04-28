@@ -247,7 +247,7 @@ sub teamScoreStr {
 
 # --- game rendering ---
 sub renderLiveGame {
-  my ($game, $feed) = @_;
+  my ($game, $feed, $prefix) = @_;
 
   my $away  = $game->{teams}{away}{team} // {};
   my $home  = $game->{teams}{home}{team} // {};
@@ -283,6 +283,7 @@ sub renderLiveGame {
 
   my @parts;
   push @parts, "\x{26BE}";  # ⚾
+  push @parts, $prefix if $prefix;
   push @parts, $pLabel if $pLabel;
   push @parts, teamScoreStr($away, $aScore, $aScore > $hScore)
              . " @ " . teamScoreStr($home, $hScore, $hScore > $aScore);
@@ -343,7 +344,7 @@ sub renderLiveGame {
 }
 
 sub renderFinalGame {
-  my ($game, $feed) = @_;
+  my ($game, $feed, $prefix) = @_;
 
   my $away  = $game->{teams}{away}{team} // {};
   my $home  = $game->{teams}{home}{team} // {};
@@ -363,6 +364,7 @@ sub renderFinalGame {
   my $sep = " \x{00B7} ";
   my @parts;
   push @parts, "\x{26BE}";
+  push @parts, $prefix if $prefix;
   push @parts, $pLabel if $pLabel;
   push @parts, teamScoreStr($away, $aScore, $aScore > $hScore)
              . " @ " . teamScoreStr($home, $hScore, $hScore > $aScore);
@@ -379,7 +381,7 @@ sub renderFinalGame {
 }
 
 sub renderPreviewGame {
-  my ($game) = @_;
+  my ($game, $prefix) = @_;
 
   my $away  = $game->{teams}{away}{team} // {};
   my $home  = $game->{teams}{home}{team} // {};
@@ -395,6 +397,7 @@ sub renderPreviewGame {
   my $sep = " \x{00B7} ";
   my @parts;
   push @parts, "\x{26BE}";
+  push @parts, $prefix if $prefix;
   push @parts, $pLabel if $pLabel;
   push @parts, bold($aAbbr) . " @ " . bold($hAbbr);
   push @parts, $time if $time;
@@ -404,7 +407,7 @@ sub renderPreviewGame {
 }
 
 sub renderSuspendedGame {
-  my ($game) = @_;
+  my ($game, $prefix) = @_;
 
   my $away  = $game->{teams}{away}{team} // {};
   my $home  = $game->{teams}{home}{team} // {};
@@ -428,6 +431,7 @@ sub renderSuspendedGame {
   my $sep = " \x{00B7} ";
   my @parts;
   push @parts, "\x{26BE}";
+  push @parts, $prefix if $prefix;
   push @parts, $pLabel if $pLabel;
   my $aScore = $game->{teams}{away}{score} // 0;
   my $hScore = $game->{teams}{home}{score} // 0;
@@ -444,17 +448,48 @@ sub renderSuspendedGame {
   print join($sep, @parts) . "\n";
 }
 
-sub renderNoGame {
+sub getStandingsLine {
   my ($abbrev, $teamId) = @_;
 
   my $name = $abbrevName{$abbrev} // $abbrev;
-
-  # Fetch next game and standings in parallel
-  my $nextUrl = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=$teamId&season=$year&hydrate=team,probablePitcher";
   my $standUrl = "https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=$year";
-
-  my $nextData = fetchJSON($nextUrl, "next_$teamId");
   my $standData = fetchJSON($standUrl, "standings");
+  return '' unless $standData && $standData->{records};
+
+  foreach my $rec (@{$standData->{records}}) {
+    my $divId = $rec->{division}{id} // 0;
+    foreach my $trec (@{$rec->{teamRecords} // []}) {
+      if (($trec->{team}{id} // 0) == $teamId) {
+        my $lr = $trec->{leagueRecord} // {};
+        my $wins    = $lr->{wins}   // 0;
+        my $losses  = $lr->{losses} // 0;
+        my $divRank = $trec->{divisionRank} // '';
+        my $gb      = $trec->{divisionGamesBack} // '0';
+        my $divName = $divName{$divId} // '';
+
+        my $sep = " \x{00B7} ";
+        my $line = bold($name) . " ($wins-$losses)";
+
+        if ($divRank && $divName) {
+          if ($divRank eq '1') {
+            $line .= $sep . green("1st in $divName");
+          } else {
+            my $ord = $divRank . ($divRank eq '2' ? 'nd' : $divRank eq '3' ? 'rd' : 'th');
+            $line .= $sep . "$ord in $divName" . ($gb && $gb ne '-' ? " ($gb GB)" : "");
+          }
+        }
+        return $line;
+      }
+    }
+  }
+  return '';
+}
+
+sub renderNextGame {
+  my ($abbrev, $teamId, $prefix) = @_;
+
+  my $nextUrl = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=$teamId&season=$year&hydrate=team,probablePitcher";
+  my $nextData = fetchJSON($nextUrl, "next_$teamId");
 
   # Find next game (first future game after today)
   my ($nextGame, $nextDate);
@@ -470,67 +505,33 @@ sub renderNoGame {
     }
   }
 
-  # Find team standings
-  my ($wins, $losses, $divName, $divRank, $gb, $wcgb, $divLeader);
-  if ($standData && $standData->{records}) {
-    foreach my $rec (@{$standData->{records}}) {
-      my $divId = $rec->{division}{id} // 0;
-      foreach my $trec (@{$rec->{teamRecords} // []}) {
-        if (($trec->{team}{id} // 0) == $teamId) {
-          my $lr = $trec->{leagueRecord} // {};
-          $wins    = $lr->{wins}   // 0;
-          $losses  = $lr->{losses} // 0;
-          $divRank = $trec->{divisionRank} // '';
-          $gb      = $trec->{divisionGamesBack} // '0';
-          $wcgb    = $trec->{wildCardGamesBack}  // '';
-          $divName = $divName{$divId} // '';
-          # Find division leader
-          foreach my $drec (@{$rec->{teamRecords} // []}) {
-            if (($drec->{divisionRank} // '') eq '1') {
-              $divLeader = $drec->{team}{abbreviation} // $drec->{team}{name} // '';
-              last;
-            }
-          }
-          last;
-        }
-      }
-    }
-  }
-
   my $sep = " \x{00B7} ";
-  print "\x{26BE} " . bold($name) . " ($wins-$losses)";
-
-  if ($divRank && $divName) {
-    if ($divRank eq '1') {
-      print $sep . green("1st in $divName");
-    } else {
-      my $ord = $divRank . ($divRank eq '2' ? 'nd' : $divRank eq '3' ? 'rd' : 'th');
-      print $sep . "$ord in $divName" . ($gb && $gb ne '-' ? " ($gb GB)" : "");
-    }
+  unless ($nextGame) {
+    print "\x{26BE} $prefix\n" if $prefix;
+    return;
   }
 
-  if ($nextGame) {
-    my $away  = $nextGame->{teams}{away}{team} // {};
-    my $home  = $nextGame->{teams}{home}{team} // {};
-    my $aAbbr = $away->{abbreviation} // '???';
-    my $hAbbr = $home->{abbreviation} // '???';
-    my $opp   = $aAbbr eq $abbrev ? $hAbbr : $aAbbr;
-    my $at    = $aAbbr eq $abbrev ? "@" : "vs";
-    my $date  = fmtDateShort($nextDate);
-    my $tStr  = '';
-    if ($nextGame->{gameDate}) {
-      $tStr = fmtTime($nextGame->{gameDate});
-    }
-    my $awayProb = $nextGame->{teams}{away}{probablePitcher}{fullName} // '';
-    my $homeProb = $nextGame->{teams}{home}{probablePitcher}{fullName} // '';
-
-    print $sep . "Next: $at $opp $date" . ($tStr ? " $tStr" : "");
-    if ($awayProb && $homeProb) {
-      print " ($awayProb vs. $homeProb)";
-    }
+  my $away  = $nextGame->{teams}{away}{team} // {};
+  my $home  = $nextGame->{teams}{home}{team} // {};
+  my $aAbbr = $away->{abbreviation} // '???';
+  my $hAbbr = $home->{abbreviation} // '???';
+  my $opp   = $aAbbr eq $abbrev ? $hAbbr : $aAbbr;
+  my $at    = $aAbbr eq $abbrev ? "@" : "vs";
+  my $date  = fmtDateShort($nextDate);
+  my $tStr  = '';
+  if ($nextGame->{gameDate}) {
+    $tStr = fmtTime($nextGame->{gameDate});
   }
+  my $awayProb = $nextGame->{teams}{away}{probablePitcher}{fullName} // '';
+  my $homeProb = $nextGame->{teams}{home}{probablePitcher}{fullName} // '';
 
-  print "\n";
+  my @parts;
+  push @parts, "\x{26BE}";
+  push @parts, $prefix if $prefix;
+  push @parts, "Next: $at $opp $date" . ($tStr ? " $tStr" : "");
+  push @parts, "($awayProb vs. $homeProb)" if $awayProb && $homeProb;
+
+  print join($sep, @parts) . "\n";
 }
 
 # --- main ---
@@ -624,6 +625,9 @@ unless ($team) {
 
 my ($abbrev, $teamId) = @$team;
 
+# Fetch standings for team-specific queries
+my $standingsPrefix = getStandingsLine($abbrev, $teamId);
+
 # Fetch today's schedule for this team
 my $schedUrl = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=$today&teamId=$teamId&hydrate=linescore,team,seriesStatus,probablePitcher";
 my $sched = fetchJSON($schedUrl, "sched_${teamId}_$today");
@@ -634,7 +638,7 @@ if ($sched && $sched->{dates} && @{$sched->{dates}}) {
 }
 
 if (@games == 0) {
-  renderNoGame($abbrev, $teamId);
+  renderNextGame($abbrev, $teamId, $standingsPrefix);
   exit 0;
 }
 
@@ -644,7 +648,7 @@ foreach my $game (@games) {
   my $detail = $game->{status}{detailedState} // '';
 
   if ($detail =~ /^(Postponed|Suspended|Delayed|Delayed Start)$/) {
-    renderSuspendedGame($game);
+    renderSuspendedGame($game, $standingsPrefix);
     next;
   }
 
@@ -654,17 +658,17 @@ foreach my $game (@games) {
       "https://statsapi.mlb.com/api/v1.1/game/$gamePk/feed/live",
       "feed_$gamePk"
     );
-    renderLiveGame($game, $feed);
+    renderLiveGame($game, $feed, $standingsPrefix);
   } elsif ($state eq 'Final') {
     my $gamePk = $game->{gamePk};
     my $feed = fetchJSON(
       "https://statsapi.mlb.com/api/v1.1/game/$gamePk/feed/live",
       "feed_$gamePk"
     );
-    renderFinalGame($game, $feed);
+    renderFinalGame($game, $feed, $standingsPrefix);
   } else {
     # Preview / Scheduled / Pre-Game
-    renderPreviewGame($game);
+    renderPreviewGame($game, $standingsPrefix);
   }
 }
 
