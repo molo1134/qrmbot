@@ -283,6 +283,7 @@ sub renderLiveGame {
 
   my @parts;
   push @parts, "\x{26BE}";  # ⚾
+  push @parts, $prefix if $prefix;
   push @parts, $pLabel if $pLabel;
   push @parts, teamScoreStr($away, $aScore, $aScore > $hScore)
              . " @ " . teamScoreStr($home, $hScore, $hScore > $aScore);

@@ -112,8 +112,8 @@ sub fetch_questions {
         exit($exitnonzeroonerror ? 1 : 0);
     }
 
-    # Request more than needed to compensate for category filtering.
-    # The API max is 50; if n > 50 we clamp and make multiple requests.
+    # Request more than needed to compensate for category filtering
+    # (some categories are skipped below). The API max is 50.
     my $fetch_amount = $n < 50 ? 50 : $n;
     my $url  = "$api_base/api.php?amount=${fetch_amount}&encode=base64&token=${token}";
     my $json = curl_get($url);
