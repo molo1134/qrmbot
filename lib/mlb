@@ -20,6 +20,8 @@ use lib dirname(realpath(__FILE__));
 use Colors;
 use Util;
 
+our $cachedir = $ENV{HOME} . "/.qrmbot/cache/mlb";
+
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
@@ -34,8 +36,15 @@ my $year  = strftime("%Y", localtime);
 # --- cache ---
 sub cache_get {
   my $key = shift;
+  our $cachedir;
+  if (not -d $cachedir) {
+    system ("mkdir -p $cachedir\n");
+  }
+  if (not -d $cachedir) {
+    print "unable to make db directory $cachedir\n";
+  }
   $key =~ s/[^a-zA-Z0-9_-]/_/g;
-  my $f = "/tmp/mlb_$key.json";
+  my $f = "$cachedir/mlb_$key.json";
   return undef unless -f $f;
   my $age = time() - (stat($f))[9];
   return undef if $age > 30;
@@ -47,8 +56,15 @@ sub cache_get {
 }
 sub cache_set {
   my ($key, $val) = @_;
+  our $cachedir;
+  if (not -d $cachedir) {
+    system ("mkdir -p $cachedir\n");
+  }
+  if (not -d $cachedir) {
+    print "unable to make db directory $cachedir\n";
+  }
   $key =~ s/[^a-zA-Z0-9_-]/_/g;
-  my $f = "/tmp/mlb_$key.json";
+  my $f = "$cachedir/mlb_$key.json";
   open(my $fh, '>:utf8', $f) or return;
   print $fh $val;
   close($fh);
