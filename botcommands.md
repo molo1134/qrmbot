@@ -83,6 +83,7 @@
  * `!steam` -- Steam game info (name, price, rating, description)
  * `!book` -- book info from Open Library (title, author, year, rating, description)
  * `!nhl` -- NHL scores: live game or last/next game for a team (e.g. `!nhl flyers`, `!flyers`)
+ * `!mlb` -- MLB scores: live game, next game, or standings for a team (e.g. `!mlb phillies`, `!phillies`)
  * `!fest` -- find upcoming hamfests near your location (uses !setgeo)
  * `!adsb` -- get plane information
  * `!hofh` -- why your radio is broke
@@ -1162,6 +1163,39 @@ Example:
     < qrm> 📊 Final scores: 1. W1AW: 2 | 2. KD9ABC: 1
     < qrm> 🏆 Winner: W1AW! Elmer of the day! 73!
 ```
+
+### `!mlb` -- MLB scores and schedule lookup
+
+Usage:
+```
+    !mlb [team]
+```
+
+Examples:
+```
+    <W1AW> !mlb phillies
+    <qrm> ⚾ Phillies (14-6) · 1st in NL East · Next: vs MIA 4/28 7:05 PM ET (Nola vs. Alcantara)
+
+    <W1AW> !phillies
+    <qrm> ⚾ · PHI (4) @ ATL (2) · Top 7th · Harper vs. Strider · Count: 3-1, 1 out
+
+    <W1AW> !mlb
+    <qrm> ⚾ PHI (4) @ ATL (2) · Top 7th
+    <qrm> ⚾ NYY (1) @ BOS (3) · Final
+    <qrm> ⚾ LAD @ SFG · 10:10 PM ET
+```
+
+Without arguments, shows up to 3 most relevant games of the day (live games first,
+then finals, then upcoming).
+
+Team name can be full name (`phillies`, `yankees`), abbreviation (`phi`, `nyy`),
+or common nickname (`phils`, `phillies`). Team aliases (e.g. `!phillies`,
+`!yankees`, `!dodgers`) also work directly.
+
+Covers live games (score, inning, count, batter vs. pitcher), final games
+(score, WP, LP), postponed/suspended games, and off days (standings + next game).
+
+Data source: https://statsapi.mlb.com/
 
 <!-- !amcon - - some dumb prepper shit -->
 

@@ -1612,4 +1612,56 @@ proc nhl_team_msg { nick uhand handle input } {
 	close $fd
 }
 
+# MLB scores: !mlb <team> plus common aliases
+set mlbbin "/home/eggdrop/bin/mlb"
+bind pub - !mlb mlb_pub
+bind msg - !mlb mlb_msg
+proc mlb_pub { nick host hand chan text } {
+	global mlbbin
+	set param [sanitize_string [string trim "${text}"]]
+	putlog "mlb pub: $nick $host $hand $chan $param"
+	set fd [open "|${mlbbin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putchan $chan "$line" }
+	close $fd
+}
+proc mlb_msg { nick uhand handle input } {
+	global mlbbin
+	set param [sanitize_string [string trim "${input}"]]
+	putlog "mlb msg: $nick $uhand $handle $param"
+	set fd [open "|${mlbbin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putmsg "$nick" "$line" }
+	close $fd
+}
+
+# MLB team aliases
+foreach _team {phillies phils yankees dodgers redsox mets braves cubs cubbies
+               cardinals cards giants padres astros mariners rangers bluejays
+               jays orioles rays twins tigers guardians guards reds brewers
+               brewcrew pirates bucs diamondbacks dbacks rockies nationals nats
+               angels athletics royals whitesox marlins} {
+	bind pub - "!${_team}" mlb_team_pub
+	bind msg - "!${_team}" mlb_team_msg
+}
+unset _team
+proc mlb_team_pub { nick host hand chan text } {
+	global mlbbin lastbind
+	set team [string range $lastbind 1 end]
+	putlog "mlb team pub: $nick $host $hand $chan $team"
+	set fd [open "|${mlbbin} ${team}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putchan $chan "$line" }
+	close $fd
+}
+proc mlb_team_msg { nick uhand handle input } {
+	global mlbbin lastbind
+	set team [string range $lastbind 1 end]
+	putlog "mlb team msg: $nick $uhand $handle $team"
+	set fd [open "|${mlbbin} ${team}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putmsg "$nick" "$line" }
+	close $fd
+}
+
 putlog "fun.tcl loaded."
