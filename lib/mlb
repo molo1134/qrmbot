@@ -411,7 +411,14 @@ sub renderSuspendedGame {
   my $aAbbr = $away->{abbreviation} // '???';
   my $hAbbr = $home->{abbreviation} // '???';
 
-  my $reason = $game->{status}{reason} // $game->{status}{detailedState} // 'SUSPENDED';
+  my $detail = $game->{status}{detailedState} // '';
+  my $reason = $game->{status}{reason} // '';
+  my $statusLabel;
+  if ($detail eq 'Delayed Start') {
+    $statusLabel = $reason ? "Delayed ($reason)" : "Delayed Start";
+  } else {
+    $statusLabel = $reason ? "$detail ($reason)" : ($detail || 'SUSPENDED');
+  }
   my $resume = $game->{rescheduleDate} // '';
   my $resumeStr = $resume ? "Resume " . fmtDate($resume) . " " . fmtTime($resume) : '';
 
@@ -421,9 +428,16 @@ sub renderSuspendedGame {
   my $sep = " \x{00B7} ";
   my @parts;
   push @parts, "\x{26BE}";
-  push @parts, "[$aAbbr] $aAbbr @ $hAbbr" if $pLabel;
   push @parts, $pLabel if $pLabel;
-  push @parts, yellow($reason);
+  my $aScore = $game->{teams}{away}{score} // 0;
+  my $hScore = $game->{teams}{home}{score} // 0;
+  if ($aScore > 0 || $hScore > 0) {
+    push @parts, teamScoreStr($away, $aScore, $aScore > $hScore)
+               . " @ " . teamScoreStr($home, $hScore, $hScore > $aScore);
+  } else {
+    push @parts, bold($aAbbr) . " @ " . bold($hAbbr);
+  }
+  push @parts, yellow($statusLabel);
   push @parts, $resumeStr if $resumeStr;
   push @parts, "Series: " . $sStr if $sStr;
 
@@ -531,12 +545,16 @@ if (!defined($input) || $input eq '') {
     exit 0;
   }
 
-  # Sort: live first, then final, then preview
+  # Sort: live/delayed first, then final, then preview
   my @sorted = sort {
     my $sa = $a->{status}{abstractGameState} // '';
+    my $da = $a->{status}{detailedState} // '';
     my $sb = $b->{status}{abstractGameState} // '';
-    my $pa = $sa eq 'Live' ? 0 : $sa eq 'Final' ? 1 : 2;
-    my $pb = $sb eq 'Live' ? 0 : $sb eq 'Final' ? 1 : 2;
+    my $db = $b->{status}{detailedState} // '';
+    my $pa = ($sa eq 'Live' || $da =~ /Delayed|Suspended/) ? 0 :
+             $sa eq 'Final' ? 1 : 2;
+    my $pb = ($sb eq 'Live' || $db =~ /Delayed|Suspended/) ? 0 :
+             $sb eq 'Final' ? 1 : 2;
     $pa <=> $pb;
   } @$games;
 
@@ -545,11 +563,12 @@ if (!defined($input) || $input eq '') {
   my $msg = "\x{26BE} ";  # ⚾
 
   foreach my $game (@sorted) {
-    my $state = $game->{status}{abstractGameState} // '';
-    my $away  = $game->{teams}{away}{team} // {};
-    my $home  = $game->{teams}{home}{team} // {};
-    my $aAbbr = $away->{abbreviation} // '???';
-    my $hAbbr = $home->{abbreviation} // '???';
+    my $state  = $game->{status}{abstractGameState} // '';
+    my $detail = $game->{status}{detailedState} // '';
+    my $away   = $game->{teams}{away}{team} // {};
+    my $home   = $game->{teams}{home}{team} // {};
+    my $aAbbr  = $away->{abbreviation} // '???';
+    my $hAbbr  = $home->{abbreviation} // '???';
     my $aScore = $game->{teams}{away}{score} // 0;
     my $hScore = $game->{teams}{home}{score} // 0;
     my $linescore = $game->{linescore} // {};
@@ -557,7 +576,12 @@ if (!defined($input) || $input eq '') {
     my $half      = $linescore->{inningState} // '';
 
     my $snippet;
-    if ($state eq 'Live') {
+    if ($detail =~ /^(Postponed|Suspended|Delayed|Delayed Start)$/) {
+      my $label = $detail eq 'Delayed Start' ? 'Delayed'
+                : $detail eq 'Delayed'       ? 'Delayed'
+                : $detail;
+      $snippet = bold($aAbbr) . " @ " . bold($hAbbr) . " " . yellow($label);
+    } elsif ($state eq 'Live') {
       my $inn = $half eq 'Top'    ? "↑$inning" :
                 $half eq 'Bottom' ? "↓$inning" :
                 $half eq 'Middle' ? "Mid$inning" :
@@ -619,7 +643,7 @@ foreach my $game (@games) {
   my $state = $game->{status}{abstractGameState} // '';
   my $detail = $game->{status}{detailedState} // '';
 
-  if ($detail eq 'Postponed' || $detail eq 'Suspended' || $detail eq 'Delayed') {
+  if ($detail =~ /^(Postponed|Suspended|Delayed|Delayed Start)$/) {
     renderSuspendedGame($game);
     next;
   }
