@@ -28,6 +28,10 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 @ARGV = split(' ', join(' ', @ARGV));
 
 my $useragent = "Mozilla/5.0 (compatible; qrmbot)";
+
+# MLB schedules use Eastern Time dates — force TZ so !mlb works correctly
+# when the server clock is UTC (otherwise after 8pm ET it rolls to tomorrow)
+$ENV{TZ} = 'America/New_York';
 my $today = strftime("%Y-%m-%d", localtime);
 my $year  = strftime("%Y", localtime);
 
