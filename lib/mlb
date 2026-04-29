@@ -95,26 +95,26 @@ my %teammap = (
   'nyy' => ['NYY', 147], 'yankees' => ['NYY', 147], 'ny' => ['NYY', 147],
   'bos' => ['BOS', 111], 'red sox' => ['BOS', 111], 'redsox' => ['BOS', 111], 'boston' => ['BOS', 111],
   'tor' => ['TOR', 141], 'blue jays' => ['TOR', 141], 'bluejays' => ['TOR', 141], 'jays' => ['TOR', 141], 'toronto' => ['TOR', 141],
-  'tbr' => ['TBR', 139], 'tb'  => ['TBR', 139], 'rays' => ['TBR', 139], 'tampa bay' => ['TBR', 139], 'tampa' => ['TBR', 139],
+  'tbr' => ['TB', 139], 'tb'  => ['TB', 139], 'rays' => ['TB', 139], 'tampa bay' => ['TB', 139], 'tampa' => ['TB', 139],
   'bal' => ['BAL', 110], 'orioles' => ['BAL', 110], 'baltimore' => ['BAL', 110],
   # AL Central
   'min' => ['MIN', 142], 'twins' => ['MIN', 142], 'minnesota' => ['MIN', 142],
   'det' => ['DET', 116], 'tigers' => ['DET', 116], 'detroit' => ['DET', 116],
   'cle' => ['CLE', 114], 'guardians' => ['CLE', 114], 'guards' => ['CLE', 114], 'cleveland' => ['CLE', 114],
   'cws' => ['CWS', 145], 'chw' => ['CWS', 145], 'white sox' => ['CWS', 145], 'whitesox' => ['CWS', 145], 'chicago white sox' => ['CWS', 145],
-  'kc'  => ['KCR', 118], 'kcr' => ['KCR', 118], 'royals' => ['KCR', 118], 'kansas city' => ['KCR', 118],
+  'kc'  => ['KC', 118], 'kcr' => ['KC', 118], 'royals' => ['KC', 118], 'kansas city' => ['KC', 118],
   # AL West
   'hou' => ['HOU', 117], 'astros' => ['HOU', 117], 'stros' => ['HOU', 117], 'houston' => ['HOU', 117],
   'sea' => ['SEA', 136], 'mariners' => ['SEA', 136], 'seattle' => ['SEA', 136],
   'tex' => ['TEX', 140], 'rangers' => ['TEX', 140], 'texas' => ['TEX', 140],
-  'oak' => ['OAK', 133], 'athletics' => ['OAK', 133], 'a\'s' => ['OAK', 133], 'as' => ['OAK', 133], 'oakland' => ['OAK', 133],
+  'oak' => ['ATH', 133], 'athletics' => ['ATH', 133], 'a\'s' => ['ATH', 133], 'as' => ['ATH', 133], 'oakland' => ['ATH', 133],
   'laa' => ['LAA', 108], 'angels' => ['LAA', 108], 'los angeles angels' => ['LAA', 108],
   # NL East
   'phi' => ['PHI', 143], 'phillies' => ['PHI', 143], 'phils' => ['PHI', 143], 'philadelphia' => ['PHI', 143],
   'nym' => ['NYM', 121], 'mets' => ['NYM', 121], 'new york mets' => ['NYM', 121],
   'atl' => ['ATL', 144], 'braves' => ['ATL', 144], 'atlanta' => ['ATL', 144],
   'mia' => ['MIA', 146], 'marlins' => ['MIA', 146], 'miami' => ['MIA', 146],
-  'wsn' => ['WSN', 120], 'nationals' => ['WSN', 120], 'nats' => ['WSN', 120], 'washington' => ['WSN', 120],
+  'wsn' => ['WSH', 120], 'nationals' => ['WSH', 120], 'nats' => ['WSH', 120], 'washington' => ['WSH', 120],
   # NL Central
   'stl' => ['STL', 138], 'cardinals' => ['STL', 138], 'cards' => ['STL', 138],
     'st. louis' => ['STL', 138], 'st louis' => ['STL', 138], 'saint louis' => ['STL', 138],
@@ -124,30 +124,30 @@ my %teammap = (
   'cin' => ['CIN', 113], 'reds' => ['CIN', 113], 'cincinnati' => ['CIN', 113],
   # NL West
   'lad' => ['LAD', 119], 'dodgers' => ['LAD', 119], 'la' => ['LAD', 119], 'los angeles dodgers' => ['LAD', 119],
-  'sf'  => ['SFG', 137], 'sfg' => ['SFG', 137], 'giants' => ['SFG', 137], 'san francisco' => ['SFG', 137],
-  'sd'  => ['SDP', 135], 'sdp' => ['SDP', 135], 'padres' => ['SDP', 135], 'san diego' => ['SDP', 135],
-  'ari' => ['ARI', 109], 'diamondbacks' => ['ARI', 109], 'dbacks' => ['ARI', 109], 'arizona' => ['ARI', 109],
+  'sf'  => ['SF', 137], 'sfg' => ['SF', 137], 'giants' => ['SF', 137], 'san francisco' => ['SF', 137],
+  'sd'  => ['SD', 135], 'sdp' => ['SD', 135], 'padres' => ['SD', 135], 'san diego' => ['SD', 135],
+  'ari' => ['AZ', 109], 'diamondbacks' => ['AZ', 109], 'dbacks' => ['AZ', 109], 'arizona' => ['AZ', 109],
   'col' => ['COL', 115], 'rockies' => ['COL', 115], 'colorado' => ['COL', 115],
 );
 
 # Reverse map: abbrev → full team name for display
 my %abbrevName = (
-  'NYY' => 'Yankees', 'BOS' => 'Red Sox', 'TOR' => 'Blue Jays', 'TBR' => 'Rays', 'BAL' => 'Orioles',
-  'MIN' => 'Twins',  'DET' => 'Tigers',   'CLE' => 'Guardians', 'CWS' => 'White Sox', 'KCR' => 'Royals',
-  'HOU' => 'Astros', 'SEA' => 'Mariners', 'TEX' => 'Rangers', 'OAK' => 'Athletics', 'LAA' => 'Angels',
-  'PHI' => 'Phillies', 'NYM' => 'Mets', 'ATL' => 'Braves', 'MIA' => 'Marlins', 'WSN' => 'Nationals',
+  'NYY' => 'Yankees', 'BOS' => 'Red Sox', 'TOR' => 'Blue Jays', 'TB' => 'Rays', 'BAL' => 'Orioles',
+  'MIN' => 'Twins',  'DET' => 'Tigers',   'CLE' => 'Guardians', 'CWS' => 'White Sox', 'KC' => 'Royals',
+  'HOU' => 'Astros', 'SEA' => 'Mariners', 'TEX' => 'Rangers', 'ATH' => 'Athletics', 'LAA' => 'Angels',
+  'PHI' => 'Phillies', 'NYM' => 'Mets', 'ATL' => 'Braves', 'MIA' => 'Marlins', 'WSH' => 'Nationals',
   'STL' => 'Cardinals', 'MIL' => 'Brewers', 'CHC' => 'Cubs', 'PIT' => 'Pirates', 'CIN' => 'Reds',
-  'LAD' => 'Dodgers', 'SFG' => 'Giants', 'SDP' => 'Padres', 'ARI' => 'Diamondbacks', 'COL' => 'Rockies',
+  'LAD' => 'Dodgers', 'SF' => 'Giants', 'SD' => 'Padres', 'AZ' => 'Diamondbacks', 'COL' => 'Rockies',
 );
 
 # teamId → abbrev
 my %teamIdToAbbr = (
-  147 => 'NYY', 111 => 'BOS', 141 => 'TOR', 139 => 'TBR', 110 => 'BAL',
-  142 => 'MIN', 116 => 'DET', 114 => 'CLE', 145 => 'CWS', 118 => 'KCR',
-  117 => 'HOU', 136 => 'SEA', 140 => 'TEX', 133 => 'OAK', 108 => 'LAA',
-  143 => 'PHI', 121 => 'NYM', 144 => 'ATL', 146 => 'MIA', 120 => 'WSN',
+  147 => 'NYY', 111 => 'BOS', 141 => 'TOR', 139 => 'TB', 110 => 'BAL',
+  142 => 'MIN', 116 => 'DET', 114 => 'CLE', 145 => 'CWS', 118 => 'KC',
+  117 => 'HOU', 136 => 'SEA', 140 => 'TEX', 133 => 'ATH', 108 => 'LAA',
+  143 => 'PHI', 121 => 'NYM', 144 => 'ATL', 146 => 'MIA', 120 => 'WSH',
   138 => 'STL', 158 => 'MIL', 112 => 'CHC', 134 => 'PIT', 113 => 'CIN',
-  119 => 'LAD', 137 => 'SFG', 135 => 'SDP', 109 => 'ARI', 115 => 'COL',
+  119 => 'LAD', 137 => 'SF', 135 => 'SD', 109 => 'AZ', 115 => 'COL',
 );
 
 my $input = lc(join(' ', @ARGV));
