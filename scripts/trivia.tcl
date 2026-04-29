@@ -65,7 +65,7 @@ proc trivia_clear {chan} {
 }
 
 proc trivia_pub {nick host hand chan text} {
-    global trivia_active trivia_starting trivia_last_game
+    global trivia_active trivia_starting trivia_last_game hamtrivia_last_game
     global trivia_cooldown_secs trivia_rounds trivia_round_secs trivia_start_delay
     global hamtrivia_active hamtrivia_starting
 
@@ -87,8 +87,15 @@ proc trivia_pub {nick host hand chan text} {
     }
 
     if {![trivia_is_exempt $nick]} {
-        if {[info exists trivia_last_game($chan)]} {
-            set elapsed [expr {[clock seconds] - $trivia_last_game($chan)}]
+        set _most_recent 0
+        if {[info exists trivia_last_game($chan)] && $trivia_last_game($chan) > $_most_recent} {
+            set _most_recent $trivia_last_game($chan)
+        }
+        if {[info exists hamtrivia_last_game($chan)] && $hamtrivia_last_game($chan) > $_most_recent} {
+            set _most_recent $hamtrivia_last_game($chan)
+        }
+        if {$_most_recent > 0} {
+            set elapsed [expr {[clock seconds] - $_most_recent}]
             if {$elapsed < $trivia_cooldown_secs} {
                 set remaining [expr {$trivia_cooldown_secs - $elapsed}]
                 set nexttime [clock format [expr {[clock seconds] + $remaining}] -format "%H:%M UTC" -gmt 1]
@@ -106,7 +113,7 @@ proc trivia_pub {nick host hand chan text} {
 
 proc trivia_start {chan} {
     global triviabin trivia_starting trivia_active trivia_questions
-    global trivia_qindex trivia_round trivia_last_game
+    global trivia_qindex trivia_round trivia_last_game hamtrivia_last_game
 
     # Bail if game was cancelled during countdown
     if {![info exists trivia_starting($chan)] || !$trivia_starting($chan)} { return }
@@ -135,7 +142,8 @@ proc trivia_start {chan} {
     set trivia_questions($chan) $lines
     set trivia_qindex($chan)    0
     set trivia_round($chan)     1
-    set trivia_last_game($chan) [clock seconds]
+    set trivia_last_game($chan)    [clock seconds]
+    set hamtrivia_last_game($chan) [clock seconds]
 
     trivia_ask $chan
 }
@@ -429,7 +437,7 @@ proc hamtrivia_clear {chan} {
 }
 
 proc hamtrivia_pub {nick host hand chan text} {
-    global hamtrivia_active hamtrivia_starting hamtrivia_last_game
+    global hamtrivia_active hamtrivia_starting hamtrivia_last_game trivia_last_game
     global hamtrivia_cooldown_secs hamtrivia_rounds hamtrivia_round_secs hamtrivia_start_delay
     global trivia_active trivia_starting
 
@@ -451,8 +459,15 @@ proc hamtrivia_pub {nick host hand chan text} {
     }
 
     if {![trivia_is_exempt $nick]} {
-        if {[info exists hamtrivia_last_game($chan)]} {
-            set elapsed [expr {[clock seconds] - $hamtrivia_last_game($chan)}]
+        set _most_recent 0
+        if {[info exists hamtrivia_last_game($chan)] && $hamtrivia_last_game($chan) > $_most_recent} {
+            set _most_recent $hamtrivia_last_game($chan)
+        }
+        if {[info exists trivia_last_game($chan)] && $trivia_last_game($chan) > $_most_recent} {
+            set _most_recent $trivia_last_game($chan)
+        }
+        if {$_most_recent > 0} {
+            set elapsed [expr {[clock seconds] - $_most_recent}]
             if {$elapsed < $hamtrivia_cooldown_secs} {
                 set remaining [expr {$hamtrivia_cooldown_secs - $elapsed}]
                 set nexttime [clock format [expr {[clock seconds] + $remaining}] -format "%H:%M UTC" -gmt 1]
@@ -470,7 +485,7 @@ proc hamtrivia_pub {nick host hand chan text} {
 
 proc hamtrivia_start {chan} {
     global hamtriviabin hamtrivia_starting hamtrivia_active hamtrivia_questions
-    global hamtrivia_qindex hamtrivia_round hamtrivia_last_game
+    global hamtrivia_qindex hamtrivia_round hamtrivia_last_game trivia_last_game
 
     if {![info exists hamtrivia_starting($chan)] || !$hamtrivia_starting($chan)} { return }
     set hamtrivia_starting($chan) 0
@@ -499,6 +514,7 @@ proc hamtrivia_start {chan} {
     set hamtrivia_qindex($chan)    0
     set hamtrivia_round($chan)     1
     set hamtrivia_last_game($chan) [clock seconds]
+    set trivia_last_game($chan)    [clock seconds]
 
     hamtrivia_ask $chan
 }
