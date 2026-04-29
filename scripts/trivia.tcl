@@ -284,6 +284,9 @@ proc trivia_end_game {chan} {
     if {[llength $winners] == 1} {
         putchan $chan "🏆 Winner: \002[lindex $winners 0]\002! Congratulations!"
         trivia_clear $chan
+    } elseif {$trivia_qindex($chan) >= [llength $trivia_questions($chan)]} {
+        putchan $chan "🤝 Not enough questions for a tiebreaker. It's a draw between: \002[join $winners {, }]\002!"
+        trivia_clear $chan
     } else {
         putchan $chan "🤝 It's a tie between: \002[join $winners {, }]\002! Starting tiebreaker..."
         global trivia_tiebreak trivia_tienicks
@@ -647,6 +650,9 @@ proc hamtrivia_end_game {chan} {
 
     if {[llength $winners] == 1} {
         putchan $chan "🏆 Winner: \002[lindex $winners 0]\002! Elmer of the day! 73!"
+        hamtrivia_clear $chan
+    } elseif {$hamtrivia_qindex($chan) >= [llength $hamtrivia_questions($chan)]} {
+        putchan $chan "🤝 Not enough questions for a tiebreaker. It's a draw between: \002[join $winners {, }]\002!"
         hamtrivia_clear $chan
     } else {
         putchan $chan "🤝 It's a tie between: \002[join $winners {, }]\002! Starting tiebreaker..."
