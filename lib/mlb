@@ -114,7 +114,7 @@ my %teammap = (
   'nym' => ['NYM', 121], 'mets' => ['NYM', 121], 'new york mets' => ['NYM', 121],
   'atl' => ['ATL', 144], 'braves' => ['ATL', 144], 'atlanta' => ['ATL', 144],
   'mia' => ['MIA', 146], 'marlins' => ['MIA', 146], 'miami' => ['MIA', 146],
-  'wsn' => ['WSN', 120], 'nationals' => ['WSN', 120], 'nats' => ['WSN', 120], 'washington' => ['WSN', 120],
+  'wsn' => ['WSH', 120], 'nationals' => ['WSH', 120], 'nats' => ['WSH', 120], 'washington' => ['WSH', 120],
   # NL Central
   'stl' => ['STL', 138], 'cardinals' => ['STL', 138], 'cards' => ['STL', 138],
     'st. louis' => ['STL', 138], 'st louis' => ['STL', 138], 'saint louis' => ['STL', 138],
@@ -135,7 +135,7 @@ my %abbrevName = (
   'NYY' => 'Yankees', 'BOS' => 'Red Sox', 'TOR' => 'Blue Jays', 'TBR' => 'Rays', 'BAL' => 'Orioles',
   'MIN' => 'Twins',  'DET' => 'Tigers',   'CLE' => 'Guardians', 'CWS' => 'White Sox', 'KCR' => 'Royals',
   'HOU' => 'Astros', 'SEA' => 'Mariners', 'TEX' => 'Rangers', 'OAK' => 'Athletics', 'LAA' => 'Angels',
-  'PHI' => 'Phillies', 'NYM' => 'Mets', 'ATL' => 'Braves', 'MIA' => 'Marlins', 'WSN' => 'Nationals',
+  'PHI' => 'Phillies', 'NYM' => 'Mets', 'ATL' => 'Braves', 'MIA' => 'Marlins', 'WSH' => 'Nationals',
   'STL' => 'Cardinals', 'MIL' => 'Brewers', 'CHC' => 'Cubs', 'PIT' => 'Pirates', 'CIN' => 'Reds',
   'LAD' => 'Dodgers', 'SFG' => 'Giants', 'SDP' => 'Padres', 'ARI' => 'Diamondbacks', 'COL' => 'Rockies',
 );
@@ -145,7 +145,7 @@ my %teamIdToAbbr = (
   147 => 'NYY', 111 => 'BOS', 141 => 'TOR', 139 => 'TBR', 110 => 'BAL',
   142 => 'MIN', 116 => 'DET', 114 => 'CLE', 145 => 'CWS', 118 => 'KCR',
   117 => 'HOU', 136 => 'SEA', 140 => 'TEX', 133 => 'OAK', 108 => 'LAA',
-  143 => 'PHI', 121 => 'NYM', 144 => 'ATL', 146 => 'MIA', 120 => 'WSN',
+  143 => 'PHI', 121 => 'NYM', 144 => 'ATL', 146 => 'MIA', 120 => 'WSH',
   138 => 'STL', 158 => 'MIL', 112 => 'CHC', 134 => 'PIT', 113 => 'CIN',
   119 => 'LAD', 137 => 'SFG', 135 => 'SDP', 109 => 'ARI', 115 => 'COL',
 );
