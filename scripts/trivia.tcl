@@ -251,7 +251,7 @@ proc trivia_round_end {chan} {
 }
 
 proc trivia_end_game {chan} {
-    global trivia_scores
+    global trivia_scores trivia_qindex trivia_questions
 
     set scores $trivia_scores($chan)
 
@@ -618,7 +618,7 @@ proc hamtrivia_round_end {chan} {
 }
 
 proc hamtrivia_end_game {chan} {
-    global hamtrivia_scores
+    global hamtrivia_scores hamtrivia_qindex hamtrivia_questions
 
     set scores $hamtrivia_scores($chan)
 
