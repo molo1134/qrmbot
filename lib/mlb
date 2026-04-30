@@ -114,7 +114,7 @@ my %teammap = (
   'nym' => ['NYM', 121], 'mets' => ['NYM', 121], 'new york mets' => ['NYM', 121],
   'atl' => ['ATL', 144], 'braves' => ['ATL', 144], 'atlanta' => ['ATL', 144],
   'mia' => ['MIA', 146], 'marlins' => ['MIA', 146], 'miami' => ['MIA', 146],
-  'wsn' => ['WSH', 120], 'nationals' => ['WSH', 120], 'nats' => ['WSH', 120], 'washington' => ['WSH', 120],
+  'wsh' => ['WSH', 120], 'nationals' => ['WSH', 120], 'nats' => ['WSH', 120], 'washington' => ['WSH', 120],
   # NL Central
   'stl' => ['STL', 138], 'cardinals' => ['STL', 138], 'cards' => ['STL', 138],
     'st. louis' => ['STL', 138], 'st louis' => ['STL', 138], 'saint louis' => ['STL', 138],
