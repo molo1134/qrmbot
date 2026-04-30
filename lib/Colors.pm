@@ -8,7 +8,29 @@
 package Colors;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(darkRed red redOnWhite blackOnWhite yellow green lightgreen lightblue blue darkYellow lightGrey grey cyan lightcyan magenta bold underline inverse italic strikethrough blink monospace optimizeIrcColor);
+@EXPORT = qw(darkRed red redOnWhite blackOnWhite yellow green lightgreen lightblue blue darkYellow lightGrey grey cyan lightcyan magenta bold underline inverse italic strikethrough blink monospace optimizeIrcColor
+lightBlueOnLightRed
+lightBlueOnLightYellow
+lightBlueOnRed
+lightBlueOnWhite
+lightBlueOnYellow
+lightCyanOnBlack
+lightCyanOnBlue
+lightGreenOnYellow
+lightRedOnBlack
+lightRedOnBlue
+lightRedOnLightBlue
+lightYellowOnBlack
+lightYellowOnBlue
+cyanOnBlue
+magentaOnBlack
+redOnLightBlack
+whiteOnBlack
+whiteOnBlue
+yellowOnBlack
+yellowOnBlue
+yellowOnLightBlack
+);
 
 BEGIN {
   our $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
@@ -67,6 +89,113 @@ sub blackOnWhite {
   return undef if not defined($s);
   return colorIrcVt220("1,0", "0;30;48;5;15", $s);
 }
+
+sub lightBlueOnLightRed {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("12,4", "1;34;48;5;9", $s);
+}
+sub lightBlueOnLightYellow {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("12,8", "1;34;48;5;11", $s);
+}
+sub lightBlueOnRed {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("12,5", "1;34;48;5;1", $s);
+}
+sub lightBlueOnWhite {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("12,0", "1;34;48;5;15", $s);
+}
+sub lightBlueOnYellow {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("12,7", "1;34;48;5;11", $s);
+}
+sub lightCyanOnBlack {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("11,1", "1;36;48;5;0", $s);
+}
+sub lightCyanOnBlue {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("11,2", "1;36;48;5;4", $s);
+}
+sub lightGreenOnYellow {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("9,5", "1;32;48;5;3", $s);
+}
+sub lightRedOnBlack {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("4,1", "1;31;48;5;0", $s);
+}
+sub lightRedOnBlue {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("4,2", "1;31;48;5;4", $s);
+}
+sub lightRedOnLightBlue {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("4,12", "1;31;48;5;12", $s);
+}
+sub lightYellowOnBlack {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("8,1", "1;33;48;5;0", $s);
+}
+sub lightYellowOnBlue {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("8,2", "1;33;48;5;4", $s);
+}
+sub cyanOnBlue {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("10,2", "0;36;48;5;4", $s);
+}
+sub magentaOnBlack {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("6,1", "0;35;48;5;0", $s);
+}
+sub redOnLightBlack {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("5,14", "0;31;48;5;8", $s);
+}
+sub whiteOnBlack {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("0,1", "0;37;48;5;0", $s);
+}
+sub whiteOnBlue {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("0,2", "0;37;48;5;4", $s);
+}
+sub yellowOnBlack {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("8,1", "0;33;48;5;0", $s);
+}
+sub yellowOnBlue {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("8,2", "0;33;48;5;4", $s);
+}
+sub yellowOnLightBlack {
+  my $s = shift;
+  return undef if not defined($s);
+  return colorIrcVt220("8,14", "0;33;48;5;8", $s);
+}
+
 sub yellow {
   my $s = shift;
   return undef if not defined($s);

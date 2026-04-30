@@ -150,6 +150,40 @@ my %teamIdToAbbr = (
   119 => 'LAD', 137 => 'SF', 135 => 'SD', 109 => 'AZ', 115 => 'COL',
 );
 
+# abbrev to color highlight function
+my %abbrevToColor = (
+  'AZ'  => \&redOnLightBlack,
+  'ATZ' => \&lightRedOnBlue,
+  'BAL' => \&lightYellowOnBlack,
+  'BOS' => \&lightRedOnBlue,
+  'CHC' => \&lightBlueOnLightRed,
+  'CWS' => \&whiteOnBlack,
+  'CIN' => \&lightRedOnBlack,
+  'CLE' => \&lightRedOnBlue,
+  'COL' => \&magentaOnBlack,
+  'DET' => \&lightYellowOnBlue,
+  'HOU' => \&lightYellowOnBlue,
+  'KC'  => \&lightBlueOnYellow,
+  'LAA' => \&lightRedOnBlue,
+  'LAD' => \&lightBlueOnWhite,
+  'MIA' => \&lightCyanOnBlack,
+  'MIL' => \&yellowOnBlue,
+  'MIN' => \&lightRedOnBlue,
+  'NYM' => \&lightBlueOnLightYellow,
+  'NYY' => \&whiteOnBlue,
+  'ATH' => \&lightGreenOnYellow,
+  'PHI' => \&lightRedOnLightBlue,
+  'PIT' => \&yellowOnBlack,
+  'SD'  => \&yellowOnLightBlack,
+  'SF'  => \&lightYellowOnBlack,
+  'SEA' => \&cyanOnBlue,
+  'STL' => \&lightRedOnBlue,
+  'TB'  => \&lightCyanOnBlue,
+  'TEX' => \&lightBlueOnRed,
+  'TOR' => \&lightBlueOnWhite,
+  'WSH' => \&lightRedOnBlue,
+);
+
 my $input = lc(join(' ', @ARGV));
 $input =~ s/^\s+|\s+$//g;
 
@@ -241,8 +275,9 @@ sub teamScoreStr {
   my ($team, $score, $isWinner) = @_;
   my $abbr = $team->{abbreviation} // $team->{teamAbbreviation} // '???';
   my $s    = $score // $team->{score} // 0;
-  return $isWinner ? bold($abbr) . " " . green($s)
-                   : bold($abbr) . " ($s)";
+  my $colorabbr = $abbrevToColor{$abbr}->($abbr);
+  return $isWinner ? underline($colorabbr) . " " . green($s)
+                   : $colorabbr . " ($s)";
 }
 
 # --- game rendering ---
@@ -297,8 +332,8 @@ sub renderLiveGame {
   if ($batter && $pitcher) {
     my $offId  = $linescore->{offense}{team}{id} // 0;
     my $defId  = $linescore->{defense}{team}{id} // 0;
-    my $offAbbr = $teamIdToAbbr{$offId} // '';
-    my $defAbbr = $teamIdToAbbr{$defId} // '';
+    my $offAbbr = $abbrevToColor{$teamIdToAbbr{$offId}}->($teamIdToAbbr{$offId}) // '';
+    my $defAbbr = $abbrevToColor{$teamIdToAbbr{$defId}}->($teamIdToAbbr{$defId}) // '';
     push @statusParts, "$batter" . ($offAbbr ? " ($offAbbr)" : "") . " batting vs. $pitcher" . ($defAbbr ? " ($defAbbr)" : "") . " pitching";
   }
   if ($inning > 0) {
@@ -398,7 +433,7 @@ sub renderPreviewGame {
   push @parts, "\x{26BE}";
   push @parts, $prefix if $prefix;
   push @parts, $pLabel if $pLabel;
-  push @parts, bold($aAbbr) . " @ " . bold($hAbbr);
+  push @parts, $abbrevToColor{$aAbbr}->($aAbbr) . " @ " . $abbrevToColor{$hAbbr}->($hAbbr);
   push @parts, $time if $time;
   push @parts, "$awayProb vs. $homeProb" if $awayProb && $homeProb;
 
@@ -438,7 +473,7 @@ sub renderSuspendedGame {
     push @parts, teamScoreStr($away, $aScore, $aScore > $hScore)
                . " @ " . teamScoreStr($home, $hScore, $hScore > $aScore);
   } else {
-    push @parts, bold($aAbbr) . " @ " . bold($hAbbr);
+    push @parts, $abbrevToColor{$aAbbr}->($aAbbr) . " @ " . $abbrevToColor{$hAbbr}->($hAbbr);
   }
   push @parts, yellow($statusLabel);
   push @parts, $resumeStr if $resumeStr;
@@ -580,22 +615,22 @@ if (!defined($input) || $input eq '') {
       my $label = $detail eq 'Delayed Start' ? 'Delayed'
                 : $detail eq 'Delayed'       ? 'Delayed'
                 : $detail;
-      $snippet = bold($aAbbr) . " @ " . bold($hAbbr) . " " . yellow($label);
+      $snippet = $abbrevToColor{$aAbbr}->($aAbbr) . " @ " . $abbrevToColor{$hAbbr}->($hAbbr) . " " . yellow($label);
     } elsif ($state eq 'Live') {
       my $inn = $half eq 'Top'    ? "↑$inning" :
                 $half eq 'Bottom' ? "↓$inning" :
                 $half eq 'Middle' ? "Mid$inning" :
                 $inning ? "$inning" : 'Live';
-      $snippet = bold($aAbbr) . "($aScore) @ " . bold($hAbbr) . "($hScore) " . yellow($inn);
+      $snippet = $abbrevToColor{$aAbbr}->($aAbbr) . "($aScore) @ " . $abbrevToColor{$hAbbr}->($hAbbr) . "($hScore) " . yellow($inn);
     } elsif ($state eq 'Final') {
-      $snippet = bold($aAbbr) . "($aScore) @ " . bold($hAbbr) . "($hScore) F";
+      $snippet = $abbrevToColor{$aAbbr}->($aAbbr) . "($aScore) @ " . $abbrevToColor{$hAbbr}->($hAbbr) . "($hScore) F";
     } elsif ($state eq 'Preview') {
       my $time = fmtTime($game->{gameDate} // '');
       $time =~ s/^(\d+):(\d+)\s*(.).*/$1:$2\L$3/;  # 7:40 PM ET → 7:40p
-      $snippet = bold($aAbbr) . " @ " . bold($hAbbr);
+      $snippet = $abbrevToColor{$aAbbr}->($aAbbr) . " @ " . $abbrevToColor{$hAbbr}->($hAbbr);
       $snippet .= " $time" if $time;
     } else {
-      $snippet = bold($aAbbr) . " @ " . bold($hAbbr);
+      $snippet = $abbrevToColor{$aAbbr}->($aAbbr) . " @ " . $abbrevToColor{$hAbbr}->($hAbbr);
       $snippet .= " $state" if $state;
     }
 

@@ -42,6 +42,28 @@ print redOnWhite("red on white"), $sep;
 print blackOnWhite("black on white"), $sep;
 print italic(red("red italic")), $sep;
 
+print lightBlueOnLightRed("lightBlueOnLightRed"), $sep;
+print lightBlueOnLightYellow("lightBlueOnLightYellow"), $sep;
+print lightBlueOnRed("lightBlueOnRed"), $sep;
+print lightBlueOnWhite("lightBlueOnWhite"), $sep;
+print lightBlueOnYellow("lightBlueOnYellow"), $sep;
+print lightCyanOnBlack("lightCyanOnBlack"), $sep;
+print lightCyanOnBlue("lightCyanOnBlue"), $sep;
+print lightGreenOnYellow("lightGreenOnYellow"), $sep;
+print lightRedOnBlack("lightRedOnBlack"), $sep;
+print lightRedOnBlue("lightRedOnBlue"), $sep;
+print lightRedOnLightBlue("lightRedOnLightBlue"), $sep;
+print lightYellowOnBlack("lightYellowOnBlack"), $sep;
+print lightYellowOnBlue("lightYellowOnBlue"), $sep;
+print cyanOnBlue("cyanOnBlue"), $sep;
+print magentaOnBlack("magentaOnBlack"), $sep;
+print redOnLightBlack("redOnLightBlack"), $sep;
+print whiteOnBlack("whiteOnBlack"), $sep;
+print whiteOnBlue("whiteOnBlue"), $sep;
+print yellowOnBlack("yellowOnBlack"), $sep;
+print yellowOnBlue("yellowOnBlue"), $sep;
+print yellowOnLightBlack("yellowOnLightBlack"), $sep;
+
 if ($username eq getEggdropUID()) {
   print "\nextended mirc color (sparkline chart): ";
   print "\x0344\x02\x02▁\x0F";
