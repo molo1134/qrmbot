@@ -164,8 +164,8 @@ my %teamIdToColorCodes = (
   CIN =>          [196,             16,               52,               88],
   CLE =>          [18,              124,              36,               52],
   COL =>          [90,              16,               61,               88],
-  DET =>          [18,              208,              36,               53],
-  HOU =>          [18,              208,              36,               53],
+  DET =>          [17,              208,              24,               53], # navy blue on orange
+  HOU =>          [208,             18,               53,               36], # orange on dark blue
   KC =>           [20,              220,              60,               42],
   LAA =>          [160,             18,               40,               36],
   LAD =>          [33,              231,              58,               98],
@@ -173,7 +173,7 @@ my %teamIdToColorCodes = (
   MIL =>          [18,              220,              36,               42],
   MIN =>          [18,              160,              36,               40],
   NYM =>          [208,             18,               53,               36],  # orange on blue
-  NYY =>          [18,              250,              36,               98],
+  NYY =>          [17,              250,              24,               96],  # navy blue on light grey
   PHI =>          [124,             15,               40,               0],   # muted red on white
   PIT =>          [16,              220,              88,               42],
   SD =>           [94,              246,              28,               98],
@@ -188,7 +188,8 @@ my %teamIdToColorCodes = (
 
 sub teamColor {
   my $id = shift;
-  my $string = shift;
+  my $string = shift;  # optional, if not given, will render the id in team colors
+
   my ($vtfg, $vtbg, $ircfg, $ircbg) = @{$teamIdToColorCodes{$id}};
   #print "$id: $vtfg, $vtbg, $ircfg, $ircbg\n";
   return colorIrcVt220("$ircfg,$ircbg", "0;38;5;$vtfg;48;5;$vtbg", defined $string ? $string : $id);
