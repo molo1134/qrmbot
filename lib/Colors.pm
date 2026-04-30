@@ -8,29 +8,53 @@
 package Colors;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(darkRed red redOnWhite blackOnWhite yellow green lightgreen lightblue blue darkYellow lightGrey grey cyan lightcyan magenta bold underline inverse italic strikethrough blink monospace optimizeIrcColor
-lightBlueOnLightRed
-lightBlueOnLightYellow
-lightBlueOnRed
-lightBlueOnWhite
-lightBlueOnYellow
-lightCyanOnBlack
-lightCyanOnBlue
-lightGreenOnYellow
-lightRedOnBlack
-lightRedOnBlue
-lightRedOnLightBlue
-lightYellowOnBlack
-lightYellowOnBlue
-cyanOnBlue
-magentaOnBlack
-redOnLightBlack
-whiteOnBlack
-whiteOnBlue
-yellowOnBlack
-yellowOnBlue
-yellowOnLightBlack
-);
+@EXPORT = qw(
+              optimizeIrcColor
+              colorIrcVt220
+              bold
+              underline
+              inverse
+              italic
+              strikethrough
+              blink
+              monospace
+              darkRed
+              red
+              redOnWhite
+              blackOnWhite
+              yellow
+              green
+              lightgreen
+              lightblue
+              blue
+              darkYellow
+              lightGrey
+              grey
+              cyan
+              lightcyan
+              magenta
+              lightBlueOnLightRed
+              lightBlueOnLightYellow
+              lightBlueOnRed
+              lightBlueOnWhite
+              lightBlueOnYellow
+              lightCyanOnBlack
+              lightCyanOnBlue
+              lightGreenOnYellow
+              lightRedOnBlack
+              lightRedOnBlue
+              lightRedOnLightBlue
+              lightYellowOnBlack
+              lightYellowOnBlue
+              cyanOnBlue
+              magentaOnBlack
+              redOnLightBlack
+              whiteOnBlack
+              whiteOnBlue
+              yellowOnBlack
+              yellowOnBlue
+              yellowOnLightBlack
+              );
 
 BEGIN {
   our $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
@@ -128,7 +152,7 @@ sub lightCyanOnBlue {
 sub lightGreenOnYellow {
   my $s = shift;
   return undef if not defined($s);
-  return colorIrcVt220("9,5", "1;32;48;5;3", $s);
+  return colorIrcVt220("9,7", "1;32;48;5;3", $s);
 }
 sub lightRedOnBlack {
   my $s = shift;
