@@ -11,6 +11,11 @@ use Cwd 'realpath';
 use lib dirname(realpath(__FILE__));
 use Colors;
 use Util;
+use POSIX qw(strftime);
+
+# NHL schedules use Eastern Time dates — force TZ so !nhl works correctly
+# when the server clock is UTC (otherwise after 8pm ET it rolls to tomorrow)
+$ENV{TZ} = 'America/New_York';
 
 # eggdrop passes all args as one string
 @ARGV = split(' ', join(' ', @ARGV));
@@ -64,7 +69,97 @@ my %teammap = (
 );
 
 if (!defined($input) || $input eq '') {
-  print "Usage: !nhl <team>  (e.g. flyers, PHI, maple leafs)\n";
+  # No team specified — show today's games, as many as fit on one line
+  my $useragent = "Mozilla/5.0 (compatible; qrmbot)";
+  my $url = "https://api-web.nhle.com/v1/scoreboard/now";
+
+  open(my $fh, '-|', "curl --max-time 10 -s -k -L -A \"$useragent\" '$url'");
+  local $/;
+  my $raw = <$fh>;
+  close($fh);
+
+  if (!defined($raw) || $raw !~ /^\s*\{/) {
+    print "error: failed to fetch NHL data\n";
+    exit 0;
+  }
+
+  my $data = decode_json($raw);
+  my $today = strftime("%Y-%m-%d", localtime);
+  my @games;
+
+  foreach my $day (@{$data->{gamesByDate} // []}) {
+    if (($day->{date} // '') eq $today) {
+      @games = @{$day->{games} // []};
+      last;
+    }
+  }
+
+  if (!@games) {
+    print "\x{1F3D2} No NHL games scheduled for today.\n";
+    exit 0;
+  }
+
+  # Sort: live/crit first, then final/off, then upcoming
+  my @sorted = sort {
+    my $sa = $a->{gameState} // '';
+    my $sb = $b->{gameState} // '';
+    my $pa = ($sa eq 'LIVE' || $sa eq 'CRIT') ? 0 :
+             ($sa eq 'FINAL' || $sa eq 'OFF') ? 1 : 2;
+    my $pb = ($sb eq 'LIVE' || $sb eq 'CRIT') ? 0 :
+             ($sb eq 'FINAL' || $sb eq 'OFF') ? 1 : 2;
+    $pa <=> $pb;
+  } @games;
+
+  my $CHAR_BUDGET = 400;
+  my $bar = " \x{00B7} ";
+  my $msg = "\x{1F3D2} ";
+
+  foreach my $game (@sorted) {
+    my $state  = $game->{gameState} // '';
+    my $away   = $game->{awayTeam} // {};
+    my $home   = $game->{homeTeam} // {};
+    my $aAbbr  = $away->{abbrev} // '???';
+    my $hAbbr  = $home->{abbrev} // '???';
+    my $aScore = $away->{score} // 0;
+    my $hScore = $home->{score} // 0;
+
+    my $snippet;
+    if ($state eq 'LIVE' || $state eq 'CRIT') {
+      my $pNum   = $game->{periodDescriptor}{number}     // 0;
+      my $pType  = $game->{periodDescriptor}{periodType} // 'REG';
+      my $clock  = $game->{clock} // {};
+      my $inInter = $clock->{inIntermission} // 0;
+      my $timeLeft = $clock->{timeRemaining} // '';
+
+      my $pStr = periodLabel($pNum, $pType);
+      my $status;
+      if ($inInter) {
+        $status = "Int/$pStr";
+      } else {
+        $status = "$pStr $timeLeft";
+      }
+      $snippet = bold($aAbbr) . "($aScore) @ " . bold($hAbbr) . "($hScore) " . yellow($status);
+    } elsif ($state eq 'FINAL' || $state eq 'OFF') {
+      my $suffix = finishLabel(
+        $game->{periodDescriptor}{number},
+        $game->{periodDescriptor}{periodType}
+      );
+      $snippet = bold($aAbbr) . "($aScore) @ " . bold($hAbbr) . "($hScore) F$suffix";
+    } else {
+      my $time = fmtStartTime($game->{startTimeUTC});
+      $time =~ s/^(\d+):(\d+)\s*(.).*/$1:$2\L$3/;  # 7:30 PM ET → 7:30p
+      $snippet = bold($aAbbr) . " @ " . bold($hAbbr);
+      $snippet .= " $time" if $time;
+    }
+
+    my $candidate = $msg . ($msg eq "\x{1F3D2} " ? "" : $bar) . $snippet;
+    if (visible_len($candidate) > $CHAR_BUDGET) {
+      last;
+    }
+    $msg = $candidate;
+  }
+
+  print "$msg\n";
   exit 0;
 }
 
@@ -159,6 +254,13 @@ sub teamScore {
               : bold($abbr) . " $score";
 }
 
+sub visible_len {
+  my $s = shift // '';
+  $s =~ s/\x03\d{1,2}(,\d{1,2})?//g;  # IRC color codes
+  $s =~ s/[\x02\x0F\x16\x1F\x1D]//g;   # bold, reset, reverse, underline, italic
+  return length($s);
+}
+
 if (defined $liveGame) {
   my $away  = $liveGame->{awayTeam} // {};
   my $home  = $liveGame->{homeTeam} // {};
@@ -205,8 +307,12 @@ if (defined $liveGame) {
     }
   }
 
+  my $gcLink = $liveGame->{gameCenterLink} // '';
+  $gcLink = "https://www.nhl.com$gcLink" if $gcLink;
+
   print teamScore($away, $aScore > $hScore) . "  at  " . teamScore($home, $hScore > $aScore)
-      . "  |  $status" . $sogStr . $seriesStr . "\n";
+      . "  |  $status" . $sogStr . $seriesStr
+      . ($gcLink ? "  |  " . $gcLink : '') . "\n";
 
 } elsif (defined($lastGame) || defined($nextGame)) {
   if (defined $lastGame) {
@@ -222,13 +328,47 @@ if (defined $liveGame) {
     my $isPlayoffs = ($lastGame->{gameType} // 2) == 3;
     my $label = $isPlayoffs ? "Playoffs" : "Last";
 
-    print "$label ($date): "
+    my $seriesStr = '';
+    if ($isPlayoffs && defined $lastGame->{seriesStatus}) {
+      my $s = $lastGame->{seriesStatus};
+      my $round = $s->{round}  // '';
+      my $gnum  = $s->{game}   // '';
+      my $top   = $s->{topSeedTeamAbbrev}    // '';
+      my $tW    = $s->{topSeedWins}          // 0;
+      my $bot   = $s->{bottomSeedTeamAbbrev} // '';
+      my $bW    = $s->{bottomSeedWins}       // 0;
+      my ($leader, $trailer, $lW, $trl) = $tW > $bW
+        ? ($top, $bot, $tW, $bW) : ($bot, $top, $bW, $tW);
+      $seriesStr = "  " . grey("| Playoffs R$round G$gnum: ");
+      if ($lW == $trl) {
+        $seriesStr .= grey("Tied $lW-$trl");
+      } else {
+        $seriesStr .= bold($leader) . grey(" leads $lW-$trl");
+      }
+    }
+
+    my $lastLine = "$label ($date): "
         . teamScore($away, $aScore > $hScore) . "  at  "
         . teamScore($home, $hScore > $aScore)
-        . grey("  (Final$suffix)") . "\n";
-  }
+        . grey("  (Final$suffix)") . $seriesStr;
 
-  if (defined $nextGame) {
+    if (defined $nextGame) {
+      my $nAway = $nextGame->{awayTeam} // {};
+      my $nHome = $nextGame->{homeTeam} // {};
+      my $nDate = fmtDate($nextGame->{gameDate});
+      my $nTime = fmtStartTime($nextGame->{startTimeUTC});
+      my $nPlayoffs = ($nextGame->{gameType} // 2) == 3;
+      my $nLabel = $nPlayoffs ? "Next (playoffs)" : "Next";
+
+      my $nextLine = "$nLabel ($nDate): " . bold($nAway->{abbrev}//'???')
+          . "  at  " . bold($nHome->{abbrev}//'???')
+          . ($nTime ? "  —  $nTime" : '');
+
+      print "$lastLine  ·  $nextLine\n";
+    } else {
+      print "$lastLine\n";
+    }
+  } elsif (defined $nextGame) {
     my $away = $nextGame->{awayTeam} // {};
     my $home = $nextGame->{homeTeam} // {};
     my $date = fmtDate($nextGame->{gameDate});
