@@ -328,7 +328,7 @@ sub renderLiveGame {
   my $sStr   = seriesStr($game);
 
   my @parts;
-  push @parts, "\x{26BE}";  # ⚾
+  push @parts, "\x{26BE}" if $username eq getEggdropUID();  # ⚾
   push @parts, $pLabel if $pLabel;
   push @parts, teamScoreStr($away, $aScore, $aScore > $hScore)
              . " @ " . teamScoreStr($home, $hScore, $hScore > $aScore);
@@ -366,22 +366,28 @@ sub renderLiveGame {
   my $sep = " \x{00B7} ";
   my $CHAR_BUDGET = 400;
 
+  $sep = "\n" if $username ne getEggdropUID();
+
   my $msg = join($sep, @parts);
   $msg .= $sep . join($sep, @statusParts) if @statusParts;
   $msg .= $sep . "Series: " . $sStr if $sStr;
 
   if ($lastPlay) {
     my $used  = visible_len($msg) + visible_len($sep . "Last: ");
-    my $avail = $CHAR_BUDGET - $used;
-    if ($avail > 20) {
-      my $lp = $lastPlay;
-      if (visible_len($lp) > $avail) {
-        $lp = substr($lp, 0, $avail - 3);
-        $lp =~ s/\S+$//;   # drop partial word at end
-        $lp =~ s/\s+$//;   # trim trailing whitespace
-        $lp .= "...";
+    if ($username eq getEggdropUID()) {
+      my $avail = $CHAR_BUDGET - $used;
+      if ($avail > 20) {
+	my $lp = $lastPlay;
+	if (visible_len($lp) > $avail) {
+	  $lp = substr($lp, 0, $avail - 3);
+	  $lp =~ s/\S+$//;   # drop partial word at end
+	  $lp =~ s/\s+$//;   # trim trailing whitespace
+	  $lp .= "...";
+	}
+	$msg .= $sep . "Last: " . italic($lp);
       }
-      $msg .= $sep . "Last: " . italic($lp);
+    } else {
+      $msg .= $sep . "Last: " . italic($lastPlay);
     }
   }
 
@@ -605,8 +611,14 @@ if (!defined($input) || $input eq '') {
   } @$games;
 
   my $CHAR_BUDGET = 400;
-  my $bar = " \x{00B7} ";
+  my $bar = " | ";
   my $msg = "\x{26BE} ";  # ⚾
+
+  if ($username ne getEggdropUID()) {
+    # terminal output - one per line, no prefix
+    $bar = "\n";
+    $msg = "";
+  }
 
   foreach my $game (@sorted) {
     my $state  = $game->{status}{abstractGameState} // '';
@@ -646,7 +658,8 @@ if (!defined($input) || $input eq '') {
     }
 
     my $candidate = $msg . ($msg eq "\x{26BE} " ? "" : $bar) . $snippet;
-    if (visible_len($candidate) > $CHAR_BUDGET) {
+    if ($username eq getEggdropUID() and visible_len($candidate) > $CHAR_BUDGET) {
+      # visible_len() only useful for irc
       last;
     }
     $msg = $candidate;
