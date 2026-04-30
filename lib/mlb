@@ -150,39 +150,48 @@ my %teamIdToAbbr = (
   119 => 'LAD', 137 => 'SF', 135 => 'SD', 109 => 'AZ', 115 => 'COL',
 );
 
-# abbrev to color highlight function
-my %abbrevToColor = (
-  'AZ'  => \&redOnLightBlack,
-  'ATL' => \&lightRedOnBlue,
-  'BAL' => \&lightYellowOnBlack,
-  'BOS' => \&lightRedOnBlue,
-  'CHC' => \&lightBlueOnLightRed,
-  'CWS' => \&whiteOnBlack,
-  'CIN' => \&lightRedOnBlack,
-  'CLE' => \&lightRedOnBlue,
-  'COL' => \&magentaOnBlack,
-  'DET' => \&lightYellowOnBlue,
-  'HOU' => \&lightYellowOnBlue,
-  'KC'  => \&lightBlueOnYellow,
-  'LAA' => \&lightRedOnBlue,
-  'LAD' => \&lightBlueOnWhite,
-  'MIA' => \&lightCyanOnBlack,
-  'MIL' => \&yellowOnBlue,
-  'MIN' => \&lightRedOnBlue,
-  'NYM' => \&lightBlueOnLightYellow,
-  'NYY' => \&whiteOnBlue,
-  'ATH' => \&lightGreenOnYellow,
-  'PHI' => \&lightRedOnLightBlue,
-  'PIT' => \&yellowOnBlack,
-  'SD'  => \&yellowOnLightBlack,
-  'SF'  => \&lightYellowOnBlack,
-  'SEA' => \&cyanOnBlue,
-  'STL' => \&lightRedOnBlue,
-  'TB'  => \&lightCyanOnBlue,
-  'TEX' => \&lightBlueOnRed,
-  'TOR' => \&lightBlueOnWhite,
-  'WSH' => \&lightRedOnBlue,
+
+# mirc extended color codes: https://anti.teamidiot.de/static/nei/*/extended_mirc_color_proposal.html
+my %teamIdToColorCodes = (
+#Team	xterm FG (256)	xterm BG (256)	mIRC FG (index)	mIRC BG (index)
+  ATH =>	[22, 	220, 	56, 	76],
+  ATL =>	[160, 	19, 	52, 	60],
+  AZ =>	[124, 	16, 	40, 	88],
+  BAL =>	[208, 	16, 	53, 	88],
+  BOS =>	[124, 	18, 	52, 	59],
+  CHC =>	[21, 	196, 	60, 	52],
+  CWS =>	[16, 	231, 	88, 	98],
+  CIN =>	[196, 	16, 	52, 	88],
+  CLE =>	[18, 	124, 	59, 	52],
+  COL =>	[90, 	16, 	61, 	88],
+  DET =>	[18, 	208, 	59, 	53],
+  HOU =>	[18, 	208, 	59, 	53],
+  KC =>	[20, 	220, 	60, 	76],
+  LAA =>	[160, 	18, 	40, 	59],
+  LAD =>	[33, 	231, 	58, 	98],
+  MIA =>	[16, 	37, 	88, 	46],
+  MIL =>	[18, 	220, 	59, 	76],
+  MIN =>	[18, 	160, 	59, 	40],
+  NYM =>	[18, 	208, 	59, 	53],
+  NYY =>	[18, 	250, 	59, 	98],
+  PHI =>	[196, 	18, 	52, 	59],
+  PIT =>	[16, 	220, 	88, 	76],
+  SD =>	[94, 	246, 	28, 	98],
+  SF =>	[208, 	16, 	53, 	88],
+  SEA =>	[18, 	23, 	59, 	56],
+  STL =>	[196, 	18, 	52, 	59],
+  TB =>	[18, 	117, 	59, 	74],
+  TEX =>	[20, 	160, 	60, 	40],
+  TOR =>	[33, 	18, 	58, 	59],
+  WSH =>	[160, 	18, 	40, 	59],
 );
+
+sub teamColor {
+  my $id = shift;
+  my ($vtfg, $vtbg, $ircfg, $ircbg) = @{$teamIdToColorCodes{$id}};
+  #print "$id: $vtfg, $vtbg, $ircfg, $ircbg\n";
+  return colorIrcVt220("$ircfg,$ircbg", "0;38;5;$vtfg;48;5;$vtbg", $id);
+}
 
 my $input = lc(join(' ', @ARGV));
 $input =~ s/^\s+|\s+$//g;
@@ -275,7 +284,7 @@ sub teamScoreStr {
   my ($team, $score, $isWinner) = @_;
   my $abbr = $team->{abbreviation} // $team->{teamAbbreviation} // '???';
   my $s    = $score // $team->{score} // 0;
-  my $colorabbr = $abbrevToColor{$abbr}->($abbr);
+  my $colorabbr = teamColor($abbr);
   return $isWinner ? underline($colorabbr) . " " . green($s)
                    : $colorabbr . " ($s)";
 }
@@ -332,8 +341,8 @@ sub renderLiveGame {
   if ($batter && $pitcher) {
     my $offId  = $linescore->{offense}{team}{id} // 0;
     my $defId  = $linescore->{defense}{team}{id} // 0;
-    my $offAbbr = $abbrevToColor{$teamIdToAbbr{$offId}}->($teamIdToAbbr{$offId}) // '';
-    my $defAbbr = $abbrevToColor{$teamIdToAbbr{$defId}}->($teamIdToAbbr{$defId}) // '';
+    my $offAbbr = teamColor($teamIdToAbbr{$offId}) // '';
+    my $defAbbr = teamColor($teamIdToAbbr{$defId}) // '';
     push @statusParts, "$batter" . ($offAbbr ? " ($offAbbr)" : "") . " batting vs. $pitcher" . ($defAbbr ? " ($defAbbr)" : "") . " pitching";
   }
   if ($inning > 0) {
@@ -433,7 +442,7 @@ sub renderPreviewGame {
   push @parts, "\x{26BE}";
   push @parts, $prefix if $prefix;
   push @parts, $pLabel if $pLabel;
-  push @parts, $abbrevToColor{$aAbbr}->($aAbbr) . " @ " . $abbrevToColor{$hAbbr}->($hAbbr);
+  push @parts, teamColor($aAbbr) . " @ " . teamColor($hAbbr);
   push @parts, $time if $time;
   push @parts, "$awayProb vs. $homeProb" if $awayProb && $homeProb;
 
@@ -473,7 +482,7 @@ sub renderSuspendedGame {
     push @parts, teamScoreStr($away, $aScore, $aScore > $hScore)
                . " @ " . teamScoreStr($home, $hScore, $hScore > $aScore);
   } else {
-    push @parts, $abbrevToColor{$aAbbr}->($aAbbr) . " @ " . $abbrevToColor{$hAbbr}->($hAbbr);
+    push @parts, teamColor($aAbbr) . " @ " . teamColor($hAbbr);
   }
   push @parts, yellow($statusLabel);
   push @parts, $resumeStr if $resumeStr;
@@ -615,22 +624,22 @@ if (!defined($input) || $input eq '') {
       my $label = $detail eq 'Delayed Start' ? 'Delayed'
                 : $detail eq 'Delayed'       ? 'Delayed'
                 : $detail;
-      $snippet = $abbrevToColor{$aAbbr}->($aAbbr) . " @ " . $abbrevToColor{$hAbbr}->($hAbbr) . " " . yellow($label);
+      $snippet = teamColor($aAbbr) . " @ " . teamColor($hAbbr) . " " . yellow($label);
     } elsif ($state eq 'Live') {
       my $inn = $half eq 'Top'    ? "↑$inning" :
                 $half eq 'Bottom' ? "↓$inning" :
                 $half eq 'Middle' ? "Mid$inning" :
                 $inning ? "$inning" : 'Live';
-      $snippet = $abbrevToColor{$aAbbr}->($aAbbr) . "($aScore) @ " . $abbrevToColor{$hAbbr}->($hAbbr) . "($hScore) " . yellow($inn);
+      $snippet = teamColor($aAbbr) . "($aScore) @ " . teamColor($hAbbr) . "($hScore) " . yellow($inn);
     } elsif ($state eq 'Final') {
-      $snippet = $abbrevToColor{$aAbbr}->($aAbbr) . "($aScore) @ " . $abbrevToColor{$hAbbr}->($hAbbr) . "($hScore) F";
+      $snippet = teamColor($aAbbr) . "($aScore) @ " . teamColor($hAbbr) . "($hScore) F";
     } elsif ($state eq 'Preview') {
       my $time = fmtTime($game->{gameDate} // '');
       $time =~ s/^(\d+):(\d+)\s*(.).*/$1:$2\L$3/;  # 7:40 PM ET → 7:40p
-      $snippet = $abbrevToColor{$aAbbr}->($aAbbr) . " @ " . $abbrevToColor{$hAbbr}->($hAbbr);
+      $snippet = teamColor($aAbbr) . " @ " . teamColor($hAbbr);
       $snippet .= " $time" if $time;
     } else {
-      $snippet = $abbrevToColor{$aAbbr}->($aAbbr) . " @ " . $abbrevToColor{$hAbbr}->($hAbbr);
+      $snippet = teamColor($aAbbr) . " @ " . teamColor($hAbbr);
       $snippet .= " $state" if $state;
     }
 
