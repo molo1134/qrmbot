@@ -368,6 +368,14 @@ proc goose { nick host hand chan text} {
 	}
 }
 
+bind pub - !goony goony
+proc goony { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	putchan $chan "goony goo goo"
+}
+
 bind pub - !monkee daveface
 proc daveface { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
