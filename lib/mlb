@@ -155,10 +155,10 @@ my %teamIdToAbbr = (
 my %teamIdToColorCodes = (
   #Team           xterm FG (256)    xterm BG (256)    mIRC FG (index)   mIRC BG (index)
   ATH =>          [220,             22,               42,               20],  # yellow on green
-  ATL =>          [160,             19,               52,               60],
-  AZ =>           [124,             16,               40,               88],
-  BAL =>          [208,             16,               53,               88],
-  BOS =>          [124,             18,               52,               36],
+  ATL =>          [161,             17,               51,               24],  # scarlet red on navy blue #CE1141
+  AZ =>           [37,              88,               46,               28],  # teal on sedona red #3EC1CC #AA182C
+  BAL =>          [208,             16,               53,               88],  # orange on black
+  BOS =>          [124,             17,               40,               24],  # red on navy blue #BD3039 #0D2B56
   CHC =>          [21,              196,              60,               52],
   CWS =>          [16,              231,              88,               98],
   CIN =>          [196,             16,               52,               88],
