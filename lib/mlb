@@ -188,9 +188,10 @@ my %teamIdToColorCodes = (
 
 sub teamColor {
   my $id = shift;
+  my $string = shift;
   my ($vtfg, $vtbg, $ircfg, $ircbg) = @{$teamIdToColorCodes{$id}};
   #print "$id: $vtfg, $vtbg, $ircfg, $ircbg\n";
-  return colorIrcVt220("$ircfg,$ircbg", "0;38;5;$vtfg;48;5;$vtbg", $id);
+  return colorIrcVt220("$ircfg,$ircbg", "0;38;5;$vtfg;48;5;$vtbg", defined $string ? $string : $id);
 }
 
 my $input = lc(join(' ', @ARGV));
@@ -511,7 +512,7 @@ sub getStandingsLine {
         my $divName = $divName{$divId} // '';
 
         my $sep = " \x{00B7} ";
-        my $line = bold($name) . " ($wins-$losses)";
+        my $line = teamColor($abbrev, $name) . " ($wins-$losses)";
 
         if ($divRank && $divName) {
           if ($divRank eq '1') {
