@@ -154,7 +154,7 @@ my %teamIdToAbbr = (
 # mirc extended color codes: https://anti.teamidiot.de/static/nei/*/extended_mirc_color_proposal.html
 my %teamIdToColorCodes = (
   #Team           xterm FG (256)    xterm BG (256)    mIRC FG (index)   mIRC BG (index)
-  ATH =>          [220,             22,               42,               20],
+  ATH =>          [220,             22,               42,               20],  # yellow on green
   ATL =>          [160,             19,               52,               60],
   AZ =>           [124,             16,               40,               88],
   BAL =>          [208,             16,               53,               88],
@@ -172,9 +172,9 @@ my %teamIdToColorCodes = (
   MIA =>          [16,              37,               88,               46],
   MIL =>          [18,              220,              36,               42],
   MIN =>          [18,              160,              36,               40],
-  NYM =>          [208,             18,               53,               36],
+  NYM =>          [208,             18,               53,               36],  # orange on blue
   NYY =>          [18,              250,              36,               98],
-  PHI =>          [196,             18,               52,               36],
+  PHI =>          [9,               15,               4,                0],   # red on white
   PIT =>          [16,              220,              88,               42],
   SD =>           [94,              246,              28,               98],
   SF =>           [208,             16,               53,               88],
