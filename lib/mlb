@@ -107,7 +107,7 @@ my %teammap = (
   'hou' => ['HOU', 117], 'astros' => ['HOU', 117], 'stros' => ['HOU', 117], 'houston' => ['HOU', 117],
   'sea' => ['SEA', 136], 'mariners' => ['SEA', 136], 'seattle' => ['SEA', 136],
   'tex' => ['TEX', 140], 'rangers' => ['TEX', 140], 'texas' => ['TEX', 140],
-  'oak' => ['ATH', 133], 'athletics' => ['ATH', 133], 'a\'s' => ['ATH', 133], 'as' => ['ATH', 133], 'oakland' => ['ATH', 133],
+  'ath' => ['ATH', 133], 'athletics' => ['ATH', 133], 'a\'s' => ['ATH', 133], 'as' => ['ATH', 133], 'oakland' => ['ATH', 133],
   'laa' => ['LAA', 108], 'angels' => ['LAA', 108], 'los angeles angels' => ['LAA', 108],
   # NL East
   'phi' => ['PHI', 143], 'phillies' => ['PHI', 143], 'phils' => ['PHI', 143], 'philadelphia' => ['PHI', 143],
@@ -126,7 +126,7 @@ my %teammap = (
   'lad' => ['LAD', 119], 'dodgers' => ['LAD', 119], 'la' => ['LAD', 119], 'los angeles dodgers' => ['LAD', 119],
   'sf'  => ['SF', 137], 'sfg' => ['SF', 137], 'giants' => ['SF', 137], 'san francisco' => ['SF', 137],
   'sd'  => ['SD', 135], 'sdp' => ['SD', 135], 'padres' => ['SD', 135], 'san diego' => ['SD', 135],
-  'ari' => ['AZ', 109], 'diamondbacks' => ['AZ', 109], 'dbacks' => ['AZ', 109], 'arizona' => ['AZ', 109],
+  'az'  => ['AZ', 109], 'diamondbacks' => ['AZ', 109], 'dbacks' => ['AZ', 109], 'arizona' => ['AZ', 109],
   'col' => ['COL', 115], 'rockies' => ['COL', 115], 'colorado' => ['COL', 115],
 );
 
