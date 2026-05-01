@@ -612,6 +612,7 @@ if (!defined($input) || $input eq '') {
   my $CHAR_BUDGET = 450;
   my $bar = " | ";
   my $msg = "\x{26BE} ";  # ⚾
+  my $output = "";
 
   if ($username ne getEggdropUID()) {
     # terminal output - one per line, no prefix
@@ -660,13 +661,16 @@ if (!defined($input) || $input eq '') {
     print ("candidate length: ", utf8_len($candidate), "\n");
     if ($username eq getEggdropUID() and utf8_len($candidate) > $CHAR_BUDGET) {
       # utf8_len() only useful for irc
-      print "char_budget hit\n";
-      last;
+      $output .= $msg . "\n";
+      $msg = "\x{26BE} " . $snippet;  # ⚾
+      next;
     }
     $msg = $candidate;
   }
 
-  print "$msg\n";
+  $output .= $msg;
+
+  print "$output\n";
   exit 0;
 }
 
