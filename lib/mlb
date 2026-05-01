@@ -16,6 +16,7 @@ use JSON::PP qw(decode_json);
 use POSIX qw(strftime);
 use File::Basename;
 use Cwd 'realpath';
+use Encode qw(encode_utf8);
 use lib dirname(realpath(__FILE__));
 use Colors;
 use Util;
@@ -234,7 +235,7 @@ sub fmtDateShort {
 
 sub utf8_len {
   my $s = shift // '';
-  return length(utf8::encode($s));
+  return length(encode_utf8($s));
 }
 
 # division ID → short name
@@ -656,8 +657,10 @@ if (!defined($input) || $input eq '') {
     }
 
     my $candidate = $msg . ($msg eq "\x{26BE} " ? "" : $bar) . $snippet;
+    print ("candidate length: ", utf8_len($candidate), "\n";
     if ($username eq getEggdropUID() and utf8_len($candidate) > $CHAR_BUDGET) {
       # utf8_len() only useful for irc
+      print "char_budget hit\n";
       last;
     }
     $msg = $candidate;
