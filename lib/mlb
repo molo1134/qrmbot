@@ -657,7 +657,7 @@ if (!defined($input) || $input eq '') {
     }
 
     my $candidate = $msg . ($msg eq "\x{26BE} " ? "" : $bar) . $snippet;
-    print ("candidate length: ", utf8_len($candidate), "\n";
+    print ("candidate length: ", utf8_len($candidate), "\n");
     if ($username eq getEggdropUID() and utf8_len($candidate) > $CHAR_BUDGET) {
       # utf8_len() only useful for irc
       print "char_budget hit\n";
