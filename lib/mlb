@@ -232,11 +232,9 @@ sub fmtDateShort {
   return int($2) . "/" . int($3);
 }
 
-sub visible_len {
+sub utf8_len {
   my $s = shift // '';
-  $s =~ s/\x03\d{1,2}(,\d{1,2})?//g;  # IRC color codes
-  $s =~ s/[\x02\x0F\x16\x1F\x1D]//g;   # bold, reset, reverse, underline, italic
-  return length($s);
+  return length(utf8::encode($s));
 }
 
 # division ID → short name
@@ -364,7 +362,7 @@ sub renderLiveGame {
   }
 
   my $sep = " \x{00B7} ";
-  my $CHAR_BUDGET = 400;
+  my $CHAR_BUDGET = 450;
 
   $sep = "\n" if $username ne getEggdropUID();
 
@@ -373,12 +371,12 @@ sub renderLiveGame {
   $msg .= $sep . "Series: " . $sStr if $sStr;
 
   if ($lastPlay) {
-    my $used  = visible_len($msg) + visible_len($sep . "Last: ");
+    my $used  = utf8_len($msg) + utf8_len($sep . "Last: ");
     if ($username eq getEggdropUID()) {
       my $avail = $CHAR_BUDGET - $used;
       if ($avail > 20) {
 	my $lp = $lastPlay;
-	if (visible_len($lp) > $avail) {
+	if (utf8_len($lp) > $avail) {
 	  $lp = substr($lp, 0, $avail - 3);
 	  $lp =~ s/\S+$//;   # drop partial word at end
 	  $lp =~ s/\s+$//;   # trim trailing whitespace
@@ -610,7 +608,7 @@ if (!defined($input) || $input eq '') {
     $pa <=> $pb;
   } @$games;
 
-  my $CHAR_BUDGET = 400;
+  my $CHAR_BUDGET = 450;
   my $bar = " | ";
   my $msg = "\x{26BE} ";  # ⚾
 
@@ -658,8 +656,8 @@ if (!defined($input) || $input eq '') {
     }
 
     my $candidate = $msg . ($msg eq "\x{26BE} " ? "" : $bar) . $snippet;
-    if ($username eq getEggdropUID() and visible_len($candidate) > $CHAR_BUDGET) {
-      # visible_len() only useful for irc
+    if ($username eq getEggdropUID() and utf8_len($candidate) > $CHAR_BUDGET) {
+      # utf8_len() only useful for irc
       last;
     }
     $msg = $candidate;
