@@ -35,7 +35,7 @@ my $geo = undef;
 my $query = undef;
 
 my $fuelId = 1; # TODO
-my $dist = 5; # km TODO
+my $dist = 5;
 
 my $curl_impersonate = "curl-impersonate-chrome";
 my $curl_impersonate_path = `which $curl_impersonate`;
@@ -61,7 +61,8 @@ while ($i <= $#ARGV) {
     $i++;
     next;
   }
-  if (isNumeric($ARGV[$i])) {
+  if (isNumeric($ARGV[$i]) and length($ARGV[$i]) != 5) {
+    # not a zip code, must be a distance
     $dist = $ARGV[$i];
     $i++;
     next;
@@ -109,7 +110,7 @@ open (JSON, '-|', "curl --compressed --max-time 10 -s -k -L -H '${ct}' --data '$
 my $json = <JSON>;
 close(JSON);
 if ($json =~ /(Cloudflare|challenge-error-text)/) {
-  print "Error: unable to retrieve price list\n";
+  print "Error: unable to retrieve station list (Cloudflare)\n";
   exit $exitnonzeroonerror;
 }
 my $j = decode_json($json) or die "parse error: $json\n";
