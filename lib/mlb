@@ -526,6 +526,23 @@ sub getStandingsLine {
           } else {
             my $ord = $divRank . ($divRank eq '2' ? 'nd' : $divRank eq '3' ? 'rd' : 'th');
             $line .= $sep . "$ord in $divName" . ($gb && $gb ne '-' ? " ($gb GB)" : "");
+
+            # Wildcard standing
+            my $wcRank = $trec->{wildCardRank} // '';
+            my $wcGB   = $trec->{wildCardGamesBack} // '';
+            if ($wcRank && $wcGB ne '') {
+              if ($wcGB eq '-' || $wcGB =~ /^\+/) {
+                # In a wildcard spot
+                my $wcStr = "WC$wcRank";
+                if ($wcGB =~ /^\+(\d+\.?\d*)/) {
+                  $wcStr .= " (+$1 GA)";
+                }
+                $line .= $sep . green($wcStr);
+              } else {
+                # Outside looking in
+                $line .= $sep . "$wcGB GB of WC";
+              }
+            }
           }
         }
         return $line;
