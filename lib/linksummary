@@ -993,6 +993,7 @@ sub doReddit {
 
   my $jsonurl;
   my $commentId;
+  my $timeout = 20;
 
   if ($url =~ m|https?://((www\|old\|np\|new)\.)?reddit\.com/(r/\w+/comments/)?(\w+)/([^/]+/\w+/?)?|i) {
     $id = $4;
@@ -1011,21 +1012,40 @@ sub doReddit {
   }
 
   #print "$jsonurl\n";
-  my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0";
-  our $scrapingant_key;
-  if (defined $scrapingant_key) {
-    $jsonurl = "https://api.scrapingant.com/v2/general?url=". uri_escape($jsonurl) . "&x-api-key=${scrapingant_key}&browser=false";
+  my $curl_bin = "curl-impersonate-chrome";
+  my $curl_bin_path = `which $curl_bin`;
+  chomp $curl_bin_path;
+  if ( not -e $curl_bin_path or not -x $curl_bin_path ) {
+    $curl_bin_path = $ENV{HOME} . "/bin/$curl_bin";
   }
-  open(HTTP, '-|', "curl --max-time $timeout -A '$ua' -L -k -s '$jsonurl'");
+  if ( not -e $curl_bin_path or not -x $curl_bin_path ) {
+    print("Warning: unable to find $curl_bin\n");
+    $curl_bin_path = "curl";
+  }
+  #my $ua = "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0";
+  our $scrapingant_key;
+  #if (defined $scrapingant_key) {
+  #  $jsonurl = "https://api.scrapingant.com/v2/general?url=". uri_escape($jsonurl) . "&x-api-key=${scrapingant_key}&browser=false";
+  #}
+  #print("$curl_bin_path --max-time $timeout -A '$ua' -L -k -s '$jsonurl'");
+  #open(HTTP, '-|', "$curl_bin_path --max-time $timeout -A '$ua' -L -k -s '$jsonurl'");
+  open(HTTP, '-|', "$curl_bin_path -4 --max-time $timeout -L -k -s '$jsonurl'");
   binmode(HTTP, ":utf8");
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $json = <HTTP>;
   close(HTTP);
 
+  if ($json =~ m/Your request has been blocked due to a network policy./ or
+      $json =~ m/You've been blocked by network security./) {
+    print "error: blocked\n";
+    exit 0;
+  }
   if ($json =~ m/^\s*$/) {
     print "error: no response\n";
     exit 0;
   }
+
+  #print $json, "\n";
 
   my $j = decode_json($json);
 
