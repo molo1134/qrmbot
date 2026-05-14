@@ -615,10 +615,11 @@ sub lookupPlayer {
 }
 
 sub renderPlayerStats {
-  my ($player, $posType) = @_;
+  my ($player) = @_;
 
   my $playerId = $player->{id};
   my $name     = $player->{fullName};
+  my $posType  = $player->{primaryPosition}{type} // '';
   my $isTwoWay = ($posType eq 'Two-Way Player');
 
   my $sep = " \x{00B7} ";
@@ -788,8 +789,7 @@ unless ($team) {
   # Try player lookup
   my $player = lookupPlayer($input);
   if ($player) {
-    my $posType = $player->{primaryPosition}{type} // '';
-    renderPlayerStats($player, $posType);
+    renderPlayerStats($player);
     exit 0;
   }
 
