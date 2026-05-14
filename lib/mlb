@@ -162,7 +162,7 @@ my %teamIdToColorCodes = (
   BAL =>          [208,             16,               53,               88],  # orange on black
   BOS =>          [203,             17,               64,               24],  # red on navy blue #BD3039 #0D2B56
   CHC =>          [203,             18,               64,               36],  # red on dark blue #CC3433 #0E3386
-  CWS =>          [16,              250,              88,               96],  # black on silver	 #000000 #C4CED4
+  CWS =>          [16,              250,              88,               96],  # black on silver  #000000 #C4CED4
   CIN =>          [231,             124,              98,               40],  # white on red
   CLE =>          [203,             17,               64,               24],  # red on navy blue
   COL =>          [171,             16,               61,               88],  # purple on black
@@ -377,14 +377,14 @@ sub renderLiveGame {
     if ($username eq getEggdropUID()) {
       my $avail = $CHAR_BUDGET - $used;
       if ($avail > 20) {
-	my $lp = $lastPlay;
-	if (utf8_len($lp) > $avail) {
-	  $lp = substr($lp, 0, $avail - 3);
-	  $lp =~ s/\S+$//;   # drop partial word at end
-	  $lp =~ s/\s+$//;   # trim trailing whitespace
-	  $lp .= "...";
-	}
-	$msg .= $sep . "Last: " . italic($lp);
+        my $lp = $lastPlay;
+        if (utf8_len($lp) > $avail) {
+          $lp = substr($lp, 0, $avail - 3);
+          $lp =~ s/\S+$//;   # drop partial word at end
+          $lp =~ s/\s+$//;   # trim trailing whitespace
+          $lp .= "...";
+        }
+        $msg .= $sep . "Last: " . italic($lp);
       }
     } else {
       $msg .= $sep . "Last: " . italic($lastPlay);
@@ -517,16 +517,18 @@ sub getStandingsLine {
         my $divRank = $trec->{divisionRank} // '';
         my $gb      = $trec->{divisionGamesBack} // '0';
         my $divName = $divName{$divId} // '';
+        my $record  = sprintf("%0.3f", ($wins / ($wins + $losses)));
+        $record =~ s/^0//;
 
         my $sep = " \x{00B7} ";
         my $line = teamColor($abbrev, $name) . " ($wins-$losses)";
 
         if ($divRank && $divName) {
           if ($divRank eq '1') {
-            $line .= $sep . green("1st in $divName");
+            $line .= $sep . green("1st in $divName") . " ($record)"
           } else {
             my $ord = $divRank . ($divRank eq '2' ? 'nd' : $divRank eq '3' ? 'rd' : 'th');
-            $line .= $sep . "$ord in $divName" . ($gb && $gb ne '-' ? " ($gb GB)" : "");
+            $line .= $sep . "$ord in $divName" . ($gb && $gb ne '-' ? " ($record, $gb GB)" : " ($record)");
 
             # Wildcard standing
             my $wcRank = $trec->{wildCardRank} // '';
