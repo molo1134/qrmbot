@@ -20,6 +20,7 @@ use Encode qw(encode_utf8);
 use lib dirname(realpath(__FILE__));
 use Colors;
 use Util;
+use URI::Escape;
 
 our $cachedir = $ENV{HOME} . "/.qrmbot/cache/mlb";
 
@@ -601,6 +602,93 @@ sub renderNextGame {
   print join($sep, @parts) . "\n";
 }
 
+# --- player lookup ---
+sub lookupPlayer {
+  my ($query) = @_;
+
+  my $enc = uri_escape_utf8($query);
+  my $searchUrl = "https://statsapi.mlb.com/api/v1/people/search?names=$enc&activeStatus=Yes";
+  my $searchData = fetchJSON($searchUrl, "player_search_$enc");
+
+  return undef unless $searchData && $searchData->{people} && @{$searchData->{people}};
+  return $searchData->{people}[0];
+}
+
+sub renderPlayerStats {
+  my ($player) = @_;
+
+  my $playerId = $player->{id};
+  my $name     = $player->{fullName};
+  my $posType  = $player->{primaryPosition}{type} // '';
+  my $isTwoWay = ($posType eq 'Two-Way Player');
+
+  my $sep = " \x{00B7} ";
+
+  # Fetch stats
+  my ($hitSplits, $pitchSplits);
+  if ($isTwoWay || $posType ne 'Pitcher') {
+    my $hitUrl  = "https://statsapi.mlb.com/api/v1/people/$playerId/stats?stats=season&season=$year&group=hitting";
+    my $hitData = fetchJSON($hitUrl, "player_stats_${playerId}_${year}_hitting");
+    $hitSplits = $hitData ? ($hitData->{stats}[0]{splits} // []) : [];
+  }
+  if ($isTwoWay || $posType eq 'Pitcher') {
+    my $pitchUrl  = "https://statsapi.mlb.com/api/v1/people/$playerId/stats?stats=season&season=$year&group=pitching";
+    my $pitchData = fetchJSON($pitchUrl, "player_stats_${playerId}_${year}_pitching");
+    $pitchSplits = $pitchData ? ($pitchData->{stats}[0]{splits} // []) : [];
+  }
+
+  # Get team from whichever stats we have
+  my $splits = $hitSplits || $pitchSplits || [];
+  my $teamId   = $splits->[0]{team}{id} // 0;
+  my $teamAbbr = $teamIdToAbbr{$teamId} // '';
+  my $teamName = $teamAbbr ? $abbrevName{$teamAbbr} // $teamAbbr : '';
+
+  my @parts;
+  push @parts, "\x{26BE}";
+  push @parts, bold($name);
+  push @parts, teamColor($teamAbbr, $teamName) if $teamAbbr;
+
+  if ($isTwoWay || $posType ne 'Pitcher') {
+    if ($hitSplits && @$hitSplits) {
+      my $s = $hitSplits->[0]{stat} // {};
+      push @parts, "Bat: G:" . ($s->{gamesPlayed} // 0);
+      push @parts, "AVG:" . ($s->{avg} // '.000');
+      push @parts, "HR:" . ($s->{homeRuns} // 0);
+      push @parts, "RBI:" . ($s->{rbi} // 0);
+      push @parts, "OPS:" . ($s->{ops} // '.000');
+      push @parts, "SB:" . ($s->{stolenBases} // 0);
+    }
+  }
+
+  if ($isTwoWay || $posType eq 'Pitcher') {
+    if ($pitchSplits && @$pitchSplits) {
+      my $s = $pitchSplits->[0]{stat} // {};
+      push @parts, "Pit: G:" . ($s->{gamesPitched} // $s->{gamesPlayed} // 0);
+      push @parts, "W-L:" . ($s->{wins} // 0) . "-" . ($s->{losses} // 0);
+      push @parts, "ERA:" . ($s->{era} // '0.00');
+      push @parts, "K:" . ($s->{strikeOuts} // 0);
+      push @parts, "WHIP:" . ($s->{whip} // '0.00');
+      push @parts, "IP:" . ($s->{inningsPitched} // '0.0');
+    }
+  }
+
+  if (!@parts || @parts <= 3) {
+    push @parts, "No $year stats";
+  }
+
+  my $msg = join($sep, @parts);
+
+  my $CHAR_BUDGET = 450;
+  if ($username eq getEggdropUID() && utf8_len($msg) > $CHAR_BUDGET) {
+    $msg = substr($msg, 0, $CHAR_BUDGET - 3);
+    $msg =~ s/\S+$//;
+    $msg =~ s/\s+$//;
+    $msg .= "...";
+  }
+
+  print "$msg\n";
+}
+
 # --- main ---
 if (!defined($input) || $input eq '') {
   # No team specified — show today's games, as many as fit on one line
@@ -698,7 +786,14 @@ unless ($team) {
 }
 
 unless ($team) {
-  print "Team '$input' not recognized. Use full name or 3-letter code (e.g. PHI, NYY, LAD).\n";
+  # Try player lookup
+  my $player = lookupPlayer($input);
+  if ($player) {
+    renderPlayerStats($player);
+    exit 0;
+  }
+
+  print "No team or player found for '$input'. Use team name, 3-letter code, or player name.\n";
   exit 0;
 }
 
