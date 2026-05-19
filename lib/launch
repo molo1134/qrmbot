@@ -87,13 +87,20 @@ if (not defined $j or not defined $j->{results} or not defined $j->{results}[0])
 
 my $r = $j->{results}[0];
 
+my $desc = $r->{mission}->{description} if defined $r->{mission}->{description};
+if (defined $desc) {
+  $desc =~ s/[\n\r]/ /g;
+  $desc =~ s/\s+/ /g;
+  $desc = substr($desc, 0, 400) . "…" if length($desc) > 400;
+}
+
 print bold($r->{name}), ": $r->{window_start} by $r->{launch_service_provider}->{name}";
 print " ($r->{launch_service_provider}->{type})" if defined $r->{launch_service_provider}->{type};
 print " ", bold("mission"), ": $r->{mission}->{name}";
 print " ($r->{mission}->{type})" if defined $r->{mission}->{type};
 print " ", bold("rocket"), ": $r->{rocket}->{full_name}" if defined $r->{rocket}->{full_name};
 print " ", bold("site"), ": $r->{pad}->{name}, $r->{pad}->{location}->{name}";
-print " ", bold("desc"), ": $r->{mission}->{description}" if defined $r->{mission}->{description};
+print " ", bold("desc"), ": $desc" if defined $desc;
 print "\n";
 
 exit 0;
