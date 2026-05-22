@@ -68,15 +68,19 @@ if (not $json =~ /^\s*\[/) {
 my $j = decode_json($json);
 
 $i = 0;
+my $found = 0;
+
 while (defined $j->[$i]) {
   my $number = $j->[$i]->{number};
   if (defined $number and $number == $trainId) {
+    $found = 1;
     my $rec = $j->[$i];
 
     my ($lat, $lon) = ($rec->{location}->{latitude}, $rec->{location}->{longitude});
     my $grid = coordToGrid($lat, $lon);
     my $loc = geolocate($lat, $lon);
     my $speed_mph = round($rec->{location}->{speed} * 0.621237119);
+    my $total_mi = $rec->{total_miles};
     print "$rec->{railroad} #$number ($rec->{origin} -> $rec->{destination}) -- $speed_mph mph in $loc ($grid)";
 
     $ENV{TZ} = $rec->{current_timezone};
@@ -87,13 +91,19 @@ while (defined $j->[$i]) {
 	if (defined $srec->{arrive} and $srec->{arrive}->{type} eq "ESTIMATED") {
 	  my $sched_arrive = $srec->{sched_arrive};
 	  my $variance = $srec->{arrive}->{variance};
-	  my $est_arrive = $sched_arrive - $variance; # sign reversed
-	  my $time = strftime("%Y-%m-%d %H:%M", localtime(int($est_arrive)));
-	  my $relative = sprintf(", %dh %dm", abs($variance) / 3600, (abs($variance) % 3600) / 60);
+	  my $est_arrive = $sched_arrive - $variance if defined $sched_arrive; # sign reversed
+	  my $time = strftime("%Y-%m-%d %H:%M", localtime(int($est_arrive))) if defined $sched_arrive;
+	  $time = "" if not defined $sched_arrive;
+	  my $relative = sprintf("%s%dh %dm",
+				 ($time eq "" ? "" : ", "),
+				 abs($variance) / 3600,
+				 (abs($variance) % 3600) / 60);
 	  $relative .= " early" if $variance > 0;
 	  $relative .= " late" if $variance < 0;
 	  $relative = "" if $variance == 0;
-	  print " -- next stop: $srec->{code} (mile marker $srec->{miles}, estimated $time$relative";
+	  print " -- next stop: $srec->{code} (mile marker $srec->{miles}";
+	  printf(", %d%% of journey)", round(($srec->{miles} / $total_mi) * 100.0));
+	  print ", estimated $time$relative" if $time ne "" or $relative ne "";
 	  last;
 	}
       }
@@ -108,3 +118,6 @@ while (defined $j->[$i]) {
   }
   $i++;
 }
+
+print "$trainId not found\n" if not $found;
+exit $exitnonzeroonerror if not $found;
