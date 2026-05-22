@@ -1,0 +1,110 @@
+#!/usr/bin/perl -w
+#
+# 2-clause BSD license.
+# Copyright (c) 2026 molo1134@github. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+use Encode qw(decode);
+use I18N::Langinfo qw(langinfo CODESET);
+use JSON qw( decode_json );
+use URI::Escape;
+use Math::Round;
+use POSIX qw(floor);
+use POSIX qw(strftime);
+use POSIX qw(tzset);
+use Time::Piece ();
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Location;
+use Util;
+
+STDOUT->autoflush();
+STDERR->autoflush();
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+my $url = "https://asm-backend.transitdocs.com/map";
+my $trainId;
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if ($ARGV[$i] =~ /--help/) {
+    print "usage: amtrak <train number>\n";
+    exit $exitnonzeroonerror;
+  } elsif ($ARGV[$i] =~ /^[0-9]+$/) {
+    $trainId = $ARGV[$i];
+  } else {
+    print "unknown parameter: $ARGV[$i]";
+    exit $exitnonzeroonerror;
+  }
+  $i++;
+}
+
+if (not defined $trainId) {
+    print "usage: amtrak <train number>\n";
+    exit $exitnonzeroonerror;
+}
+
+open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+my $json = <HTTP>;
+close(HTTP);
+
+if (not $json =~ /^\s*\[/) {
+  print "error while retrieving data: ", substr($json, 0, 30), "\n";
+  exit $exitnonzeroonerror;
+}
+
+my $j = decode_json($json);
+
+$i = 0;
+while (defined $j->[$i]) {
+  my $number = $j->[$i]->{number};
+  if (defined $number and $number == $trainId) {
+    my $rec = $j->[$i];
+
+    my ($lat, $lon) = ($rec->{location}->{latitude}, $rec->{location}->{longitude});
+    my $grid = coordToGrid($lat, $lon);
+    my $loc = geolocate($lat, $lon);
+    my $speed_mph = round($rec->{location}->{speed} * 0.621237119);
+    print "$rec->{railroad} #$number ($rec->{origin} -> $rec->{destination}) -- $speed_mph mph in $loc ($grid)";
+
+    $ENV{TZ} = $rec->{current_timezone};
+    tzset;
+
+    if (defined $rec->{stops}) {
+      foreach my $srec (@{$rec->{stops}}) {
+	if (defined $srec->{arrive} and $srec->{arrive}->{type} eq "ESTIMATED") {
+	  my $sched_arrive = $srec->{sched_arrive};
+	  my $variance = $srec->{arrive}->{variance};
+	  my $est_arrive = $sched_arrive - $variance; # sign reversed
+	  my $time = strftime("%Y-%m-%d %H:%M", localtime(int($est_arrive)));
+	  my $relative = sprintf(", %dh %dm", abs($variance) / 3600, (abs($variance) % 3600) / 60);
+	  $relative .= " early" if $variance > 0;
+	  $relative .= " late" if $variance < 0;
+	  $relative = "" if $variance == 0;
+	  print " -- next stop: $srec->{code} (mile marker $srec->{miles}, estimated $time$relative";
+	  last;
+	}
+      }
+    }
+    print "\n";
+
+    if (defined $rec->{alerts}) {
+      foreach my $arec (@{$rec->{alerts}}) {
+	print yellow("  Alert: "), $arec->{text}, "\n";
+      }
+    }
+  }
+  $i++;
+}

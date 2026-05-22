@@ -44,3 +44,34 @@ proc adsb_msg {nick uhand handle input} {
 	}
 	close $fd
 }
+
+
+
+bind pub - !amtrak amtrak
+bind msg - !amtrak amtrak_msg
+set amtrakbin "/home/eggdrop/bin/amtrak"
+# load utility methods
+
+proc amtrak { nick host hand chan text } {
+	global amtrakbin
+	set query [sanitize_string [string trim "${text}"]]
+	putlog "amtrak pub: $nick $host $hand $chan $query"
+	set fd [open "|${amtrakbin} ${query}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc amtrak_msg {nick uhand handle input} {
+	global amtrakbin
+	set query [sanitize_string [string trim "${input}"]]
+	putlog "amtrak msg: $nick $uhand $handle $query"
+	set fd [open "|${amtrakbin} ${query}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
