@@ -33,6 +33,7 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
+our $cacheFile = $ENV{'HOME'} . "/.qrmbot/cache/amtrak-stations.gz";
 my $url = "https://asm-backend.transitdocs.com/map";
 my $trainId;
 
@@ -55,13 +56,28 @@ if (not defined $trainId) {
     exit $exitnonzeroonerror;
 }
 
+updateAmtrakStations();
+
+open(CACHE, '-|', "gzip -d < $cacheFile");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+my $json = <CACHE>;
+close(CACHE);
+
+if (not $json =~ /^\s*\[/) {
+  print "error while reading cache file: ", substr($json, 0, 60), "\n";
+  exit $exitnonzeroonerror;
+}
+
+my $stations = decode_json($json);
+
+
 open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
 local $/;   # read entire file -- FIXME: potentially memory hungry
-my $json = <HTTP>;
+$json = <HTTP>;
 close(HTTP);
 
 if (not $json =~ /^\s*\[/) {
-  print "error while retrieving data: ", substr($json, 0, 30), "\n";
+  print "error while retrieving data: ", substr($json, 0, 60), "\n";
   exit $exitnonzeroonerror;
 }
 
@@ -92,7 +108,7 @@ while (defined $j->[$i]) {
 	  my $sched_arrive = $srec->{sched_arrive};
 	  my $variance = $srec->{arrive}->{variance};
 	  my $est_arrive = $sched_arrive - $variance if defined $sched_arrive; # sign reversed
-	  my $time = strftime("%Y-%m-%d %H:%M", localtime(int($est_arrive))) if defined $sched_arrive;
+	  my $time = strftime("%Y-%m-%d %H:%M %Z", localtime(int($est_arrive))) if defined $sched_arrive;
 	  $time = "" if not defined $sched_arrive;
 	  my $relative = sprintf("%s%dh %dm",
 				 ($time eq "" ? "" : ", "),
@@ -101,7 +117,9 @@ while (defined $j->[$i]) {
 	  $relative .= " early" if $variance > 0;
 	  $relative .= " late" if $variance < 0;
 	  $relative = "" if $variance == 0;
-	  print " -- next stop: $srec->{code} (mile marker $srec->{miles}";
+	  my $stationRec = getRecForStation($srec->{code}, $stations);
+	  my $stationDesc = "$stationRec->{city}, $stationRec->{state}";
+	  print " -- next stop: $srec->{code}, $stationDesc (mile marker $srec->{miles}";
 	  printf(", %d%% of journey)", round(($srec->{miles} / $total_mi) * 100.0));
 	  print ", estimated $time$relative" if $time ne "" or $relative ne "";
 	  last;
@@ -111,9 +129,8 @@ while (defined $j->[$i]) {
     print "\n";
 
     if (defined $rec->{alerts}) {
-      foreach my $arec (@{$rec->{alerts}}) {
-	print yellow("  Alert: "), $arec->{text}, "\n";
-      }
+      print yellow("  Alert: "), $rec->{alerts}->[0]->{text}, "\n";
+      # only print one
     }
   }
   $i++;
@@ -121,3 +138,45 @@ while (defined $j->[$i]) {
 
 print "$trainId not found\n" if not $found;
 exit $exitnonzeroonerror if not $found;
+
+
+sub updateAmtrakStations {
+  my $url = "https://asm-backend.transitdocs.com/stationInfo";
+  our $cacheFile;
+
+  my $needSta = 0;
+  my $now = time;
+  my $maxage = 604800; # 1 week
+  if (not -e $cacheFile) {
+    $needSta = 1
+  } else {
+    my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $cacheFile;
+    if (defined $mtime) {
+      my $age = $now - $mtime;
+      if ($age > $maxage or $size < 1024) {
+	$needSta = 1;
+      }
+    } else {
+      $needSta = 1;
+    }
+  }
+  if ($needSta == 1) {
+    #print "$url\n";
+    system("curl --stderr - -s -k -L --max-time 20 --retry 1 '$url' | gzip -c > '$cacheFile' ");
+  }
+}
+
+
+sub getRecForStation {
+  my $sta = shift;
+  my $stations = shift;
+
+  my $i = 0;
+  while (defined $stations->[$i]) {
+    if ($stations->[$i]->{code} eq $sta) {
+      return $stations->[$i];
+    }
+    $i++;
+  }
+  return undef;
+}
