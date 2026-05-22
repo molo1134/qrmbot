@@ -79,7 +79,7 @@ while (defined $j->[$i]) {
     my ($lat, $lon) = ($rec->{location}->{latitude}, $rec->{location}->{longitude});
     my $grid = coordToGrid($lat, $lon);
     my $loc = geolocate($lat, $lon);
-    my $speed_mph = round($rec->{location}->{speed} * 0.621237119);
+    my $speed_mph = round($rec->{location}->{speed});
     my $total_mi = $rec->{total_miles};
     print "$rec->{railroad} #$number ($rec->{origin} -> $rec->{destination}) -- $speed_mph mph in $loc ($grid)";
 
