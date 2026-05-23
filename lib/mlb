@@ -91,6 +91,22 @@ sub fetchJSON {
   return decode_json($res);
 }
 
+sub getPitcherERA {
+  my ($pitcherId) = @_;
+  return '' unless $pitcherId;
+
+  my $url = "https://statsapi.mlb.com/api/v1/people/$pitcherId/stats?stats=season&season=$year&group=pitching";
+  my $data = fetchJSON($url, "pitcher_era_${pitcherId}_$year");
+  return '' unless $data && $data->{stats} && @{$data->{stats}};
+
+  my $splits = $data->{stats}[0]{splits} // [];
+  return '' unless @$splits;
+
+  my $era = $splits->[0]{stat}{era} // '';
+  return '' unless defined $era && $era ne '';
+  return sprintf("%.2f ERA", $era);
+}
+
 # --- team map: name → [abbrev, teamId] ---
 my %teammap = (
   # AL East
@@ -408,11 +424,14 @@ sub renderFinalGame {
   my $decisions = ($feed && $feed->{liveData}) ? ($feed->{liveData}{decisions} // {}) : {};
   my $wpName = $decisions->{winner}{fullName} // '';
   my $lpName = $decisions->{loser}{fullName}  // '';
+  my $svName = $decisions->{save}{fullName}   // '';
 
   my $pLabel = playoffLabel($game);
   my $sStr   = seriesStr($game);
 
   my $sep = " \x{00B7} ";
+  my $CHAR_BUDGET = 450;
+
   my @parts;
   push @parts, "\x{26BE}";
   push @parts, $prefix if $prefix;
@@ -424,11 +443,36 @@ sub renderFinalGame {
   my @detail;
   push @detail, "W: $wpName" if $wpName;
   push @detail, "L: $lpName" if $lpName;
+  push @detail, "SV: $svName" if $svName;
   push @parts, join(" ", @detail) if @detail;
 
   push @parts, "Series: " . $sStr if $sStr;
 
-  print join($sep, @parts) . "\n";
+  my $msg = join($sep, @parts);
+
+  # Top performers (3 stars of the game) — fit on same line
+  my $topPerf = ($feed && $feed->{liveData}) ? ($feed->{liveData}{boxscore}{topPerformers} // []) : [];
+  if (@$topPerf) {
+    my @stars;
+    for my $tp (@$topPerf) {
+      my $name = $tp->{player}{person}{fullName} // '';
+      next unless $name;
+      my $summary = $tp->{player}{stats}{pitching}{summary}
+                 // $tp->{player}{stats}{batting}{summary}
+                 // '';
+      push @stars, $summary ? "$name ($summary)" : $name;
+    }
+
+    if (@stars && $username eq getEggdropUID()) {
+      # Trim stars to fit the IRC budget
+      while (@stars > 1 && utf8_len($msg . $sep . "\x{2605} " . join($sep, @stars)) > $CHAR_BUDGET) {
+        pop @stars;
+      }
+    }
+    $msg .= $sep . "\x{2605} " . join($sep, @stars) if @stars;
+  }
+
+  print $msg . "\n";
 }
 
 sub renderPreviewGame {
@@ -440,8 +484,12 @@ sub renderPreviewGame {
   my $hAbbr = $home->{abbreviation} // '???';
   my $time  = fmtTime($game->{gameDate} // '');
 
-  my $awayProb = $game->{teams}{away}{probablePitcher}{fullName} // '';
-  my $homeProb = $game->{teams}{home}{probablePitcher}{fullName} // '';
+  my $awayPitcher = $game->{teams}{away}{probablePitcher} // {};
+  my $homePitcher = $game->{teams}{home}{probablePitcher} // {};
+  my $awayProb = $awayPitcher->{fullName} // '';
+  my $homeProb = $homePitcher->{fullName} // '';
+  my $awayERA  = getPitcherERA($awayPitcher->{id}) if $awayPitcher->{id};
+  my $homeERA  = getPitcherERA($homePitcher->{id}) if $homePitcher->{id};
 
   my $pLabel = playoffLabel($game);
 
@@ -452,7 +500,11 @@ sub renderPreviewGame {
   push @parts, $pLabel if $pLabel;
   push @parts, teamColor($aAbbr) . " @ " . teamColor($hAbbr);
   push @parts, $time if $time;
-  push @parts, "$awayProb vs. $homeProb" if $awayProb && $homeProb;
+
+  my @probParts;
+  push @probParts, $awayERA ? "$awayProb ($awayERA)" : $awayProb if $awayProb;
+  push @probParts, $homeERA ? "$homeProb ($homeERA)" : $homeProb if $homeProb;
+  push @parts, join(" vs. ", @probParts) if @probParts == 2;
 
   print join($sep, @parts) . "\n";
 }
@@ -592,14 +644,22 @@ sub renderNextGame {
   if ($nextGame->{gameDate}) {
     $tStr = fmtTime($nextGame->{gameDate});
   }
-  my $awayProb = $nextGame->{teams}{away}{probablePitcher}{fullName} // '';
-  my $homeProb = $nextGame->{teams}{home}{probablePitcher}{fullName} // '';
+  my $awayPitcher = $nextGame->{teams}{away}{probablePitcher} // {};
+  my $homePitcher = $nextGame->{teams}{home}{probablePitcher} // {};
+  my $awayProb = $awayPitcher->{fullName} // '';
+  my $homeProb = $homePitcher->{fullName} // '';
+  my $awayERA  = getPitcherERA($awayPitcher->{id}) if $awayPitcher->{id};
+  my $homeERA  = getPitcherERA($homePitcher->{id}) if $homePitcher->{id};
 
   my @parts;
   push @parts, "\x{26BE}";
   push @parts, $prefix if $prefix;
   push @parts, "Next: $at $opp $date" . ($tStr ? " $tStr" : "");
-  push @parts, "($awayProb vs. $homeProb)" if $awayProb && $homeProb;
+
+  my @probParts;
+  push @probParts, $awayERA ? "$awayProb ($awayERA)" : $awayProb if $awayProb;
+  push @probParts, $homeERA ? "$homeProb ($homeERA)" : $homeProb if $homeProb;
+  push @parts, "(" . join(" vs. ", @probParts) . ")" if @probParts == 2;
 
   print join($sep, @parts) . "\n";
 }
