@@ -153,6 +153,8 @@ while ($combined_html =~ m|(<li>\s*<div class="img">.*?</li>)|gsi) {
   # Event name (title attribute of the detail link)
   if ($item =~ m|href="/hamfests/[^"]*"\s+title="([^"]+)"|) {
     $ev{name} = decodeEntities($1);
+    $ev{name} =~ s/^\s*//;
+    $ev{name} =~ s/\s*$//;
   }
   next unless defined $ev{name};
   next if $ev{name} eq "Learn More";
@@ -185,7 +187,7 @@ while ($combined_html =~ m|(<li>\s*<div class="img">.*?</li>)|gsi) {
 }
 
 if (@events == 0) {
-  print "📻 No upcoming hamfests found in the ARRL database for the next $DAYS_AHEAD days\n";
+  print "No upcoming hamfests found in the ARRL database for the next $DAYS_AHEAD days\n";
   exit 0;
 }
 
@@ -198,7 +200,7 @@ if (@events == 0) {
 } @events;
 
 if (@events == 0) {
-  print "📻 No hamfests found within $MAX_DIST_MI miles in the next $DAYS_AHEAD days\n";
+  print "No hamfests found within $MAX_DIST_MI miles in the next $DAYS_AHEAD days\n";
   exit 0;
 }
 
@@ -206,18 +208,18 @@ my $count = @events < $MAX_RESULTS ? scalar @events : $MAX_RESULTS;
 
 # --- Output ---
 my @month_abbr = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-my $sep = " \x{00B7} ";
+my $sep = "; ";
 
-print "📻 Upcoming hamfests near " . bold($location_name) . ":\n";
+print "Upcoming hamfests near " . bold($location_name) . ":\n";
 
 for my $ev (@events[0..$count-1]) {
   my ($mon, $day, $yr) = split('/', $ev->{date});
   my $date_fmt = $month_abbr[$mon - 1] . " " . int($day);
 
-  print "📅 " . bold($date_fmt) . " \x{2014} " . bold($ev->{name});
+  print " * " . bold($date_fmt) . " - " . bold($ev->{name});
   print ", " . $ev->{location} if defined $ev->{location};
   print " (" . $ev->{dist_mi} . " mi)";
-  print $sep . $ev->{type}    if defined $ev->{type};
+  print $sep . $ev->{type}    if defined $ev->{type} and $ev->{type} ne "ARRL Hamfest";
   print $sep . $ev->{website} if defined $ev->{website};
   print "\n";
 }
