@@ -288,10 +288,7 @@ sub distBearing {
 
   my ($dist, $bearing);
 
-  # disable "experimental" warning on smart match operator use
-  no if $] >= 5.018, warnings => "experimental::smartmatch";
-
-  if (@origin ~~ @foreign) {	  # smart match operator - equality comparison
+  if (arraysEqual(\@origin, \@foreign)) {
     $dist = 0;
     $bearing = 0;
   } else {

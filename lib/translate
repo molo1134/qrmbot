@@ -19,9 +19,6 @@ use lib dirname(realpath(__FILE__));
 use Colors;
 use Util;
 
-# disable "experimental" warning on smart match operator use
-no if $] >= 5.018, warnings => "experimental::smartmatch";
-
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
@@ -335,7 +332,7 @@ sub do_deepl {
   my $dsource = uc $source;
 
   my @targetlist = keys %lang_dl_target;
-  if (not $target ~~ @targetlist) {
+  if (not (grep {$_ eq $target} @targetlist)) {
     print "DEEPL: not found: $target\n";
     return 0;
   }

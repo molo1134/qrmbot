@@ -22,9 +22,6 @@ use Time::Piece ();
 use List::Util qw[min max];
 use POSIX qw(strftime);
 
-# disable "experimental" warning on smart match operator use
-no if $] >= 5.018, warnings => "experimental::smartmatch";
-
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 my $highlight="vt220";
 $highlight = "none" if ! -t STDOUT;

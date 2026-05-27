@@ -12,7 +12,7 @@ use feature 'unicode_strings';
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(decodeEntities stripIrcColors getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum moveFile shortenUrl isNumeric getEggdropUID getDxccDataRef updateCty checkCtyDat checkMW scrapeMW);
+@EXPORT = qw(decodeEntities stripIrcColors getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum moveFile shortenUrl isNumeric arraysEqual getEggdropUID getDxccDataRef updateCty checkCtyDat checkMW scrapeMW);
 
 use URI::Escape;
 use Date::Manip;
@@ -401,6 +401,35 @@ sub isNumeric {
   } else {
     warn "isNumeric requires an argument!";
   }
+}
+
+# check for array equality equal in length, ordered contents; references
+# contained must also be equal (does not delve into substructures)
+sub arraysEqual {
+  my $a_ref = shift;
+  my $b_ref = shift;
+
+  return 0 if @$a_ref != @$b_ref; # length comparison
+
+  for my $i (0 .. $#$a_ref) {
+    my ($a, $b) = ($a_ref->[$i], $b_ref->[$i]);
+
+    # If both are references, compare reference identity
+    if (ref($a) || ref($b)) {
+      return 0 if ref($a) ne ref($b) or $a != $b;
+      next;
+    }
+
+    # Numeric comparison if both numeric
+    if (isNumeric($a) and isNumeric($b)) {
+      return 0 if $a != $b;
+      next;
+    }
+
+    # Otherwise string comparison
+    return 0 if $a ne $b;
+  }
+  return 1;
 }
 
 sub getEggdropUID {

@@ -146,9 +146,6 @@ $url{"AVA5-50"}   = "https://www.commscope.com/globalassets/digizuite/115359-p36
 $url{"AVA6-50"}   = "https://www.commscope.com/globalassets/digizuite/115393-p360-ava6-50-external.pdf";
 $url{"AVA7-50"}   = "https://www.commscope.com/globalassets/digizuite/115405-p360-ava7-50-external.pdf";
 
-# disable "experimental" warning on smart match operator use
-no if $] >= 5.018, warnings => "experimental::smartmatch";
-
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 
 # change this to 0 to always exit with success
@@ -196,7 +193,8 @@ if (defined $coax and (not defined $freq or not defined $len or not defined $fre
   # display the attenuation table
   my @types = keys %loss;
   my $uc_coax = uc $coax;
-  if (not $coax ~~ @types and not $uc_coax ~~ @types) {
+  if (not (grep { $_ eq $coax } @types) and
+      not (grep { $_ eq $uc_coax } @types)) {
     print "Unable to find coax type \"$coax\". Valid types: ", join(", ", sort keys %loss), "\n";
     exit $exitnonzeroonerror;
   }
@@ -226,7 +224,8 @@ if (not defined $coax or not defined $freq or not defined $len or not defined $f
 
 my @types = keys %loss;
 my $uc_coax = uc $coax;
-if (not $coax ~~ @types and not $uc_coax ~~ @types) {
+if (not (grep { $_ eq $coax } @types) and
+    not (grep { $_ eq $uc_coax } @types)) {
   print "Unable to find coax type \"$coax\". Valid types: ", join(", ", sort keys %loss), "\n";
   exit $exitnonzeroonerror;
 }

@@ -16,9 +16,6 @@ use lib dirname(realpath(__FILE__));
 use Util;
 use Colors;
 
-# disable "experimental" warning on smart match operator use
-no if $] >= 5.018, warnings => "experimental::smartmatch";
-
 @ARGV = map { decode "utf-8", $_ } @ARGV;
 
 # eggdrop doesn't split args on spaces
@@ -411,7 +408,8 @@ while ($i <= $#ARGV) {
 	  print "error: must specify a count before users\n";
 	  exit 0;
 	}
-	if (not ($ARGV[$i] ~~ @draws)) {  # don't draw more than once per user id
+	# don't draw more than once per user id
+	if (not (grep {$_->[0] eq $ARGV[$i]} @draws)) {
 	  push @draws, [ $ARGV[$i], $n ]; # array ref
 	  $total = $total + $n;
 	  if ($total > 52) {
