@@ -357,6 +357,7 @@ proc rickface { nick host hand chan text} {
 }
 
 bind pub - !goose goose
+bind pub - !honk goose
 proc goose { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
