@@ -382,10 +382,10 @@ proc bobik { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
 	}
-	putchan $chan "  /\___/\"
-	putchan $chan " / .   . \"
-	putchan $chan " \   x   /"
-	putchan $chan "  \_____/ "
+	putchan $chan "  /\___/\ "
+	putchan $chan " / .   . \ "
+	putchan $chan " \   x   / "
+	putchan $chan "  \_____/  "
 }
 
 bind pub - !monkee daveface
