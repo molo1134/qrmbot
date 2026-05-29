@@ -377,6 +377,17 @@ proc goony { nick host hand chan text} {
 	putchan $chan "goony goo goo"
 }
 
+bind pub - !bobik bobik
+proc bobik { nick host hand chan text} {
+	if [string equal "#amateurradio" $chan] then {
+		return
+	}
+	putchan $chan "  /\___/\"
+	putchan $chan " / .   . \"
+	putchan $chan " \   x   /"
+	putchan $chan "  \_____/ "
+}
+
 bind pub - !monkee daveface
 proc daveface { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
