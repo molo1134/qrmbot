@@ -1678,27 +1678,14 @@ bind pub - !scores scores_pub
 bind msg - !scores scores_msg
 
 set cosb_base "https://contestonlinescore.com/scoreboard/"
-set cosb_https_ready -1
 
 proc cosb_fetch {url} {
-	global cosb_https_ready
-	package require http
-	if {$cosb_https_ready == -1} {
-		if {[catch {
-			package require tls
-			http::register https 443 [list ::tls::socket]
-			set cosb_https_ready 1
-		} err]} {
-			putlog "cosb: cannot register HTTPS: $err"
-			set cosb_https_ready 0
-		}
-	}
-	if {!$cosb_https_ready} { return "" }
+	set data ""
 	if {[catch {
-		set tok [http::geturl $url -timeout 15000 \
-			-headers [list "User-Agent" "eggdrop-cosb-bot/1.0"]]
-		set data [http::data $tok]
-		http::cleanup $tok
+		set fd [open "|curl -skL -A \"eggdrop-cosb-bot/1.0\" \"${url}\"" r]
+		fconfigure $fd -encoding utf-8
+		set data [read $fd]
+		close $fd
 	} err]} {
 		putlog "cosb_fetch error: $err"
 		return ""
