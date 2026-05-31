@@ -43,6 +43,7 @@
  * `!iota` -- search IOTA islands
  * `!1x1` -- search 1x1 special event stations
  * `!contests` -- list current and upcoming contests
+ * `!scores` -- look up a callsign on Contest Online ScoreBoard (COSB)
  * `!wrtc` -- show WRTC standings for a callsign
  * `!fspl` -- free space path loss calculator
  * `!coax` `!atten` -- coax attenuation calculator
@@ -943,6 +944,48 @@ Example:
     <qrm> next weekend: Kawanua DX Contest; REF Contest, CW; BARTG RTTY
           Sprint; Winter Field Day
 ```
+
+### `!scores` -- look up a callsign on Contest Online ScoreBoard (COSB)
+
+Searches all currently active contests on contestonlinescore.com for the given
+callsign and reports rank, score, and QSO count for each contest found.
+
+Usage:
+
+```
+    !scores <callsign>
+```
+
+Examples:
+
+```
+    <W0NY> !scores AA3B
+    <qrm> COSB [CQ WPX CW]: AA3B #10 | Score: 8289099 | QSOs: 2693
+
+    <W0NY> !scores N3RD
+    <qrm> COSB [CQ WPX CW]: N3RD #249 | Score: 53808 | QSOs: 126
+
+    <W0NY> !scores W1AW
+    <qrm> W1AW not found in active COSB contest(s): CQ WPX CW
+```
+
+If the callsign is active in more than one contest (e.g. a CWT day with
+overlapping sprints), each match is reported on its own line:
+
+```
+    <W0NY> !scores AA3B
+    <qrm> COSB [CWops Mini-CWT 1]: AA3B #3 | Score: 4182 | QSOs: 66
+    <qrm> COSB [NCCC NA CW Sprint]: AA3B #7 | Score: 1820 | QSOs: 52
+```
+
+If no contests are currently active:
+
+```
+    <W0NY> !scores AA3B
+    <qrm> No contests currently on air at COSB.
+```
+
+Data source: https://contestonlinescore.com/
 
 ### `!wrtc` -- show WRTC standings for a callsign
 
