@@ -14,13 +14,14 @@ binmode(STDOUT, ":utf8");
 
 use JSON::PP qw(decode_json);
 use POSIX qw(strftime);
+use Encode qw(encode_utf8);
+use URI::Escape;
+
 use File::Basename;
 use Cwd 'realpath';
-use Encode qw(encode_utf8);
 use lib dirname(realpath(__FILE__));
 use Colors;
 use Util;
-use URI::Escape;
 
 our $cachedir = $ENV{HOME} . "/.qrmbot/cache/mlb";
 
