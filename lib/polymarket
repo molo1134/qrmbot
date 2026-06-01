@@ -14,6 +14,7 @@ binmode(STDOUT, ":utf8");
 
 use JSON::PP qw( decode_json );
 use URI::Escape;
+use Encode qw(encode_utf8);
 
 use File::Basename;
 use Cwd 'realpath';
@@ -70,11 +71,9 @@ sub fmt_pct {
   return sprintf('%.0f%%', $p * 100);
 }
 
-sub visible_len {
+sub utf8_len {
   my $s = shift // '';
-  $s =~ s/\x03\d{1,2}(,\d{1,2})?//g;  # IRC color codes
-  $s =~ s/[\x02\x0F\x16\x1F]//g;       # bold, reset, reverse, underline
-  return length($s);
+  return length(encode_utf8($s));
 }
 
 sub color_pct {
@@ -110,6 +109,7 @@ sub print_market {
 
   my $question = $market->{question} // "Unknown";
   my $volume   = $market->{volumeNum} // ($market->{volume} // 0) + 0;
+  my $liq      = $market->{liquidity} // ($market->{liquidity} // 0) + 0;
 
   unless (defined $url) {
     my @eslugs = map { $_->{slug} } @{$market->{events} // []};
@@ -123,6 +123,7 @@ sub print_market {
   print bold($question);
   print $sep . outcome_str($market);
   print $sep . "Vol: " . fmt_vol($volume);
+  print $sep . "Liquidity: " . fmt_vol($liq);
   print $sep . $url;
   print "\n";
 }
@@ -192,7 +193,9 @@ sub print_event {
     ($_->{question} // "") =~ /\bO\/U\b|\bSpread\b|\bTotal\b/i
   } @markets;
 
-  { my $s = shortenUrl($event_url); $event_url = $s if defined $s; }
+  my $s = shortenUrl($event_url);
+  $event_url = $s if defined $s;
+
   if (@moneyline && @prop_markets) {
     my $ml  = $moneyline[0];
     my $vol = ($ml->{volumeNum} // ($ml->{volume} // 0)) + 0;
@@ -232,10 +235,10 @@ sub print_event {
     return;
   }
 
-  # Default: show as many markets as fit within the visible character budget
-  my $CHAR_BUDGET = 300;  # max visible characters for message content
+  # Default: show as many markets as fit within the irc protocol octet budget
+  my $CHAR_BUDGET = 450;  # max characters for message content
   my $MIN_ENTRIES = 3;    # always show at least this many
-  my $MAX_ENTRIES = 10;   # never show more than this many
+  my $MAX_ENTRIES = 20;   # never show more than this many
 
   my @sorted = sort { ($b->{outcomePrices} ? (decode_json($b->{outcomePrices}))->[0] + 0 : 0)
                   <=> ($a->{outcomePrices} ? (decode_json($a->{outcomePrices}))->[0] + 0 : 0) } @markets;
@@ -253,10 +256,17 @@ sub print_event {
   my $strip_sfx = $sfxlen > 15;
 
   # Shorten URL now so we can account for its length in the budget
-  { my $s = shortenUrl($event_url); $event_url = $s if defined $s; }
+  $s = undef;
+  $s = shortenUrl($event_url);
+  $event_url = $s if defined $s;
 
-  # Fixed overhead: title + trailing sep + URL
-  my $used = visible_len(bold($title)) + visible_len($sep . $event_url);
+  my $vol = "Vol: " . fmt_vol($event->{volume});
+  my $liq = "Liquidity: " . fmt_vol($event->{liquidity});
+
+  # Fixed overhead: title + trailing sep + URL + sep + volume string + sep +
+  # liqidity string
+  my $used = utf8_len(bold($title)) + utf8_len($sep . $event_url)
+	      + utf8_len($sep . $vol) + utf8_len($sep . $liq);
 
   # Greedily add entries until budget is exhausted or limits are hit
   my @entries;
@@ -282,14 +292,16 @@ sub print_event {
     } else {
       $entry = $sep . outcome_str($m);
     }
-    if (@entries >= $MIN_ENTRIES && $used + visible_len($entry) > $CHAR_BUDGET) {
+    if (@entries >= $MIN_ENTRIES && $used + utf8_len($entry) > $CHAR_BUDGET) {
       last;
     }
-    $used += visible_len($entry);
+    $used += utf8_len($entry);
     push @entries, $entry;
   }
 
   print bold($title);
+  print $sep . $vol;
+  print $sep . $liq;
   print $_ for @entries;
   print $sep . $event_url;
   print "\n";
@@ -342,7 +354,6 @@ if (defined $search_data && ref($search_data) eq 'HASH') {
   if (@events) {
     my $event     = $events[0];
     my $eslug     = $event->{slug} // "";
-    my @markets   = @{$event->{markets} // []};
     my $event_url = "https://polymarket.com/event/$eslug";
 
     print_event($event, $event_url);
