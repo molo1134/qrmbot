@@ -1,0 +1,116 @@
+#!/usr/bin/perl -w
+# Look up a callsign on Contest Online ScoreBoard (COSB).
+
+# 2-clause BSD license.
+# Copyright (c) 2026 nreed97@github. All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+use Encode qw(decode);
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+@ARGV = map { decode "utf-8", $_ } @ARGV;
+# eggdrop doesn't split args on spaces
+@ARGV = split(' ', join(' ', @ARGV));
+
+if (scalar @ARGV == 0) {
+  if ($username eq getEggdropUID()) {
+    print "usage: !scores <callsign>\n";
+  } else {
+    print "usage: $0 <callsign>\n";
+  }
+  exit $exitnonzeroonerror;
+}
+
+my $call = uc $ARGV[0];
+
+my $base = "https://contestonlinescore.com/scoreboard/";
+
+# Fetch main page and find all "On air" contest IDs and names
+my @active;
+{
+  my $html = "";
+  open(HTTP, '-|', "curl --max-time 15 -skL -A 'eggdrop-cosb-bot/1.0' '$base'");
+  binmode(HTTP, ":utf8");
+  local $/;
+  $html = <HTTP>;
+  close(HTTP);
+
+  while ($html =~ m|<option[^>]*value=['"](\d+)['"][^>]*>On air:\s*([^<]+)</option>|gi) {
+    my ($id, $name) = ($1, $2);
+    $name =~ s/\s+$//;
+    push @active, { id => $id, name => $name };
+  }
+}
+
+if (scalar @active == 0) {
+  print "No contests currently on air at COSB.\n";
+  exit 0;
+}
+
+my $found = 0;
+foreach my $contest (@active) {
+  my $url = "${base}?contest_id=$contest->{id}";
+  my $html = "";
+  open(HTTP, '-|', "curl --max-time 15 -skL -A 'eggdrop-cosb-bot/1.0' '$url'");
+  binmode(HTTP, ":utf8");
+  local $/;
+  $html = <HTTP>;
+  close(HTTP);
+
+  # Find the rate link for this call, then extract its enclosing <tr>
+  my $lcall = lc $call;
+  my $link_pos = index(lc $html, "call=$lcall");
+  next if $link_pos < 0;
+
+  my $tr_pos = rindex($html, "<tr", $link_pos);
+  next if $tr_pos < 0;
+
+  my $tr_end = index($html, "</tr>", $link_pos);
+  next if $tr_end < 0;
+
+  my $row = substr($html, $tr_pos, $tr_end - $tr_pos + 5);
+
+  # Rank: first numeric <td> content
+  my $rank;
+  $rank = $1 if $row =~ m|<td[^>]*>(\d+)|i;
+  next unless defined $rank;
+
+  # Position after the callsign cell's </td>
+  my $call_in_row = index(lc $row, "call=$lcall");
+  my $after_td = index($row, "</td>", $call_in_row) + 5;
+  my $after_call = substr($row, $after_td);
+
+  # Score: first <td> with plain digits (may have trailing &nbsp;)
+  my $score;
+  $score = $1 if $after_call =~ m|<td[^>]*>([0-9,]+)[^<]*</td>|i;
+  next unless defined $score;
+  $score =~ s/,//g;
+
+  # QSOs: first <td> containing <strong> digits
+  my $qsos;
+  $qsos = $1 if $after_call =~ m|<td[^>]*>[^<]*<strong>([0-9,]+)|i;
+  next unless defined $qsos;
+  $qsos =~ s/,//g;
+
+  print "COSB [" . bold($contest->{name}) . "]: " . bold($call) .
+        " #$rank | Score: $score | QSOs: $qsos\n";
+  $found = 1;
+}
+
+if (!$found) {
+  my @names = map { $_->{name} } @active;
+  print bold($call) . " not found in active COSB contest(s): " .
+        join(", ", @names) . "\n";
+}

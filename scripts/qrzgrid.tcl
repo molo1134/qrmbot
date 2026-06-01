@@ -208,6 +208,9 @@ bind pub - !1x1 onebyone_pub
 bind msg - !wrtc wrtc_msg
 bind pub - !wrtc wrtc_pub
 
+bind msg - !scores scores_msg
+bind pub - !scores scores_pub
+
 set qrzbin "/home/eggdrop/bin/qrz"
 set gridbin "/home/eggdrop/bin/grid"
 set drivebin "/home/eggdrop/bin/drivetime"
@@ -247,6 +250,7 @@ set sotabin "/home/eggdrop/bin/sota"
 set iotabin "/home/eggdrop/bin/iota"
 set onebyonebin "/home/eggdrop/bin/1x1"
 set wrtcbin "/home/eggdrop/bin/wrtc"
+set scoresbin "/home/eggdrop/bin/scores"
 
 set spotfile spotlist
 
@@ -2090,6 +2094,29 @@ proc wrtc_msg {nick uhand handle input} {
 	set params [sanitize_string [string trim "${input}"]]
 	putlog "wrtc msg: $nick $uhand $handle $params"
 	set fd [open "|${wrtcbin} ${params}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
+proc scores_pub { nick host hand chan text } {
+	global scoresbin
+	set call [sanitize_string [string trim "${text}"]]
+	putlog "scores pub: $nick $host $hand $chan $call"
+	set fd [open "|${scoresbin} ${call}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+proc scores_msg {nick uhand handle input} {
+	global scoresbin
+	set call [sanitize_string [string trim "${input}"]]
+	putlog "scores msg: $nick $uhand $handle $call"
+	set fd [open "|${scoresbin} ${call}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg "$nick" "$line"
