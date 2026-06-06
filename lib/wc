@@ -278,7 +278,7 @@ sub gameSnippet {
 }
 
 sub renderTeamGame {
-  my ($event, $abbrev, $group, $isIRC) = @_;
+  my ($event, $abbrev, $group, $isIRC, $goals) = @_;
   my $status = $event->{competitions}[0]{status} // {};
   my $stateName = $status->{type}{name} // '';
   my ($home, $away) = getCompetitors($event);
@@ -327,6 +327,9 @@ sub renderTeamGame {
     $msg = $prefix . bold($aAbbr) . " vs " . bold($hAbbr) . "  $dateFmt $time";
   }
 
+  # Append goal scorers if available
+  $msg .= $bar . $goals if defined($goals) && $goals ne '';
+
   # Append group standings if available
   if (defined $group) {
     my $groupLine = formatGroupLine($group, $abbrev, $isIRC);
@@ -346,6 +349,47 @@ sub findTeamEvent {
     return $e if $aAbbr eq $abbrev || $hAbbr eq $abbrev;
   }
   return undef;
+}
+
+# --- goal scorers from summary endpoint ---
+
+sub fetchSummary {
+  my $eventId = shift;
+  return fetchJSON("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=$eventId");
+}
+
+sub formatGoals {
+  my ($summary, $isIRC) = @_;
+  return '' unless defined $summary;
+  my $comp = $summary->{header}{competitions}[0] // {};
+  my $details = $comp->{details} // [];
+  my @goals;
+  foreach my $d (@$details) {
+    next unless $d->{scoringPlay};
+    my $minute = $d->{clock}{displayValue} // '';
+    my $teamAbbr = $d->{team}{abbreviation} // '';
+    my $scorer = '';
+    my $assist = '';
+    foreach my $p (@{$d->{participants} // []}) {
+      my $name = $p->{athlete}{displayName} // '';
+      next unless $name;
+      # use last name only for compactness
+      $name = (split(' ', $name))[-1];
+      if ($scorer eq '') {
+        $scorer = $name;
+      } else {
+        $assist = $name;
+      }
+    }
+    my $entry = bold($teamAbbr) . " $scorer $minute";
+    if ($assist) {
+      $entry .= " (" . grey($assist) . ")" unless $isIRC && length($entry) > 30;
+    }
+    push @goals, $entry;
+  }
+  return '' unless @goals;
+  my $label = @goals == 1 ? 'Goal: ' : 'Goals: ';
+  return $label . join(', ', @goals);
 }
 
 # ====================================================================
@@ -504,8 +548,14 @@ my $teamEvent = findTeamEvent($todayEvents, $abbrev);
 my $bar = $isIRC ? " \x{00B7} " : "\n";
 
 if (defined $teamEvent) {
-  # Team has a game today
-  print renderTeamGame($teamEvent, $abbrev, $group, $isIRC) . "\n";
+  # Team has a game today — fetch goals if live or final
+  my $stateName = $teamEvent->{competitions}[0]{status}{type}{name} // '';
+  my $goals = '';
+  if (isLive($stateName) || isFinal($stateName)) {
+    my $summary = fetchSummary($teamEvent->{id});
+    $goals = formatGoals($summary, $isIRC) if defined $summary;
+  }
+  print renderTeamGame($teamEvent, $abbrev, $group, $isIRC, $goals) . "\n";
 } else {
   # No game today — find last and next game
   my ($lastEvent, $lastDate, $nextEvent, $nextDate);
