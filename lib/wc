@@ -1,0 +1,618 @@
+#!/usr/bin/perl -w
+# World Cup 2026 scores, schedule, and group standings.
+# Data via ESPN public API — no key required.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+use JSON::PP qw(decode_json);
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+use POSIX qw(strftime);
+
+# Force Eastern Time for date math (tournament is in North America)
+$ENV{TZ} = 'America/New_York';
+
+# eggdrop passes all args as one string
+@ARGV = split(' ', join(' ', @ARGV));
+
+my $input = lc(join(' ', @ARGV));
+$input =~ s/^\s+|\s+$//g;
+
+my %teammap = (
+  # 3-letter FIFA / ESPN abbreviations
+  'mex' => 'MEX', 'cze' => 'CZE', 'kor' => 'KOR', 'rsa' => 'RSA',
+  'can' => 'CAN', 'bih' => 'BIH', 'sui' => 'SUI', 'qat' => 'QAT',
+  'bra' => 'BRA', 'sco' => 'SCO', 'hai' => 'HAI', 'mar' => 'MAR',
+  'par' => 'PAR', 'tur' => 'TUR', 'aus' => 'AUS', 'usa' => 'USA',
+  'ecu' => 'ECU', 'ger' => 'GER', 'civ' => 'CIV', 'cuw' => 'CUW',
+  'ned' => 'NED', 'swe' => 'SWE', 'jpn' => 'JPN', 'tun' => 'TUN',
+  'bel' => 'BEL', 'irn' => 'IRN', 'egy' => 'EGY', 'nzl' => 'NZL',
+  'esp' => 'ESP', 'uru' => 'URU', 'ksa' => 'KSA', 'cpv' => 'CPV',
+  'nor' => 'NOR', 'fra' => 'FRA', 'sen' => 'SEN', 'irq' => 'IRQ',
+  'arg' => 'ARG', 'aut' => 'AUT', 'alg' => 'ALG', 'jor' => 'JOR',
+  'col' => 'COL', 'por' => 'POR', 'uzb' => 'UZB', 'cod' => 'COD',
+  'eng' => 'ENG', 'cro' => 'CRO', 'pan' => 'PAN', 'gha' => 'GHA',
+  # full country names
+  'mexico'                  => 'MEX',
+  'czechia'                 => 'CZE', 'czech republic' => 'CZE',
+  'south korea'             => 'KOR', 'korea'          => 'KOR',
+  'south africa'            => 'RSA',
+  'canada'                  => 'CAN',
+  'bosnia'                  => 'BIH', 'bosnia herzegovina' => 'BIH',
+  'switzerland'             => 'SUI',
+  'qatar'                   => 'QAT',
+  'brazil'                  => 'BRA',
+  'scotland'                => 'SCO',
+  'haiti'                   => 'HAI',
+  'morocco'                 => 'MAR',
+  'paraguay'                => 'PAR',
+  'turkey'                  => 'TUR', 'turkiye'        => 'TUR',
+  'australia'               => 'AUS',
+  'united states'           => 'USA', 'america'        => 'USA',
+  'ecuador'                 => 'ECU',
+  'germany'                 => 'GER',
+  'ivory coast'             => 'CIV',
+  'curacao'                 => 'CUW', 'curaçao'        => 'CUW',
+  'netherlands'             => 'NED', 'holland'        => 'NED',
+  'sweden'                  => 'SWE',
+  'japan'                   => 'JPN',
+  'tunisia'                 => 'TUN',
+  'belgium'                 => 'BEL',
+  'iran'                    => 'IRN',
+  'egypt'                   => 'EGY',
+  'new zealand'             => 'NZL',
+  'spain'                   => 'ESP',
+  'uruguay'                 => 'URU',
+  'saudi arabia'            => 'KSA', 'saudi'          => 'KSA',
+  'cape verde'              => 'CPV',
+  'norway'                  => 'NOR',
+  'france'                  => 'FRA',
+  'senegal'                 => 'SEN',
+  'iraq'                    => 'IRQ',
+  'argentina'               => 'ARG',
+  'austria'                 => 'AUT',
+  'algeria'                 => 'ALG',
+  'jordan'                  => 'JOR',
+  'colombia'                => 'COL',
+  'portugal'                => 'POR',
+  'uzbekistan'              => 'UZB',
+  'congo dr'                => 'COD', 'congo'          => 'COD',
+  'england'                 => 'ENG',
+  'croatia'                 => 'CRO',
+  'panama'                  => 'PAN',
+  'ghana'                   => 'GHA',
+);
+
+# Round name shorthand
+my %roundLabel = (
+  'group-stage'   => 'Group',
+  'round-of-32'   => 'R32',
+  'round-of-16'   => 'R16',
+  'quarterfinals' => 'QF',
+  'semifinals'    => 'SF',
+  'third-place'   => '3rd',
+  'final'         => 'Final',
+);
+
+# --- helpers ---
+
+sub fmtTime {
+  my $iso = shift // '';
+  return '' unless $iso =~ /T(\d{2}):(\d{2})/;
+  my ($h, $m) = ($1 + 0, $2 + 0);
+  $h = ($h - 4) % 24;    # UTC to EDT
+  my $ap = $h >= 12 ? 'p' : 'a';
+  $h = $h % 12 || 12;
+  return sprintf("%d:%02d%s ET", $h, $m, $ap);
+}
+
+sub fmtDate {
+  my $d = shift // '';
+  return $d unless $d =~ /^(\d{4})-(\d{2})-(\d{2})$/;
+  my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+  return $mon[$2 - 1] . " " . int($3);
+}
+
+sub visible_len {
+  my $s = shift // '';
+  $s =~ s/\x03\d{1,2}(,\d{1,2})?//g;  # IRC color codes
+  $s =~ s/[\x02\x0F\x16\x1F\x1D]//g;   # bold, reset, reverse, underline, italic
+  return length($s);
+}
+
+sub fetchJSON {
+  my $url = shift;
+  my $ua = "Mozilla/5.0 (compatible; qrmbot)";
+  open(my $fh, '-|', "curl --max-time 10 -s -k -L -A \"$ua\" '$url'");
+  local $/;
+  my $raw = <$fh>;
+  close($fh);
+  return undef unless defined($raw) && $raw =~ /^\s*\{/;
+  return decode_json($raw);
+}
+
+sub statusLabel {
+  my $status = shift // {};
+  my $typeName = $status->{type}{name}           // '';
+  my $shortDetail = $status->{type}{shortDetail} // '';
+  my $clock = $status->{displayClock}            // '';
+
+  if ($typeName eq 'STATUS_SCHEDULED' || $typeName eq 'STATUS_PREMATCH') {
+    return '';
+  } elsif ($typeName eq 'STATUS_IN_PROGRESS') {
+    return yellow("LIVE") . " $clock";
+  } elsif ($typeName eq 'STATUS_HALFTIME') {
+    return yellow('HT');
+  } elsif ($typeName eq 'STATUS_FULL_TIME' || $typeName eq 'STATUS_FULL_EXTRA') {
+    return 'FT';
+  } elsif ($typeName eq 'STATUS_OVERTIME') {
+    return yellow('ET') . " $clock";
+  } elsif ($typeName eq 'STATUS_PENALTY') {
+    return yellow('PEN');
+  } elsif ($typeName eq 'STATUS_FINAL_PEN') {
+    return 'PEN';
+  } elsif ($typeName eq 'STATUS_POSTPONED') {
+    return yellow('PPD');
+  } elsif ($typeName eq 'STATUS_DELAYED') {
+    return yellow('DELAY');
+  } elsif ($typeName eq 'STATUS_SUSPENDED') {
+    return yellow('SUSP');
+  } elsif ($typeName eq 'STATUS_CANCELLED') {
+    return 'CNCL';
+  }
+  # fallback: use ESPN's short detail
+  return $shortDetail;
+}
+
+sub isLive {
+  my $name = shift // '';
+  return $name eq 'STATUS_IN_PROGRESS' || $name eq 'STATUS_HALFTIME'
+      || $name eq 'STATUS_OVERTIME'    || $name eq 'STATUS_PENALTY';
+}
+
+sub isFinal {
+  my $name = shift // '';
+  return $name eq 'STATUS_FULL_TIME' || $name eq 'STATUS_FULL_EXTRA'
+      || $name eq 'STATUS_FINAL_PEN';
+}
+
+# --- standings helpers ---
+
+sub fetchStandings {
+  return fetchJSON("https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings");
+}
+
+sub findGroupForTeam {
+  my ($standings, $abbrev) = @_;
+  return undef unless defined $standings;
+  foreach my $child (@{$standings->{children} // []}) {
+    foreach my $entry (@{$child->{standings}{entries} // []}) {
+      my $tAbbr = $entry->{team}{abbreviation} // '';
+      return $child if $tAbbr eq $abbrev;
+    }
+  }
+  return undef;
+}
+
+sub formatGroupLine {
+  my ($group, $highlight, $isIRC) = @_;
+  return '' unless defined $group;
+  my $name = $group->{name} // '';
+  my $entries = $group->{standings}{entries} // [];
+  my @parts;
+  foreach my $e (@$entries) {
+    my $abbr = $e->{team}{abbreviation} // '???';
+    my $pts  = 0;
+    foreach my $s (@{$e->{stats} // []}) {
+      $pts = $s->{displayValue} if $s->{name} eq 'points';
+    }
+    my $s = (defined($highlight) && $abbr eq $highlight)
+      ? bold($abbr) : $abbr;
+    $s .= " $pts";
+    push @parts, $s;
+  }
+  my $sep = $isIRC ? " \x{00B7} " : "  ";
+  return "$name: " . join($sep, @parts);
+}
+
+# --- game rendering helpers ---
+
+sub getCompetitors {
+  my $event = shift;
+  my $comp = $event->{competitions}[0] // {};
+  my @competitors = @{$comp->{competitors} // []};
+  my ($home, $away);
+  foreach my $c (@competitors) {
+    if (($c->{homeAway} // '') eq 'home') {
+      $home = $c;
+    } else {
+      $away = $c;
+    }
+  }
+  return ($home, $away);
+}
+
+sub gameSnippet {
+  my ($event, $isIRC) = @_;
+  my $status = $event->{competitions}[0]{status} // {};
+  my $stateName = $status->{type}{name} // '';
+  my ($home, $away) = getCompetitors($event);
+  return '' unless defined($home) && defined($away);
+
+  my $aAbbr = $away->{team}{abbreviation} // '???';
+  my $hAbbr = $home->{team}{abbreviation} // '???';
+  my $aScore = $away->{score} // 0;
+  my $hScore = $home->{score} // 0;
+
+  my $snippet;
+  if (isLive($stateName)) {
+    my $label = statusLabel($status);
+    $snippet = bold($aAbbr) . "($aScore) vs " . bold($hAbbr) . "($hScore) $label";
+  } elsif (isFinal($stateName)) {
+    my $suffix = '';
+    if ($stateName eq 'STATUS_FINAL_PEN') {
+      # check notes for penalty result
+      my $notes = $event->{competitions}[0]{notes} // [];
+      foreach my $n (@$notes) {
+        if (($n->{type}//'') eq 'event' && ($n->{headline}//'') =~ /penalties/i) {
+          $suffix = " ($n->{headline})";
+          last;
+        }
+      }
+    }
+    my $winner = ($aScore > $hScore) ? green($aScore) : $aScore;
+    my $wHome  = ($hScore > $aScore) ? green($hScore) : $hScore;
+    $snippet = bold($aAbbr) . "($winner) vs " . bold($hAbbr) . "($wHome) FT$suffix";
+  } else {
+    # scheduled / preview
+    my $time = fmtTime($event->{date});
+    $snippet = bold($aAbbr) . " vs " . bold($hAbbr);
+    $snippet .= " " . grey($time) if $time;
+  }
+  return $snippet;
+}
+
+sub renderTeamGame {
+  my ($event, $abbrev, $group, $isIRC) = @_;
+  my $status = $event->{competitions}[0]{status} // {};
+  my $stateName = $status->{type}{name} // '';
+  my ($home, $away) = getCompetitors($event);
+  return '' unless defined($home) && defined($away);
+
+  my $aAbbr = $away->{team}{abbreviation} // '???';
+  my $hAbbr = $home->{team}{abbreviation} // '???';
+  my $aScore = $away->{score} // 0;
+  my $hScore = $home->{score} // 0;
+  my $season = $event->{season}{slug} // '';
+  my $round  = $roundLabel{$season} // $season;
+
+  my $bar = $isIRC ? " \x{00B7} " : "\n";
+  my $msg;
+
+  # Round / group prefix
+  my $prefix = '';
+  if (defined $group) {
+    # Use the group name directly (e.g. "[Group D]") instead of round + group
+    $prefix = grey("[" . $group->{name} . "] ");
+  } else {
+    $prefix = grey("[$round] ");
+  }
+
+  my $dateStr = fmtDate(substr($event->{date}, 0, 10));
+
+  if (isLive($stateName)) {
+    my $label = statusLabel($status);
+    $msg = $prefix . bold($aAbbr) . " $aScore-$hScore " . bold($hAbbr)
+         . "  $label";
+  } elsif (isFinal($stateName)) {
+    my $suffix = '';
+    if ($stateName eq 'STATUS_FINAL_PEN') {
+      my $notes = $event->{competitions}[0]{notes} // [];
+      foreach my $n (@$notes) {
+        if (($n->{type}//'') eq 'event' && ($n->{headline}//'') =~ /penalties/i) {
+          $suffix = " PEN";
+          last;
+        }
+      }
+    }
+    $msg = $prefix . bold($aAbbr) . " $aScore-$hScore " . bold($hAbbr) . grey(" (FT$suffix)");
+  } else {
+    my $time = fmtTime($event->{date});
+    my $dateFmt = fmtDate(substr($event->{date}, 0, 10));
+    $msg = $prefix . bold($aAbbr) . " vs " . bold($hAbbr) . "  $dateFmt $time";
+  }
+
+  # Append group standings if available
+  if (defined $group) {
+    my $groupLine = formatGroupLine($group, $abbrev, $isIRC);
+    $msg .= $bar . $groupLine if $groupLine;
+  }
+
+  return $msg;
+}
+
+sub findTeamEvent {
+  my ($events, $abbrev) = @_;
+  foreach my $e (@$events) {
+    my ($home, $away) = getCompetitors($e);
+    next unless defined($home) && defined($away);
+    my $aAbbr = $away->{team}{abbreviation} // '';
+    my $hAbbr = $home->{team}{abbreviation} // '';
+    return $e if $aAbbr eq $abbrev || $hAbbr eq $abbrev;
+  }
+  return undef;
+}
+
+# ====================================================================
+# Main dispatch
+# ====================================================================
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+my $isIRC = ($username eq getEggdropUID());
+
+# --- no-args: today's matches summary (or next match day) ---
+if (!defined($input) || $input eq '') {
+  my $ball = "\x{26BD}";
+
+  # Try today first, then search forward up to 14 days
+  my ($events, $dateStr);
+  for (my $d = 0; $d <= 14; $d++) {
+    my $day = strftime("%Y%m%d", localtime(time + $d * 86400));
+    my $data = fetchJSON("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=$day");
+    my $found = $data->{events} // [];
+    if (@$found) {
+      $events = $found;
+      my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+      my ($y, $m, $day) = (localtime(time + $d * 86400))[5,4,3];
+      $dateStr = "$mon[$m] $day";
+      $dateStr = "today"    if $d == 0;
+      $dateStr = "tomorrow" if $d == 1;
+      last;
+    }
+  }
+
+  if (!defined($events) || !@$events) {
+    print "$ball No World Cup matches in the next two weeks.\n";
+    exit 0;
+  }
+
+  # Sort: in-progress first, then finals, then upcoming
+  my @sorted = sort {
+    my $sa = $a->{competitions}[0]{status}{type}{name} // '';
+    my $sb = $b->{competitions}[0]{status}{type}{name} // '';
+    my $pa = isLive($sa) ? 0 : isFinal($sa) ? 1 : 2;
+    my $pb = isLive($sb) ? 0 : isFinal($sb) ? 1 : 2;
+    $pa <=> $pb;
+  } @$events;
+
+  my $CHAR_BUDGET = 450;
+  my $bar  = " \x{00B7} ";
+  my @lines;
+  my $line = "$ball ";
+
+  foreach my $e (@sorted) {
+    my $snippet = gameSnippet($e, $isIRC);
+    next unless $snippet;
+
+    if ($isIRC) {
+      my $candidate = $line . ($line eq "$ball " ? "" : $bar) . $snippet;
+      if (visible_len($candidate) > $CHAR_BUDGET) {
+        push @lines, $line if $line ne "$ball ";
+        $line = "$ball $snippet";
+      } else {
+        $line = $candidate;
+      }
+    } else {
+      push @lines, $snippet;
+    }
+  }
+  push @lines, $line if $isIRC && $line ne "$ball ";
+
+  # Prepend date label for non-today match days
+  my $datePrefix = ($dateStr eq 'today') ? '' : grey("$dateStr: ");
+
+  if ($isIRC) {
+    foreach my $l (@lines) {
+      print "$datePrefix$l\n";
+    }
+  } else {
+    # terminal: print the date header once, then one game per line
+    if ($datePrefix) {
+      print "$ball $dateStr:\n";
+      foreach my $l (@lines) {
+        print "  $l\n";
+      }
+    } else {
+      foreach my $l (@lines) {
+        print "$ball $l\n";
+      }
+    }
+  }
+  exit 0;
+}
+
+# --- group lookup: !wc group d, !wc groupd ---
+if ($input =~ /^group\s*([a-z])$/ || $input =~ /^group([a-z])$/) {
+  my $groupLetter = uc($1);
+  if ($groupLetter gt 'L') {
+    print "No such group: Group $groupLetter (groups are A-L).\n";
+    exit 0;
+  }
+  my $standings = fetchStandings();
+  if (defined $standings) {
+    foreach my $child (@{$standings->{children} // []}) {
+      if (($child->{name} // '') eq "Group $groupLetter") {
+        my $groupLine = formatGroupLine($child, undef, $isIRC);
+        my $ball = "\x{26BD}";
+        if ($isIRC) {
+          print "$ball $groupLine\n" if $groupLine;
+        } else {
+          print "$ball Group $groupLetter:\n";
+          my $entries = $child->{standings}{entries} // [];
+          foreach my $e (@$entries) {
+            my $abbr = $e->{team}{abbreviation} // '???';
+            my $pts  = 0;
+            my $w = 0; my $d = 0; my $l = 0; my $gf = 0; my $ga = 0; my $gd = 0;
+            foreach my $s (@{$e->{stats} // []}) {
+              $pts = $s->{displayValue} if $s->{name} eq 'points';
+              $w   = $s->{displayValue} if $s->{name} eq 'wins';
+              $d   = $s->{displayValue} if $s->{name} eq 'ties';
+              $l   = $s->{displayValue} if $s->{name} eq 'losses';
+              $gf  = $s->{displayValue} if $s->{name} eq 'pointsFor';
+              $ga  = $s->{displayValue} if $s->{name} eq 'pointsAgainst';
+              $gd  = $s->{displayValue} if $s->{name} eq 'pointDifferential';
+            }
+            printf "  %-4s %2s  %s-%s-%s  %s:%s  %s\n",
+              $abbr, $pts, $w, $d, $l, $gf, $ga,
+              ($gd > 0 ? "+$gd" : $gd);
+          }
+        }
+        exit 0;
+      }
+    }
+  }
+  print "Group $groupLetter not found.\n";
+  exit 0;
+}
+
+# --- team mode ---
+(my $cleanInput = $input) =~ s/^the\s+//;
+my $abbrev = $teammap{$input} // $teammap{$cleanInput};
+
+unless (defined $abbrev) {
+  print "Unknown team: $input\n";
+  exit 0;
+}
+
+# Fetch today's scoreboard
+my $today = strftime("%Y%m%d", localtime);
+my $data = fetchJSON("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=$today");
+my $todayEvents = $data->{events} // [];
+
+# Fetch standings (for group info)
+my $standings = fetchStandings();
+my $group = findGroupForTeam($standings, $abbrev);
+
+# Look for team in today's events
+my $teamEvent = findTeamEvent($todayEvents, $abbrev);
+
+my $bar = $isIRC ? " \x{00B7} " : "\n";
+
+if (defined $teamEvent) {
+  # Team has a game today
+  print renderTeamGame($teamEvent, $abbrev, $group, $isIRC) . "\n";
+} else {
+  # No game today — find last and next game
+  my ($lastEvent, $lastDate, $nextEvent, $nextDate);
+
+  # Search backwards for last completed game (up to 5 days)
+  for (my $d = 1; $d <= 5; $d++) {
+    my $pastStr = strftime("%Y%m%d", localtime(time - $d * 86400));
+    my $pastData = fetchJSON("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=$pastStr");
+    my $pastEvents = $pastData->{events} // [];
+    foreach my $e (@$pastEvents) {
+      my $name = $e->{competitions}[0]{status}{type}{name} // '';
+      if (isFinal($name)) {
+        my $found = findTeamEvent([$e], $abbrev);
+        if (defined $found) {
+          $lastEvent = $found;
+          $lastDate  = substr($e->{date}, 0, 10);
+          last;
+        }
+      }
+    }
+    last if defined $lastEvent;
+  }
+
+  # Search forwards for next game (up to 14 days)
+  for (my $d = 1; $d <= 14; $d++) {
+    my $futStr = strftime("%Y%m%d", localtime(time + $d * 86400));
+    my $futData = fetchJSON("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=$futStr");
+    my $futEvents = $futData->{events} // [];
+    foreach my $e (@$futEvents) {
+      my $found = findTeamEvent([$e], $abbrev);
+      if (defined $found) {
+        $nextEvent = $found;
+        $nextDate  = substr($e->{date}, 0, 10);
+        last;
+      }
+    }
+    last if defined $nextEvent;
+  }
+
+  # If we still haven't found next event, also check today's events (there might
+  # be a scheduled game that hasn't started yet).
+  if (!defined $nextEvent) {
+    foreach my $e (@$todayEvents) {
+      my $name = $e->{competitions}[0]{status}{type}{name} // '';
+      if ($name eq 'STATUS_SCHEDULED') {
+        my $found = findTeamEvent([$e], $abbrev);
+        if (defined $found) {
+          $nextEvent = $found;
+          $nextDate  = substr($e->{date}, 0, 10);
+          last;
+        }
+      }
+    }
+  }
+
+  # Build round prefix
+  my $season = '';
+  if (defined $lastEvent) {
+    $season = $lastEvent->{season}{slug} // '';
+  } elsif (defined $nextEvent) {
+    $season = $nextEvent->{season}{slug} // '';
+  }
+  my $round = $roundLabel{$season} // $season;
+  my $prefix = '';
+  if (defined $group) {
+    $prefix = grey("[" . $group->{name} . "] ");
+  } else {
+    $prefix = grey("[$round] ");
+  }
+
+  my @parts;
+
+  if (defined $lastEvent) {
+    my ($lHome, $lAway) = getCompetitors($lastEvent);
+    next unless defined($lHome) && defined($lAway);
+    my $lA = $lAway->{team}{abbreviation} // '???';
+    my $lH = $lHome->{team}{abbreviation} // '???';
+    my $lAS = $lAway->{score} // 0;
+    my $lHS = $lHome->{score} // 0;
+    my $lDate = fmtDate($lastDate // '');
+    push @parts, "Last ($lDate): " . bold($lA) . " $lAS-$lHS " . bold($lH);
+  }
+
+  if (defined $nextEvent) {
+    my ($nHome, $nAway) = getCompetitors($nextEvent);
+    if (defined($nHome) && defined($nAway)) {
+      my $nA = $nAway->{team}{abbreviation} // '???';
+      my $nH = $nHome->{team}{abbreviation} // '???';
+      my $nDate = fmtDate($nextDate // '');
+      my $nTime = fmtTime($nextEvent->{date});
+      push @parts, "Next ($nDate): " . bold($nA) . " vs " . bold($nH)
+                 . ($nTime ? "  $nTime" : '');
+    }
+  }
+
+  if (@parts) {
+    my $msg = $prefix . join($bar, @parts);
+
+    # Append group standings if available
+    if (defined $group) {
+      my $groupLine = formatGroupLine($group, $abbrev, $isIRC);
+      $msg .= $bar . $groupLine if $groupLine;
+    }
+    print "$msg\n";
+  } else {
+    print "No recent or upcoming matches found for $abbrev.\n";
+  }
+}
+
+exit 0;

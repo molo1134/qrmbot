@@ -1673,4 +1673,55 @@ proc mlb_team_msg { nick uhand handle input } {
 	close $fd
 }
 
+# World Cup 2026: !wc <team> plus common aliases
+set wcbin "/home/eggdrop/bin/wc"
+bind pub - !wc wc_pub
+bind msg - !wc wc_msg
+proc wc_pub { nick host hand chan text } {
+	global wcbin
+	set param [sanitize_string [string trim "${text}"]]
+	putlog "wc pub: $nick $host $hand $chan $param"
+	set fd [open "|${wcbin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putchan $chan "$line" }
+	close $fd
+}
+proc wc_msg { nick uhand handle input } {
+	global wcbin
+	set param [sanitize_string [string trim "${input}"]]
+	putlog "wc msg: $nick $uhand $handle $param"
+	set fd [open "|${wcbin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putmsg "$nick" "$line" }
+	close $fd
+}
+
+# World Cup team aliases (!usa, !eng, !bra, etc.)
+foreach _team {mex cze kor rsa can bih sui qat bra sco hai mar par tur aus
+               usa ecu ger civ cuw ned swe jpn tun bel irn egy nzl esp uru
+               ksa cpv nor fra sen irq arg aut alg jor col por uzb cod eng
+               cro pan gha} {
+	bind pub - "!${_team}" wc_team_pub
+	bind msg - "!${_team}" wc_team_msg
+}
+unset _team
+proc wc_team_pub { nick host hand chan text } {
+	global wcbin lastbind
+	set team [string range $lastbind 1 end]
+	putlog "wc team pub: $nick $host $hand $chan $team"
+	set fd [open "|${wcbin} ${team}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putchan $chan "$line" }
+	close $fd
+}
+proc wc_team_msg { nick uhand handle input } {
+	global wcbin lastbind
+	set team [string range $lastbind 1 end]
+	putlog "wc team msg: $nick $uhand $handle $team"
+	set fd [open "|${wcbin} ${team}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putmsg "$nick" "$line" }
+	close $fd
+}
+
 putlog "fun.tcl loaded."

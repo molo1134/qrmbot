@@ -85,6 +85,7 @@
  * `!book` -- book info from Open Library (title, author, year, rating, description)
  * `!nhl` -- NHL scores: live game or last/next game for a team (e.g. `!nhl flyers`, `!flyers`)
  * `!mlb` -- MLB scores: live game, next game, or standings for a team (e.g. `!mlb phillies`, `!phillies`)
+ * `!wc` -- World Cup 2026 scores: today's matches, team info, or group standings (e.g. `!wc usa`, `!wc group d`, `!usa`)
  * `!fest` -- find upcoming hamfests near your location (uses !setgeo)
  * `!adsb` -- get plane information
  * `!hofh` -- why your radio is broke
@@ -1239,6 +1240,44 @@ Covers live games (score, inning, count, batter vs. pitcher), final games
 (score, WP, LP), postponed/suspended games, and off days (standings + next game).
 
 Data source: https://statsapi.mlb.com/
+
+### `!wc` -- World Cup 2026 scores, schedule, and group standings
+
+Usage:
+```
+    !wc [team]
+```
+
+Examples:
+```
+    <W1AW> !wc
+    <qrm> ⚽ RSA(0) vs MEX(0) 3:00p · CZE(0) vs KOR(0) 10:00p
+
+    <W1AW> !wc group d
+    <qrm> ⚽ Group D: PAR 0 · TUR 0 · AUS 0 · USA 0
+
+    <W1AW> !wc usa
+    <qrm> [Group D] PAR vs USA  Jun 13 9:00p ET
+    <qrm> Group D: PAR 0 · TUR 0 · AUS 0 · USA 0
+
+    <W1AW> !usa
+    <qrm> [Group D] PAR 1-2 USA (FT)
+    <qrm> Group D: USA 3 · PAR 1 · TUR 1 · AUS 0
+```
+
+Without arguments, shows all of today's matches sorted by in-progress, then
+final, then upcoming.
+
+Team name can be 3-letter code (`usa`, `eng`, `bra`), country name (`united states`,
+`england`, `brazil`), or common nickname (`holland`, `saudi`). Team aliases
+(e.g. `!usa`, `!eng`, `!bra`) also work directly.
+
+Covers live matches (score, minute/half), final results (including penalty
+shootouts), upcoming matches, and group standings during the group stage.
+Knockout round labels (R32, R16, QF, SF, Final) are shown once the tournament
+progresses beyond the group stage.
+
+Data source: https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/
 
 <!-- !amcon - - some dumb prepper shit -->
 
