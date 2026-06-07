@@ -170,7 +170,7 @@ sub longest_common_suffix {
 sub print_event {
   my ($event, $event_url) = @_;
   my $title   = $event->{title} // "Unknown";
-  my @markets = grep { !$_->{archived} } @{$event->{markets} // []};
+  my @markets = grep { !$_->{archived} && !$_->{negRiskOther} } @{$event->{markets} // []};
   my $sep     = " \x{00B7} ";
 
   if (@markets == 0) {
