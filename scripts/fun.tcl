@@ -1674,7 +1674,7 @@ proc mlb_team_msg { nick uhand handle input } {
 }
 
 # World Cup 2026: !wc <team> plus common aliases
-set wcbin "/home/eggdrop/bin/wc"
+set wcbin "/home/eggdrop/bin/worldcup"
 bind pub - !wc wc_pub
 bind msg - !wc wc_msg
 proc wc_pub { nick host hand chan text } {

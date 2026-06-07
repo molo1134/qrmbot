@@ -13,6 +13,7 @@ use lib dirname(realpath(__FILE__));
 use Colors;
 use Util;
 use POSIX qw(strftime);
+use Encode qw(encode_utf8);
 
 # Force Eastern Time for date math (tournament is in North America)
 $ENV{TZ} = 'America/New_York';
@@ -118,11 +119,9 @@ sub fmtDate {
   return $mon[$2 - 1] . " " . int($3);
 }
 
-sub visible_len {
+sub utf8_len {
   my $s = shift // '';
-  $s =~ s/\x03\d{1,2}(,\d{1,2})?//g;  # IRC color codes
-  $s =~ s/[\x02\x0F\x16\x1F\x1D]//g;   # bold, reset, reverse, underline, italic
-  return length($s);
+  return length(encode_utf8($s));
 }
 
 sub fetchJSON {
@@ -445,7 +444,7 @@ if (!defined($input) || $input eq '') {
 
     if ($isIRC) {
       my $candidate = $line . ($line eq "$ball " ? "" : $bar) . $snippet;
-      if (visible_len($candidate) > $CHAR_BUDGET) {
+      if (utf8_len($candidate) > $CHAR_BUDGET) {
         push @lines, $line if $line ne "$ball ";
         $line = "$ball $snippet";
       } else {
