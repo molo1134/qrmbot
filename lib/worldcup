@@ -171,7 +171,8 @@ sub statusLabel {
 sub isLive {
   my $name = shift // '';
   return $name eq 'STATUS_IN_PROGRESS' || $name eq 'STATUS_HALFTIME'
-      || $name eq 'STATUS_OVERTIME'    || $name eq 'STATUS_PENALTY';
+      || $name eq 'STATUS_OVERTIME'    || $name eq 'STATUS_PENALTY'
+      || $name eq 'STATUS_FIRST_HALF'  || $name eq 'STATUS_SECOND_HALF';
 }
 
 sub isFinal {
@@ -548,7 +549,7 @@ my $bar = $isIRC ? " \x{00B7} " : "\n";
 
 if (defined $teamEvent) {
   # Team has a game today — fetch goals if live or final
-  my $stateName = $teamEvent->{competitions}[0]{status}{type}{name} // '';
+  my $stateName = $teamEvent->{status}{type}{name} // '';
   my $goals = '';
   if (isLive($stateName) || isFinal($stateName)) {
     my $summary = fetchSummary($teamEvent->{id});
