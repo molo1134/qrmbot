@@ -143,6 +143,10 @@ sub statusLabel {
 
   if ($typeName eq 'STATUS_SCHEDULED' || $typeName eq 'STATUS_PREMATCH') {
     return '';
+  } elsif ($typeName eq 'STATUS_FIRST_HALF') {
+    return yellow("LIVE") . " $clock";
+  } elsif ($typeName eq 'STATUS_SECOND_HALF') {
+    return yellow("LIVE") . " $clock";
   } elsif ($typeName eq 'STATUS_IN_PROGRESS') {
     return yellow("LIVE") . " $clock";
   } elsif ($typeName eq 'STATUS_HALFTIME') {
@@ -308,7 +312,7 @@ sub renderTeamGame {
   if (isLive($stateName)) {
     my $label = statusLabel($status);
     $msg = $prefix . bold($aAbbr) . " $aScore-$hScore " . bold($hAbbr)
-         . "  $label";
+         . " $label";
   } elsif (isFinal($stateName)) {
     my $suffix = '';
     if ($stateName eq 'STATUS_FINAL_PEN') {
