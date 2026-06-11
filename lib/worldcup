@@ -282,7 +282,7 @@ sub gameSnippet {
 }
 
 sub renderTeamGame {
-  my ($event, $abbrev, $group, $isIRC, $goals) = @_;
+  my ($event, $abbrev, $group, $isIRC, $goals, $commentary, $stats) = @_;
   my $status = $event->{competitions}[0]{status} // {};
   my $stateName = $status->{type}{name} // '';
   my ($home, $away) = getCompetitors($event);
@@ -313,6 +313,7 @@ sub renderTeamGame {
     my $label = statusLabel($status);
     $msg = $prefix . bold($aAbbr) . " $aScore-$hScore " . bold($hAbbr)
          . " $label";
+    $msg .= "  $stats" if defined($stats) && $stats ne '';
   } elsif (isFinal($stateName)) {
     my $suffix = '';
     if ($stateName eq 'STATUS_FINAL_PEN') {
@@ -334,12 +335,10 @@ sub renderTeamGame {
   # Append goal scorers if available
   $msg .= $bar . $goals if defined($goals) && $goals ne '';
 
-  # Append group standings if available
-  if (defined $group) {
-    my $groupLine = formatGroupLine($group, $abbrev, $isIRC);
-    $msg .= $bar . $groupLine if $groupLine;
-  }
+  # Append latest commentary if available
+  $msg .= $bar . $commentary if defined($commentary) && $commentary ne '';
 
+  # Group is shown in prefix, no need for full standings
   return $msg;
 }
 
@@ -394,6 +393,47 @@ sub formatGoals {
   return '' unless @goals;
   my $label = @goals == 1 ? 'Goal: ' : 'Goals: ';
   return $label . join(', ', @goals);
+}
+
+sub formatCommentary {
+  my ($summary, $count, $isIRC) = @_;
+  return '' unless defined $summary;
+  my $comm = $summary->{commentary} // [];
+  return '' unless @$comm;
+  $count //= 1;
+  my @items;
+  for my $i (1..$count) {
+    last if $i > @$comm;
+    my $item = $comm->[-$i];
+    my $text  = $item->{text} // '';
+    my $clock = $item->{time}{displayValue} // '';
+    next unless $text;
+    my $entry = $text;
+    $entry = "$clock $entry" if $clock;
+    push @items, $entry;
+  }
+  return '' unless @items;
+  my $label = @items == 1 ? 'Play: ' : 'Latest: ';
+  return $label . join(' | ', @items);
+}
+
+sub formatStats {
+  my ($summary, $isIRC) = @_;
+  return '' unless defined $summary;
+  my $teams = $summary->{boxscore}{teams} // [];
+  return '' unless @$teams == 2;
+  my @parts;
+  for my $t (@$teams) {
+    my $abbr = $t->{team}{abbreviation} // '???';
+    my $shots = '';
+    my $onGoal = '';
+    for my $s (@{$t->{statistics} // []}) {
+      $shots  = $s->{displayValue} if $s->{name} eq 'totalShots';
+      $onGoal = $s->{displayValue} if $s->{name} eq 'shotsOnTarget';
+    }
+    push @parts, bold($abbr) . ' ' . ($shots // '') . '(' . ($onGoal // '') . ')';
+  }
+  return 'Shots: ' . join(' ', @parts);
 }
 
 # ====================================================================
@@ -552,14 +592,20 @@ my $teamEvent = findTeamEvent($todayEvents, $abbrev);
 my $bar = $isIRC ? " \x{00B7} " : "\n";
 
 if (defined $teamEvent) {
-  # Team has a game today — fetch goals if live or final
+  # Team has a game today — fetch goals and commentary if live or final
   my $stateName = $teamEvent->{status}{type}{name} // '';
   my $goals = '';
+  my $commentary = '';
+  my $stats = '';
   if (isLive($stateName) || isFinal($stateName)) {
     my $summary = fetchSummary($teamEvent->{id});
-    $goals = formatGoals($summary, $isIRC) if defined $summary;
+    if (defined $summary) {
+      $goals = formatGoals($summary, $isIRC);
+      $commentary = formatCommentary($summary, 1, $isIRC) if isLive($stateName);
+      $stats = formatStats($summary, $isIRC) if isLive($stateName) || isFinal($stateName);
+    }
   }
-  print renderTeamGame($teamEvent, $abbrev, $group, $isIRC, $goals) . "\n";
+  print renderTeamGame($teamEvent, $abbrev, $group, $isIRC, $goals, $commentary, $stats) . "\n";
 } else {
   # No game today — find last and next game
   my ($lastEvent, $lastDate, $nextEvent, $nextDate);
@@ -658,11 +704,6 @@ if (defined $teamEvent) {
   if (@parts) {
     my $msg = $prefix . join($bar, @parts);
 
-    # Append group standings if available
-    if (defined $group) {
-      my $groupLine = formatGroupLine($group, $abbrev, $isIRC);
-      $msg .= $bar . $groupLine if $groupLine;
-    }
     print "$msg\n";
   } else {
     print "No recent or upcoming matches found for $abbrev.\n";
