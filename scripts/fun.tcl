@@ -364,6 +364,19 @@ proc goose { nick host hand chan text} {
 	}
 	if [ expr (rand()*10) <= 1 ] then {
 		putchan $chan "https://i.imgur.com/fBIYpa2.png"
+	if [ expr (rand()*10) <= 5 ] then {
+		set msg(0) "https://i.imgur.com/j791fHS.jpeg"
+		set msg(1) "https://i.imgur.com/U0fk2Yc.jpeg"
+		set msg(2) "https://i.imgur.com/BFwANa7.jpeg"
+		set msg(3) "https://i.imgur.com/S8RUSes.jpeg"
+		set msg(4) "https://i.imgur.com/7bxWh9q.jpeg"
+		set msg(5) "https://i.imgur.com/oBGWX0S.jpeg"
+		set msg(6) "https://i.imgur.com/astXq1e.jpeg"
+		set msg(7) "https://i.imgur.com/dPYdETp.jpeg"
+		set msg(8) "https://i.imgur.com/XKKSmnE.jpeg"
+		set msg(9) "https://i.imgur.com/j83qSdM.jpeg"
+		set index [expr {int(rand()*[array size msg])}]
+		putchan $chan "$msg($index)"
 	} else {
 		putchan $chan "https://i.imgur.com/B4WRvHE.jpeg"
 	}
