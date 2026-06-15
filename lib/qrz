@@ -323,6 +323,7 @@ if ($csv == 1) {
   $qsl = "" if not defined $qsl;
   $qsl =~ s/,//g;
   $grid = "" if not defined $grid;
+  $updated = "" if not defined $updated;
   print "$call,$retcall,$name,$mail,$grid,$born,$expiration,$sk,$qsl,$effective,$updated\n";
   #$mail =~ s/^.*\b([A-Z][A-Z])\b.*$/$1/;
   #print "$call,$mail\n";
