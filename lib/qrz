@@ -280,7 +280,7 @@ our ($retcall, $country, $name, $sk, $class, $mail, $grid, $lat, $lon, $geosrc,
   $born, @prevcalls, $email, $codes, $website, $iota, $lotw, $eqsl,
   $mailqsl, $qsl, $expiration, @othercalls, $trustee, $incomplete, $addr1,
   $addr2, $state, $zip, $mailcountry, $county, $ituzone, $cqzone, $qrzserial,
-  $qrzadmin, $effective, $dxcc, $subscriber, $twofa, $nickname, $attn);
+  $qrzadmin, $effective, $dxcc, $subscriber, $twofa, $nickname, $attn, $updated);
 
 getAndParseData();
 
@@ -323,7 +323,7 @@ if ($csv == 1) {
   $qsl = "" if not defined $qsl;
   $qsl =~ s/,//g;
   $grid = "" if not defined $grid;
-  print "$call,$retcall,$name,$mail,$grid,$born,$expiration,$sk,$qsl\n";
+  print "$call,$retcall,$name,$mail,$grid,$born,$expiration,$sk,$qsl,$effective,$updated\n";
   #$mail =~ s/^.*\b([A-Z][A-Z])\b.*$/$1/;
   #print "$call,$mail\n";
   exit 0;
@@ -905,6 +905,10 @@ sub getAndParseData {
     }
     if ($calldata and /end calldata/) {
       $calldata = 0;
+    }
+
+    if (not $detail and /Last modified: ([0-9-]+) /) {
+      $updated = $1;
     }
 
     if (/begin detail/) {
