@@ -14,6 +14,7 @@ use Colors;
 use Util;
 use POSIX qw(strftime);
 use Encode qw(encode_utf8);
+use URI::Escape;
 
 # Force Eastern Time for date math (tournament is in North America)
 $ENV{TZ} = 'America/New_York';
@@ -211,12 +212,13 @@ sub formatGroupLine {
   my @parts;
   foreach my $e (@$entries) {
     my $abbr = $e->{team}{abbreviation} // '???';
+    my $name = $e->{team}{name} // $abbr;
     my $pts  = 0;
     foreach my $s (@{$e->{stats} // []}) {
       $pts = $s->{displayValue} if $s->{name} eq 'points';
     }
     my $s = (defined($highlight) && $abbr eq $highlight)
-      ? bold($abbr) : $abbr;
+      ? bold($name) : $name;
     $s .= " $pts";
     push @parts, $s;
   }
@@ -250,13 +252,15 @@ sub gameSnippet {
 
   my $aAbbr = $away->{team}{abbreviation} // '???';
   my $hAbbr = $home->{team}{abbreviation} // '???';
+  my $aName = $away->{team}{name} // $aAbbr;
+  my $hName = $home->{team}{name} // $hAbbr;
   my $aScore = $away->{score} // 0;
   my $hScore = $home->{score} // 0;
 
   my $snippet;
   if (isLive($stateName)) {
     my $label = statusLabel($status);
-    $snippet = bold($aAbbr) . "($aScore) vs " . bold($hAbbr) . "($hScore) $label";
+    $snippet = bold($aName) . "($aScore) vs " . bold($hName) . "($hScore) $label";
   } elsif (isFinal($stateName)) {
     my $suffix = '';
     if ($stateName eq 'STATUS_FINAL_PEN') {
@@ -271,7 +275,7 @@ sub gameSnippet {
     }
     my $winner = ($aScore > $hScore) ? green($aScore) : $aScore;
     my $wHome  = ($hScore > $aScore) ? green($hScore) : $hScore;
-    $snippet = bold($aAbbr) . "($winner) vs " . bold($hAbbr) . "($wHome) FT$suffix";
+    $snippet = bold($aName) . "($winner) vs " . bold($hName) . "($wHome) FT$suffix";
   } else {
     # scheduled / preview
     my $time = fmtTime($event->{date});
@@ -287,6 +291,8 @@ sub gameSnippet {
     $snippet .= italic($city) if defined $city;
     $snippet .= " " . $time if $time;
     $snippet .= ")" if defined $city or defined $time;
+    my $odds = fetchPolymarketOdds($away->{team}{name}, $home->{team}{name}, $aAbbr, $hAbbr);
+    $snippet .= "  $odds" if defined $odds;
   }
   return $snippet;
 }
@@ -337,11 +343,13 @@ sub renderTeamGame {
         }
       }
     }
-    $msg = $prefix . bold($aAbbr) . " $aScore-$hScore " . bold($hAbbr) . grey(" (FT$suffix)");
+    $msg = $prefix . bold($aName) . " $aScore-$hScore " . bold($hName) . grey(" (FT$suffix)");
   } else {
     my $time = fmtTime($event->{date});
     my $dateFmt = fmtDate(substr($event->{date}, 0, 10));
-    $msg = $prefix . bold($aAbbr) . " vs " . bold($hAbbr) . "  $dateFmt $time";
+    $msg = $prefix . bold($aName) . " vs " . bold($hName) . "  $dateFmt $time";
+    my $odds = fetchPolymarketOdds($aName, $hName, $aAbbr, $hAbbr);
+    $msg .= "  $odds" if defined $odds;
   }
 
   # Append goal scorers if available
@@ -446,6 +454,71 @@ sub formatStats {
     push @parts, bold($abbr) . ' ' . ($shots // '') . '(' . ($onGoal // '') . ')';
   }
   return 'Shots: ' . join(' ', @parts);
+}
+
+# --- Polymarket odds helpers ---
+
+sub fmt_pct {
+  my $p = shift // 0;
+  return sprintf('%.0f%%', $p * 100);
+}
+
+sub color_pct {
+  my $p = shift // 0;
+  my $str = fmt_pct($p);
+  return green($str)  if $p >= 0.6;
+  return yellow($str) if $p >= 0.35;
+  return red($str);
+}
+
+sub fetchPolymarketOdds {
+  my ($teamA_name, $teamB_name, $teamA_abbr, $teamB_abbr) = @_;
+
+  my $query = uri_escape_utf8("$teamA_name vs $teamB_name");
+  my $url = "https://gamma-api.polymarket.com/public-search"
+    . "?q=$query&limit_per_type=1&events_status=active";
+
+  my $data = fetchJSON($url);
+  return undef unless defined $data && ref($data) eq 'HASH';
+
+  my @events = @{$data->{events} // []};
+  return undef unless @events;
+
+  my $event = $events[0];
+  my @markets = grep { !$_->{archived} && !$_->{negRiskOther} }
+    @{$event->{markets} // []};
+  return undef unless @markets;
+
+  # Detect soccer 1X2: all binary Yes/No outcomes with a draw market
+  my $all_binary = !grep {
+    my $o = decode_json($_->{outcomes} // '["Yes","No"]');
+    !(@$o == 2 && lc($o->[0]) eq 'yes')
+  } @markets;
+  return undef unless $all_binary;
+
+  my $has_draw = grep { ($_->{question} // "") =~ /\bdraw\b/i } @markets;
+  return undef unless $has_draw;
+
+  # Format 3-way: "TeamA: 65% | Draw: 20% | TeamB: 15%"
+  my @parts;
+  for my $m (@markets) {
+    my $q      = $m->{question} // "";
+    my $prices = decode_json($m->{outcomePrices} // '[0,0]');
+    my $label;
+    if    ($q =~ /\bdraw\b/i)          { $label = "Draw" }
+    elsif ($q =~ /^Will (.+?) win\b/i) { $label = $1 }
+    else                               { $label = $q }
+    # Map Polymarket's team name back to our abbreviation for compact display
+    if ($label ne 'Draw') {
+      $label = $teamA_abbr if index(lc($q), lc($teamA_name)) != -1;
+      $label = $teamB_abbr if index(lc($q), lc($teamB_name)) != -1;
+    }
+    push @parts, { label => $label, p => $prices->[0] + 0 };
+  }
+  @parts = sort { $b->{p} <=> $a->{p} } @parts;
+
+  my $sep = " | ";
+  return join($sep, map { bold($_->{label}) . ": " . color_pct($_->{p}) } @parts);
 }
 
 # ====================================================================
@@ -556,6 +629,7 @@ if ($input =~ /^group\s*([a-z])$/ || $input =~ /^group([a-z])$/) {
           my $entries = $child->{standings}{entries} // [];
           foreach my $e (@$entries) {
             my $abbr = $e->{team}{abbreviation} // '???';
+            my $name = $e->{team}{name} // $abbr;
             my $pts  = 0;
             my $w = 0; my $d = 0; my $l = 0; my $gf = 0; my $ga = 0; my $gd = 0;
             foreach my $s (@{$e->{stats} // []}) {
@@ -567,8 +641,8 @@ if ($input =~ /^group\s*([a-z])$/ || $input =~ /^group([a-z])$/) {
               $ga  = $s->{displayValue} if $s->{name} eq 'pointsAgainst';
               $gd  = $s->{displayValue} if $s->{name} eq 'pointDifferential';
             }
-            printf "  %-4s %2s  %s-%s-%s  %s:%s  %s\n",
-              $abbr, $pts, $w, $d, $l, $gf, $ga,
+            printf "  %-24s %2s  %s-%s-%s  %s:%s  %s\n",
+              $name, $pts, $w, $d, $l, $gf, $ga,
               ($gd > 0 ? "+$gd" : $gd);
           }
         }
@@ -706,10 +780,15 @@ if (defined $teamEvent) {
     if (defined($nHome) && defined($nAway)) {
       my $nA = $nAway->{team}{abbreviation} // '???';
       my $nH = $nHome->{team}{abbreviation} // '???';
+      my $nAName = $nAway->{team}{name} // $nA;
+      my $nHName = $nHome->{team}{name} // $nH;
       my $nDate = fmtDate($nextDate // '');
       my $nTime = fmtTime($nextEvent->{date});
-      push @parts, "Next ($nDate): " . bold($nA) . " vs " . bold($nH)
-                 . ($nTime ? "  $nTime" : '');
+      my $nextStr = "Next ($nDate): " . bold($nAName) . " vs " . bold($nHName)
+                  . ($nTime ? "  $nTime" : '');
+      my $odds = fetchPolymarketOdds($nAName, $nHName, $nA, $nH);
+      $nextStr .= "  $odds" if defined $odds;
+      push @parts, $nextStr;
     }
   }
 
