@@ -298,6 +298,8 @@ sub renderTeamGame {
   my ($home, $away) = getCompetitors($event);
   return '' unless defined($home) && defined($away);
 
+  my $aName = $away->{team}{name} // '???';
+  my $hName = $home->{team}{name} // '???';
   my $aAbbr = $away->{team}{abbreviation} // '???';
   my $hAbbr = $home->{team}{abbreviation} // '???';
   my $aScore = $away->{score} // 0;
@@ -321,7 +323,7 @@ sub renderTeamGame {
 
   if (isLive($stateName)) {
     my $label = statusLabel($status);
-    $msg = $prefix . bold($aAbbr) . " $aScore-$hScore " . bold($hAbbr)
+    $msg = $prefix . bold($aName) . " $aScore-$hScore " . bold($hName)
          . " $label";
     $msg .= "  $stats" if defined($stats) && $stats ne '';
   } elsif (isFinal($stateName)) {
