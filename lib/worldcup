@@ -275,8 +275,18 @@ sub gameSnippet {
   } else {
     # scheduled / preview
     my $time = fmtTime($event->{date});
-    $snippet = bold($aAbbr) . " vs " . bold($hAbbr);
-    $snippet .= " " . grey($time) if $time;
+    my $name = $event->{name};
+    if ($name =~ m/^(.*?) at (.*?)$/) {
+      $snippet = bold($1) . " vs " . bold($2);
+    } else {
+      $snippet = bold($aAbbr) . " vs " . bold($hAbbr);
+    }
+    my $city = $event->{competitions}[0]{venue}{address}{city};
+    $city =~ s/,.*$// if defined $city;
+    $snippet .= " (" if defined $city or defined $time;
+    $snippet .= italic($city) if defined $city;
+    $snippet .= " " . $time if $time;
+    $snippet .= ")" if defined $city or defined $time;
   }
   return $snippet;
 }
