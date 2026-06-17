@@ -475,7 +475,7 @@ sub formatCards {
       push @parts, "$abbr: $yellows$reds";
     }
   }
-  return "Cards: " . join(' ', @parts);
+  return $#parts > 0 ? ("Cards: " . join(' ', @parts)) : '';
 }
 
 # --- Polymarket odds helpers ---
