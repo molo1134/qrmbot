@@ -298,7 +298,7 @@ sub gameSnippet {
 }
 
 sub renderTeamGame {
-  my ($event, $abbrev, $group, $isIRC, $goals, $commentary, $stats) = @_;
+  my ($event, $abbrev, $group, $isIRC, $goals, $commentary, $stats, $cards) = @_;
   my $status = $event->{competitions}[0]{status} // {};
   my $stateName = $status->{type}{name} // '';
   my ($home, $away) = getCompetitors($event);
@@ -332,6 +332,7 @@ sub renderTeamGame {
     $msg = $prefix . bold($aName) . " $aScore-$hScore " . bold($hName)
          . " $label";
     $msg .= "  $stats" if defined($stats) && $stats ne '';
+    $msg .= "  $cards" if defined($cards) && $cards ne '';
   } elsif (isFinal($stateName)) {
     my $suffix = '';
     if ($stateName eq 'STATUS_FINAL_PEN') {
@@ -454,6 +455,27 @@ sub formatStats {
     push @parts, bold($abbr) . ' ' . ($shots // '') . '(' . ($onGoal // '') . ')';
   }
   return 'Shots: ' . join(' ', @parts);
+}
+
+sub formatCards {
+  my $summary = shift;
+  return '' unless defined $summary;
+  my $teams = $summary->{boxscore}{teams} // [];
+  return '' unless @$teams == 2;
+  my @parts;
+  for my $t (@$teams) {
+    my $abbr = $t->{team}{abbreviation} // '???';
+    my $yellows = '';
+    my $reds = '';
+    for my $s (@{$t->{statistics} // []}) {
+      $yellows = yellow($s->{displayValue} . '🟨') if $s->{name} eq 'yellowCards' and $s->{displayValue} != 0;
+      $reds    = red($s->{displayValue} . '🟥')    if $s->{name} eq 'redCards'    and $s->{displayValue} != 0;
+    }
+    if ($yellows ne "" or $reds ne "") {
+      push @parts, "$abbr: $yellows$reds";
+    }
+  }
+  return "Cards: " . join(' ', @parts);
 }
 
 # --- Polymarket odds helpers ---
@@ -683,15 +705,17 @@ if (defined $teamEvent) {
   my $goals = '';
   my $commentary = '';
   my $stats = '';
+  my $cards = '';
   if (isLive($stateName) || isFinal($stateName)) {
     my $summary = fetchSummary($teamEvent->{id});
     if (defined $summary) {
       $goals = formatGoals($summary, $isIRC);
       $commentary = formatCommentary($summary, 1, $isIRC) if isLive($stateName);
       $stats = formatStats($summary, $isIRC) if isLive($stateName) || isFinal($stateName);
+      $cards = formatCards($summary);
     }
   }
-  print renderTeamGame($teamEvent, $abbrev, $group, $isIRC, $goals, $commentary, $stats) . "\n";
+  print renderTeamGame($teamEvent, $abbrev, $group, $isIRC, $goals, $commentary, $stats, $cards) . "\n";
 } else {
   # No game today — find last and next game
   my ($lastEvent, $lastDate, $nextEvent, $nextDate);
