@@ -85,6 +85,7 @@ sub cache_set {
 
 sub fetchJSON {
   my ($url, $ckey) = @_;
+  my $origurl = $url;
   if ($ckey) {
     my $c = cache_get($ckey);
     return decode_json($c) if defined $c;
@@ -99,6 +100,10 @@ sub fetchJSON {
   close($fh);
   return undef unless defined $res && length($res) > 2;
   my $json = decode_json($res);
+  if (defined $json->{detail}) {
+    print "Error retrieving $origurl -- $json->{detail}\n";
+    return undef;
+  }
   cache_set($ckey, $res) if $ckey and defined $json and not defined $json->{error};
   print "Error retrieving $ckey: $json->{status}: $json->{error}\n"
     if defined $json->{error} and defined $json->{status};
