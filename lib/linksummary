@@ -819,7 +819,7 @@ sub doHtml {
   #print "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" '$url'";
   my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0";
   #print("curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=1.9\" -A \"$useragent\" '$url'");
-  open (HTTP, '-|', "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=1.9\" -H \"Accept-Language: en-us, en;q=0.9, *;q=0.8\" -A \"$useragent\" '$url'");
+  open (HTTP, '-|', "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,text/plain,application/xhtml+xml,application/xml;q=1.9\" -H \"Accept-Language: en-us, en;q=0.9, *;q=0.8\" -A \"$useragent\" '$url'");
   while (<HTTP>) {
     #print;
     chomp;
@@ -831,7 +831,7 @@ sub doHtml {
     if (defined($httpcode) and $httpcode < 300 and /^Content-Type:\s+(.*?)$/i) {
       $contenttype = $1;
       #print "$contenttype\n";
-      if (not $contenttype =~ /^(text\/html)|(application\/(xhtml|xml))/) {
+      if (not $contenttype =~ /^(text\/(html|plain))|(application\/(xhtml|xml))/) {
 	close(HTTP);
 	return;
       }
@@ -842,6 +842,8 @@ sub doHtml {
 	  $decoded = 1;
 	}
       }
+    }
+    if (/^\s*$/) {
       last;
     }
   }
@@ -872,6 +874,22 @@ sub doHtml {
   }
   if (not defined($page)) {
     $page = $origpage;
+  }
+
+  if ($contenttype =~ m|text/plain|) {
+    foreach my $l (split /\n/, $page) {
+      next if $l =~ m/^\s*$/;
+      $l =~ s/^\s*//;
+      $l =~ s/\s*$//;
+      if (length($l) < 120) {
+	# text output, first non-empty line less than 120 chars
+	my $shortUrl = shortenUrl($url);
+	print "$shortUrl :: $l\n" if defined $shortUrl;
+	print "$l\n" if not defined $shortUrl;
+	last;
+      }
+    }
+    return;
   }
 
   #print "charset: $charset\n";
