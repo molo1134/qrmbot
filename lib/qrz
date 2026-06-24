@@ -854,6 +854,7 @@ sub getAndParseData {
       $name = "$4$9";
       $addr1 = $addr2 = $mailcountry = $mail = $10;
       $nickname = $7;
+      $name =~ s/^\s+//;
       $mail =~ s/<br *\/>/; /g;
       $mail =~ s/<\/p>//g;
       $mail =~ s/\s*$//;
@@ -910,6 +911,7 @@ sub getAndParseData {
 
     if (not $detail and /Last modified: ([0-9-]+) /) {
       $updated = $1;
+      $updated = undef if $updated =~ /^2015-07-1[567]$/; # bulk update
     }
 
     if (/begin detail/) {
