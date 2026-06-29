@@ -316,10 +316,9 @@ sub renderTeamGame {
   my $bar = $isIRC ? " \x{00B7} " : "\n";
   my $msg;
 
-  # Round / group prefix
+  # Round / group prefix — only show group in group stage, otherwise show round
   my $prefix = '';
-  if (defined $group) {
-    # Use the group name directly (e.g. "[Group D]") instead of round + group
+  if (defined $group && $season eq 'group-stage') {
     $prefix = grey("[" . $group->{name} . "] ");
   } else {
     $prefix = grey("[$round] ");
@@ -771,24 +770,19 @@ if (defined $teamEvent) {
     }
   }
 
-  # Build round prefix
-  my $season = '';
-  if (defined $lastEvent) {
-    $season = $lastEvent->{season}{slug} // '';
-  } elsif (defined $nextEvent) {
-    $season = $nextEvent->{season}{slug} // '';
-  }
-  my $round = $roundLabel{$season} // $season;
-  my $prefix = '';
-  if (defined $group) {
-    $prefix = grey("[" . $group->{name} . "] ");
-  } else {
-    $prefix = grey("[$round] ");
-  }
-
   my @parts;
 
   if (defined $lastEvent) {
+    # Prefix based on last event's own round
+    my $lSeason = $lastEvent->{season}{slug} // '';
+    my $lPrefix = '';
+    if ($lSeason eq 'group-stage' && defined $group) {
+      $lPrefix = grey("[" . $group->{name} . "] ");
+    } elsif ($lSeason) {
+      my $lRound = $roundLabel{$lSeason} // $lSeason;
+      $lPrefix = grey("[$lRound] ");
+    }
+
     my ($lHome, $lAway) = getCompetitors($lastEvent);
     next unless defined($lHome) && defined($lAway);
     my $lA = $lAway->{team}{abbreviation} // '???';
@@ -796,10 +790,20 @@ if (defined $teamEvent) {
     my $lAS = $lAway->{score} // 0;
     my $lHS = $lHome->{score} // 0;
     my $lDate = fmtDate($lastDate // '');
-    push @parts, "Last ($lDate): " . bold($lA) . " $lAS-$lHS " . bold($lH);
+    push @parts, $lPrefix . "Last ($lDate): " . bold($lA) . " $lAS-$lHS " . bold($lH);
   }
 
   if (defined $nextEvent) {
+    # Prefix based on next event's own round
+    my $nSeason = $nextEvent->{season}{slug} // '';
+    my $nPrefix = '';
+    if ($nSeason eq 'group-stage' && defined $group) {
+      $nPrefix = grey("[" . $group->{name} . "] ");
+    } elsif ($nSeason) {
+      my $nRound = $roundLabel{$nSeason} // $nSeason;
+      $nPrefix = grey("[$nRound] ");
+    }
+
     my ($nHome, $nAway) = getCompetitors($nextEvent);
     if (defined($nHome) && defined($nAway)) {
       my $nA = $nAway->{team}{abbreviation} // '???';
@@ -808,7 +812,7 @@ if (defined $teamEvent) {
       my $nHName = $nHome->{team}{name} // $nH;
       my $nDate = fmtDate($nextDate // '');
       my $nTime = fmtTime($nextEvent->{date});
-      my $nextStr = "Next ($nDate): " . bold($nAName) . " vs " . bold($nHName)
+      my $nextStr = $nPrefix . "Next ($nDate): " . bold($nAName) . " vs " . bold($nHName)
                   . ($nTime ? "  $nTime" : '');
       my $odds = fetchPolymarketOdds($nAName, $nHName, $nA, $nH);
       $nextStr .= "  $odds" if defined $odds;
@@ -817,7 +821,7 @@ if (defined $teamEvent) {
   }
 
   if (@parts) {
-    my $msg = $prefix . join($bar, @parts);
+    my $msg = join($bar, @parts);
 
     print "$msg\n";
   } else {
