@@ -316,10 +316,9 @@ sub renderTeamGame {
   my $bar = $isIRC ? " \x{00B7} " : "\n";
   my $msg;
 
-  # Round / group prefix
+  # Round / group prefix — only show group in group stage, otherwise show round
   my $prefix = '';
-  if (defined $group) {
-    # Use the group name directly (e.g. "[Group D]") instead of round + group
+  if (defined $group && $season eq 'group-stage') {
     $prefix = grey("[" . $group->{name} . "] ");
   } else {
     $prefix = grey("[$round] ");
@@ -780,7 +779,7 @@ if (defined $teamEvent) {
   }
   my $round = $roundLabel{$season} // $season;
   my $prefix = '';
-  if (defined $group) {
+  if (defined $group && $season eq 'group-stage') {
     $prefix = grey("[" . $group->{name} . "] ");
   } else {
     $prefix = grey("[$round] ");
