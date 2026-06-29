@@ -139,6 +139,8 @@ while ($i <= $#ARGV) {
     doBlueSky($1, $2);
   } elsif ($ARGV[$i] =~ m|https://www.zillow.com/homedetails/[A-Za-z0-9-]+/([0-9]+)_zpid/?|) {
     doZillowZpid($ARGV[$i]);
+  } elsif ($ARGV[$i] =~ m|https://github.com/[a-z0-9_-]+/[a-z0-9_-]+|i) {
+    doGithub($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://| and
 	  not $ARGV[$i] =~ /\.(bmp|tif|gif|jpe?g|jpe|png|mp[34]|pdf|docx?|xlsx?|exe|dll|msi|wav|wma|flac|shn|7z|zip|deb|rpm|rar|tgz|tar|dmg|iso|apk|jar|avi|m4v|mov|mpe?g|vob|swf|wmv|gz|xz|bz2)/i) {
     # TODO: HTTP HEAD for these file types ^^ -- get size and last modified date
@@ -1823,6 +1825,46 @@ sub doZillowZpid {
     print yellow(" [Auction]") if $p->{listingSubType}->{isForAuction};
     print yellow(" [Foreclosure]") if $p->{listingSubType}->{isForclosure};
     print " pic: $photo [of $photos]; \"$desc\"\n";
+  }
+}
+
+sub doGithub {
+  my $url = shift;
+
+  if ($url =~ m|^https://github\.com/([A-Z0-9_-]+)/([A-Z0-9_-]+)/?$|i) {
+    my ($owner, $repo) = ($1, $2);
+
+    my $apiurl = "https://api.github.com/repos/$owner/$repo";
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    open(HTTP, '-|', "curl --compressed --max-time $timeout -L -k -s '$apiurl'");
+    binmode(HTTP, ":utf8");
+    my $json = <HTTP>;
+    close(HTTP);
+    my $j = from_json($json);
+
+    my $output = bold($j->{full_name});
+    $output .= " " . darkRed("[fork]") if $j->{fork};
+    $output .= ": " . italic($j->{description})
+      if defined $j->{description} and $j->{description} ne "";
+    $output .= " -- created " . substr($j->{created_at},0,10) . ";";
+    $output .= " updated " . substr($j->{updated_at},0,10) . ";";
+    $output .= " $j->{forks}⑂" if $j->{forks} > 0;
+    $output .= " $j->{stargazers_count}★" if $j->{stargazers_count} > 0;
+    $output .= " (" if defined $j->{language} or defined $j->{license}{name};
+    $output .= $j->{language} if defined $j->{language};
+    $output .= "; " if defined $j->{language} and defined $j->{license}{name};
+    $output .= $j->{license}{name} if defined $j->{license}{name};
+    $output .= ")" if defined $j->{language} or defined $j->{license}{name};
+
+    if (defined $j->{source}) {
+      $output .= " -- origin repo: https://github.com/$j->{source}{full_name}";
+      $output .= " created " . substr($j->{source}{created_at},0,10) . ";";
+      $output .= " updated " . substr($j->{source}{updated_at},0,10) . ";";
+      $output .= " $j->{source}{forks}⑂" if $j->{source}{forks} > 0;
+      $output .= " $j->{source}{stargazers_count}★" if $j->{source}{stargazers_count} > 0;
+    }
+
+    print $output, "\n";
   }
 }
 
