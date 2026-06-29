@@ -770,12 +770,12 @@ if (defined $teamEvent) {
     }
   }
 
-  # Build round prefix
+  # Build round prefix — prefer next event's season since that's the upcoming match
   my $season = '';
-  if (defined $lastEvent) {
-    $season = $lastEvent->{season}{slug} // '';
-  } elsif (defined $nextEvent) {
+  if (defined $nextEvent) {
     $season = $nextEvent->{season}{slug} // '';
+  } elsif (defined $lastEvent) {
+    $season = $lastEvent->{season}{slug} // '';
   }
   my $round = $roundLabel{$season} // $season;
   my $prefix = '';
