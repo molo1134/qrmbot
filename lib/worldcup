@@ -15,6 +15,7 @@ use Util;
 use POSIX qw(strftime);
 use Encode qw(encode_utf8);
 use URI::Escape;
+use Time::Piece;
 
 # Force Eastern Time for date math (tournament is in North America)
 $ENV{TZ} = 'America/New_York';
@@ -115,6 +116,18 @@ sub fmtTime {
 
 sub fmtDate {
   my $d = shift // '';
+  # Handle full ISO timestamp: "2026-07-02T00:00Z" or "2026-07-02T00:00:00Z"
+  if ($d =~ /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/) {
+    my ($y, $m, $day, $h) = ($1 + 0, $2 + 0, $3 + 0, $4 + 0);
+    my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+    # EDT: UTC-4. If UTC hour < 4, the ET date is the previous day.
+    if ($h < 4) {
+      my $t = Time::Piece->strptime("$y-$m-$day", "%Y-%m-%d") - 86400;
+      return $mon[$t->mon - 1] . " " . $t->mday;
+    }
+    return $mon[$m - 1] . " " . $day;
+  }
+  # Fallback: plain date string
   return $d unless $d =~ /^(\d{4})-(\d{2})-(\d{2})$/;
   my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
   return $mon[$2 - 1] . " " . int($3);
@@ -154,6 +167,8 @@ sub statusLabel {
     return yellow('HT');
   } elsif ($typeName eq 'STATUS_FULL_TIME' || $typeName eq 'STATUS_FULL_EXTRA') {
     return 'FT';
+  } elsif ($typeName eq 'STATUS_FINAL_AET') {
+    return 'AET';
   } elsif ($typeName eq 'STATUS_OVERTIME') {
     return yellow('ET') . " $clock";
   } elsif ($typeName eq 'STATUS_PENALTY') {
@@ -183,7 +198,7 @@ sub isLive {
 sub isFinal {
   my $name = shift // '';
   return $name eq 'STATUS_FULL_TIME' || $name eq 'STATUS_FULL_EXTRA'
-      || $name eq 'STATUS_FINAL_PEN';
+      || $name eq 'STATUS_FINAL_PEN' || $name eq 'STATUS_FINAL_AET';
 }
 
 # --- standings helpers ---
@@ -263,7 +278,9 @@ sub gameSnippet {
     $snippet = bold($aName) . "($aScore) vs " . bold($hName) . "($hScore) $label";
   } elsif (isFinal($stateName)) {
     my $suffix = '';
-    if ($stateName eq 'STATUS_FINAL_PEN') {
+    if ($stateName eq 'STATUS_FINAL_AET') {
+      $suffix = '';
+    } elsif ($stateName eq 'STATUS_FINAL_PEN') {
       # check notes for penalty result
       my $notes = $event->{competitions}[0]{notes} // [];
       foreach my $n (@$notes) {
@@ -275,7 +292,8 @@ sub gameSnippet {
     }
     my $winner = ($aScore > $hScore) ? green($aScore) : $aScore;
     my $wHome  = ($hScore > $aScore) ? green($hScore) : $hScore;
-    $snippet = bold($aName) . "($winner) vs " . bold($hName) . "($wHome) FT$suffix";
+    my $label = $stateName eq 'STATUS_FINAL_AET' ? 'AET' : 'FT';
+    $snippet = bold($aName) . "($winner) vs " . bold($hName) . "($wHome) $label$suffix";
   } else {
     # scheduled / preview
     my $time = fmtTime($event->{date});
@@ -324,7 +342,7 @@ sub renderTeamGame {
     $prefix = grey("[$round] ");
   }
 
-  my $dateStr = fmtDate(substr($event->{date}, 0, 10));
+  my $dateStr = fmtDate($event->{date});
 
   if (isLive($stateName)) {
     my $label = statusLabel($status);
@@ -334,19 +352,24 @@ sub renderTeamGame {
     $msg .= "  $cards" if defined($cards) && $cards ne '';
   } elsif (isFinal($stateName)) {
     my $suffix = '';
-    if ($stateName eq 'STATUS_FINAL_PEN') {
+    if ($stateName eq 'STATUS_FINAL_AET') {
+      $suffix = 'AET';
+    } elsif ($stateName eq 'STATUS_FINAL_PEN') {
       my $notes = $event->{competitions}[0]{notes} // [];
       foreach my $n (@$notes) {
         if (($n->{type}//'') eq 'event' && ($n->{headline}//'') =~ /penalties/i) {
-          $suffix = " PEN";
+          $suffix = "FT PEN";
           last;
         }
       }
+      $suffix = 'FT PEN' unless $suffix;
+    } else {
+      $suffix = 'FT';
     }
-    $msg = $prefix . bold($aName) . " $aScore-$hScore " . bold($hName) . grey(" (FT$suffix)");
+    $msg = $prefix . bold($aName) . " $aScore-$hScore " . bold($hName) . grey(" ($suffix)");
   } else {
     my $time = fmtTime($event->{date});
-    my $dateFmt = fmtDate(substr($event->{date}, 0, 10));
+    my $dateFmt = fmtDate($event->{date});
     $msg = $prefix . bold($aName) . " vs " . bold($hName) . "  $dateFmt $time";
     my $odds = fetchPolymarketOdds($aName, $hName, $aAbbr, $hAbbr);
     $msg .= "  $odds" if defined $odds;
@@ -684,17 +707,25 @@ unless (defined $abbrev) {
   exit 0;
 }
 
-# Fetch today's scoreboard
+# Fetch today's scoreboard (UTC date). Also check tomorrow's UTC date
+# because a game in ET evening (e.g. 8pm ET) lands on the next UTC day.
 my $today = strftime("%Y%m%d", localtime);
 my $data = fetchJSON("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=$today");
 my $todayEvents = $data->{events} // [];
+
+my $tomorrow = strftime("%Y%m%d", localtime(time + 86400));
+my $tomorrowData = fetchJSON("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=$tomorrow");
+my $tomorrowEvents = $tomorrowData->{events} // [];
+
+# Merge: search both today's and tomorrow's UTC scoreboards
+my $allNearEvents = [@$todayEvents, @$tomorrowEvents];
 
 # Fetch standings (for group info)
 my $standings = fetchStandings();
 my $group = findGroupForTeam($standings, $abbrev);
 
-# Look for team in today's events
-my $teamEvent = findTeamEvent($todayEvents, $abbrev);
+# Look for team in today's or tomorrow's events
+my $teamEvent = findTeamEvent($allNearEvents, $abbrev);
 
 my $bar = $isIRC ? " \x{00B7} " : "\n";
 
@@ -730,7 +761,7 @@ if (defined $teamEvent) {
         my $found = findTeamEvent([$e], $abbrev);
         if (defined $found) {
           $lastEvent = $found;
-          $lastDate  = substr($e->{date}, 0, 10);
+          $lastDate  = $e->{date};
           last;
         }
       }
@@ -747,7 +778,7 @@ if (defined $teamEvent) {
       my $found = findTeamEvent([$e], $abbrev);
       if (defined $found) {
         $nextEvent = $found;
-        $nextDate  = substr($e->{date}, 0, 10);
+        $nextDate  = $e->{date};
         last;
       }
     }
@@ -763,7 +794,7 @@ if (defined $teamEvent) {
         my $found = findTeamEvent([$e], $abbrev);
         if (defined $found) {
           $nextEvent = $found;
-          $nextDate  = substr($e->{date}, 0, 10);
+          $nextDate  = $e->{date};
           last;
         }
       }
