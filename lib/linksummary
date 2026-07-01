@@ -827,7 +827,7 @@ sub doHtml {
     chomp;
     if (/^HTTP\/[0-9.]+\s*(\d+).*?$/) {
       $httpcode = $1;
-      #print "$httpcode\n";
+      #print "HTTPCODE: $httpcode\n";
     }
     # want to ignore content-type if getting a 302 redirect
     if (defined($httpcode) and $httpcode < 300 and /^Content-Type:\s+(.*?)$/i) {
@@ -845,7 +845,7 @@ sub doHtml {
 	}
       }
     }
-    if (/^\s*$/) {
+    if (/^\s*$/ and $httpcode != 302 and $httpcode != 301) {
       last;
     }
   }
