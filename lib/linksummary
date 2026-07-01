@@ -1902,7 +1902,7 @@ sub gh_repoUsesAi {
     my $msg = $j->[$i]{commit}{message} if defined $j->[$i]{commit}{message};
     next if not defined $msg;
     $isVibe = 1 if $msg =~ m/co-authored-by.*\b(Claude|Sonnet|Opus|anthropic|chatgpt|openai|copilot|gemini|agent|deepseek)\b/i;
-    print "FOUND COMMIT MSG\n" if $isVibe;
+    #print "FOUND COMMIT MSG\n" if $isVibe;
     return $isVibe if $isVibe;
   }
 
@@ -1911,7 +1911,7 @@ sub gh_repoUsesAi {
   if (defined $gitignore and $gitignore ne "") {
     foreach my $f (@files) {
       if ($gitignore =~ m|$f|i) {
-        print "FOUND GITIGNORE: $f\n";
+        #print "FOUND GITIGNORE: $f\n";
         $isVibe = 1;
         return $isVibe if $isVibe;
       }
@@ -1921,7 +1921,7 @@ sub gh_repoUsesAi {
   # pass 3: look for particular files
   foreach my $f (@files) {
     $isVibe = gh_doesRepoHaveFile($repo, $branch, $f);
-    print "FOUND FILE: $f\n" if $isVibe;
+    #print "FOUND FILE: $f\n" if $isVibe;
     return $isVibe if $isVibe;
   }
 
