@@ -199,7 +199,7 @@ proc _seen_output_line { origQuery chan line } {
 
     set recchan [dict get $parsed chan]
     set recmsg [dict get $parsed msg]
-    putchan $chan "${origQuery} last seen at $stamp (${desc} ago) in $recchan: $recmsg"
+    putchan $chan "${origQuery} was last seen at $stamp (${desc} ago) in $recchan: $recmsg"
 }
 
 proc seen_pub { nick host hand chan text } {
@@ -210,7 +210,7 @@ proc seen_pub { nick host hand chan text } {
     set nick [string tolower "$nick"]
 
     if {${target} == ${nick}} {
-        putchan $chan "welp, there you are."
+        putchan $chan "Whelp, there you are."
         return
     }
     if {${target} == [string tolower ${botnick}] } {
@@ -233,18 +233,18 @@ proc seen_pub { nick host hand chan text } {
             set laston [getuser ${target} LASTON $chan]
             if {$laston != 0} {
                 set stamp [clock format $laston -gmt 1 -format "%Y-%m-%d %H:%M:%S %Z"]
-                putchan $chan "${origQuery} last seen at $stamp"
+                putchan $chan "${origQuery} was last seen at $stamp"
             } else {
                 set laston [lindex [getuser ${target} LASTON] 0]
                 if {$laston != 0} {
                     set stamp [clock format $laston -gmt 1 -format "%Y-%m-%d %H:%M:%S %Z"]
-                    putchan $chan "${origQuery} last seen at $stamp"
+                    putchan $chan "${origQuery} was last seen at $stamp"
                 } else {
-                    putchan $chan "${origQuery} not found"
+                    putchan $chan "${origQuery} was not found."
                 }
             }
         } else {
-            putchan $chan "${origQuery} not found"
+            putchan $chan "${origQuery} was not found."
         }
         return
     }

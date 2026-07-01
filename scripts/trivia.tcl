@@ -99,7 +99,7 @@ proc trivia_pub {nick host hand chan text} {
             if {$elapsed < $trivia_cooldown_secs} {
                 set remaining [expr {$trivia_cooldown_secs - $elapsed}]
                 set nexttime [clock format [expr {[clock seconds] + $remaining}] -format "%H:%M UTC" -gmt 1]
-                putchan $chan "⏳ $nick: Trivia is on cooldown. Next game allowed at $nexttime."
+                putchan $chan "⏳ $nick: Trivia is on a cooldown. The next game will be allowed at $nexttime."
                 return
             }
         }
@@ -128,13 +128,13 @@ proc trivia_start {chan} {
         }
         close $fd
     } err]} {
-        putchan $chan "❌ Trivia error: could not fetch questions. Try again later."
+        putchan $chan "❌ Trivia Error: Could not fetch questions. Try again later."
         putlog "trivia_start error: $err"
         return
     }
 
     if {[llength $lines] == 0} {
-        putchan $chan "❌ Trivia error: no questions returned. Try again later."
+        putchan $chan "❌ Trivia Error: No questions returned. Try again later."
         return
     }
 
@@ -157,7 +157,7 @@ proc trivia_ask {chan} {
 
     if {$idx >= [llength $qlist]} {
         # Ran out of questions (shouldn't happen with 10 fetched)
-        putchan $chan "❌ Trivia: ran out of questions. Game over!"
+        putchan $chan "❌ Trivia: Ran out of questions. Game over!"
         trivia_end_game $chan
         return
     }
@@ -204,20 +204,20 @@ proc trivia_answer_pub {nick host hand chan text} {
     }
 
     if {[lsearch -exact $trivia_answered($chan) $nick] != -1} {
-        putchan $chan "$nick: you already answered this round!"
+        putchan $chan "$nick: You already answered this round!"
         return
     }
 
     set ans [string trim $text]
     if {![string is integer -strict $ans] || $ans < 1} {
-        putchan $chan "$nick: please answer with a number (e.g. !a 2)"
+        putchan $chan "$nick: Please answer with a number (e.g. !a 2)"
         return
     }
 
     set parts   [split [lindex $trivia_questions($chan) [expr {$trivia_qindex($chan) - 1}]] "|"]
     set nopts   [expr {[llength $parts] - 2}]
     if {$ans > $nopts} {
-        putchan $chan "$nick: answer must be between 1 and $nopts"
+        putchan $chan "$nick: Answer must be between 1 and $nopts"
         return
     }
 
@@ -264,7 +264,7 @@ proc trivia_end_game {chan} {
     set scores $trivia_scores($chan)
 
     if {[dict size $scores] == 0} {
-        putchan $chan "Game over! No one scored any points. Better luck next time."
+        putchan $chan "Game over! No one scored any points. How utterly dissapointing this must be for everyone. Better luck next time."
         trivia_clear $chan
         return
     }
@@ -293,10 +293,10 @@ proc trivia_end_game {chan} {
         putchan $chan "🏆 Winner: \002[lindex $winners 0]\002! Congratulations!"
         trivia_clear $chan
     } elseif {$trivia_qindex($chan) >= [llength $trivia_questions($chan)]} {
-        putchan $chan "🤝 Not enough questions for a tiebreaker. It's a draw between: \002[join $winners {, }]\002!"
+        putchan $chan "🤝 Not enough questions available for a tiebreaker. It's a draw between: \002[join $winners {, }]\002!"
         trivia_clear $chan
     } else {
-        putchan $chan "🤝 It's a tie between: \002[join $winners {, }]\002! Starting tiebreaker..."
+        putchan $chan "🤝 It's a tie between: \002[join $winners {, }]\002! Starting tiebreaker round..."
         global trivia_tiebreak trivia_tienicks
         set trivia_tiebreak($chan)  1
         set trivia_tienicks($chan)  $winners
@@ -328,14 +328,14 @@ proc trivia_tiebreaker_eval {chan} {
                     trivia_clear $chan
                     return
                 }
-                putchan $chan "😴 Nobody answered — no change! Another tiebreaker..."
+                putchan $chan "😴 Nobody answered — no change to the scores! Another tiebreaker..."
             } else {
                 # Everyone answered wrong — ask another question
-                putchan $chan "💀 Nobody answered correctly — no change! Another tiebreaker..."
+                putchan $chan "💀 Nobody answered correctly — no change to the scores! Another tiebreaker..."
             }
         } else {
             set trivia_tb_noanswer($chan) 0
-            putchan $chan "🎯 Everyone answered correctly — no change! Another tiebreaker..."
+            putchan $chan "🎯 Everyone answered correctly — no change to the scores! Another tiebreaker..."
         }
         utimer 3 [list trivia_ask $chan]
         return
@@ -365,15 +365,15 @@ proc trivia_tiebreaker_eval {chan} {
 proc trivia_stop_pub {nick host hand chan text} {
     global trivia_active trivia_starting
     if {![trivia_is_exempt $nick]} {
-        putchan $chan "🚫 $nick: only molo or Crossbar can stop a trivia game."
+        putchan $chan "🚫 $nick: Hold up! Only molo or Crossbar can stop a trivia game."
         return
     }
     if {([info exists trivia_active($chan)] && $trivia_active($chan)) ||
         ([info exists trivia_starting($chan)] && $trivia_starting($chan))} {
         trivia_clear $chan
-        putchan $chan "🛑 Trivia stopped by $nick."
+        putchan $chan "🛑 Trivia was stopped by $nick."
     } else {
-        putchan $chan "No trivia game is running."
+        putchan $chan "No trivia game is currently running."
     }
 }
 
@@ -471,7 +471,7 @@ proc hamtrivia_pub {nick host hand chan text} {
             if {$elapsed < $hamtrivia_cooldown_secs} {
                 set remaining [expr {$hamtrivia_cooldown_secs - $elapsed}]
                 set nexttime [clock format [expr {[clock seconds] + $remaining}] -format "%H:%M UTC" -gmt 1]
-                putchan $chan "⏳ $nick: Ham Radio Trivia is on cooldown. Next game allowed at $nexttime."
+                putchan $chan "⏳ $nick: Ham Radio Trivia is on a cooldown. The ext game allowed at $nexttime."
                 return
             }
         }
@@ -499,13 +499,13 @@ proc hamtrivia_start {chan} {
         }
         close $fd
     } err]} {
-        putchan $chan "❌ Ham Radio Trivia error: could not fetch questions. Try again later."
+        putchan $chan "❌ Ham Radio Trivia Error: Could not fetch questions. Try again later."
         putlog "hamtrivia_start error: $err"
         return
     }
 
     if {[llength $lines] == 0} {
-        putchan $chan "❌ Ham Radio Trivia error: no questions returned. Try again later."
+        putchan $chan "❌ Ham Radio Trivia Error: No questions returned. Try again later."
         return
     }
 
@@ -527,7 +527,7 @@ proc hamtrivia_ask {chan} {
     set idx   $hamtrivia_qindex($chan)
 
     if {$idx >= [llength $qlist]} {
-        putchan $chan "❌ Ham Radio Trivia: ran out of questions. Game over!"
+        putchan $chan "❌ Ham Radio Trivia: Ran out of available questions. Game over!"
         hamtrivia_end_game $chan
         return
     }
@@ -593,7 +593,7 @@ proc hamtrivia_answer_pub {nick host hand chan text} {
     set parts [split [lindex $hamtrivia_questions($chan) [expr {$hamtrivia_qindex($chan) - 1}]] "|"]
     set nopts [expr {[llength $parts] - 2}]
     if {$ans > $nopts} {
-        putchan $chan "$nick: answer must be between 1 and $nopts"
+        putchan $chan "$nick: Answer must be between 1 and $nopts"
         return
     }
 
@@ -724,7 +724,7 @@ proc hamtrivia_tiebreaker_eval {chan} {
     putchan $chan "❌ Eliminated: [join $eliminated {, }]."
 
     if {[llength $hamtrivia_tienicks($chan)] == 1} {
-        putchan $chan "🏆 Winner: \002[lindex $hamtrivia_tienicks($chan) 0]\002! Elmer of the day! 73!"
+        putchan $chan "🏆 Winner: \002[lindex $hamtrivia_tienicks($chan) 0]\002! Elmer of the day! FB OM 73!"
         hamtrivia_clear $chan
     } else {
         putchan $chan "🤝 Still tied: \002[join $hamtrivia_tienicks($chan) {, }]\002. Another tiebreaker..."
@@ -741,7 +741,7 @@ proc hamtrivia_stop_pub {nick host hand chan text} {
     if {([info exists hamtrivia_active($chan)] && $hamtrivia_active($chan)) ||
         ([info exists hamtrivia_starting($chan)] && $hamtrivia_starting($chan))} {
         hamtrivia_clear $chan
-        putchan $chan "🛑 Ham Radio Trivia stopped by $nick."
+        putchan $chan "🛑 Ham Radio Trivia was stopped by $nick."
     } else {
         putchan $chan "No Ham Radio Trivia game is running."
     }
