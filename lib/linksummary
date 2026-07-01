@@ -1828,6 +1828,106 @@ sub doZillowZpid {
   }
 }
 
+sub gh_doesRepoHaveFile {
+  my $repo = shift;
+  my $branch = shift;
+  my $filepath = shift;
+
+  my $url = "https://api.github.com/repos/$repo/contents/$filepath?ref=$branch";
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  open(HTTP, '-|', "curl --compressed --max-time $timeout -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  my $json = <HTTP>;
+  close(HTTP);
+  my $j = from_json($json);
+
+  print "$url\n";
+
+  if (not defined $j->{status} or (defined $j->{status} and $j->{status} != 404)) {
+      if ($j->{size} > 0 and $j->{type} eq "file") {
+        return 1;
+      }
+  }
+  return 0;
+}
+
+sub gh_getFileContents {
+  my $repo = shift;
+  my $branch = shift;
+  my $filepath = shift;
+
+  my $url = "https://api.github.com/repos/$repo/contents/$filepath?ref=$branch";
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  open(HTTP, '-|', "curl --compressed --max-time $timeout -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  my $json = <HTTP>;
+  close(HTTP);
+  my $j = from_json($json);
+
+  print "$url\n";
+
+  if (not defined $j->{status} or (defined $j->{status} and $j->{status} != 404)) {
+      if ($j->{size} > 0 and $j->{type} eq "file") {
+        return decode_base64($j->{content});
+      }
+  }
+  return undef;
+}
+
+sub gh_repoUsesAi {
+  my $repo = shift;
+  my $branch = shift;
+
+  my $isVibe = 0;
+
+  # files of interest
+  my @files = ( "CLAUDE.md",
+                "GEMINI.md",
+                "ai-context.md",
+                "copilot-instructions.md",
+                "AGENTS.md",
+                ".copilot-config.json" );
+
+
+  # pass 1: look at commit messages
+  my $url = "https://api.github.com/repos/$repo/commits";
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  open(HTTP, '-|', "curl --compressed --max-time $timeout -L -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  my $json = <HTTP>;
+  close(HTTP);
+  my $j = from_json($json);
+
+  for(my $i = 0; defined($j->[$i]); $i++) {
+    my $msg = $j->[$i]{commit}{message} if defined $j->[$i]{commit}{message};
+    next if not defined $msg;
+    $isVibe = 1 if $msg =~ m/co-authored-by.*\b(Claude|Sonnet|Opus|anthropic|chatgpt|openai|copilot|gemini|agent|deepseek)\b/i;
+    print "FOUND COMMIT MSG\n" if $isVibe;
+    return $isVibe if $isVibe;
+  }
+
+  # pass 2: look at .gitignore contents
+  my $gitignore = gh_getFileContents($repo, $branch, ".gitignore");
+  if (defined $gitignore and $gitignore ne "") {
+    foreach my $f (@files) {
+      if ($gitignore =~ m|$f|i) {
+        print "FOUND GITIGNORE: $f\n";
+        $isVibe = 1;
+        return $isVibe if $isVibe;
+      }
+    }
+  }
+
+  # pass 3: look for particular files
+  foreach my $f (@files) {
+    $isVibe = gh_doesRepoHaveFile($repo, $branch, $f);
+    print "FOUND FILE: $f\n" if $isVibe;
+    return $isVibe if $isVibe;
+  }
+
+  return $isVibe;
+}
+
 sub doGithub {
   my $url = shift;
 
@@ -1856,6 +1956,8 @@ sub doGithub {
     $output .= $j->{license}{name} if defined $j->{license}{name};
     $output .= ")" if defined $j->{language} or defined $j->{license}{name};
 
+    $output .= " " . red("[AI use]") if gh_repoUsesAi($j->{full_name}, $j->{default_branch});
+
     if (defined $j->{source}) {
       $output .= " -- origin repo: https://github.com/$j->{source}{full_name}";
       $output .= " created " . substr($j->{source}{created_at},0,10) . ";";
@@ -1866,6 +1968,8 @@ sub doGithub {
 
     print $output, "\n";
   }
+
+  # TODO other github URLs: issue, PR, user profile
 }
 
 sub unescape {
