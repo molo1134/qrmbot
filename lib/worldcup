@@ -15,7 +15,7 @@ use Util;
 use POSIX qw(strftime);
 use Encode qw(encode_utf8);
 use URI::Escape;
-use Time::Piece;
+use Time::Local qw(timegm);
 
 # Force Eastern Time for date math (tournament is in North America)
 $ENV{TZ} = 'America/New_York';
@@ -117,13 +117,13 @@ sub fmtTime {
 sub fmtDate {
   my $d = shift // '';
   my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-  # Handle full ISO timestamp via strptime: "2026-07-02T00:00Z"
-  if ($d =~ /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/) {
-    # strptime parses as localtime (ET per TZ), but the input is UTC.
-    # Subtract EDT offset (4h) to get the correct epoch; mon/mday then
-    # give us the ET date via localtime.
-    my $t = Time::Piece->strptime($1, "%Y-%m-%dT%H:%M") - 4 * 3600;
-    return $mon[$t->mon - 1] . " " . $t->mday;
+  # Handle full ISO timestamp: "2026-07-02T00:00Z"
+  if ($d =~ /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/) {
+    my ($y, $m, $day, $h, $min) = ($1 + 0, $2 + 0, $3 + 0, $4 + 0, $5 + 0);
+    # Parse as UTC epoch via timegm, then convert to local (ET) for display
+    my $epoch = timegm(0, $min, $h, $day, $m - 1, $y);
+    my ($et_mon, $et_mday) = (localtime($epoch))[4,3];
+    return $mon[$et_mon] . " " . $et_mday;
   }
   # Fallback: plain date string
   return $d unless $d =~ /^(\d{4})-(\d{2})-(\d{2})$/;
