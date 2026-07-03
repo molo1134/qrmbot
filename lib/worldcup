@@ -300,12 +300,14 @@ sub gameSnippet {
     } else {
       $snippet = bold($aAbbr) . " vs " . bold($hAbbr);
     }
+    my $broadcast = $event->{competitions}[0]{broadcasts}[0]{names}[0];
     my $city = $event->{competitions}[0]{venue}{address}{city};
     $city =~ s/,.*$// if defined $city;
-    $snippet .= " (" if defined $city or defined $time;
+    $snippet .= " (" if defined $city or defined $time or defined $broadcast;
     $snippet .= italic($city) if defined $city;
     $snippet .= " " . $time if $time;
-    $snippet .= ")" if defined $city or defined $time;
+    $snippet .= " " . $broadcast if defined $broadcast;
+    $snippet .= ")" if defined $city or defined $time or defined $broadcast;
     my $odds = fetchPolymarketOdds($away->{team}{name}, $home->{team}{name}, $aAbbr, $hAbbr);
     $snippet .= "  $odds" if defined $odds;
   }
@@ -368,6 +370,16 @@ sub renderTeamGame {
     my $time = fmtTime($event->{date});
     my $dateFmt = fmtDate($event->{date});
     $msg = $prefix . bold($aName) . " vs " . bold($hName) . "  $dateFmt $time";
+
+    my $broadcast = $event->{competitions}[0]{broadcasts}[0]{names}[0];
+    my $city = $event->{competitions}[0]{venue}{address}{city};
+    $city =~ s/,.*$// if defined $city;
+    $msg .= " (" if defined $city or defined $broadcast;
+    $msg .= italic($city) if defined $city;
+    $msg .= " " if defined $city and defined $broadcast;
+    $msg .= $broadcast if defined $broadcast;
+    $msg .= ")" if defined $city or defined $broadcast;
+
     my $odds = fetchPolymarketOdds($aName, $hName, $aAbbr, $hAbbr);
     $msg .= "  $odds" if defined $odds;
   }
