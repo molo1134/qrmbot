@@ -162,6 +162,8 @@ sub statusLabel {
     return yellow("LIVE") . " $clock";
   } elsif ($typeName eq 'STATUS_HALFTIME') {
     return yellow('HT');
+  } elsif ($typeName eq 'STATUS_HALFTIME_ET') {
+    return yellow('HT') . " $clock";
   } elsif ($typeName eq 'STATUS_FULL_TIME') {
     return yellow('FT');
   } elsif ($typeName eq 'STATUS_FULL_EXTRA') {
@@ -191,7 +193,8 @@ sub isLive {
   my $name = shift // '';
   return $name eq 'STATUS_IN_PROGRESS' || $name eq 'STATUS_HALFTIME'
       || $name eq 'STATUS_OVERTIME'    || $name eq 'STATUS_PENALTY'
-      || $name eq 'STATUS_FIRST_HALF'  || $name eq 'STATUS_SECOND_HALF';
+      || $name eq 'STATUS_FIRST_HALF'  || $name eq 'STATUS_SECOND_HALF'
+      || $name eq 'STATUS_HALFTIME_ET';
 }
 
 sub isFinal {
