@@ -162,8 +162,12 @@ sub statusLabel {
     return yellow("LIVE") . " $clock";
   } elsif ($typeName eq 'STATUS_HALFTIME') {
     return yellow('HT');
-  } elsif ($typeName eq 'STATUS_FULL_TIME' || $typeName eq 'STATUS_FULL_EXTRA') {
-    return 'FT';
+  } elsif ($typeName eq 'STATUS_HALFTIME_ET') {
+    return yellow('HT') . " $clock";
+  } elsif ($typeName eq 'STATUS_FULL_TIME') {
+    return yellow('FT');
+  } elsif ($typeName eq 'STATUS_FULL_EXTRA') {
+    return yellow('AET');
   } elsif ($typeName eq 'STATUS_FINAL_AET') {
     return 'AET';
   } elsif ($typeName eq 'STATUS_OVERTIME') {
@@ -189,13 +193,30 @@ sub isLive {
   my $name = shift // '';
   return $name eq 'STATUS_IN_PROGRESS' || $name eq 'STATUS_HALFTIME'
       || $name eq 'STATUS_OVERTIME'    || $name eq 'STATUS_PENALTY'
-      || $name eq 'STATUS_FIRST_HALF'  || $name eq 'STATUS_SECOND_HALF';
+      || $name eq 'STATUS_FIRST_HALF'  || $name eq 'STATUS_SECOND_HALF'
+      || $name eq 'STATUS_HALFTIME_ET';
 }
 
 sub isFinal {
   my $name = shift // '';
   return $name eq 'STATUS_FULL_TIME' || $name eq 'STATUS_FULL_EXTRA'
       || $name eq 'STATUS_FINAL_PEN' || $name eq 'STATUS_FINAL_AET';
+}
+
+# Detect the break between regulation and extra time (or extra time and penalties)
+# in knockout matches. STATUS_FULL_TIME / STATUS_FULL_EXTRA are in isFinal above,
+# but when the score is tied in a knockout round the match is still going.
+sub isBetweenPeriods {
+  my $event = shift;
+  my $stateName = $event->{competitions}[0]{status}{type}{name} // '';
+  return 0 unless $stateName eq 'STATUS_FULL_TIME' || $stateName eq 'STATUS_FULL_EXTRA';
+  # Group stage matches can't go to extra time — draws are truly final
+  my $season = $event->{season}{slug} // '';
+  return 0 if $season eq 'group-stage';
+  # Only transitional if score is tied (otherwise the match really is over)
+  my ($home, $away) = getCompetitors($event);
+  return 0 unless defined($home) && defined($away);
+  return ($home->{score} // 0) == ($away->{score} // 0);
 }
 
 # --- standings helpers ---
@@ -273,6 +294,10 @@ sub gameSnippet {
   if (isLive($stateName)) {
     my $label = statusLabel($status);
     $snippet = bold($aName) . "($aScore) vs " . bold($hName) . "($hScore) $label";
+  } elsif (isBetweenPeriods($event)) {
+    # Between regulation and extra time (or extra time and penalties) in knockout
+    my $label = statusLabel($status);
+    $snippet = bold($aName) . "($aScore) vs " . bold($hName) . "($hScore) $label";
   } elsif (isFinal($stateName)) {
     my $suffix = '';
     if ($stateName eq 'STATUS_FINAL_AET') {
@@ -344,6 +369,14 @@ sub renderTeamGame {
   my $dateStr = fmtDate($event->{date});
 
   if (isLive($stateName)) {
+    my $label = statusLabel($status);
+    $msg = $prefix . bold($aName) . " $aScore-$hScore " . bold($hName)
+         . " $label";
+    $msg .= "  $stats" if defined($stats) && $stats ne '';
+    $msg .= "  $cards" if defined($cards) && $cards ne '';
+  } elsif (isBetweenPeriods($event)) {
+    # Between regulation and extra time (or extra time and penalties) in knockout —
+    # match is still in progress, show full detail like a live match
     my $label = statusLabel($status);
     $msg = $prefix . bold($aName) . " $aScore-$hScore " . bold($hName)
          . " $label";
@@ -749,7 +782,7 @@ if (defined $teamEvent) {
     my $summary = fetchSummary($teamEvent->{id});
     if (defined $summary) {
       $goals = formatGoals($summary, $isIRC);
-      $commentary = formatCommentary($summary, 1, $isIRC) if isLive($stateName);
+      $commentary = formatCommentary($summary, 1, $isIRC) if isLive($stateName) || isBetweenPeriods($teamEvent);
       $stats = formatStats($summary, $isIRC) if isLive($stateName) || isFinal($stateName);
       $cards = formatCards($summary);
     }
