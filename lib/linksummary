@@ -1841,7 +1841,7 @@ sub gh_doesRepoHaveFile {
   close(HTTP);
   my $j = from_json($json);
 
-  print "$url\n";
+  #print "$url\n";
 
   if (not defined $j->{status} or (defined $j->{status} and $j->{status} != 404)) {
       if ($j->{size} > 0 and $j->{type} eq "file") {
@@ -1864,7 +1864,7 @@ sub gh_getFileContents {
   close(HTTP);
   my $j = from_json($json);
 
-  print "$url\n";
+  #print "$url\n";
 
   if (not defined $j->{status} or (defined $j->{status} and $j->{status} != 404)) {
       if ($j->{size} > 0 and $j->{type} eq "file") {
