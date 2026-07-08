@@ -19,7 +19,7 @@ use lib dirname(realpath(__FILE__));
 use Colors;
 use Util;
 
-my $url="https://services.swpc.noaa.gov/text/45-day-ap-forecast.txt";
+my $url="https://services.swpc.noaa.gov/text/45-day-forecast.txt";
 
 my $datestamp;
 my $inAp = 0;
