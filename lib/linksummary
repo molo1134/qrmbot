@@ -1901,7 +1901,7 @@ sub gh_repoUsesAi {
   for(my $i = 0; defined($j->[$i]); $i++) {
     my $msg = $j->[$i]{commit}{message} if defined $j->[$i]{commit}{message};
     next if not defined $msg;
-    $isVibe = 1 if $msg =~ m/co-authored-by.*\b(Claude|Sonnet|Opus|anthropic|chatgpt|openai|copilot|gemini|agent|deepseek)\b/i;
+    $isVibe = 1 if $msg =~ m/co-authored-by.*(Claude|Sonnet|Opus|anthropic|chatgpt|openai|copilot|gemini|agent|deepseek|cursor)/i;
     #print "FOUND COMMIT MSG\n" if $isVibe;
     return $isVibe if $isVibe;
   }
