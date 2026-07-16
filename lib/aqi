@@ -207,6 +207,7 @@ sub colorByAQI {
   return darkYellow($text) if $aqi <= 150;
   return red($text) if $aqi <= 200;
   return magenta($text) if $aqi <= 300;
+  return darkRed(">".$text) if $aqi == 500.0 and isNumeric($text);
   return darkRed($text);
 }
 
@@ -345,38 +346,39 @@ sub pm25_to_aqi {
 
   my ($aqi_lo, $aqi_hi, $conc_lo, $conc_hi);
 
-  if ($pm25 < 12.1) {
+  if ($pm25 < 9.1) {
+    $conc_lo = 0.0;
+    $conc_hi = 9.0;
     $aqi_lo = 0.0;
     $aqi_hi = 50.0;
-    $conc_lo = 0.0;
-    $conc_hi = 12.0;
   } elsif ($pm25 < 35.5) {
+    $conc_lo = 9.1;
+    $conc_hi = 35.4;
     $aqi_lo = 51.0;
     $aqi_hi = 100.0;
-    $conc_lo = 12.1;
-    $conc_hi = 35.4;
   } elsif ($pm25 < 55.5) {
-    $aqi_lo = 101.0;
-    $aqi_hi = 150.0;
     $conc_lo = 35.5;
     $conc_hi = 55.4;
-  } elsif ($pm25 < 150.5) {
+    $aqi_lo = 101.0;
+    $aqi_hi = 150.0;
+  } elsif ($pm25 < 125.5) {
+    $conc_lo = 55.5;
+    $conc_hi = 125.4;
     $aqi_lo = 151.0;
     $aqi_hi = 200.0;
-    $conc_lo = 55.5;
-    $conc_hi = 150.4;
-  } elsif ($pm25 < 250.5) {
+  } elsif ($pm25 < 225.5) {
+    $conc_lo = 125.5;
+    $conc_hi = 225.4;
     $aqi_lo = 201.0;
     $aqi_hi = 300.0;
-    $conc_lo = 150.5;
-    $conc_hi = 250.4;
-  } elsif ($pm25 < 500.5) {
+  } elsif ($pm25 < 325.5) {
+    $conc_lo = 225.5;
+    $conc_hi = 325.4;
     $aqi_lo = 301.0;
     $aqi_hi = 500.0;
-    $conc_lo = 250.5;
-    $conc_hi = 500.4;
   } else {
-    return -1;
+    # off scale
+    return 500.0;
   }
 
   my $aqi = ((($aqi_hi - $aqi_lo) / ($conc_hi - $conc_lo)) * ($pm25 - $conc_lo)) + $aqi_lo;
