@@ -18,6 +18,9 @@ bind msg - !setgeo qrz_setgeo_msg
 bind pub - !getgeo qrz_getgeo_pub
 bind msg - !getgeo qrz_getgeo_msg
 
+bind pub - !aqui qrz_aqui_pub
+bind msg - !aqui qrz_aqui_msg
+
 bind pub - !grid grid
 bind pub - !qth grid
 
@@ -326,6 +329,17 @@ proc qrz_getgeo_msg { nick uhand handle input } {
 	putlog "getgeo msg: $nick $uhand $handle $input"
 	set geo [qrz_getgeo $handle]
 	putmsg "$nick" "$geo"
+}
+
+proc qrz_aqui_pub { nick host hand chan text } {
+	putlog "aqui pub: $nick $host $hand $chan $text"
+	set geo [qrz_getgeo $hand]
+	putchan $chan "Usted está aquí: $geo"
+}
+proc qrz_aqui_msg { nick uhand handle input } {
+	putlog "aqui msg: $nick $uhand $handle $input"
+	set geo [qrz_getgeo $handle]
+	putmsg "$nick" "Usted está aquí: $geo"
 }
 
 proc grid_to_coords { grid } {
@@ -2339,4 +2353,3 @@ proc potaleaguedel_msg {nick uhand handle input} {
 }
 
 putlog "Ham utils loaded."
-
