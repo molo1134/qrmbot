@@ -209,7 +209,6 @@ sub colorByAQI {
   return darkYellow($text) if $aqi <= 150;
   return red($text) if $aqi <= 200;
   return magenta($text) if $aqi <= 300;
-  return darkRed(">".$text) if $aqi == 500.0 and isNumeric($text);
   return darkRed($text);
 }
 
@@ -379,8 +378,8 @@ sub pm25_to_aqi {
     $aqi_lo = 301.0;
     $aqi_hi = 500.0;
   } else {
-    # off scale
-    return 500.0;
+    # off scale, continue with last bracket
+    return round((($pm25 - 325.5) * 2.0) + 500.0);
   }
 
   my $aqi = ((($aqi_hi - $aqi_lo) / ($conc_hi - $conc_lo)) * ($pm25 - $conc_lo)) + $aqi_lo;
