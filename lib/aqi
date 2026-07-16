@@ -116,8 +116,9 @@ sub getNearest {
     my $sta = $j->{'aqMonitors'}->[0];
     my $ts = Time::Piece->strptime($sta->{'utc_ts'}, "%Y-%m-%dT%H:%M:%S+00:00")->epoch;
     my $src = "aq";
-    my ($id, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng) = (
+    my ($id, $name, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng) = (
       $sta->{'unit_id'},
+      $sta->{'site_name'} || "#" . $sta->{'unit_id'},
       "",
       defined($sta->{'nowcast'}) ? $sta->{'nowcast'} : "",
       $sta->{'raw_pm25'},
@@ -125,7 +126,7 @@ sub getNearest {
       $sta->{'lng'}
     );
     my ($dist, undef) = distBearing($mylat, $mylon, $lat, $lng);
-    $stationData{$dist} = join('|', ($src, $id, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng));
+    $stationData{$dist} = join('|', ($src, $id, $name, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng));
 
   } else {
     print "warning: no aqMonitors found in getNearest()\n";
@@ -136,8 +137,9 @@ sub getNearest {
     my $sta = $j->{'purpleAir'}->[0];
     my $ts = Time::Piece->strptime($sta->{'utc_ts'}, "%Y-%m-%dT%H:%M:%S+00:00")->epoch;
     my $src = "pa";
-    my ($id, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng) = (
+    my ($id, $name, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng) = (
       $sta->{'unit_id'},
+      $sta->{'site_name'} || "#" . $sta->{'unit_id'},
       $sta->{'corrected_pm25'},
       $sta->{'nowcast'},
       $sta->{'raw_pm25'},
@@ -146,7 +148,7 @@ sub getNearest {
     );
     #print "aqi: $sta->{'aqi'}\n" if defined $sta->{'aqi'}; # XXX DEBUG
     my ($dist, undef) = distBearing($mylat, $mylon, $lat, $lng);
-    $stationData{$dist} = join('|', ($src, $id, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng));
+    $stationData{$dist} = join('|', ($src, $id, $name, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng));
 
   } else {
     print "warning: no purpleAir found in getNearest()\n";
@@ -164,7 +166,7 @@ sub displayStation {
   }
   #print "$key => $stationData{$key}\n";
 
-  my ($src, $id, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng) = split /\|/, $stationData{$key};
+  my ($src, $id, $name, $ts, $epa_pm25, $epa_nowcast, $raw_pm25, $lat, $lng) = split /\|/, $stationData{$key};
   my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lng);
   my $grid = coordToGrid($lat, $lng);
   my $loc = geolocate($lat, $lng);
@@ -178,7 +180,7 @@ sub displayStation {
 
   my $aqi = pm25_to_aqi($epa_nowcast);
 
-  print "$loc ($grid): Air Quality Index (PM2.5): ",
+  print "$loc ($grid -- $name): Air Quality Index (PM2.5): ",
       colorByAQI($aqi, "$aqi"),
       " (", descriptionByAQI($aqi), ")";
   print " at ", strftime("%Y-%m-%d %H%Mz", gmtime($ts)), $old;
