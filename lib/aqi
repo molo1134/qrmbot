@@ -207,9 +207,11 @@ sub colorByAQI {
   return green($text) if $aqi <= 50;
   return yellow($text) if $aqi <= 100;
   return darkYellow($text) if $aqi <= 150;
-  return red($text) if $aqi <= 200;
-  return magenta($text) if $aqi <= 300;
-  return darkRed($text);
+  return darkRed($text) if $aqi <= 200;
+  return red($text) if $aqi <= 300;
+  return magenta($text) if $aqi <= 500;
+  return blue($text) if $aqi <= 750;
+  return lightblue($text);
 }
 
 sub descriptionByAQI {
