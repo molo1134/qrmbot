@@ -220,9 +220,11 @@ sub descriptionByAQI {
   return green("Good") if $aqi <= 50;
   return yellow("Moderate") if $aqi <= 100;
   return darkYellow("Unhealthy for sensitive groups") if $aqi <= 150;
-  return red("Unhealthy") if $aqi <= 200;
-  return magenta("Very Unhealthy") if $aqi <= 300;
-  return darkRed("Hazardous");
+  return darkRed("Unhealthy") if $aqi <= 200;
+  return red("Very Unhealthy") if $aqi <= 300;
+  return magenta("Hazardous") if $aqi <= 500;
+  return blue("Very Hazardous [off scale]") if $aqi <= 750;
+  return lightblue("Super Hazardous [off scale]");
 }
 
 sub getTimeSeriesPA {
