@@ -31,10 +31,12 @@ my $json = <HTTP>;
 close HTTP;
 my $j = decode_json($json);
 $isup = $j->{statistics}->{counts}->{down} == 0;
-$uptime = $j->{statistics}->{uptime}->{l1}->{ratio};
+$uptime = $j->{data}[0]{'30dRatio'}{ratio};
+my $lastdowntime = substr($j->{data}[0]{lastDowntime}{date}, 0, 10);
 print "LoTW up? ",$isup?green("yes"):red("no"), "; up ";
 print (($uptime < 100.0)?red($uptime):green($uptime));
-print "% of last 24h;";
+print "% of last 30d; last downtime on $lastdowntime;";
+
 
 $url = "http://www.arrl.org/logbook-queue-status";
 open (HTTP, '-|', "curl --max-time 10 -L -k -s $url");
