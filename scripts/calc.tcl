@@ -39,9 +39,12 @@ proc pub_calc { nick host hand chan text } {
   set expression [sanitize_bc $term]
   putlog "calc pub: $nick $host $hand $chan $expression"
   set fd [open "|/bin/sh -c \"ulimit -t 5 ; echo '${expression}' | /usr/bin/bc -l \${HOME}/.bcrc \" 2>@1" r ]
+  set count 0
+  set limit 8
   fconfigure $fd -encoding utf-8
-  while {[gets $fd line] >= 0} {
+  while {[gets $fd line] >= 0 && $count < $limit} {
     putchan $chan "$line"
+    set count [expr $count + 1]
   }
   close $fd
 }
