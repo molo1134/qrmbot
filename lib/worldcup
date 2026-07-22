@@ -2,6 +2,8 @@
 # World Cup 2026 scores, schedule, and group standings.
 # Data via ESPN public API — no key required.
 
+exit 0;
+
 use strict;
 use utf8;
 use feature 'unicode_strings';
