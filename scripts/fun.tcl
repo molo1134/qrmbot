@@ -1686,26 +1686,4 @@ proc mlb_team_msg { nick uhand handle input } {
 	close $fd
 }
 
-# World Cup 2026: !wc <team> plus common aliases
-bind pub - !wc wc_pub
-bind msg - !wc wc_msg
-proc wc_pub { nick host hand chan text } {
-}
-proc wc_msg { nick uhand handle input } {
-}
-
-# World Cup team aliases (!usa, !eng, !bra, etc.)
-foreach _team {mex cze kor rsa can bih sui qat bra sco hai mar par tur aus
-               usa ecu ger civ cuw ned swe jpn tun bel irn egy nzl esp uru
-               ksa cpv nor fra sen irq arg aut alg jor col por uzb cod eng
-               cro pan gha} {
-	bind pub - "!${_team}" wc_team_pub
-	bind msg - "!${_team}" wc_team_msg
-}
-unset _team
-proc wc_team_pub { nick host hand chan text } {
-}
-proc wc_team_msg { nick uhand handle input } {
-}
-
 putlog "fun.tcl loaded."
