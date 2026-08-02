@@ -37,8 +37,10 @@ my $call = uc $ARGV[0];
 
 my $base = "https://contestonlinescore.com/scoreboard/";
 
-# Fetch main page and find all "On air" contest IDs and names
-my @active;
+# Fetch main page and find all "On air" and recently "Closed" contest IDs and
+# names.  COSB drops a contest from the list a few days after it ends, so the
+# closed ones are the results people are still asking about.
+my @contests;
 {
   my $html = "";
   open(HTTP, '-|', "curl --max-time 15 -skL -A 'eggdrop-cosb-bot/1.0' '$base'");
@@ -47,20 +49,23 @@ my @active;
   $html = <HTTP>;
   close(HTTP);
 
-  while ($html =~ m|<option[^>]*value=['"](\d+)['"][^>]*>On air:\s*([^<]+)</option>|gi) {
-    my ($id, $name) = ($1, $2);
+  while ($html =~ m{<option[^>]*value=['"](\d+)['"][^>]*>(On air|Closed):\s*([^<]+)</option>}gi) {
+    my ($id, $state, $name) = ($1, $2, $3);
     $name =~ s/\s+$//;
-    push @active, { id => $id, name => $name };
+    push @contests, { id => $id, name => $name, closed => ($state =~ /^closed$/i) ? 1 : 0 };
   }
+
+  # report contests still running before ones that have finished
+  @contests = ((grep { !$_->{closed} } @contests), (grep { $_->{closed} } @contests));
 }
 
-if (scalar @active == 0) {
-  print "No contests currently on air at COSB.\n";
+if (scalar @contests == 0) {
+  print "No contests currently on air or recently closed at COSB.\n";
   exit 0;
 }
 
 my $found = 0;
-foreach my $contest (@active) {
+foreach my $contest (@contests) {
   my $url = "${base}?contest_id=$contest->{id}";
   my $html = "";
   open(HTTP, '-|', "curl --max-time 15 -skL -A 'eggdrop-cosb-bot/1.0' '$url'");
@@ -125,14 +130,23 @@ foreach my $contest (@active) {
   $qsos =~ s/,//g;
 
   my $catstr = defined $category ? " | $category" : "";
+  my $closedstr = $contest->{closed} ? " " . grey("(closed)") : "";
 
-  print "COSB [" . bold($contest->{name}) . "]: " . bold($call) .
+  print "COSB [" . bold($contest->{name}) . "]$closedstr: " . bold($call) .
         " #$rank$catstr | Score: $score | QSOs: $qsos\n";
   $found = 1;
 }
 
 if (!$found) {
-  my @names = map { $_->{name} } @active;
-  print bold($call) . " not found in active COSB contest(s): " .
-        join(", ", @names) . "\n";
+  my @active = map { $_->{name} } grep { !$_->{closed} } @contests;
+  my @closed = map { $_->{name} } grep { $_->{closed} } @contests;
+
+  my $msg = bold($call) . " not found in";
+  if (scalar @active > 0) {
+    $msg .= " active COSB contest(s): " . join(", ", @active);
+    $msg .= "; or recently closed: " . join(", ", @closed) if scalar @closed > 0;
+  } else {
+    $msg .= " recently closed COSB contest(s): " . join(", ", @closed);
+  }
+  print "$msg\n";
 }
