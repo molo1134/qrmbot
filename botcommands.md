@@ -952,10 +952,12 @@ Example:
 
 ### `!scores` -- look up a callsign on Contest Online ScoreBoard (COSB)
 
-Searches all currently active contests on contestonlinescore.com for the given
-callsign and reports rank, entry category, score, and QSO count for each contest
-found.  The rank is the position within that category, as COSB groups the
-scoreboard by category.
+Searches all currently active contests on contestonlinescore.com -- plus the
+recently closed ones COSB still lists, for a few days after a contest ends --
+for the given callsign, and reports rank, entry category, score, and QSO count
+for each contest found.  The rank is the position within that category, as COSB
+groups the scoreboard by category.  Results from a contest that has finished are
+flagged `(closed)`.
 
 Usage:
 
@@ -973,7 +975,15 @@ Examples:
     <qrm> COSB [CQ WPX CW]: N3RD #249 | SO-ALL LP (A) | Score: 53808 | QSOs: 126
 
     <W0NY> !scores W1AW
-    <qrm> W1AW not found in active COSB contest(s): CQ WPX CW
+    <qrm> W1AW not found in active COSB contest(s): CQ WPX CW; or recently
+          closed: NCCC NA CW Sprint
+```
+
+A contest that has already finished is still reported, flagged `(closed)`:
+
+```
+    <W0NY> !scores W0NY
+    <qrm> COSB [NAQP CW] (closed): W0NY #76 | SO-ALL LP (A) CW | Score: 78768 | QSOs: 547
 ```
 
 If the callsign is active in more than one contest (e.g. a CWT day with
@@ -985,11 +995,11 @@ overlapping sprints), each match is reported on its own line:
     <qrm> COSB [NCCC NA CW Sprint]: AA3B #7 | SO-ALL LP | Score: 1820 | QSOs: 52
 ```
 
-If no contests are currently active:
+If COSB lists no contests at all, on air or recently closed:
 
 ```
     <W0NY> !scores AA3B
-    <qrm> No contests currently on air at COSB.
+    <qrm> No contests currently on air or recently closed at COSB.
 ```
 
 Data source: https://contestonlinescore.com/
