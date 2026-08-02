@@ -953,7 +953,9 @@ Example:
 ### `!scores` -- look up a callsign on Contest Online ScoreBoard (COSB)
 
 Searches all currently active contests on contestonlinescore.com for the given
-callsign and reports rank, score, and QSO count for each contest found.
+callsign and reports rank, entry category, score, and QSO count for each contest
+found.  The rank is the position within that category, as COSB groups the
+scoreboard by category.
 
 Usage:
 
@@ -965,10 +967,10 @@ Examples:
 
 ```
     <W0NY> !scores AA3B
-    <qrm> COSB [CQ WPX CW]: AA3B #10 | Score: 8289099 | QSOs: 2693
+    <qrm> COSB [CQ WPX CW]: AA3B #10 | SO-ALL HP | Score: 8289099 | QSOs: 2693
 
     <W0NY> !scores N3RD
-    <qrm> COSB [CQ WPX CW]: N3RD #249 | Score: 53808 | QSOs: 126
+    <qrm> COSB [CQ WPX CW]: N3RD #249 | SO-ALL LP (A) | Score: 53808 | QSOs: 126
 
     <W0NY> !scores W1AW
     <qrm> W1AW not found in active COSB contest(s): CQ WPX CW
@@ -979,8 +981,8 @@ overlapping sprints), each match is reported on its own line:
 
 ```
     <W0NY> !scores AA3B
-    <qrm> COSB [CWops Mini-CWT 1]: AA3B #3 | Score: 4182 | QSOs: 66
-    <qrm> COSB [NCCC NA CW Sprint]: AA3B #7 | Score: 1820 | QSOs: 52
+    <qrm> COSB [CWops Mini-CWT 1]: AA3B #3 | SO-ALL LP | Score: 4182 | QSOs: 66
+    <qrm> COSB [NCCC NA CW Sprint]: AA3B #7 | SO-ALL LP | Score: 1820 | QSOs: 52
 ```
 
 If no contests are currently active:
