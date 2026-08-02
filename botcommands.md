@@ -932,16 +932,20 @@ Examples:
 
 ### `!contests` -- list current and upcoming contests
 
+Each contest is annotated with a countdown: in-progress contests show the time
+remaining until they end, upcoming contests show the time until they start.
+Durations of a day or more are shown in whole days.
+
 Example:
 
 ```
     <molo1134> !contests
-    <qrm> now: AWA Linc Cundall Memorial CW Contest; Hungarian DX Contest;
-          PRO Digi Contest; North American QSO Party, SSB; NA Collegiate
-          Championship, SSB; ARRL January VHF Contest; Feld Hell Sprint
-    <qrm> this weekend: CQ 160-Meter Contest, CW
-    <qrm> next weekend: Kawanua DX Contest; REF Contest, CW; BARTG RTTY
-          Sprint; Winter Field Day
+    <qrm> now: AWA Linc Cundall Memorial CW Contest (5h12m left); Hungarian DX
+          Contest (21h4m left); PRO Digi Contest (1d left); North American QSO
+          Party, SSB (3h4m left); Feld Hell Sprint (47m left)
+    <qrm> this weekend: CQ 160-Meter Contest, CW (in 4d)
+    <qrm> next weekend: Kawanua DX Contest (in 11d); REF Contest, CW (in 11d);
+          BARTG RTTY Sprint (in 12d); Winter Field Day (in 12d)
 ```
 
 ### `!wrtc` -- show WRTC standings for a callsign

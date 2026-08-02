@@ -76,12 +76,24 @@ my @current;
 my @thisweekend;
 my @nextweekend;
 
+# compact duration, e.g. "3d", "5h12m", "47m"
+sub duration {
+  my $secs = shift;
+  $secs = 0 if $secs < 0;
+  my $d = int($secs / 86400);
+  my $h = int(($secs % 86400) / 3600);
+  my $m = int(($secs % 3600) / 60);
+  return "${d}d" if $d > 0;
+  return "${h}h${m}m" if $h > 0;
+  return "${m}m";
+}
+
 while (defined $contests{$i}) {
   ($start, $end, $summary, $conturl) = split("::", $contests{$i});
 
   if ($start < $now and $now < $end) {
     #print("now: $summary -- $start -- $now -- $end\n");
-    push @current, $summary;
+    push @current, "$summary (" . duration($end - $now) . " left)";
   }
 
   # weekday based on GMT
@@ -94,10 +106,10 @@ while (defined $contests{$i}) {
 	($end-$start) > 43100) {
     if (($yday - $jdate) < 6) {
       #print("thisweekend: $summary -- $start -- $now -- $end\n");
-      push @thisweekend, $summary;
+      push @thisweekend, "$summary (in " . duration($start - $now) . ")";
     } elsif (($yday - $jdate) < 13) {
       #print("nextweekend: $summary -- $start -- $now -- $end\n");
-      push @nextweekend, $summary;
+      push @nextweekend, "$summary (in " . duration($start - $now) . ")";
     } else {
       #print "2 weeks or more away: $summary\n";
     }
@@ -112,10 +124,10 @@ while (defined $contests{$i}) {
 	$start > $now and
 	($end-$start) > 43100) {
     if (($yday - $jdate) < 6) {
-      push @thisweekend, $summary;
+      push @thisweekend, "$summary (in " . duration($start - $now) . ")";
       #print("thisweekend: $summary -- $start -- $now -- $end\n");
     } elsif (($yday - $jdate) < 13) {
-      push @nextweekend, $summary;
+      push @nextweekend, "$summary (in " . duration($start - $now) . ")";
       #print("nextweekend: $summary -- $start -- $now -- $end\n");
     } else {
       #print "2 week or more away: $summary\n";
