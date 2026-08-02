@@ -82,6 +82,26 @@ foreach my $contest (@active) {
 
   my $row = substr($html, $tr_pos, $tr_end - $tr_pos + 5);
 
+  # Category: the board is grouped into sections, each introduced by a
+  # <tr class="title5"> header naming the category, e.g. "SO-ALL LP (A) CW".
+  # The applicable one is the last such header before this entry's row.
+  my $category;
+  {
+    my $prefix = substr($html, 0, $tr_pos);
+    my $hdr;
+    while ($prefix =~ m|<tr[^>]*class=['"]title5['"][^>]*>(.*?)</td>|gis) {
+      $hdr = $1;
+    }
+    if (defined $hdr) {
+      $hdr =~ s/^.*?<td[^>]*>//s;   # keep only the header cell's contents
+      $hdr =~ s/<[^>]*>//g;         # strip the per-category filter links
+      $hdr =~ s/&nbsp;/ /g;
+      $hdr =~ s/\s+/ /g;
+      $hdr =~ s/^\s+|\s+$//g;
+      $category = $hdr if $hdr ne "";
+    }
+  }
+
   # Rank: first numeric <td> content
   my $rank;
   $rank = $1 if $row =~ m|<td[^>]*>(\d+)|i;
@@ -104,8 +124,10 @@ foreach my $contest (@active) {
   next unless defined $qsos;
   $qsos =~ s/,//g;
 
+  my $catstr = defined $category ? " | $category" : "";
+
   print "COSB [" . bold($contest->{name}) . "]: " . bold($call) .
-        " #$rank | Score: $score | QSOs: $qsos\n";
+        " #$rank$catstr | Score: $score | QSOs: $qsos\n";
   $found = 1;
 }
 
