@@ -101,10 +101,13 @@ foreach my $r (@rec) {
     if (m|<tr><td>Requestor call</td><td>(.*?)</td></tr>|) {
       $orig_call = uc $1;
     }
-    if (m|<tr><td>Reqphone</td><td>(.*?)</td></tr>|) {
+    if (m|<tr><td>Requestor phone</td><td>(.*?)</td></tr>|) {
       $phone = $1;
+      $phone =~ s/^\s*//;
+      $phone =~ s/\s*$//;
+      $phone =~ s/(.*)([0-9]{4})$/\1xxxx/ if $username eq getEggdropUID();
     }
-    if (m|<tr><td>Reqemail</td><td>.*?data-cfemail="([0-9a-f]+)">|i) {
+    if (m|<tr><td>Requestor email</td><td>.*?data-cfemail="([0-9a-f]+)">|i) {
       $email = $1;
       $email = decodeEmail($email);
     }
@@ -120,9 +123,7 @@ foreach my $r (@rec) {
     print bold($rcall), ": $rel: ",  bold($event),
       " from $sdate to $edate by $orig_call ($by";
     print "; $email" if defined $email and $email ne "";
-    if ($username ne getEggdropUID()) {
-      print "; $phone" if defined $phone and $phone ne "";
-    }
+    print "; $phone" if defined $phone and $phone ne "";
     print ")";
     print "\n";
     $found = 1;
