@@ -141,3 +141,13 @@ needed.
 * Asara WX0R
 * Jack WA6CR
 * Nick W0NY
+* Cory
+* Rob
+* imagesafari
+* w2xg
+* nickenzi
+* licyb200
+* joshmwilliams
+* k5dru
+* GooseThings
+* Eric
