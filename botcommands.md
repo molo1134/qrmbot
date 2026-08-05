@@ -11,7 +11,7 @@
  * `!forecast` -- 27 day solar forecast
  * `!45day` `!usaf` -- USAF 45 day solar forecast
  * `!longterm` -- solar cycle forecast
- * `!activity` -- band activity from pskreporter
+ * `!activity` -- band activity from pskreporter (uses !setgeo)
  * `!dxcc` -- display information on a dxcc entity
  * `!spots` -- display spots for a callsign
  * `!potaspots` -- find POTA activity
@@ -285,8 +285,10 @@ Data sources: NOAA SWPC, NASA MSAFE, ITU HFBC
 Usage:
 
 ```
-    !activity [mode] <grid>
+    !activity [mode] [grid]
 ```
+
+If no grid is given, your QTH set with `!setgeo` is used automatically.
 
 Examples:
 
@@ -303,6 +305,12 @@ Examples:
     <molo1134> !activity FN FT4
     <qrm> FT4 from grid FN (last 15 min): 10m⇒2246, 12m⇒6, 15m⇒470, 17m⇒50,
              20m⇒2630, 30m⇒281, 40m⇒1266, 60m⇒3, 80m⇒112, 160m⇒22
+
+    <molo1134> !setgeo FN21wb
+    <qrm> set geo coords: 41.716667,-70.958333
+    <molo1134> !activity FT4
+    <qrm> FT4 from grid FN21 (last 15 min): 10m⇒884, 12m⇒857, 15m⇒1483,
+             17m⇒26, 20m⇒140, 30m⇒75, 40m⇒52, 160m⇒1
 ```
 
 Data source: https://pskreporter.info/
