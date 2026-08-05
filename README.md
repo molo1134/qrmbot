@@ -80,9 +80,11 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/keys/google` -- keys for Google APIs (geocoding, translation)
 * `$HOME/.qrmbot/keys/imgur` -- API key for [imgur.com](https://imgur.com/)
 * `$HOME/.qrmbot/keys/omdbapi` -- API key for [omdbapi.com](https://www.omdbapi.com/)
+* `$HOME/.qrmbot/keys/scrapingantkey` -- API key for [scrapingant.com](https://scrapingant.com/) (optional, used as a fallback for `linksummary`)
 
 ## Cache files / state
 
+* `$HOME/.qrmbot/cache/amtrak-stations.gz` -- cache of Amtrak station data
 * `$HOME/.qrmbot/cache/clublogusers.gz` -- cache of clublog.org user data
 * `$HOME/.qrmbot/cache/cty.dat` -- cached DXCC data from [country-files.com](http://www.country-files.com/)
 * `$HOME/.qrmbot/cache/dmr-id-repeaters.csv` -- cache of DMR repeater IDs
@@ -90,10 +92,13 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/cache/hamspots.cookies` -- HTTP cookies for hamspots.net session
 * `$HOME/.qrmbot/cache/icao-types` -- cache of ICAO aircraft type data
 * `$HOME/.qrmbot/cache/lotw-dates.txt` -- cached LOTW upload dates
+* `$HOME/.qrmbot/cache/mlb/` -- cache of MLB Stats API responses
 * `$HOME/.qrmbot/cache/mostwanted.txt` -- cached DXCC "most wanted" data from [clublog.org](http://clublog.org/)
 * `$HOME/.qrmbot/cache/qrz.cookies` -- HTTP cookies for qrz.com session
 * `$HOME/.qrmbot/cache/radmon.txt` -- cached rad monitor data; safe to remove
 * `$HOME/.qrmbot/cache/spot_timestamps` -- used for spots monitor mode; safe to remove
+* `$HOME/.qrmbot/cache/trivia_token.txt` -- cached OpenTDB session token for `!trivia`
+* `$HOME/.qrmbot/db/potaleague` -- persistence file for `!potaleague` yearly activation tracking
 * `$HOME/.qrmbot/db/spots.sqlite` -- database of user-added radio spots
 
 
@@ -109,7 +114,7 @@ needed.
 1. Clean up and modularize TCL scripts
 2. Document how to use and configure TCL scripts
 3. ~~Accept other formats for `!setgeo`~~
-4. Use geo grid for `!activity`
+4. ~~Use geo grid for `!activity`~~
 5. Cleanup needed in `qrz` script
 6. Add a preferred wx station in addition to `!setgeo` geo coords
 7. If no callsign is specified with `!spots` use irc nick.
@@ -135,3 +140,15 @@ needed.
 * Andrew KC2G
 * Asara WX0R
 * Jack WA6CR
+* Nick W0NY
+* Cory ([MonkeybutlerCJH](https://github.com/MonkeybutlerCJH))
+* [jquinby](https://github.com/jquinby)
+* Rob
+* [imagesafari](https://github.com/imagesafari)
+* [w2xg](https://github.com/w2xg)
+* nickenzi (K1NZ)
+* [licyb200](https://github.com/licyb200)
+* [joshmwilliams](https://github.com/joshmwilliams)
+* [k5dru](https://github.com/k5dru)
+* [GooseThings](https://github.com/GooseThings)
+* Eric
