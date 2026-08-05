@@ -114,7 +114,7 @@ needed.
 1. Clean up and modularize TCL scripts
 2. Document how to use and configure TCL scripts
 3. ~~Accept other formats for `!setgeo`~~
-4. ~~Use geo grid for `!activity`~~
+4. Use geo grid for `!activity`
 5. Cleanup needed in `qrz` script
 6. Add a preferred wx station in addition to `!setgeo` geo coords
 7. If no callsign is specified with `!spots` use irc nick.
@@ -141,14 +141,3 @@ needed.
 * Asara WX0R
 * Jack WA6CR
 * Nick W0NY
-* Cory ([MonkeybutlerCJH](https://github.com/MonkeybutlerCJH))
-* [jquinby](https://github.com/jquinby)
-* Rob
-* [imagesafari](https://github.com/imagesafari)
-* [w2xg](https://github.com/w2xg)
-* nickenzi (K1NZ)
-* [licyb200](https://github.com/licyb200)
-* [joshmwilliams](https://github.com/joshmwilliams)
-* [k5dru](https://github.com/k5dru)
-* [GooseThings](https://github.com/GooseThings)
-* Eric
