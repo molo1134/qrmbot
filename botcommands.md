@@ -307,9 +307,9 @@ Examples:
              20m⇒2630, 30m⇒281, 40m⇒1266, 60m⇒3, 80m⇒112, 160m⇒22
 
     <molo1134> !setgeo FN21wb
-    <qrm> set geo coords: 41.716667,-70.958333
-    <molo1134> !activity FT4
-    <qrm> FT4 from grid FN21 (last 15 min): 10m⇒884, 12m⇒857, 15m⇒1483,
+    <qrm> set geo coords: 41.0625,-74.1250
+    <molo1134> !activity
+    <qrm> ALL from grid FN21 (last 15 min): 10m⇒884, 12m⇒857, 15m⇒1483,
              17m⇒26, 20m⇒140, 30m⇒75, 40m⇒52, 160m⇒1
 ```
 
