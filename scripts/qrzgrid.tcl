@@ -1304,8 +1304,15 @@ proc contests_msg {nick uhand handle input} {
 proc activity { nick host hand chan text } {
 	global activitybin
 	set params [sanitize_string [string trim "${text}"]]
-	putlog "activity pub: $nick $host $hand $chan $params"
-	set fd [open "|${activitybin} ${params}" r]
+	set geo [qrz_getgeo $hand]
+
+	putlog "activity pub: $nick $host $hand $chan $params $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${activitybin} ${params}" r]
+	} else {
+		set fd [open "|${activitybin} ${params} --geo ${geo}" r]
+	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
@@ -1315,8 +1322,15 @@ proc activity { nick host hand chan text } {
 proc activity_msg {nick uhand handle input} {
 	global activitybin
 	set params [sanitize_string [string trim "${input}"]]
-	putlog "activity msg: $nick $uhand $handle $params"
-	set fd [open "|${activitybin} ${params}" r]
+	set geo [qrz_getgeo $handle]
+
+	putlog "activity msg: $nick $uhand $handle $params $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${activitybin} ${params}" r]
+	} else {
+		set fd [open "|${activitybin} ${params} --geo ${geo}" r]
+	}
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg "$nick" "$line"
