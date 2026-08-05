@@ -80,9 +80,11 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/keys/google` -- keys for Google APIs (geocoding, translation)
 * `$HOME/.qrmbot/keys/imgur` -- API key for [imgur.com](https://imgur.com/)
 * `$HOME/.qrmbot/keys/omdbapi` -- API key for [omdbapi.com](https://www.omdbapi.com/)
+* `$HOME/.qrmbot/keys/scrapingantkey` -- API key for [scrapingant.com](https://scrapingant.com/) (optional, used as a fallback for `linksummary`)
 
 ## Cache files / state
 
+* `$HOME/.qrmbot/cache/amtrak-stations.gz` -- cache of Amtrak station data
 * `$HOME/.qrmbot/cache/clublogusers.gz` -- cache of clublog.org user data
 * `$HOME/.qrmbot/cache/cty.dat` -- cached DXCC data from [country-files.com](http://www.country-files.com/)
 * `$HOME/.qrmbot/cache/dmr-id-repeaters.csv` -- cache of DMR repeater IDs
@@ -90,10 +92,13 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/cache/hamspots.cookies` -- HTTP cookies for hamspots.net session
 * `$HOME/.qrmbot/cache/icao-types` -- cache of ICAO aircraft type data
 * `$HOME/.qrmbot/cache/lotw-dates.txt` -- cached LOTW upload dates
+* `$HOME/.qrmbot/cache/mlb/` -- cache of MLB Stats API responses
 * `$HOME/.qrmbot/cache/mostwanted.txt` -- cached DXCC "most wanted" data from [clublog.org](http://clublog.org/)
 * `$HOME/.qrmbot/cache/qrz.cookies` -- HTTP cookies for qrz.com session
 * `$HOME/.qrmbot/cache/radmon.txt` -- cached rad monitor data; safe to remove
 * `$HOME/.qrmbot/cache/spot_timestamps` -- used for spots monitor mode; safe to remove
+* `$HOME/.qrmbot/cache/trivia_token.txt` -- cached OpenTDB session token for `!trivia`
+* `$HOME/.qrmbot/db/potaleague` -- persistence file for `!potaleague` yearly activation tracking
 * `$HOME/.qrmbot/db/spots.sqlite` -- database of user-added radio spots
 
 
@@ -135,3 +140,14 @@ needed.
 * Andrew KC2G
 * Asara WX0R
 * Jack WA6CR
+* Nick W0NY
+* Cory
+* Rob
+* imagesafari
+* w2xg
+* nickenzi
+* licyb200
+* joshmwilliams
+* k5dru
+* GooseThings
+* Eric
