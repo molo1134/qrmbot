@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Scrape info from ae7q.com
+# Scrape info from ae7q.com (now callinfo.w5yi-vec.org)
 #
 # 2-clause BSD license.
 # Copyright (c) 2019, 2020, 2021 molo1134@github. All rights reserved.
@@ -68,7 +68,7 @@ sub doAe7qRegion {
   my $region = shift;
   my $saved = $_;
   $region = 10 if $region == 0;
-  my $url = "http://www.ae7q.com/query/list/GenLicAvail.php?REGION=$region";
+  my $url = "https://callinfo.w5yi-vec.org/query/list/GenLicAvail.php?REGION=$region";
 
   my @avail;
   my @pending;
@@ -215,7 +215,7 @@ sub doAe7qCall {
   my @frns;
   my %odds_sim;
 
-  #  print "Note: ae7q.com is not providing full data after changes on the site. See https://www.ae7q.com/query/text/News.php\n";
+  #  print "Note: ae7q.com is not providing full data after changes on the site. See https://callinfo.w5yi-vec.org/query/text/News.php\n";
 
   #my $url = "${predictionBaseUrl}/vanity-$call.csv";
   #open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
@@ -237,7 +237,7 @@ sub doAe7qCall {
   #}
   #close(CSV);
 
-  my $url = "http://www.ae7q.com/query/data/CallHistory.php?CALL=$call";
+  my $url = "http://callinfo.w5yi-vec.org/query/data/CallHistory.php?CALL=$call";
   #print "$url\n";
   open(HTTP, '-|', "curl --max-time $ae7qTimeout -L -k -s '$url'");
   while(<HTTP>) {
