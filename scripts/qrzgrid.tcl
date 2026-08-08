@@ -1864,6 +1864,10 @@ proc blitz_msg {nick uhand handle input} {
 set ae7qbin "/home/eggdrop/bin/ae7q"
 bind pub - !ae7q pub_ae7q
 bind msg - !ae7q msg_ae7q
+bind pub - !w5yi pub_w5yi
+bind msg - !w5yi msg_w5yi
+bind pub - !aj8u pub_aj8u
+bind msg - !aj8u msg_aj8u
 
 proc pub_ae7q { nick host hand chan text } {
 	global ae7qbin
@@ -1886,6 +1890,22 @@ proc msg_ae7q {nick uhand handle input} {
 		putmsg "$nick" "$line"
 	}
 	close $fd
+}
+proc pub_w5yi { nick host hand chan text } {
+	set input [sanitize_string [string trim "${text}"]]
+	pub_ae7q "$nick" "$host" "$hand" "$chan" "--w5yi $input"
+}
+proc pub_aj8u { nick host hand chan text } {
+	set input [sanitize_string [string trim "${text}"]]
+	pub_ae7q "$nick" "$host" "$hand" "$chan" "--aj8u $input"
+}
+proc msg_w5yi {nick uhand handle input} {
+	set input [sanitize_string [string trim "${input}"]]
+	msg_ae7q "$nick" "$uhand" "$handle" "--w5yi $input"
+}
+proc msg_aj8u {nick uhand handle input} {
+	set input [sanitize_string [string trim "${input}"]]
+	msg_ae7q "$nick" "$uhand" "$handle" "--aj8u $input"
 }
 
 set vanitybin "/home/eggdrop/bin/vanity"

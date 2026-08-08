@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Scrape info from ae7q.com (now callinfo.w5yi-vec.org)
+# Scrape info from ae7q.com (now callinfo.w5yi-vec.org and www.aj8u.net)
 #
 # 2-clause BSD license.
 # Copyright (c) 2019, 2020, 2021 molo1134@github. All rights reserved.
@@ -31,7 +31,10 @@ my $highlight="vt220";
 $highlight = "none" if ! -t STDOUT;
 $highlight = "irc" if $username eq getEggdropUID();
 
-my $predictionBaseUrl = "https://www.k2cr.com/predict/";
+#my $predictionBaseUrl = "https://www.k2cr.com/predict/";
+my @hostlist = ("callinfo.w5yi-vec.org", "www.aj8u.net");
+my $host = $hostlist[rand(scalar @hostlist)];  # random host by default
+my $src = getSrcForHost($host);
 
 # change this to 0 to always exit with success
 our $exitnonzeroonerror = 1;
@@ -43,9 +46,9 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   if ($username eq getEggdropUID()) {
-    print "usage: !ae7q <call>|<region>\n";
+    print "usage: !ae7q [--w5yi|--aj8u] <call>|<region>\n";
   } else {
-    print "usage: $0 <call>|<region>\n";
+    print "usage: $0 [--w5yi|--aj8u] <call>|<region>\n";
   }
   exit $exitnonzeroonerror;
 }
@@ -55,6 +58,21 @@ my $i = 0;
 while ($i <= $#ARGV) {
 
   $ARGV[$i] =~ s/'//g; # sanitize
+
+  if (lc $ARGV[$i] eq "--w5yi") {
+    $host = "callinfo.w5yi-vec.org";
+    $src = getSrcForHost($host);
+    @hostlist = ($host);
+    $i++;
+    next;
+  }
+  if (lc $ARGV[$i] eq "--aj8u") {
+    $host = "www.aj8u.net";
+    $src = getSrcForHost($host);
+    @hostlist = ($host);
+    $i++;
+    next;
+  }
 
   if ($ARGV[$i] =~ m/^[0-9]+$/) {
     doAe7qRegion($ARGV[$i]);
@@ -68,7 +86,7 @@ sub doAe7qRegion {
   my $region = shift;
   my $saved = $_;
   $region = 10 if $region == 0;
-  my $url = "https://callinfo.w5yi-vec.org/query/list/GenLicAvail.php?REGION=$region";
+  my $url = "https://$host/query/list/GenLicAvail.php?REGION=$region";
 
   my @avail;
   my @pending;
@@ -196,6 +214,7 @@ sub doAe7qRegion {
   print "; ", red(scalar @unavail), " unavailable: ",
 	red(join(", ", @unavail)) if scalar @unavail > 0;
   print "; ** information may be out of date" if $moving;
+  print "; src: $src" if defined $src;
   print "\n";
   $_ = $saved;
 }
@@ -215,7 +234,7 @@ sub doAe7qCall {
   my @frns;
   my %odds_sim;
 
-  #  print "Note: ae7q.com is not providing full data after changes on the site. See https://callinfo.w5yi-vec.org/query/text/News.php\n";
+  #  print "Note: ae7q.com is not providing full data after changes on the site. See https://www.ae7q.com/query/text/News.php\n";
 
   #my $url = "${predictionBaseUrl}/vanity-$call.csv";
   #open(CSV, '-|', "curl --fail --max-time $ae7qTimeout -L -k -s '$url'");
@@ -237,7 +256,7 @@ sub doAe7qCall {
   #}
   #close(CSV);
 
-  my $url = "http://callinfo.w5yi-vec.org/query/data/CallHistory.php?CALL=$call";
+  my $url = "http://$host/query/data/CallHistory.php?CALL=$call";
   #print "$url\n";
   open(HTTP, '-|', "curl --max-time $ae7qTimeout -L -k -s '$url'");
   while(<HTTP>) {
@@ -313,6 +332,7 @@ sub doAe7qCall {
 	print "Cancel $cxl; " if defined $cxl and length($cxl) > 0;
 	print "Expire $expire";
 	print italic("; Avail $availdate") if defined $availdate;
+        print "; src: $src" if defined $src;
 	print "\n";
 	push(@frns, $frn) if defined $frn and $status eq "Active";
 	$name = $frn = $class = $status = $grant = $eff = $cxl = $expire = undef;
@@ -322,7 +342,11 @@ sub doAe7qCall {
       $inLicTable = 0 if />Callsign</; # for trustee section
     }
     if (m|^\s*<table class="Database" cellpadding="4" align="center">\s*$|) {
-      print bold($call), ": $callStatus\n" if defined $callStatus and not $found;
+      if (defined $callStatus and not $found) {
+        print bold($call), ": $callStatus";
+        print "; src: $src" if defined $src;
+        print "\n";
+      }
       $found = 1;
       $inPredTable = 1;
       $state = $class = undef;
@@ -377,7 +401,11 @@ sub doAe7qCall {
     printFrnApps($f, \%odds_sim);
   }
 
-  print bold($call), ": $callStatus\n" if defined $callStatus and not $found;
+  if (defined $callStatus and not $found) {
+    print bold($call), ": $callStatus";
+    print "; src: $src" if defined $src;
+    print "\n";
+  }
   $_ = $saved;
 }
 
@@ -536,4 +564,10 @@ sub testDaysInMonth {
   assert(getDaysInMonth(2, 2400) == 29);
   # all others
   assert(getDaysInMonth(2, 2001) == 28);
+}
+
+sub getSrcForHost {
+  my $src = shift;
+  $src =~ s/.*\.([^.]+)\.[^.]+$/$1/;
+  return $src;
 }
