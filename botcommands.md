@@ -1068,19 +1068,51 @@ Examples:
 
 ### `!ae7q` -- get US callsign availability info
 
+This scraped information from the ae7q.com website, which is now defunct.  The
+codebase lives on with two new sites,
+[callinfo.w5yi-vec.org](https://callinfo.w5yi-vec.org/query/) and
+[aj8u.net](https://www.aj8u.net/query/).  Use this to query for callsign
+status, holder, and pending application status.  Use the region number to
+query for short callsign availability.
+
+Compare with `!vanity`, below.
+
 Usage:
 
 ```
-    !ae7q <call>|<region>
+    !ae7q [--w5yi|--aj8u] <call>|<region>
+    !w5yi <call|region>
+    !aj8u <call|region>
 ```
 
 Examples:
 
 ```
-TODO FIXME
+      <molo1134> !ae7q w1aw
+      <qrm> W1AW: Active - Arrl Hq Operators Club (FRN 0004511143; CT) -
+             Status: Active - Grant 2020-12-08; Effective 2026-03-12; Expire
+             2031-02-26; Avail 2033-02-27; src: aj8u
+
+      <molo1134> !ae7q 4
+      <qrm> Region 4: 0 available; 4 pending: N4GE, NV4P, WE4N, WS4J; 1
+             upcoming: NU4J; src: w5yi-vec
+
+      <molo1134> !w5yi WE4N
+      <qrm> WE4N: Application Pending - previous licensee: - Hansen, Darrin (FRN 0031235104; NV) - Amateur
+             Extra - Status: Canceled - Grant 2024-05-14; Effective 2024-05-14; Cancel 2024-08-02; Expire
+             2034-05-14; Avail 2026-08-03; src: w5yi-vec
+      <qrm> 2026-08-05 -> 2026-08-25 KE2EYU (GU) App 0012141058 #10/23 Unneeded
+      <qrm> 2026-08-04 -> 2026-08-22 KN4LJW (VA) App 0012139649 #2/2   Competition
+      <qrm> 2026-08-03 -> 2026-08-21 KF4IIF (TN) App 0012138692 #1/1   Inactive
+      <qrm> 2026-08-03 -> 2026-08-21 KJ4UBM (NC) App 0012137848 #1/1   Available
+      <qrm> 2026-08-03 -> 2026-08-21 NA4EK  (FL) App 0012139313 #17/22 Unneeded
 ```
 
 ### `!vanity` -- get US vanity callsign application info
+
+Get information about available and currently pending callsign applications,
+reading data from [vanities.k2cr.com](https://vanities.k2cr.com/).  Includes
+monte-carlo prediction of outcomes, showing chance of assignment.
 
 Usage:
 
@@ -1091,7 +1123,18 @@ Usage:
 Examples:
 
 ```
-TODO FIXME
+      <molo> !vanity 4
+      <qrm> Region 4: 0 available; 4 pending: N4GE (3x), NV4P, WE4N (91.6%
+             2x), WS4J (4x); 1 upcoming: NU4J
+
+      <molo> !vanity WE4N
+      <qrm> WE4N: Application Pending (91.6%) (available): Req'd class: E -- Avail: 2026-08-03 --
+            4 (KY, VA, TN, NC, SC, GA, AL, FL)
+      <qrm> 2026-08-03 -> 2026-08-21 KJ4UBM (NC) App 0012137848 #1/?   Available 66.7%
+      <qrm> 2026-08-03 -> 2026-08-21 KF4IIF (TN) App 0012138692 #1/?   Inactive applicant call
+      <qrm> 2026-08-03 -> 2026-08-21 NA4EK  (FL) App 0012139313 #17/?  Unneeded 0%
+      <qrm> 2026-08-04 -> 2026-08-22 KN4LJW (VA) App 0012139649 #2/?   Competition 24.9%
+      <qrm> 2026-08-05 -> 2026-08-25 KE2EYU (GU) App 0012141058 #10/?  Unneeded 0%
 ```
 
 ### `!dxped` -- get current dxpedition info
