@@ -109,7 +109,7 @@ Usage:
 Examples:
 
 ```
-    <molo1134> !call W1AW 
+    <molo1134> !call W1AW
     <@qrn> W1AW: USA:  ARRL HQ OPERATORS CLUB -- W1AW@ARRL.ORG -- Club class
             -- DMR IDs: 3109478, 310938 -- trustee: NJ1Q -- QSL: US STATIONS
             PLEASE QSL VIA LOTW OR DIRECT WITH SASE. [LM] -- Attn: JOSEPH P
@@ -168,11 +168,11 @@ Examples:
     <qrm> FN31pr: 41.714775, -72.727260: Newington, CT, USA
 
     <molo1134> !qth 1400 pennsylvania avenue washington dc
-    <qrm> FM18lv: 38.8960168, -77.0329812: Northwest Washington, Washington, 
+    <qrm> FM18lv: 38.8960168, -77.0329812: Northwest Washington, Washington,
              DC, USA
 
     <molo1134> !qth 1400 pennsylvania avenue washington dc DE 41.714775,-72.727260
-    <qrm> FM18lv: 38.8960168, -77.0329812: Northwest Washington, Washington, 
+    <qrm> FM18lv: 38.8960168, -77.0329812: Northwest Washington, Washington,
              DC, USA -- 481.6 km, 231° from FN31pr
 ```
 
@@ -428,7 +428,7 @@ Examples:
 
 ```
     <molo1134> !morse CQ CQ DE W1AW
-    <qrm> -.-. --.-   -.-. --.-   -.. .   .-- .---- .- .--   
+    <qrm> -.-. --.-   -.-. --.-   -.. .   .-- .---- .- .--
 
     <molo1134> !morse --weight W1AA K1AA N1AA
     <qrm> W1AA: 48; K1AA: 48; N1AA: 44
@@ -1404,9 +1404,9 @@ Notes:
     < molo1134> !units (dBuV(140.5)/m)/(9.73 /((c/98MHz)*sqrt(dB(2.14)))) in V
     < qrm> (dBuV(140.5)/m)/(9.73 /((c/98MHz)*sqrt(dB(2.14)))) = 4.2607082 V
 
-    < molo1134> !contests  
-    < qrm> now: AWA Bruce Kelley 1929 QSO Party  
-    < qrm> this weekend: ARRL 10-Meter Contest; SKCC Weekend Sprintathon;  
+    < molo1134> !contests
+    < qrm> now: AWA Bruce Kelley 1929 QSO Party
+    < qrm> this weekend: ARRL 10-Meter Contest; SKCC Weekend Sprintathon;
                  International Naval Contest
 
     < KM4JOJ> !wx 20111
@@ -1417,9 +1417,9 @@ Notes:
     < qrm> Weather for Laramie, WY (-105.6,41.3)  Elev: 2190m/7185ft
     < qrm>  observed at KLAR, Laramie, Last Updated on November 20, 11:22 AM MST
     < qrm>  conditions: Snow  Temp: -6°C/21°F  Humidity: 88%
-    < qrm>  Feels like: -14°C/8°F  Visibility: 1.6km/1.0mi  
-    < qrm>  Wind: North at 24kph/15mph  Pressure: 29.96inHg/1014mb (↓)  
-    < qrm>  Precipitation: today: 0.5mm/0.02in  
+    < qrm>  Feels like: -14°C/8°F  Visibility: 1.6km/1.0mi
+    < qrm>  Wind: North at 24kph/15mph  Pressure: 29.96inHg/1014mb (↓)
+    < qrm>  Precipitation: today: 0.5mm/0.02in
 
     < VA7EEX_> !phonetics w8tam
     < qrm> welcomed 8 tabulate aural matchmakers
@@ -1446,7 +1446,7 @@ Notes:
     < molo1134> !eme paris
     <+qrm> Moon az/el 121.8°/1.5°; dist 403311 km; phase: 3rd qrtr., 56%
              illum.; Moon will set at 2017-03-20 10:11z (in 8h55m); EME
-             degrd(2m): 10.5 dB (Very Poor); EME path loss(2m): 252.9 dB (+2.1 
+             degrd(2m): 10.5 dB (Very Poor); EME path loss(2m): 252.9 dB (+2.1
              dB, 93%);
 
     < molo1134> !graves
