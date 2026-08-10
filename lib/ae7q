@@ -32,7 +32,9 @@ $highlight = "none" if ! -t STDOUT;
 $highlight = "irc" if $username eq getEggdropUID();
 
 #my $predictionBaseUrl = "https://www.k2cr.com/predict/";
-my @hostlist = ("callinfo.w5yi-vec.org", "www.aj8u.net");
+#my @hostlist = ("callinfo.w5yi-vec.org", "www.aj8u.net");
+# 2026-08-09: AJ8U is having load issues
+my @hostlist = ("callinfo.w5yi-vec.org");
 my $host = $hostlist[rand(scalar @hostlist)];  # random host by default
 my $src = getSrcForHost($host);
 
