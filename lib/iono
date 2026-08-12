@@ -71,6 +71,11 @@ if (defined $query and not defined $result) {
 my ($mylat, $mylon) = split(',', $geo) if defined $geo;
 ($mylat, $mylon) = split(',', $result) if defined $result;
 
+if (defined $geo and (not isNumeric($mylat) or not isNumeric($mylon))) {
+  print "error: invalid --geo value\n";
+  exit $exitnonzeroonerror;
+}
+
 #print "$mylat, $mylon\n";
 
 my $url = "https://prop.kc2g.com/api/stations.json";

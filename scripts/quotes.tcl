@@ -57,6 +57,7 @@ proc q_pubquote { nick uhost hand chan arg } {
 
     if { $tmp == 0 } {
       putchan $chan "no quotes recorded for $chan"
+      close $qf
       return
     }
 

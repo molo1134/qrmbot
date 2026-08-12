@@ -84,7 +84,9 @@ $minsfi = 10000000.0;
 my $maxap = -1.0;
 my $minap = 10000.0;
 
-while (not $found) {
+my $tries = 0;
+while (not $found and $tries < 24) {
+  $tries++;
 
   my $currmonth = lc strftime("%b%Y", gmtime $time);
   my $curr_y_m = strftime("%Y/%m", gmtime $time);
@@ -131,6 +133,8 @@ if ($found) {
   printf "NASA:%s\n", yearMarkers(sort keys %sfi);
   printf "SFI: %s : $minsfi-$maxsfi\n", join("", sfiToColorBlocks($minsfi, $maxsfi, \%sfi));
   printf "AP:  %s : $minap-$maxap\n", join("", apToColorBlocks($minap, $maxap, \%ap));
+} else {
+  print "error: unable to find forecast data\n";
 }
 
 $url = "https://www.itu.int/ITU-R/eTerrestrial/eBroadcasting/eHFBC/api/hfbc/reftables/tables/sunspots";

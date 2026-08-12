@@ -43,7 +43,7 @@ while ($i <= $#ARGV) {
     $i++;
     next;
   }
-  if ($ARGV[$i] =~ /^((10|6|4|2|1\.25)m)|((70|33|23)cm)$/) {
+  if ($ARGV[$i] =~ /^((10|6|4|2|1\.25)m|(70|33|23)cm)$/) {
     $band = $ARGV[$i];
     $i++;
     next;
@@ -60,7 +60,7 @@ my $encoded = uri_escape($searchterm);
 my $url = "https://repeaterbook.com/repeaters/keyword.php?func=result&keyword=${encoded}&state_id=0";
 #print "$url\n";
 
-if (defined($band) and !($band =~ /^((10|6|4|2|1\.25)m)|((70|33|23)cm)$/)) {
+if (defined($band) and !($band =~ /^((10|6|4|2|1\.25)m|(70|33|23)cm)$/)) {
   print "valid bands: 10m 6m 4m 2m 1.25m 70cm 33cm 23cm\n";
   exit 0;
 }

@@ -196,7 +196,7 @@ if (@events == 0) {
 @events = sort {
   my ($am, $ad, $ay) = split('/', $a->{date});
   my ($bm, $bd, $by) = split('/', $b->{date});
-  "$ay$am$ad" cmp "$by$bm$bd"
+  sprintf("%04d%02d%02d", $ay, $am, $ad) cmp sprintf("%04d%02d%02d", $by, $bm, $bd)
 } @events;
 
 if (@events == 0) {

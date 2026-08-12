@@ -114,18 +114,18 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
   if (@{$j}[0]->{type} eq "park") {
     #print "park: ", $srec->{display}, " -- TODO\n";
     # TODO
-    my $url = "https://api.pota.app/park/" . $srec->{value};
+    my $url = "https://api.pota.app/park/" . uri_escape($srec->{value});
 
     local $/;   # read entire file -- FIXME: potentially memory hungry
-    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s " . shellQuote($url));
     my $json = <JSON>;
     close(JSON);
     #print $json, "\n";
     my $j = decode_json($json);
 
-    my $url = "https://api.pota.app/park/stats/" . $srec->{value};
+    my $url = "https://api.pota.app/park/stats/" . uri_escape($srec->{value});
     local $/;   # read entire file -- FIXME: potentially memory hungry
-    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s " . shellQuote($url));
     my $json = <JSON>;
     close(JSON);
     #print $json, "\n";
@@ -138,9 +138,9 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
       $k = decode_json($json);
     }
 
-    my $url = "https://api.pota.app/park/activations/$srec->{value}?count=1";
+    my $url = "https://api.pota.app/park/activations/" . uri_escape($srec->{value}) . "?count=1";
     local $/;   # read entire file -- FIXME: potentially memory hungry
-    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s " . shellQuote($url));
     my $json = <JSON>;
     close(JSON);
     #print $json, "\n";
@@ -165,9 +165,9 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
 	$last->{activeCallsign},
 	commify($last->{totalQSOs});
 
-      my $url = "https://api.pota.app/park/leaderboard/$srec->{value}?count=3";
+      my $url = "https://api.pota.app/park/leaderboard/" . uri_escape($srec->{value}) . "?count=3";
       local $/;   # read entire file -- FIXME: potentially memory hungry
-      open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+      open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s " . shellQuote($url));
       my $json = <JSON>;
       close(JSON);
       #print $json, "\n";
@@ -199,10 +199,10 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
 
   } elsif (@{$j}[0]->{type} eq "user") {
     #print "user\n";
-    my $url = "https://api.pota.app/profile/" . $srec->{value};
+    my $url = "https://api.pota.app/profile/" . uri_escape($srec->{value});
 
     local $/;   # read entire file -- FIXME: potentially memory hungry
-    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s " . shellQuote($url));
     my $json = <JSON>;
     close(JSON);
     #print $json, "\n";

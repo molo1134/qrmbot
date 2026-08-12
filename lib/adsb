@@ -520,7 +520,7 @@ sub getFlightTrack
 {
   my $flight = shift;
   our $scrapingant_key;
-  my $url = "https://flightaware.com/live/flight/$flight";
+  my $url = "https://flightaware.com/live/flight/" . uri_escape($flight);
 
   if (defined $scrapingant_key) {
     $url = "https://api.scrapingant.com/v2/general?url=". uri_escape($url) . "&x-api-key=${scrapingant_key}&browser=false";
@@ -528,7 +528,7 @@ sub getFlightTrack
   my ($airline, $orig, $dest, $fnum, $eta);
   my $token;
   #print "$url\n";
-  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
+  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L " . shellQuote($url));
   while(<HTTP>) {
     if (/name="origin".*content="([A-Z]+)"/) {
       $orig = $1;

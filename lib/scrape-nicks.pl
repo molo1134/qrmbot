@@ -155,7 +155,7 @@ foreach my $baseurl (@baseurls) {
     local $/;   # read entire file -- FIXME: potentially memory hungry
     my $json = <HTTP>;
     close(HTTP);
-    if (not defined $json or $json eq "") {
+    if (not defined $json or not $json =~ /^\s*[{\[]/) {
       print "WARNING: skipping $url\n";
       next;
     }

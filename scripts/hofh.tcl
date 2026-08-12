@@ -53,12 +53,17 @@ proc h_pubquote { nick uhost hand chan arg } {
 
     if { $tmp == 0 } {
       putchan $chan "no hofh recorded"
+      close $qf
       return
     }
 
     if { [string trim "$arg"] == "" } {
       set j [rand $tmp]
       #putmsg "$nick" "picked hofh [expr $j + 1] of $tmp"
+    } elseif { ! [string is integer -strict [string trim "$arg"]] } {
+      putmsg "$nick" "valid hofh number from 1 to $tmp"
+      close $qf
+      return
     } else {
       set j "$arg"
       if { ( $j >= 1 ) && ( $j <= $tmp ) } {

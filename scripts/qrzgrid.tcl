@@ -2305,7 +2305,7 @@ proc potaleague_pub { nick host hand chan text } {
 	global potaleaguebin
 	set params [sanitize_string [string trim "${text}"]]
 	putlog "potaleague pub: $nick $host $hand $chan $params"
-	set fd [open "|${potaleaguebin} --channel ${chan} ${params}" r]
+	set fd [open "|${potaleaguebin} --channel [sanitize_string ${chan}] ${params}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
@@ -2332,7 +2332,7 @@ proc potaleagueadd_pub { nick host hand chan text } {
 		putchan $chan "usage: !potaleagueadd <callsign>"
 		return
 	}
-	set fd [open "|${potaleaguebin} --channel ${chan} --register ${call}" r]
+	set fd [open "|${potaleaguebin} --channel [sanitize_string ${chan}] --register ${call}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
@@ -2363,7 +2363,7 @@ proc potaleaguedel_pub { nick host hand chan text } {
 		putchan $chan "usage: !potaleaguedel <callsign>"
 		return
 	}
-	set fd [open "|${potaleaguebin} --channel ${chan} --remove ${call}" r]
+	set fd [open "|${potaleaguebin} --channel [sanitize_string ${chan}] --remove ${call}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"

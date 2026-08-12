@@ -121,6 +121,10 @@ open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
 my $json = <JSON>;
 close(JSON);
 
+if (not $json =~ /^\s*{/) {
+  print "error: could not fetch data\n";
+  exit $exitnonzeroonerror;
+}
 my $j = decode_json($json);
 
 my %results;
