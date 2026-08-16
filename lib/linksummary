@@ -528,7 +528,7 @@ sub doMastodon {
 
   INSTANCE_CHECK:
   my $instanceapi = "${instance_base}/api/v1/instance";
-  open(JSON, '-|', "curl --max-time $timeout -L -k -s '$instanceapi' ");
+  open(JSON, '-|', "curl --max-time $timeout -L -k -s " . shellQuote($instanceapi));
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $uri = <JSON>;
   close(JSON);
@@ -546,7 +546,7 @@ sub doMastodon {
 
   my $apiurl = "${instance_base}/api/v1/statuses/$statusid";
   #print "apiurl: $apiurl\n";
-  open(JSON, '-|', "curl --max-time $timeout -L -k -s '$apiurl'");
+  open(JSON, '-|', "curl --max-time $timeout -L -k -s " . shellQuote($apiurl));
   binmode(JSON, ":utf8");
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $json = <JSON>;
@@ -816,7 +816,7 @@ sub doHtml {
   #print "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=0.9\" '$url'";
   my $useragent = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0";
   #print("curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,application/xhtml+xml,application/xml;q=1.9\" -A \"$useragent\" '$url'");
-  open (HTTP, '-|', "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,text/plain,application/xhtml+xml,application/xml;q=1.9\" -H \"Accept-Language: en-us, en;q=0.9, *;q=0.8\" -A \"$useragent\" '$url'");
+  open (HTTP, '-|', "curl --compressed --max-time $timeout -D - -f -L -k -s -H \"Accept: text/html,text/plain,application/xhtml+xml,application/xml;q=1.9\" -H \"Accept-Language: en-us, en;q=0.9, *;q=0.8\" -A \"$useragent\" " . shellQuote($url));
   while (<HTTP>) {
     #print;
     chomp;

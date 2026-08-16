@@ -528,7 +528,7 @@ sub getFlightTrack
   my ($airline, $orig, $dest, $fnum, $eta);
   my $token;
   #print "$url\n";
-  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
+  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L " . shellQuote($url));
   while(<HTTP>) {
     if (/name="origin".*content="([A-Z]+)"/) {
       $orig = $1;

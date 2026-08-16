@@ -117,7 +117,7 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
     my $url = "https://api.pota.app/park/" . uri_escape($srec->{value});
 
     local $/;   # read entire file -- FIXME: potentially memory hungry
-    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s " . shellQuote($url));
     my $json = <JSON>;
     close(JSON);
     #print $json, "\n";
@@ -125,7 +125,7 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
 
     my $url = "https://api.pota.app/park/stats/" . uri_escape($srec->{value});
     local $/;   # read entire file -- FIXME: potentially memory hungry
-    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s " . shellQuote($url));
     my $json = <JSON>;
     close(JSON);
     #print $json, "\n";
@@ -140,7 +140,7 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
 
     my $url = "https://api.pota.app/park/activations/" . uri_escape($srec->{value}) . "?count=1";
     local $/;   # read entire file -- FIXME: potentially memory hungry
-    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s " . shellQuote($url));
     my $json = <JSON>;
     close(JSON);
     #print $json, "\n";
@@ -167,7 +167,7 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
 
       my $url = "https://api.pota.app/park/leaderboard/" . uri_escape($srec->{value}) . "?count=3";
       local $/;   # read entire file -- FIXME: potentially memory hungry
-      open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+      open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s " . shellQuote($url));
       my $json = <JSON>;
       close(JSON);
       #print $json, "\n";
@@ -202,7 +202,7 @@ if ($count > 1 and uc @{$j}[0]->{value} ne uc $term) {
     my $url = "https://api.pota.app/profile/" . uri_escape($srec->{value});
 
     local $/;   # read entire file -- FIXME: potentially memory hungry
-    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+    open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s " . shellQuote($url));
     my $json = <JSON>;
     close(JSON);
     #print $json, "\n";

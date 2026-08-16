@@ -12,7 +12,7 @@ use feature 'unicode_strings';
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(decodeEntities stripIrcColors getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum moveFile shortenUrl isNumeric arraysEqual getEggdropUID getDxccDataRef updateCty checkCtyDat checkMW scrapeMW);
+@EXPORT = qw(decodeEntities stripIrcColors getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum moveFile shortenUrl isNumeric arraysEqual getEggdropUID getDxccDataRef updateCty checkCtyDat checkMW scrapeMW shellQuote);
 
 use URI::Escape;
 use Date::Manip;
@@ -20,6 +20,14 @@ use Math::Round;
 use File::Temp qw(tempfile);
 use File::Copy;
 use JSON qw( from_json );
+
+# safely quote a string for use as a single shell argument
+sub shellQuote {
+  my $s = shift;
+  return "''" if not defined $s;
+  $s =~ s/'/'\\''/g;
+  return "'$s'";
+}
 
 sub decodeEntities {
   my $s = shift;
@@ -376,8 +384,8 @@ sub shortenUrl {
 	  "curl --max-time $timeout -L -k -s " .
 	  "-H 'Content-Type: application/json' " .
 	  "-H 'Authorization: Bearer $bitly_apikey' " .
-	  "-X POST --data '$requestdoc' ".
-	  "'$rest'");
+	  "-X POST --data " . shellQuote($requestdoc) . " " .
+	  shellQuote($rest));
   binmode(HTTP, ":utf8");
   while(<HTTP>) {
     $shortUrl = $1 if /"link":\s*"(.*?)"/;
