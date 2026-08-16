@@ -68,6 +68,11 @@ if (defined $query and not defined $result) {
 my ($mylat, $mylon) = split(',', $geo) if defined $geo;
 ($mylat, $mylon) = split(',', $result) if defined $result;
 
+if (defined $geo and (not isNumeric($mylat) or not isNumeric($mylon))) {
+  print "error: invalid --geo value\n";
+  exit $exitnonzeroonerror;
+}
+
 my $url = "http://bo-service.tryb.de/";
 my $ua = "User-Agent: bo-android-270";
 my $ct = "Content-Type: text/json";

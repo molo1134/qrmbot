@@ -94,6 +94,11 @@ if (defined $query and not defined $result) {
 my ($mylat, $mylon) = split(',', $geo) if defined $geo;
 ($mylat, $mylon) = split(',', $result) if defined $result;
 
+if (defined $geo and (not isNumeric($mylat) or not isNumeric($mylon))) {
+  print "error: invalid --geo value\n";
+  exit $exitnonzeroonerror;
+}
+
 my ($maxlat, undef) = rangeAndBearing($mylat, $mylon, $dist, 0);
 my ($minlat, undef) = rangeAndBearing($mylat, $mylon, $dist, 180);
 my (undef, $maxlon) = rangeAndBearing($mylat, $mylon, $dist, 90);
