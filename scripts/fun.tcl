@@ -1686,4 +1686,57 @@ proc mlb_team_msg { nick uhand handle input } {
 	close $fd
 }
 
+# NFL scores: !nfl <team> plus common aliases
+set nflbin "/home/eggdrop/bin/nfl"
+bind pub - !nfl nfl_pub
+bind msg - !nfl nfl_msg
+proc nfl_pub { nick host hand chan text } {
+	global nflbin
+	set param [sanitize_string [string trim "${text}"]]
+	putlog "nfl pub: $nick $host $hand $chan $param"
+	set fd [open "|${nflbin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putchan $chan "$line" }
+	close $fd
+}
+proc nfl_msg { nick uhand handle input } {
+	global nflbin
+	set param [sanitize_string [string trim "${input}"]]
+	putlog "nfl msg: $nick $uhand $handle $param"
+	set fd [open "|${nflbin} ${param}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putmsg "$nick" "$line" }
+	close $fd
+}
+
+# NFL team aliases
+# NOTE: jets/panthers bound to !nhl, giants/bucs/cardinals bound to !mlb —
+# those teams work via `!nfl <name>` instead
+foreach _team {eagles cowboys 49ers patriots steelers packers bears niners
+               raiders chiefs broncos ravens bengals browns bills dolphins
+               colts texans jaguars jags titans chargers rams seahawks falcons
+               saints vikings vikes lions commanders} {
+	bind pub - "!${_team}" nfl_team_pub
+	bind msg - "!${_team}" nfl_team_msg
+}
+unset _team
+proc nfl_team_pub { nick host hand chan text } {
+	global nflbin lastbind
+	set team [string range $lastbind 1 end]
+	putlog "nfl team pub: $nick $host $hand $chan $team"
+	set fd [open "|${nflbin} ${team}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putchan $chan "$line" }
+	close $fd
+}
+proc nfl_team_msg { nick uhand handle input } {
+	global nflbin lastbind
+	set team [string range $lastbind 1 end]
+	putlog "nfl team msg: $nick $uhand $handle $team"
+	set fd [open "|${nflbin} ${team}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} { putmsg "$nick" "$line" }
+	close $fd
+}
+
 putlog "fun.tcl loaded."

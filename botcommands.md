@@ -86,6 +86,7 @@
  * `!nhl` -- NHL scores: live game or last/next game for a team (e.g. `!nhl flyers`, `!flyers`)
  * `!mlb` -- MLB scores: live game, next game, or standings for a team (e.g. `!mlb phillies`, `!phillies`)
  * `!wc` -- World Cup 2026 scores: today's matches, team info, or group standings (e.g. `!wc usa`, `!wc group d`, `!usa`)
+ * `!nfl` -- NFL scores: live game or last/next game for a team (e.g. `!nfl eagles`, `!eagles`)
  * `!fest` -- find upcoming hamfests near your location (uses !setgeo)
  * `!adsb` -- get plane information
  * `!hofh` -- why your radio is broke
@@ -1345,6 +1346,40 @@ Knockout round labels (R32, R16, QF, SF, Final) are shown once the tournament
 progresses beyond the group stage.
 
 Data source: https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/
+
+### `!nfl` -- NFL scores and schedule lookup
+
+Usage:
+```
+    !nfl [team]
+```
+
+Examples:
+```
+    <W1AW> !nfl eagles
+    <qrm> 🏈 Eagles (0-1) · 4th in NFC East · Last (Aug 15): PHI 7 at BAL 24 (Final) · Next (8/22): PHI at NE — 7:00p ET
+
+    <W1AW> !eagles
+    <qrm> 🏈 Eagles (0-1) · 4th in NFC East · Last (Aug 15): PHI 7 at BAL 24 (Final) · Next (8/22): PHI at NE — 7:00p ET
+
+    <W1AW> !nfl
+    <qrm> 🏈 DET(14) @ CIN(16) F · GB(9) @ PIT(28) F · IND(13) @ NE(13) F
+```
+
+Without arguments, shows today's games (live first, then finals, then upcoming)
+as many as fit on one line.
+
+Team name can be full name (`eagles`, `cowboys`), abbreviation (`phi`, `dal`),
+or common nickname (`niners`, `vikes`). Team aliases (e.g. `!eagles`,
+`!cowboys`, `!steelers`) also work directly. (`!jets`, `!panthers`, `!giants`,
+`!bucs`, `!cardinals` are taken by `!nhl`/`!mlb` aliases — use `!nfl <name>`
+for those teams.)
+
+Covers live games (score, quarter, clock, down/distance, last play), final
+games (score), postponed games, and off days (record + division standing +
+next game).
+
+Data source: https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/
 
 <!-- !amcon - - some dumb prepper shit -->
 
