@@ -1,0 +1,482 @@
+#!/usr/bin/perl -w
+#
+# NFL game scores and schedule lookup.
+#
+# 2-clause BSD license.
+# Copyright (c) 2026 cjh@github. All rights reserved.
+#
+# Uses the ESPN NFL API -- no API key required.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use JSON::PP qw(decode_json);
+use POSIX qw(strftime);
+use Encode qw(encode_utf8);
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+
+# eggdrop passes all args as one string
+@ARGV = split(' ', join(' ', @ARGV));
+
+my $useragent = "Mozilla/5.0 (compatible; qrmbot)";
+my $API = "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl";
+
+# NFL schedules use Eastern Time dates — force TZ so !nfl works correctly
+# when the server clock is UTC (otherwise after 8pm ET it rolls to tomorrow)
+$ENV{TZ} = 'America/New_York';
+my $today     = strftime("%Y-%m-%d", localtime);
+my $todayC    = strftime("%Y%m%d", localtime);
+my $year      = strftime("%Y", localtime);
+
+# --- fetch ---
+sub fetchJSON {
+  my ($url) = @_;
+  open(my $fh, '-|', "curl --max-time 10 -s -k -L -A \"$useragent\" '$url'");
+  local $/;
+  my $raw = <$fh>;
+  close($fh);
+  return undef unless defined($raw) && $raw =~ /^\s*\{/;
+  return decode_json($raw);
+}
+
+# --- team map: name → [abbrev, teamId] ---
+my %teammap = (
+  # abbreviations (ESPN)
+  'ari' => ['ARI', 22], 'atl' => ['ATL', 1], 'bal' => ['BAL', 33], 'buf' => ['BUF', 2],
+  'car' => ['CAR', 29], 'chi' => ['CHI', 3], 'cin' => ['CIN', 4], 'cle' => ['CLE', 5],
+  'dal' => ['DAL', 6], 'den' => ['DEN', 7], 'det' => ['DET', 8], 'gb'  => ['GB', 9],
+  'hou' => ['HOU', 34], 'ind' => ['IND', 11], 'jax' => ['JAX', 30], 'jac' => ['JAX', 30],
+  'kc'  => ['KC', 12], 'lv'  => ['LV', 13], 'lac' => ['LAC', 24], 'lar' => ['LAR', 14],
+  'mia' => ['MIA', 15], 'min' => ['MIN', 16], 'ne'  => ['NE', 17], 'no'  => ['NO', 18],
+  'nyg' => ['NYG', 19], 'nyj' => ['NYJ', 20], 'phi' => ['PHI', 21], 'pit' => ['PIT', 23],
+  'sf'  => ['SF', 25], 'sea' => ['SEA', 26], 'tb'  => ['TB', 27], 'ten' => ['TEN', 10],
+  'wsh' => ['WSH', 28], 'was' => ['WSH', 28],
+  # nicknames and cities
+  'cardinals'  => ['ARI', 22], 'arizona'  => ['ARI', 22],
+  'falcons'    => ['ATL', 1],  'atlanta'  => ['ATL', 1],
+  'ravens'     => ['BAL', 33], 'baltimore'=> ['BAL', 33],
+  'bills'      => ['BUF', 2],  'buffalo'  => ['BUF', 2],
+  'panthers'   => ['CAR', 29], 'carolina' => ['CAR', 29],
+  'bears'      => ['CHI', 3],  'chicago'  => ['CHI', 3],
+  'bengals'    => ['CIN', 4],  'cincinnati'=> ['CIN', 4],
+  'browns'     => ['CLE', 5],  'cleveland'=> ['CLE', 5],
+  'cowboys'    => ['DAL', 6],  'dallas'   => ['DAL', 6],
+  'broncos'    => ['DEN', 7],  'denver'   => ['DEN', 7],
+  'lions'      => ['DET', 8],  'detroit'  => ['DET', 8],
+  'packers'    => ['GB', 9],   'green bay'=> ['GB', 9],
+  'texans'     => ['HOU', 34], 'houston'  => ['HOU', 34],
+  'colts'      => ['IND', 11], 'indianapolis'=> ['IND', 11],
+  'jaguars'    => ['JAX', 30], 'jags'     => ['JAX', 30], 'jacksonville' => ['JAX', 30],
+  'chiefs'     => ['KC', 12],  'kansas city' => ['KC', 12],
+  'raiders'    => ['LV', 13],  'las vegas'=> ['LV', 13],
+  'chargers'   => ['LAC', 24], 'los angeles chargers' => ['LAC', 24],
+  'rams'       => ['LAR', 14], 'los angeles' => ['LAR', 14], 'la' => ['LAR', 14],
+  'dolphins'   => ['MIA', 15], 'miami'    => ['MIA', 15],
+  'vikings'    => ['MIN', 16], 'vikes'    => ['MIN', 16], 'minnesota' => ['MIN', 16],
+  'patriots'   => ['NE', 17],  'pats'     => ['NE', 17], 'new england' => ['NE', 17],
+  'saints'     => ['NO', 18],  'new orleans' => ['NO', 18],
+  'giants'     => ['NYG', 19], 'new york giants' => ['NYG', 19],
+  'jets'       => ['NYJ', 20], 'new york' => ['NYJ', 20], 'ny' => ['NYJ', 20],
+  'eagles'     => ['PHI', 21], 'philadelphia' => ['PHI', 21],
+  'steelers'   => ['PIT', 23], 'pittsburgh' => ['PIT', 23],
+  '49ers'      => ['SF', 25],  'niners'   => ['SF', 25], 'san francisco' => ['SF', 25],
+  'seahawks'   => ['SEA', 26], 'seattle'  => ['SEA', 26],
+  'buccaneers' => ['TB', 27],  'bucs'     => ['TB', 27], 'tampa bay' => ['TB', 27], 'tampa' => ['TB', 27],
+  'titans'     => ['TEN', 10], 'tennessee'=> ['TEN', 10],
+  'commanders' => ['WSH', 28], 'washington'=> ['WSH', 28],
+);
+
+# abbrev → nickname for display
+my %teamname = (
+  ARI => 'Cardinals', ATL => 'Falcons', BAL => 'Ravens', BUF => 'Bills',
+  CAR => 'Panthers', CHI => 'Bears', CIN => 'Bengals', CLE => 'Browns',
+  DAL => 'Cowboys', DEN => 'Broncos', DET => 'Lions', GB  => 'Packers',
+  HOU => 'Texans', IND => 'Colts', JAX => 'Jaguars', KC  => 'Chiefs',
+  LV  => 'Raiders', LAC => 'Chargers', LAR => 'Rams', MIA => 'Dolphins',
+  MIN => 'Vikings', NE  => 'Patriots', NO  => 'Saints', NYG => 'Giants',
+  NYJ => 'Jets', PHI => 'Eagles', PIT => 'Steelers', SF  => '49ers',
+  SEA => 'Seahawks', TB => 'Buccaneers', TEN => 'Titans', WSH => 'Commanders',
+);
+
+# abbrev → [primary hex, alternate hex] (from the ESPN teams endpoint)
+my %teamcolor = (
+  ARI => ['a40227', 'ffffff'], ATL => ['a71930', '000000'], BAL => ['29126f', '000000'],
+  BUF => ['00338d', 'd50a0a'], CAR => ['0085ca', '000000'], CHI => ['0b1c3a', 'e64100'],
+  CIN => ['fb4f14', '000000'], CLE => ['472a08', 'ff3c00'], DAL => ['002a5c', 'b0b7bc'],
+  DEN => ['0a2343', 'fc4c02'], DET => ['0076b6', 'bbbbbb'], GB  => ['204e32', 'ffb612'],
+  HOU => ['021018', 'eb0028'], IND => ['003b75', 'ffffff'], JAX => ['007487', 'd7a22a'],
+  KC  => ['e31837', 'ffb612'], LV  => ['000000', 'a5acaf'], LAC => ['0080c6', 'ffc20e'],
+  LAR => ['003594', 'ffd100'], MIA => ['008e97', 'fc4c02'], MIN => ['4f2683', 'ffc62f'],
+  NE  => ['002a5c', 'c60c30'], NO  => ['d3bc8d', '000000'], NYG => ['003c7f', 'c9243f'],
+  NYJ => ['115740', 'ffffff'], PHI => ['06424d', '000000'], PIT => ['000000', 'ffb612'],
+  SF  => ['aa0000', 'b3995d'], SEA => ['002a5c', '69be28'], TB  => ['bd1c36', '3e3a35'],
+  TEN => ['4495d2', '001532'], WSH => ['5a1414', 'ffb612'],
+);
+
+# --- color helpers ---
+sub nearestXterm {
+  my ($r, $g, $b) = @_;
+  my ($best, $bd) = (0, 1e9);
+  for my $ri (0..5) {
+    for my $gi (0..5) {
+      for my $bi (0..5) {
+        my $idx = 16 + 36*$ri + 6*$gi + $bi;
+        my ($cr, $cg, $cb) = ($ri ? 55 + 40*$ri : 0, $gi ? 55 + 40*$gi : 0, $bi ? 55 + 40*$bi : 0);
+        my $d = ($cr-$r)**2 + ($cg-$g)**2 + ($cb-$b)**2;
+        ($best, $bd) = ($idx, $d) if $d < $bd;
+      }
+    }
+  }
+  for my $gi (0..23) {
+    my $v = 8 + 10*$gi;
+    my $idx = 232 + $gi;
+    my $d = ($v-$r)**2 + ($v-$g)**2 + ($v-$b)**2;
+    ($best, $bd) = ($idx, $d) if $d < $bd;
+  }
+  return $best;
+}
+
+my @MIRC = (
+  [255,255,255], [0,0,0], [0,0,127], [0,147,0], [255,0,0], [127,0,0],
+  [156,0,156], [252,127,0], [255,255,0], [0,252,0], [0,147,147],
+  [0,255,255], [0,0,252], [255,0,255], [127,127,127], [210,210,210],
+);
+sub nearestMirc {
+  my ($r, $g, $b) = @_;
+  my ($best, $bd) = (0, 1e9);
+  for my $i (0..$#MIRC) {
+    my $d = ($MIRC[$i][0]-$r)**2 + ($MIRC[$i][1]-$g)**2 + ($MIRC[$i][2]-$b)**2;
+    ($best, $bd) = ($i, $d) if $d < $bd;
+  }
+  return $best;
+}
+
+sub teamColor {
+  my ($abbr, $text) = @_;
+  $text //= $abbr;
+  my $colors = $teamcolor{$abbr} // [];
+  return bold($text) unless @$colors;
+  my ($hex, $alt) = @$colors;
+  my @rgb = map { hex($_) } ($hex =~ /^(..)(..)(..)$/);
+  return bold($text) unless @rgb == 3;
+  my ($r, $g, $b) = @rgb;
+  my $irc = nearestMirc($r, $g, $b);
+  # black team colors are invisible on dark IRC backgrounds — use the
+  # alternate color (or plain bold) instead
+  if ($irc == 1 && @$colors > 1 && $alt) {
+    @rgb = map { hex($_) } ($alt =~ /^(..)(..)(..)$/);
+    if (@rgb == 3) {
+      ($r, $g, $b) = @rgb;
+      $irc = nearestMirc($r, $g, $b);
+    }
+  }
+  return bold($text) if $irc == 1;
+  my $vt = nearestXterm($r, $g, $b);
+  return colorIrcVt220("$irc", "0;38;5;$vt", $text);
+}
+
+# --- helpers ---
+sub utf8_len {
+  my $s = shift // '';
+  return length(encode_utf8($s));
+}
+
+# "7:00 PM EDT" → "7:00p"
+sub fmtStartTime {
+  my $shortDetail = shift // '';
+  return '' unless $shortDetail =~ /(\d{1,2}):(\d{2})\s*(AM|PM)/i;
+  my ($h, $m, $ap) = ($1, $2, uc $3);
+  return sprintf("%d:%02d%s", $h, $m, lc substr($ap, 0, 1));
+}
+
+# "8/22 - 7:00 PM EDT" or "Sun, Aug 13 at 7:00 PM EDT" → "8/22"
+sub fmtDateShort {
+  my $shortDetail = shift // '';
+  my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+  my %monnum = map { $mon[$_] => $_ + 1 } 0..$#mon;
+  if ($shortDetail =~ /(\d{1,2})\/(\d{1,2})/) {
+    return "$1/$2";
+  }
+  if ($shortDetail =~ /([A-Z][a-z]{2})\s+(\d{1,2})/ && $monnum{$1}) {
+    return $monnum{$1} . "/" . int($2);
+  }
+  return '';
+}
+
+# "2026-08-15T23:00Z" → "Aug 15"
+sub fmtDateLong {
+  my $d = shift // '';
+  return $d unless $d =~ /^(\d{4})-(\d{2})-(\d{2})/;
+  my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+  return $mon[$2 - 1] . " " . int($3);
+}
+
+sub quarterLabel {
+  my ($period, $clock) = @_;
+  $period //= 0;
+  return 'Halftime' if $period == 2 && ($clock // '') eq '0:00';
+  return "Q$period" if $period >= 1 && $period <= 4;
+  return 'OT' if $period > 4;
+  return '';
+}
+
+sub ordinal {
+  my $n = shift;
+  return "${n}th" if $n % 100 >= 11 && $n % 100 <= 13;
+  return "${n}st" if $n % 10 == 1;
+  return "${n}nd" if $n % 10 == 2;
+  return "${n}rd" if $n % 10 == 3;
+  return "${n}th";
+}
+
+# normalized view of an ESPN event (scoreboard and schedule shapes differ)
+sub getGame {
+  my $ev = shift;
+  my $comp = $ev->{competitions}[0] // {};
+  my $status = $ev->{status} // $comp->{status} // {};
+  my $type = $status->{type} // {};
+  my ($away, $home);
+  foreach my $c (@{$comp->{competitors} // []}) {
+    if (($c->{homeAway} // '') eq 'home') { $home = $c }
+    elsif (($c->{homeAway} // '') eq 'away') { $away = $c }
+  }
+  return {
+    date     => $ev->{date} // '',
+    id       => $ev->{id} // '',
+    state    => $type->{state} // '',
+    detail   => $type->{detail} // '',
+    short    => $type->{shortDetail} // '',
+    clock    => $status->{displayClock} // '',
+    period   => $status->{period} // 0,
+    away     => $away,
+    home     => $home,
+    comp     => $comp,
+  };
+}
+
+sub score {
+  my $c = shift // {};
+  my $s = $c->{score};
+  return ref($s) eq 'HASH' ? ($s->{displayValue} // 0) : ($s // 0);
+}
+
+sub tabbr {
+  my $c = shift // {};
+  return $c->{team}{abbreviation} // '???';
+}
+
+sub teamScore {
+  my ($c, $win) = @_;
+  my $s = score($c);
+  return $win ? teamColor(tabbr($c)) . " " . green($s)
+              : teamColor(tabbr($c)) . " $s";
+}
+
+# --- standings prefix like !mlb: "Eagles (1-0) · 1st in NFC East" ---
+sub getStandingsPrefix {
+  my ($abbrev, $teamId, $eventId) = @_;
+  return '' unless $eventId;
+  my $data = fetchJSON("$API/summary?event=$eventId");
+  return '' unless $data && $data->{standings}{groups};
+  foreach my $grp (@{$data->{standings}{groups}}) {
+    my $entries = $grp->{standings}{entries} // [];
+    foreach my $i (0..$#$entries) {
+      my $e = $entries->[$i];
+      next unless ($e->{id} // '') eq "$teamId";
+      my ($w, $l, $overall) = (0, 0, '');
+      foreach my $s (@{$e->{stats} // []}) {
+        my $n = $s->{name} // '';
+        $w       = $s->{displayValue} if $n eq 'wins';
+        $l       = $s->{displayValue} if $n eq 'losses';
+        $overall = $s->{displayValue} if $n eq 'overall';
+      }
+      my $div = $grp->{header} // '';
+      $div =~ s/^\d{4}\s+//;
+      $div =~ s/\s+Standings$//;
+      my $rec = $overall || "$w-$l";
+      return teamColor($abbrev, $teamname{$abbrev} // $abbrev) . " ($rec) · " . ordinal($i + 1) . " in $div";
+    }
+  }
+  return '';
+}
+
+# --- game rendering ---
+sub gameSnippet {
+  my ($g) = @_;
+  my $state  = $g->{state};
+  my $detail = $g->{detail};
+  my $aScore = score($g->{away});
+  my $hScore = score($g->{home});
+
+  if ($detail =~ /Postponed|Delayed|Suspended/) {
+    return teamColor(tabbr($g->{away})) . " @ " . teamColor(tabbr($g->{home})) . " " . yellow($detail);
+  }
+  if ($state eq 'in') {
+    my $ql = quarterLabel($g->{period}, $g->{clock});
+    my $status = $ql ? "$ql $g->{clock}" : ($g->{short} || 'LIVE');
+    return teamColor(tabbr($g->{away})) . "($aScore) @ " . teamColor(tabbr($g->{home})) . "($hScore) " . yellow($status);
+  }
+  if ($state eq 'post') {
+    return teamColor(tabbr($g->{away})) . "($aScore) @ " . teamColor(tabbr($g->{home})) . "($hScore) F";
+  }
+  # pre
+  my $time = fmtStartTime($g->{short});
+  my $s = teamColor(tabbr($g->{away})) . " @ " . teamColor(tabbr($g->{home}));
+  $s .= " $time" if $time;
+  return $s;
+}
+
+sub renderTeamLine {
+  my ($prefix, $g) = @_;
+  my $state  = $g->{state};
+  my $detail = $g->{detail};
+  my $aScore = score($g->{away});
+  my $hScore = score($g->{home});
+
+  my $sep = " \x{00B7} ";
+  my @parts;
+  push @parts, "\x{1F3C8}";            # 🏈
+  push @parts, $prefix if $prefix;
+  push @parts, teamScore($g->{away}, $aScore > $hScore) . " @ " . teamScore($g->{home}, $hScore > $aScore);
+
+  if ($detail =~ /Postponed|Delayed|Suspended/) {
+    push @parts, yellow($detail);
+  } elsif ($state eq 'in') {
+    my $ql = quarterLabel($g->{period}, $g->{clock});
+    my $status = $ql ? ($ql eq 'Halftime' ? yellow('Halftime') : yellow("$ql $g->{clock}")) : ($g->{short} ? yellow($g->{short}) : yellow('LIVE'));
+    push @parts, $status;
+    my $sit = $g->{comp}{situation} // {};
+    if (ref($sit) eq 'HASH' && ($sit->{down} // 0) > 0) {
+      my $dnt = $sit->{shortDownDistanceText} // $sit->{downDistanceText} // '';
+      my $pos = $sit->{possessionText} // '';
+      my $yl  = $sit->{yardLine};
+      if ($dnt) {
+        my $sitStr = $dnt;
+        $sitStr .= " at $pos $yl" if $pos && defined $yl;
+        push @parts, $sitStr;
+      }
+      if (ref($sit->{lastPlay}) eq 'HASH' && $sit->{lastPlay}{text}) {
+        push @parts, "Last: " . italic($sit->{lastPlay}{text});
+      }
+    }
+  } elsif ($state eq 'post') {
+    push @parts, "FINAL";
+  }
+
+  print join($sep, @parts) . "\n";
+}
+
+# --- main: no args — today's games ---
+my $input = lc(join(' ', @ARGV));
+$input =~ s/^\s+|\s+$//g;
+
+if (!defined($input) || $input eq '') {
+  my $data = fetchJSON("$API/scoreboard?dates=$todayC");
+  my $events = $data ? ($data->{events} // []) : [];
+
+  if (!$events || !@$events) {
+    print "\x{1F3C8} No NFL games scheduled for today.\n";
+    exit 0;
+  }
+
+  my @games = map { getGame($_) } @$events;
+
+  # Sort: live first, then final, then upcoming
+  my @sorted = sort {
+    my $pa = $a->{state} eq 'in' ? 0 : $a->{state} eq 'post' ? 1 : 2;
+    my $pb = $b->{state} eq 'in' ? 0 : $b->{state} eq 'post' ? 1 : 2;
+    $pa <=> $pb;
+  } @games;
+
+  my $CHAR_BUDGET = 450;
+  my $bar = " \x{00B7} ";
+  my $msg = "\x{1F3C8} ";
+
+  foreach my $g (@sorted) {
+    my $snippet = gameSnippet($g);
+    my $candidate = $msg . ($msg eq "\x{1F3C8} " ? "" : $bar) . $snippet;
+    last if utf8_len($candidate) > $CHAR_BUDGET;
+    $msg = $candidate;
+  }
+
+  print "$msg\n";
+  exit 0;
+}
+
+# --- team lookup ---
+my $team = $teammap{$input};
+unless ($team) {
+  (my $stripped = $input) =~ s/^the\s+//i;
+  $team = $teammap{$stripped};
+}
+
+unless ($team) {
+  print "Unknown team: $input\n";
+  exit 0;
+}
+
+my ($abbrev, $teamId) = @$team;
+
+my $sched = fetchJSON("$API/teams/$teamId/schedule?season=$year");
+if (!$sched || !$sched->{events} || !@{$sched->{events}}) {
+  print "No recent or upcoming games found for $abbrev.\n";
+  exit 0;
+}
+
+# schedule events are chronological; pick live, then last final, then next pre
+my ($liveGame, $lastGame, $nextGame);
+foreach my $ev (@{$sched->{events}}) {
+  my $g = getGame($ev);
+  if ($g->{state} eq 'in') {
+    $liveGame = $g;
+  } elsif ($g->{state} eq 'post' && $g->{date} le $today) {
+    $lastGame = $g;
+  } elsif ($g->{state} ne 'post' && $g->{date} ge $today && !defined $nextGame) {
+    $nextGame = $g;
+  }
+}
+
+my $prefix = getStandingsPrefix($abbrev, $teamId, $liveGame ? $liveGame->{id}
+                                     : $lastGame ? $lastGame->{id}
+                                     : $nextGame ? $nextGame->{id} : '');
+
+if (defined $liveGame) {
+  renderTeamLine($prefix, $liveGame);
+} elsif (defined $lastGame || defined $nextGame) {
+  my $sep = " \x{00B7} ";
+  if (defined $lastGame) {
+    my $date = fmtDateLong($lastGame->{date});
+    my $line = "Last ($date): " . teamScore($lastGame->{away}, score($lastGame->{away}) > score($lastGame->{home}))
+        . "  at  " . teamScore($lastGame->{home}, score($lastGame->{home}) > score($lastGame->{away}))
+        . grey("  (Final)");
+    if (defined $nextGame) {
+      my $nAway = $nextGame->{away};
+      my $nHome = $nextGame->{home};
+      my $nDate = fmtDateShort($nextGame->{short});
+      my $nTime = fmtStartTime($nextGame->{short});
+      my $nextLine = "Next ($nDate): " . teamColor(tabbr($nAway)) . "  at  " . teamColor(tabbr($nHome))
+          . ($nTime ? "  —  $nTime ET" : '');
+      print "\x{1F3C8} " . ($prefix ? "$prefix$sep" : '') . "$line$sep$nextLine\n";
+    } else {
+      print "\x{1F3C8} " . ($prefix ? "$prefix$sep" : '') . "$line\n";
+    }
+  } elsif (defined $nextGame) {
+    my $nAway = $nextGame->{away};
+    my $nHome = $nextGame->{home};
+    my $nDate = fmtDateShort($nextGame->{short});
+    my $nTime = fmtStartTime($nextGame->{short});
+    my $nextLine = "Next ($nDate): " . teamColor(tabbr($nAway)) . "  at  " . teamColor(tabbr($nHome))
+        . ($nTime ? "  —  $nTime ET" : '');
+    print "\x{1F3C8} " . ($prefix ? "$prefix$sep" : '') . "$nextLine\n";
+  }
+} else {
+  print "No recent or upcoming games found for $abbrev.\n";
+}
+
+exit 0;
