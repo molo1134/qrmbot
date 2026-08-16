@@ -113,7 +113,11 @@ if ($json =~ /(Cloudflare|challenge-error-text)/) {
   print "Error: unable to retrieve station list (Cloudflare)\n";
   exit $exitnonzeroonerror;
 }
-my $j = decode_json($json) or die "parse error: $json\n";
+if (not $json =~ /^\s*{/) {
+  print "Error: unable to retrieve station list\n";
+  exit $exitnonzeroonerror;
+}
+my $j = decode_json($json);
 #print $json, "\n";
 
 my $stationsref = [];
@@ -125,7 +129,7 @@ for ($m = 0, $n = 0; $m < scalar (@{$j->{primaryStations}}); $m++, $n++) {
   #print "$m -> $n\n";
 }
 for ($m = 0; $m < scalar (@{$j->{secondaryStations}}); $m++, $n++) {
-  $stationsref->[$n] = $j->{primaryStations}->[$m];
+  $stationsref->[$n] = $j->{secondaryStations}->[$m];
   #print "$m -> $n\n";
 }
 
