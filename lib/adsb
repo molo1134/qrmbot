@@ -383,7 +383,7 @@ sub show
   print " eta $eta" if defined $eta;
   print ")" if defined $airline;
   print " 0x$rec{hex}; ";
-  print "squawk $rec{squawk}$squawknote " if defined $rec{squawk} and length($rec{squawk}) > 0;
+  print "squawk $rec{squawk}$squawknote; " if defined $rec{squawk} and length($rec{squawk}) > 0;
   print "alt $rec{alt_geom} ft;" if defined $rec{alt_geom};
   print "alt ~$rec{alt_baro} ft;" if defined $rec{alt_baro} and not defined $rec{alt_geom};
   printf (" track %.0f° %s; gnd speed %.0f knots", $rec{track}, azToNEWS($rec{track}), $rec{gs});
