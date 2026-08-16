@@ -75,8 +75,10 @@ foreach my $contest (@contests) {
   close(HTTP);
 
   # Find the rate link for this call, then extract its enclosing <tr>
+  # (must not match a longer callsign that starts with this one)
   my $lcall = lc $call;
-  my $link_pos = index(lc $html, "call=$lcall");
+  my $link_pos = -1;
+  $link_pos = $-[0] if lc($html) =~ /call=\Q$lcall\E(?![a-z0-9])/;
   next if $link_pos < 0;
 
   my $tr_pos = rindex($html, "<tr", $link_pos);
@@ -113,7 +115,8 @@ foreach my $contest (@contests) {
   next unless defined $rank;
 
   # Position after the callsign cell's </td>
-  my $call_in_row = index(lc $row, "call=$lcall");
+  my $call_in_row = -1;
+  $call_in_row = $-[0] if lc($row) =~ /call=\Q$lcall\E(?![a-z0-9])/;
   my $after_td = index($row, "</td>", $call_in_row) + 5;
   my $after_call = substr($row, $after_td);
 
