@@ -83,8 +83,11 @@ $maxsfi = -1.0;
 $minsfi = 10000000.0;
 my $maxap = -1.0;
 my $minap = 10000.0;
+my ($tries, $maxtries) = (0, 3);
 
-while (not $found) {
+while (not $found and $tries < $maxtries) {
+
+  $tries++;
 
   my $currmonth = lc strftime("%b%Y", gmtime $time);
   my $curr_y_m = strftime("%Y/%m", gmtime $time);
