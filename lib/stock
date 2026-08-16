@@ -43,6 +43,7 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
   exit $exitnonzeroonerror;
 } else {
   $quote = $ARGV[0];
+  $quote =~ s/'//g;
 }
 
 if ($quote =~ /cummies/i) {
@@ -151,7 +152,9 @@ if ($needcrumb) {
   close(CRUMB);
 }
 
-my $url = "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&.tsrc=finance&symbols=${quote}&crumb=${crumb}";
+my $quote_enc = uri_escape($quote);
+
+my $url = "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&.tsrc=finance&symbols=${quote_enc}&crumb=${crumb}";
 #print "quote: $url\n";
 open(HTTP, '-|', "$curl_impersonate_path -4 --max-time 10 -s -k -L --cookie $cookiefile '$url'");
 binmode(HTTP, ":utf8");

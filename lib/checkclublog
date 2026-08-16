@@ -60,17 +60,21 @@ if ($#ARGV < 0 || length($ARGV[0]) == 0) {
 my $call = uc $ARGV[0];
 $call =~ s/^\s*//;
 $call =~ s/\s*$//;
+$call =~ s/'//g;
 
 my $call2 = undef;
 if ($#ARGV >= 1) {
   $call2 = uc $ARGV[1];
   $call2 =~ s/^\s*//;
   $call2 =~ s/\s*$//;
+  $call2 =~ s/'//g;
 }
 
 if (defined $call2) {
   our $apikey;
-  my $url = "https://clublog.org/logsearchjson.php?log=${call}&call=${call2}&api=$apikey";
+  my $call_enc = uri_encode($call);
+  my $call2_enc = uri_encode($call2);
+  my $url = "https://clublog.org/logsearchjson.php?log=${call_enc}&call=${call2_enc}&api=$apikey";
   local $/;   # read entire file -- FIXME: potentially memory hungry
   open(JSON, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
   my $json = <JSON>;
