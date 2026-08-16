@@ -2304,6 +2304,7 @@ proc fest_msg { nick uhand handle input } {
 proc potaleague_pub { nick host hand chan text } {
 	global potaleaguebin
 	set params [sanitize_string [string trim "${text}"]]
+	set chan [sanitize_string "${chan}"]
 	putlog "potaleague pub: $nick $host $hand $chan $params"
 	set fd [open "|${potaleaguebin} --channel ${chan} ${params}" r]
 	fconfigure $fd -encoding utf-8
@@ -2327,6 +2328,7 @@ proc potaleague_msg {nick uhand handle input} {
 proc potaleagueadd_pub { nick host hand chan text } {
 	global potaleaguebin
 	set call [sanitize_string [string trim "${text}"]]
+	set chan [sanitize_string "${chan}"]
 	putlog "potaleagueadd pub: $nick $host $hand $chan $call"
 	if {[string equal "" $call]} then {
 		putchan $chan "usage: !potaleagueadd <callsign>"
@@ -2358,6 +2360,7 @@ proc potaleagueadd_msg {nick uhand handle input} {
 proc potaleaguedel_pub { nick host hand chan text } {
 	global potaleaguebin
 	set call [sanitize_string [string trim "${text}"]]
+	set chan [sanitize_string "${chan}"]
 	putlog "potaleaguedel pub: $nick $host $hand $chan $call"
 	if {[string equal "" $call]} then {
 		putchan $chan "usage: !potaleaguedel <callsign>"
