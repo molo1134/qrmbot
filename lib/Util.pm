@@ -400,6 +400,7 @@ sub isNumeric {
     return $val =~ /^-?[0-9]+\.?[0-9]*$/ ? 1 : 0;
   } else {
     warn "isNumeric requires an argument!";
+    return 0;
   }
 }
 
