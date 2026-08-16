@@ -76,8 +76,8 @@ if ($json =~ /Sorry, you have been blocked/) {
   goto SKIP_POP_PARSE;
 }
 
-if (length($json) > 0) {
-  $j = decode_json($json) or die "parse error: $json\n";
+if (length($json) > 0 and $json =~ /^\s*{/) {
+  $j = decode_json($json);
 }
 
 if (defined $j->{detail}) {

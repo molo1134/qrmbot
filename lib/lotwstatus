@@ -29,6 +29,10 @@ binmode(HTTP, ":utf8");
 local $/;   # read entire file -- FIXME: potentially memory hungry
 my $json = <HTTP>;
 close HTTP;
+if (not $json =~ /^\s*{/) {
+  print "error: could not fetch data\n";
+  exit 1;
+}
 my $j = decode_json($json);
 $isup = $j->{statistics}->{counts}->{down} == 0;
 $uptime = $j->{data}[0]{'30dRatio'}{ratio};

@@ -109,7 +109,11 @@ sub getNearest {
   binmode(JSON, ":utf8");
   my $json = <JSON>;
   close(JSON);
-  my $j = from_json($json) or die "error: could not decode response\n";
+  if (not $json =~ /^\s*{/) {
+    print "error: could not fetch data\n";
+    exit $exitnonzeroonerror;
+  }
+  my $j = from_json($json);
 
   if (defined $j->{'aqMonitors'}->[0]) {
 

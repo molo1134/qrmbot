@@ -45,6 +45,10 @@ my $json = <JSON>;
 close(JSON);
 
 #print $json, "\n";
+if (not $json =~ /^\s*{/) {
+  print "error: could not fetch data\n";
+  exit $exitnonzeroonerror;
+}
 my $j = decode_json($json);
 
 if (not defined $j->{list}->[0]) {

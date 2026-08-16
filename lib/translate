@@ -349,6 +349,10 @@ sub do_deepl {
   my $json = <HTTP>;
   close(HTTP);
   #print ("$json\n");
+  if (not $json =~ /^\s*{/) {
+    print "DEEPL error: could not fetch data\n";
+    return 0;
+  }
   my $j = decode_json($json); # includes utf-8 decode
 
   if (defined $j->{translations} and defined $j->{translations}->[0]) {
@@ -387,6 +391,10 @@ sub do_google {
   my $json = <HTTP>;
   close(HTTP);
   #print ("$json\n");
+  if (not $json =~ /^\s*{/) {
+    print "GOOGLE error: could not fetch data\n";
+    return 0;
+  }
   my $j = decode_json($json); # includes utf-8 decode
 
   if (defined $j->{data}->{translations} and
