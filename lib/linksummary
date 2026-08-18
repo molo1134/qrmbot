@@ -1718,7 +1718,7 @@ sub gh_repoUsesAi {
   return $isVibe;
 }
 
-sub getGithubCommitCount {
+sub getGithubCommitCountAndFirstCommit {
   my $owner = shift;
   my $repo = shift;
 
@@ -1740,7 +1740,17 @@ sub getGithubCommitCount {
     }
   }
 
-  return $commits;
+  my $apiurl = "https://api.github.com/repos/$owner/$repo/commits?per_page=1&page=$commits";  # default branch
+  local $/;   # FIXME: potentially memory hungry
+  open(HTTP, '-|', "curl --compressed --max-time $timeout -L -k -s '$apiurl'");
+  binmode(HTTP, ":utf8");
+  my $json = <HTTP>;
+  close(HTTP);
+  my $j = from_json($json);
+
+  my $firstcommitdate = substr($j->[0]{commit}{author}{date},0,10);
+
+  return ($commits, $firstcommitdate);
 }
 
 sub doGithub {
@@ -1757,13 +1767,13 @@ sub doGithub {
     close(HTTP);
     my $j = from_json($json);
 
-    my $commits = getGithubCommitCount($owner, $repo);
+    my ($commits, $firstcommit) = getGithubCommitCountAndFirstCommit($owner, $repo);
 
     my $output = bold($j->{full_name});
     $output .= " " . darkRed("[fork]") if $j->{fork};
     $output .= ": " . italic($j->{description})
       if defined $j->{description} and $j->{description} ne "";
-    $output .= " -- created " . substr($j->{created_at},0,10) . ";";
+    $output .= " -- first commit $firstcommit;";
     $output .= " updated " . substr($j->{pushed_at},0,10) . ";";
     $output .= " commits: $commits;" if defined $commits;
     $output .= " $j->{forks}⑂" if $j->{forks} > 0;
@@ -1777,10 +1787,10 @@ sub doGithub {
     $output .= " " . red("[AI use]") if gh_repoUsesAi($j->{full_name}, $j->{default_branch});
 
     if (defined $j->{source}) {
-      $commits = getGithubCommitCount(split ('/', $j->{source}{full_name}));
+      ($commits, $firstcommit) = getGithubCommitCountAndFirstCommit(split ('/', $j->{source}{full_name}));
 
       $output .= " -- origin repo: https://github.com/$j->{source}{full_name}";
-      $output .= " created " . substr($j->{source}{created_at},0,10) . ";";
+      $output .= " first commit: $firstcommit;";
       $output .= " updated " . substr($j->{source}{pushed_at},0,10) . ";";
       $output .= " commits: $commits;" if defined $commits;
       $output .= " $j->{source}{forks}⑂" if $j->{source}{forks} > 0;
