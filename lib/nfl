@@ -246,16 +246,21 @@ sub getGame {
     if (($c->{homeAway} // '') eq 'home') { $home = $c }
     elsif (($c->{homeAway} // '') eq 'away') { $away = $c }
   }
-  # national TV network; broadcast shapes differ between the schedule
-  # (market:{type}, media.shortName) and scoreboard (market, names[]) endpoints
+  # TV network: prefer the national broadcaster, falling back to the first
+  # regional/home-market station when none is listed (some preseason games).
+  # Broadcast shapes differ between the schedule (market:{type},
+  # media.shortName) and scoreboard (market, names[]) endpoints
+  my @regional;
   foreach my $b (@{$comp->{broadcasts} // []}) {
+    my $name = $b->{media}{shortName}
+        // (ref($b->{names}) eq 'ARRAY' && @{$b->{names}} ? $b->{names}[0] : '');
+    next unless $name;
     my $mkt = $b->{market} // '';
     $mkt = ref($mkt) eq 'HASH' ? ($mkt->{type} // '') : $mkt;
-    next unless lc($mkt) eq 'national';
-    $tv = $b->{media}{shortName} // '';
-    $tv = $b->{names}[0] // '' if !$tv && ref($b->{names}) eq 'ARRAY';
-    last if $tv;
+    if (lc($mkt) eq 'national') { $tv = $name; last }
+    push @regional, $name;
   }
+  $tv //= shift(@regional) // '';
   return {
     date     => $ev->{date} // '',
     id       => $ev->{id} // '',
