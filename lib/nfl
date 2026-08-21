@@ -241,10 +241,20 @@ sub getGame {
   my $comp = $ev->{competitions}[0] // {};
   my $status = $ev->{status} // $comp->{status} // {};
   my $type = $status->{type} // {};
-  my ($away, $home);
+  my ($away, $home, $tv);
   foreach my $c (@{$comp->{competitors} // []}) {
     if (($c->{homeAway} // '') eq 'home') { $home = $c }
     elsif (($c->{homeAway} // '') eq 'away') { $away = $c }
+  }
+  # national TV network; broadcast shapes differ between the schedule
+  # (market:{type}, media.shortName) and scoreboard (market, names[]) endpoints
+  foreach my $b (@{$comp->{broadcasts} // []}) {
+    my $mkt = $b->{market} // '';
+    $mkt = ref($mkt) eq 'HASH' ? ($mkt->{type} // '') : $mkt;
+    next unless lc($mkt) eq 'national';
+    $tv = $b->{media}{shortName} // '';
+    $tv = $b->{names}[0] // '' if !$tv && ref($b->{names}) eq 'ARRAY';
+    last if $tv;
   }
   return {
     date     => $ev->{date} // '',
@@ -252,6 +262,7 @@ sub getGame {
     state    => $type->{state} // '',
     detail   => $type->{detail} // '',
     short    => $type->{shortDetail} // '',
+    tv       => $tv,
     clock    => $status->{displayClock} // '',
     period   => $status->{period} // 0,
     away     => $away,
@@ -329,6 +340,7 @@ sub gameSnippet {
   my $time = fmtStartTime($g->{short});
   my $s = teamColor(tabbr($g->{away})) . " @ " . teamColor(tabbr($g->{home}));
   $s .= " $time" if $time;
+  $s .= grey(" on $g->{tv}") if $g->{tv};
   return $s;
 }
 
@@ -351,14 +363,14 @@ sub renderTeamLine {
     my $ql = quarterLabel($g->{period}, $g->{clock});
     my $status = $ql ? ($ql eq 'Halftime' ? yellow('Halftime') : yellow("$ql $g->{clock}")) : ($g->{short} ? yellow($g->{short}) : yellow('LIVE'));
     push @parts, $status;
+    push @parts, grey("on $g->{tv}") if $g->{tv};
     my $sit = $g->{comp}{situation} // {};
     if (ref($sit) eq 'HASH' && ($sit->{down} // 0) > 0) {
       my $dnt = $sit->{shortDownDistanceText} // $sit->{downDistanceText} // '';
-      my $pos = $sit->{possessionText} // '';
-      my $yl  = $sit->{yardLine};
+      my $pos = $sit->{possessionText} // '';   # already includes yard line, e.g. "PIT 36"
       if ($dnt) {
         my $sitStr = $dnt;
-        $sitStr .= " at $pos $yl" if $pos && defined $yl;
+        $sitStr .= " at $pos" if $pos;
         push @parts, $sitStr;
       }
       if (ref($sit->{lastPlay}) eq 'HASH' && $sit->{lastPlay}{text}) {
@@ -447,6 +459,16 @@ my $prefix = getStandingsPrefix($abbrev, $teamId, $liveGame ? $liveGame->{id}
                                      : $nextGame ? $nextGame->{id} : '');
 
 if (defined $liveGame) {
+  # the schedule endpoint omits down/distance and last play; pull them
+  # from the scoreboard for the game's own date
+  if ($liveGame->{date} =~ /^(\d{4})-(\d{2})-(\d{2})/) {
+    my $sb = fetchJSON("$API/scoreboard?dates=$1$2$3");
+    foreach my $ev (@{$sb->{events} // []}) {
+      next unless ($ev->{id} // '') eq $liveGame->{id};
+      $liveGame->{comp}{situation} = $ev->{competitions}[0]{situation};
+      last;
+    }
+  }
   renderTeamLine($prefix, $liveGame);
 } elsif (defined $lastGame || defined $nextGame) {
   my $sep = " \x{00B7} ";
@@ -461,7 +483,8 @@ if (defined $liveGame) {
       my $nDate = fmtDateShort($nextGame->{short});
       my $nTime = fmtStartTime($nextGame->{short});
       my $nextLine = "Next ($nDate): " . teamColor(tabbr($nAway)) . "  at  " . teamColor(tabbr($nHome))
-          . ($nTime ? "  —  $nTime ET" : '');
+          . ($nTime ? "  —  $nTime ET" : '')
+          . ($nextGame->{tv} ? grey(" on $nextGame->{tv}") : '');
       print "\x{1F3C8} " . ($prefix ? "$prefix$sep" : '') . "$line$sep$nextLine\n";
     } else {
       print "\x{1F3C8} " . ($prefix ? "$prefix$sep" : '') . "$line\n";
@@ -472,7 +495,8 @@ if (defined $liveGame) {
     my $nDate = fmtDateShort($nextGame->{short});
     my $nTime = fmtStartTime($nextGame->{short});
     my $nextLine = "Next ($nDate): " . teamColor(tabbr($nAway)) . "  at  " . teamColor(tabbr($nHome))
-        . ($nTime ? "  —  $nTime ET" : '');
+        . ($nTime ? "  —  $nTime ET" : '')
+        . ($nextGame->{tv} ? grey(" on $nextGame->{tv}") : '');
     print "\x{1F3C8} " . ($prefix ? "$prefix$sep" : '') . "$nextLine\n";
   }
 } else {

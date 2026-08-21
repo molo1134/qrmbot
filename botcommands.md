@@ -1375,9 +1375,9 @@ or common nickname (`niners`, `vikes`). Team aliases (e.g. `!eagles`,
 `!bucs`, `!cardinals` are taken by `!nhl`/`!mlb` aliases — use `!nfl <name>`
 for those teams.)
 
-Covers live games (score, quarter, clock, down/distance, last play), final
-games (score), postponed games, and off days (record + division standing +
-next game).
+Covers live games (score, quarter, clock, down/distance, last play, national
+TV network), final games (score), postponed games, and off days (record +
+division standing + next game).
 
 Data source: https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/
 
