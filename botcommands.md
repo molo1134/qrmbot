@@ -1307,7 +1307,7 @@ or common nickname (`phils`, `phillies`). Team aliases (e.g. `!phillies`,
 Covers live games (score, inning, count, batter vs. pitcher), final games
 (score, WP, LP), postponed/suspended games, and off days (standings + next game).
 
-Data source: https://statsapi.mlb.com/
+Data source: https://site.web.api.espn.com/apis/site/v2/sports/baseball/mlb/
 
 ### `!wc` -- World Cup 2026 scores, schedule, and group standings
 

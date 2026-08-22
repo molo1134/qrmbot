@@ -5,7 +5,7 @@
 # 2-clause BSD license.
 # Copyright (c) 2026 cjh@github. All rights reserved.
 #
-# Uses the MLB Stats API -- no API key required.
+# Uses the ESPN API -- no API key required.
 
 use strict;
 use utf8;
@@ -15,7 +15,6 @@ binmode(STDOUT, ":utf8");
 use JSON::PP qw(decode_json);
 use POSIX qw(strftime);
 use Encode qw(encode_utf8);
-use URI::Escape;
 
 use File::Basename;
 use Cwd 'realpath';
@@ -29,22 +28,18 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
-our $scrapingant_key=undef;
-my $scrapingantfile = $ENV{'HOME'} . "/.qrmbot/keys/scrapingantkey";
-if (-e ($scrapingantfile)) {
-  require($scrapingantfile);
-}
-
 # eggdrop passes all args as one string
 @ARGV = split(' ', join(' ', @ARGV));
 
 my $useragent = "Mozilla/5.0 (compatible; qrmbot)";
+my $API = "https://site.web.api.espn.com/apis/site/v2/sports/baseball/mlb";
 
 # MLB schedules use Eastern Time dates — force TZ so !mlb works correctly
 # when the server clock is UTC (otherwise after 8pm ET it rolls to tomorrow)
 $ENV{TZ} = 'America/New_York';
-my $today = strftime("%Y-%m-%d", localtime);
-my $year  = strftime("%Y", localtime);
+my $today  = strftime("%Y-%m-%d", localtime);
+my $todayC = strftime("%Y%m%d", localtime);
+my $year   = strftime("%Y", localtime);
 
 # --- cache ---
 sub cache_get {
@@ -85,86 +80,59 @@ sub cache_set {
 
 sub fetchJSON {
   my ($url, $ckey) = @_;
-  my $origurl = $url;
   if ($ckey) {
     my $c = cache_get($ckey);
     return decode_json($c) if defined $c;
-  }
-  our $scrapingant_key;
-  if (defined $scrapingant_key) {
-    $url = "https://api.scrapingant.com/v2/general?url=". uri_escape($url) . "&x-api-key=${scrapingant_key}&browser=false";
   }
   open(my $fh, '-|', "curl --max-time 10 -s -k -L -H 'Accept: application/json' -A \"$useragent\" '$url'");
   local $/;
   my $res = <$fh>;
   close($fh);
-  return undef unless defined $res && length($res) > 2;
+  return undef unless defined $res && $res =~ /^\s*\{/;
   my $json = decode_json($res);
-  if (defined $json->{detail}) {
-    print "Error retrieving $origurl -- $json->{detail}\n";
-    return undef;
-  }
-  cache_set($ckey, $res) if $ckey and defined $json and not defined $json->{error};
-  print "Error retrieving $ckey: $json->{status}: $json->{error}\n"
-    if defined $json->{error} and defined $json->{status};
+  cache_set($ckey, $res) if $ckey;
   return $json;
 }
 
-sub getPitcherERA {
-  my ($pitcherId) = @_;
-  return '' unless $pitcherId;
-
-  my $url = "https://statsapi.mlb.com/api/v1/people/$pitcherId/stats?stats=season&season=$year&group=pitching";
-  my $data = fetchJSON($url, "pitcher_era_${pitcherId}_$year");
-  return '' unless $data && $data->{stats} && @{$data->{stats}};
-
-  my $splits = $data->{stats}[0]{splits} // [];
-  return '' unless @$splits;
-
-  my $era = $splits->[0]{stat}{era} // '';
-  return '' unless defined $era && $era ne '';
-  return sprintf("%.2f ERA", $era);
-}
-
-# --- team map: name → [abbrev, teamId] ---
+# --- team map: name → [abbrev, espnTeamId] ---
 my %teammap = (
   # AL East
-  'nyy' => ['NYY', 147], 'yankees' => ['NYY', 147], 'ny' => ['NYY', 147],
-  'bos' => ['BOS', 111], 'red sox' => ['BOS', 111], 'redsox' => ['BOS', 111], 'boston' => ['BOS', 111],
-  'tor' => ['TOR', 141], 'blue jays' => ['TOR', 141], 'bluejays' => ['TOR', 141], 'jays' => ['TOR', 141], 'toronto' => ['TOR', 141],
-  'tbr' => ['TB', 139], 'tb'  => ['TB', 139], 'rays' => ['TB', 139], 'tampa bay' => ['TB', 139], 'tampa' => ['TB', 139],
-  'bal' => ['BAL', 110], 'orioles' => ['BAL', 110], 'baltimore' => ['BAL', 110],
+  'nyy' => ['NYY', 10], 'yankees' => ['NYY', 10], 'ny' => ['NYY', 10],
+  'bos' => ['BOS', 2], 'red sox' => ['BOS', 2], 'redsox' => ['BOS', 2], 'boston' => ['BOS', 2],
+  'tor' => ['TOR', 14], 'blue jays' => ['TOR', 14], 'bluejays' => ['TOR', 14], 'jays' => ['TOR', 14], 'toronto' => ['TOR', 14],
+  'tbr' => ['TB', 30], 'tb'  => ['TB', 30], 'rays' => ['TB', 30], 'tampa bay' => ['TB', 30], 'tampa' => ['TB', 30],
+  'bal' => ['BAL', 1], 'orioles' => ['BAL', 1], 'baltimore' => ['BAL', 1],
   # AL Central
-  'min' => ['MIN', 142], 'twins' => ['MIN', 142], 'minnesota' => ['MIN', 142],
-  'det' => ['DET', 116], 'tigers' => ['DET', 116], 'detroit' => ['DET', 116],
-  'cle' => ['CLE', 114], 'guardians' => ['CLE', 114], 'guards' => ['CLE', 114], 'cleveland' => ['CLE', 114],
-  'cws' => ['CWS', 145], 'chw' => ['CWS', 145], 'white sox' => ['CWS', 145], 'whitesox' => ['CWS', 145], 'chicago white sox' => ['CWS', 145],
-  'kc'  => ['KC', 118], 'kcr' => ['KC', 118], 'royals' => ['KC', 118], 'kansas city' => ['KC', 118],
+  'min' => ['MIN', 9], 'twins' => ['MIN', 9], 'minnesota' => ['MIN', 9],
+  'det' => ['DET', 6], 'tigers' => ['DET', 6], 'detroit' => ['DET', 6],
+  'cle' => ['CLE', 5], 'guardians' => ['CLE', 5], 'guards' => ['CLE', 5], 'cleveland' => ['CLE', 5],
+  'cws' => ['CWS', 4], 'chw' => ['CWS', 4], 'white sox' => ['CWS', 4], 'whitesox' => ['CWS', 4], 'chicago white sox' => ['CWS', 4],
+  'kc'  => ['KC', 7], 'kcr' => ['KC', 7], 'royals' => ['KC', 7], 'kansas city' => ['KC', 7],
   # AL West
-  'hou' => ['HOU', 117], 'astros' => ['HOU', 117], 'stros' => ['HOU', 117], 'houston' => ['HOU', 117],
-  'sea' => ['SEA', 136], 'mariners' => ['SEA', 136], 'seattle' => ['SEA', 136],
-  'tex' => ['TEX', 140], 'rangers' => ['TEX', 140], 'texas' => ['TEX', 140],
-  'ath' => ['ATH', 133], 'athletics' => ['ATH', 133], 'a\'s' => ['ATH', 133], 'as' => ['ATH', 133], 'oakland' => ['ATH', 133],
-  'laa' => ['LAA', 108], 'angels' => ['LAA', 108], 'los angeles angels' => ['LAA', 108],
+  'hou' => ['HOU', 18], 'astros' => ['HOU', 18], 'stros' => ['HOU', 18], 'houston' => ['HOU', 18],
+  'sea' => ['SEA', 12], 'mariners' => ['SEA', 12], 'seattle' => ['SEA', 12],
+  'tex' => ['TEX', 13], 'rangers' => ['TEX', 13], 'texas' => ['TEX', 13],
+  'ath' => ['ATH', 11], 'athletics' => ['ATH', 11], 'a\'s' => ['ATH', 11], 'as' => ['ATH', 11], 'oakland' => ['ATH', 11],
+  'laa' => ['LAA', 3], 'angels' => ['LAA', 3], 'los angeles angels' => ['LAA', 3],
   # NL East
-  'phi' => ['PHI', 143], 'phillies' => ['PHI', 143], 'phils' => ['PHI', 143], 'philadelphia' => ['PHI', 143],
-  'nym' => ['NYM', 121], 'mets' => ['NYM', 121], 'new york mets' => ['NYM', 121],
-  'atl' => ['ATL', 144], 'braves' => ['ATL', 144], 'atlanta' => ['ATL', 144],
-  'mia' => ['MIA', 146], 'marlins' => ['MIA', 146], 'miami' => ['MIA', 146],
-  'wsh' => ['WSH', 120], 'nationals' => ['WSH', 120], 'nats' => ['WSH', 120], 'washington' => ['WSH', 120],
+  'phi' => ['PHI', 22], 'phillies' => ['PHI', 22], 'phils' => ['PHI', 22], 'philadelphia' => ['PHI', 22],
+  'nym' => ['NYM', 21], 'mets' => ['NYM', 21], 'new york mets' => ['NYM', 21],
+  'atl' => ['ATL', 15], 'braves' => ['ATL', 15], 'atlanta' => ['ATL', 15],
+  'mia' => ['MIA', 28], 'marlins' => ['MIA', 28], 'miami' => ['MIA', 28],
+  'wsh' => ['WSH', 20], 'nationals' => ['WSH', 20], 'nats' => ['WSH', 20], 'washington' => ['WSH', 20],
   # NL Central
-  'stl' => ['STL', 138], 'cardinals' => ['STL', 138], 'cards' => ['STL', 138],
-    'st. louis' => ['STL', 138], 'st louis' => ['STL', 138], 'saint louis' => ['STL', 138],
-  'mil' => ['MIL', 158], 'brewers' => ['MIL', 158], 'brew crew' => ['MIL', 158], 'brewcrew' => ['MIL', 158], 'milwaukee' => ['MIL', 158],
-  'chc' => ['CHC', 112], 'cubs' => ['CHC', 112], 'cubbies' => ['CHC', 112], 'chicago cubs' => ['CHC', 112],
-  'pit' => ['PIT', 134], 'pirates' => ['PIT', 134], 'bucs' => ['PIT', 134], 'pittsburgh' => ['PIT', 134],
-  'cin' => ['CIN', 113], 'reds' => ['CIN', 113], 'cincinnati' => ['CIN', 113],
+  'stl' => ['STL', 24], 'cardinals' => ['STL', 24], 'cards' => ['STL', 24],
+    'st. louis' => ['STL', 24], 'st louis' => ['STL', 24], 'saint louis' => ['STL', 24],
+  'mil' => ['MIL', 8], 'brewers' => ['MIL', 8], 'brew crew' => ['MIL', 8], 'brewcrew' => ['MIL', 8], 'milwaukee' => ['MIL', 8],
+  'chc' => ['CHC', 16], 'cubs' => ['CHC', 16], 'cubbies' => ['CHC', 16], 'chicago cubs' => ['CHC', 16],
+  'pit' => ['PIT', 23], 'pirates' => ['PIT', 23], 'bucs' => ['PIT', 23], 'pittsburgh' => ['PIT', 23],
+  'cin' => ['CIN', 17], 'reds' => ['CIN', 17], 'cincinnati' => ['CIN', 17],
   # NL West
-  'lad' => ['LAD', 119], 'dodgers' => ['LAD', 119], 'la' => ['LAD', 119], 'los angeles dodgers' => ['LAD', 119],
-  'sf'  => ['SF', 137], 'sfg' => ['SF', 137], 'giants' => ['SF', 137], 'san francisco' => ['SF', 137],
-  'sd'  => ['SD', 135], 'sdp' => ['SD', 135], 'padres' => ['SD', 135], 'san diego' => ['SD', 135],
-  'az'  => ['AZ', 109], 'diamondbacks' => ['AZ', 109], 'dbacks' => ['AZ', 109], 'arizona' => ['AZ', 109],
-  'col' => ['COL', 115], 'rockies' => ['COL', 115], 'colorado' => ['COL', 115],
+  'lad' => ['LAD', 19], 'dodgers' => ['LAD', 19], 'la' => ['LAD', 19], 'los angeles dodgers' => ['LAD', 19],
+  'sf'  => ['SF', 26], 'sfg' => ['SF', 26], 'giants' => ['SF', 26], 'san francisco' => ['SF', 26],
+  'sd'  => ['SD', 25], 'sdp' => ['SD', 25], 'padres' => ['SD', 25], 'san diego' => ['SD', 25],
+  'az'  => ['AZ', 29], 'diamondbacks' => ['AZ', 29], 'dbacks' => ['AZ', 29], 'arizona' => ['AZ', 29],
+  'col' => ['COL', 27], 'rockies' => ['COL', 27], 'colorado' => ['COL', 27],
 );
 
 # Reverse map: abbrev → full team name for display
@@ -177,16 +145,12 @@ my %abbrevName = (
   'LAD' => 'Dodgers', 'SF' => 'Giants', 'SD' => 'Padres', 'AZ' => 'Diamondbacks', 'COL' => 'Rockies',
 );
 
-# teamId → abbrev
-my %teamIdToAbbr = (
-  147 => 'NYY', 111 => 'BOS', 141 => 'TOR', 139 => 'TB', 110 => 'BAL',
-  142 => 'MIN', 116 => 'DET', 114 => 'CLE', 145 => 'CWS', 118 => 'KC',
-  117 => 'HOU', 136 => 'SEA', 140 => 'TEX', 133 => 'ATH', 108 => 'LAA',
-  143 => 'PHI', 121 => 'NYM', 144 => 'ATL', 146 => 'MIA', 120 => 'WSH',
-  138 => 'STL', 158 => 'MIL', 112 => 'CHC', 134 => 'PIT', 113 => 'CIN',
-  119 => 'LAD', 137 => 'SF', 135 => 'SD', 109 => 'AZ', 115 => 'COL',
-);
-
+# ESPN uses CHW/ARI; our colors and display use CWS/AZ
+my %abbrFix = (CHW => 'CWS', ARI => 'AZ');
+sub fixAbbr {
+  my $a = shift // '';
+  return $abbrFix{$a} // $a;
+}
 
 # mirc extended color codes: https://anti.teamidiot.de/static/nei/*/extended_mirc_color_proposal.html
 my %teamIdToColorCodes = (
@@ -224,48 +188,36 @@ my %teamIdToColorCodes = (
 );
 
 sub teamColor {
-  my $id = shift;
-  my $string = shift;  # optional, if not given, will render the id in team colors
+  my $abbr = shift;
+  my $string = shift;  # optional, if not given, will render the abbr in team colors
 
-  my ($vtfg, $vtbg, $ircfg, $ircbg) = @{$teamIdToColorCodes{$id}};
-  #print "$id: $vtfg, $vtbg, $ircfg, $ircbg\n";
-  return colorIrcVt220("$ircfg,$ircbg", "0;38;5;$vtfg;48;5;$vtbg", defined $string ? $string : $id);
+  my ($vtfg, $vtbg, $ircfg, $ircbg) = @{$teamIdToColorCodes{$abbr}};
+  return bold(defined $string ? $string : $abbr) unless $vtfg;
+  return colorIrcVt220("$ircfg,$ircbg", "0;38;5;$vtfg;48;5;$vtbg", defined $string ? $string : $abbr);
 }
 
 my $input = lc(join(' ', @ARGV));
 $input =~ s/^\s+|\s+$//g;
 
 # --- helpers ---
-sub fmtInning {
-  my ($num, $half, $ordinal) = @_;
-  $ordinal //= '';
-  return $ordinal if $ordinal;
-  return "${num}th" if $num;
-  return '';
+# "Bottom 5th" / "Top 12th" / "Middle 7th" / "End 3rd" → (half, num)
+sub parseInning {
+  my $detail = shift // '';
+  return ('', 0) unless $detail =~ /^(Top|Bottom|Middle|End)\s+(\d+)/i;
+  return (ucfirst(lc($1)), $2);
 }
 
-sub fmtTime {
-  my $utc = shift // '';
-  return '' unless $utc =~ /T(\d{2}):(\d{2})/;
-  my ($h, $m) = ($1 + 0, $2 + 0);
-  # UTC to ET
-  $h = ($h - 4) % 24;
-  if ($h < 0) { $h += 24; }
-  my $ap = $h >= 12 ? 'PM' : 'AM';
-  my $h12 = $h % 12 || 12;
-  return sprintf("%d:%02d %s ET", $h12, $m, $ap);
-}
-
-sub fmtDate {
-  my $d = shift // '';
-  return $d unless $d =~ /^(\d{4})-(\d{2})-(\d{2})$/;
-  my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-  return $mon[$2 - 1] . " " . int($3);
+# "8/23 - 1:35 PM EDT" → "1:35p"
+sub fmtStartTime {
+  my $shortDetail = shift // '';
+  return '' unless $shortDetail =~ /(\d{1,2}):(\d{2})\s*(AM|PM)/i;
+  my ($h, $m, $ap) = ($1, $2, uc $3);
+  return sprintf("%d:%02d%s", $h, $m, lc substr($ap, 0, 1));
 }
 
 sub fmtDateShort {
   my $d = shift // '';
-  return $d unless $d =~ /^(\d{4})-(\d{2})-(\d{2})$/;
+  return $d unless $d =~ /^(\d{4})-(\d{2})-(\d{2})/;
   return int($2) . "/" . int($3);
 }
 
@@ -274,130 +226,174 @@ sub utf8_len {
   return length(encode_utf8($s));
 }
 
-# division ID → short name
-my %divName = (
-  200 => 'AL West', 201 => 'AL East', 202 => 'AL Central',
-  203 => 'NL West', 204 => 'NL East', 205 => 'NL Central',
-);
-
-sub isPlayoffGame {
-  my $g = shift;
-  my $type = $g->{gameType} // 'R';
-  return $type ne 'R' && $type ne 'S' && $type ne 'E' && $type ne 'A';
+sub ordinal {
+  my $n = shift;
+  return "${n}st" if $n % 10 == 1 && $n % 100 != 11;
+  return "${n}nd" if $n % 10 == 2 && $n % 100 != 12;
+  return "${n}rd" if $n % 10 == 3 && $n % 100 != 13;
+  return "${n}th";
 }
 
-sub playoffLabel {
-  my $g = shift;
-  return '' unless isPlayoffGame($g);
-  my $s = $g->{seriesStatus} // {};
-  my $round = $s->{roundSeries} // $s->{round} // '';
-  my $game  = $s->{game} // '';
-  return "[$round G$game]" if $round && $game;
-  return "[Playoffs]";
-}
-
-sub seriesStr {
-  my $g = shift;
-  return '' unless isPlayoffGame($g);
-  my $s = $g->{seriesStatus} // {};
-  return '' unless $s && keys %$s;
-  my $top   = $s->{topSeedTeam} // {};
-  my $bot   = $s->{bottomSeedTeam} // {};
-  my $tAbbr = $top->{abbreviation} // '';
-  my $bAbbr = $bot->{abbreviation} // '';
-  my $tW    = $s->{topSeedWins} // 0;
-  my $bW    = $s->{bottomSeedWins} // 0;
-  return '' unless $tAbbr && $bAbbr;
-  my ($leader, $trailer, $lW, $trW) = $tW > $bW
-    ? ($tAbbr, $bAbbr, $tW, $bW)
-    : ($bAbbr, $tAbbr, $bW, $tW);
-  if ($lW == $trW) {
-    return "Tied $lW-$trW";
+# normalized view of an ESPN event
+sub getGame {
+  my $ev = shift;
+  my $comp = $ev->{competitions}[0] // {};
+  my $status = $ev->{status} // $comp->{status} // {};
+  my $type = $status->{type} // {};
+  my ($away, $home);
+  foreach my $c (@{$comp->{competitors} // []}) {
+    my $abbr = fixAbbr($c->{team}{abbreviation});
+    if (($c->{homeAway} // '') eq 'home') { $home = $c }
+    elsif (($c->{homeAway} // '') eq 'away') { $away = $c }
   }
-  return "$leader leads $lW-$trW";
+  return {
+    date     => $ev->{date} // '',
+    id       => $ev->{id} // '',
+    state    => $type->{state} // '',
+    detail   => $type->{detail} // '',
+    short    => $type->{shortDetail} // '',
+    away     => $away,
+    home     => $home,
+    comp     => $comp,
+  };
+}
+
+sub score {
+  my $c = shift // {};
+  my $s = $c->{score};
+  return ref($s) eq 'HASH' ? ($s->{displayValue} // 0) : ($s // 0);
+}
+
+sub tabbr {
+  my $c = shift // {};
+  return fixAbbr($c->{team}{abbreviation}) // '???';
 }
 
 sub teamScoreStr {
   my ($team, $score, $isWinner) = @_;
-  my $abbr = $team->{abbreviation} // $team->{teamAbbreviation} // '???';
-  my $s    = $score // $team->{score} // 0;
+  my $abbr = tabbr($team);
+  my $s    = $score // 0;
   my $colorabbr = teamColor($abbr);
   return $isWinner ? underline($colorabbr) . " " . green($s)
                    : $colorabbr . " ($s)";
 }
 
+sub probString {
+  # probables: [{athlete:{displayName}, statistics:[{name:"ERA", displayValue}]}]
+  my $prob = shift // {};
+  my $name = $prob->{athlete}{displayName} // '';
+  return '' unless $name;
+  my $era = '';
+  foreach my $st (@{$prob->{statistics} // []}) {
+    if (($st->{name} // '') eq 'ERA') { $era = $st->{displayValue} // ''; last }
+  }
+  return $era ? "$name ($era ERA)" : $name;
+}
+
+# --- standings prefix from a game summary: "Phillies (80-49) · 1st in NL East" ---
+sub getStandingsPrefix {
+  my ($abbrev, $teamId, $eventId) = @_;
+  return '' unless $eventId;
+  my $data = fetchJSON("$API/summary?event=$eventId", "sum_$eventId");
+  return '' unless $data && $data->{standings}{groups};
+  foreach my $grp (@{$data->{standings}{groups}}) {
+    my $entries = $grp->{standings}{entries} // [];
+    foreach my $i (0..$#$entries) {
+      my $e = $entries->[$i];
+      next unless ($e->{id} // '') eq "$teamId";
+      my ($w, $l, $gb) = (0, 0, '');
+      foreach my $s (@{$e->{stats} // []}) {
+        my $n = $s->{name} // '';
+        $w  = $s->{displayValue} if $n eq 'wins';
+        $l  = $s->{displayValue} if $n eq 'losses';
+        $gb = $s->{displayValue} if $n eq 'gamesBehind';
+      }
+      my $div = $grp->{header} // '';
+      $div =~ s/^\d{4}\s+//;
+      $div =~ s/\s+Standings$//;
+      $div =~ s/National League/NL/;
+      $div =~ s/American League/AL/;
+      my $line = teamColor($abbrev, $abbrevName{$abbrev} // $abbrev) . " ($w-$l)";
+      my $rank = $i + 1;
+      if ($rank == 1) {
+        my $pct = ($w + $l) ? sprintf("%0.3f", $w / ($w + $l)) : '.000';
+        $pct =~ s/^0//;
+        $line .= " \x{00B7} " . green("1st in $div") . " ($pct)";
+      } else {
+        my $gbStr = ($gb && $gb ne '-') ? " ($gb GB)" : '';
+        $line .= " \x{00B7} " . ordinal($rank) . " in $div$gbStr";
+      }
+      return $line;
+    }
+  }
+  return '';
+}
+
 # --- game rendering ---
 sub renderLiveGame {
-  my ($game, $feed) = @_;
+  my ($g, $sum) = @_;
 
-  my $away  = $game->{teams}{away}{team} // {};
-  my $home  = $game->{teams}{home}{team} // {};
-  my $aScore = $game->{teams}{away}{score} // 0;
-  my $hScore = $game->{teams}{home}{score} // 0;
+  my $aScore = score($g->{away});
+  my $hScore = score($g->{home});
+  my ($half, $inning) = parseInning($g->{detail});
+  my $sit  = $sum->{situation} // {};
 
-  my $linescore = ($feed && $feed->{liveData}) ? ($feed->{liveData}{linescore} // $game->{linescore} // {}) : ($game->{linescore} // {});
-  my $inning    = $linescore->{currentInning} // 0;
-  my $innOrd    = $linescore->{currentInningOrdinal} // '';
-  my $half      = $linescore->{inningState} // '';  # Top, Bottom, Middle, End
-  my $balls     = $linescore->{balls}   // 0;
-  my $strikes   = $linescore->{strikes} // 0;
-  my $outs      = $linescore->{outs}    // 0;
-
-  my $batter   = $linescore->{offense}{batter}{fullName}   // '';
-  my $pitcher  = $linescore->{defense}{pitcher}{fullName}  // '';
-
-  my $lastPlay = '';
-  my $allPlays = ($feed && $feed->{liveData}) ? ($feed->{liveData}{plays}{allPlays} // []) : [];
-  if (@$allPlays) {
-    # Walk backwards — last entry is sometimes a placeholder with no description
-    for (my $i = $#$allPlays; $i >= 0; $i--) {
-      my $d = $allPlays->[$i]{result}{description};
-      if (defined $d && length $d) {
-        $lastPlay = $d;
-        last;
-      }
+  # id → name map from both rosters
+  my %names;
+  foreach my $r (@{$sum->{rosters} // []}) {
+    foreach my $p (@{$r->{roster} // []}) {
+      my $id = $p->{athlete}{id} // next;
+      $names{$id} = $p->{athlete}{fullName} // '';
     }
   }
 
-  my $pLabel = playoffLabel($game);
-  my $sStr   = seriesStr($game);
+  # current matchup
+  my $offAbbr = $half eq 'Top' ? tabbr($g->{away}) :
+                $half eq 'Bottom' ? tabbr($g->{home}) : '';
+  my $defAbbr = '';
+  if ($offAbbr eq tabbr($g->{away}) && $offAbbr) { $defAbbr = tabbr($g->{home}) }
+  elsif ($offAbbr) { $defAbbr = tabbr($g->{away}) }
+  my $batter  = $names{$sit->{batter}{playerId} // ''} // '';
+  my $pitcher = $names{$sit->{pitcher}{playerId} // ''} // '';
+
+  my @statusParts;
+  push @statusParts, $g->{detail} if $g->{detail};
+  if ($batter && $pitcher) {
+    push @statusParts, "$batter ($offAbbr) batting vs. $pitcher ($defAbbr) pitching";
+  }
+  my $balls   = $sit->{balls}   // 0;
+  my $strikes = $sit->{strikes} // 0;
+  my $outs    = $sit->{outs}    // 0;
+  if ($inning > 0) {
+    push @statusParts, "Count: $balls-$strikes, $outs out" . ($outs != 1 ? 's' : '');
+  }
+
+  # base runners: latest play listing them
+  my @plays = @{$sum->{plays} // []};
+  my (%runners, $lastPlay);
+  foreach my $p (reverse @plays) {
+    $lastPlay = $p->{text} if !defined $lastPlay && $p->{text};
+    foreach my $part (@{$p->{participants} // []}) {
+      my $t = $part->{type} // '';
+      next unless $t =~ /^on(First|Second|Third)$/;
+      my $id = $part->{athlete}{id} // next;
+      $runners{$t} = $names{$id} // '';
+    }
+    last if keys %runners;
+  }
+  my %baseLabel = (onFirst => '1st', onSecond => '2nd', onThird => '3rd');
+  my @bases = map { "$runners{$_} ($baseLabel{$_})" }
+              grep { $runners{$_} } qw(onFirst onSecond onThird);
+  if (@bases == 3) {
+    push @statusParts, "Bases loaded: " . join(", ", @bases);
+  } elsif (@bases > 0) {
+    push @statusParts, "Runners: " . join(", ", @bases);
+  }
 
   my @parts;
   push @parts, "\x{26BE}" if $username eq getEggdropUID();  # ⚾
-  push @parts, $pLabel if $pLabel;
-  push @parts, teamScoreStr($away, $aScore, $aScore > $hScore)
-             . " @ " . teamScoreStr($home, $hScore, $hScore > $aScore);
-
-  my $inningStr = $half eq 'Top' ? "Top $innOrd" :
-                  $half eq 'Bottom' ? "Bottom $innOrd" :
-                  $half eq 'Middle' ? "Middle $innOrd" :
-                  $innOrd || '';
-  my @statusParts;
-  push @statusParts, $inningStr if $inningStr;
-
-  if ($batter && $pitcher) {
-    my $offId  = $linescore->{offense}{team}{id} // 0;
-    my $defId  = $linescore->{defense}{team}{id} // 0;
-    my $offAbbr = teamColor($teamIdToAbbr{$offId}) // '';
-    my $defAbbr = teamColor($teamIdToAbbr{$defId}) // '';
-    push @statusParts, "$batter" . ($offAbbr ? " ($offAbbr)" : "") . " batting vs. $pitcher" . ($defAbbr ? " ($defAbbr)" : "") . " pitching";
-  }
-  if ($inning > 0) {
-    push @statusParts, "Count: $balls-$strikes, $outs out" . ($outs != 1 ? 's' : '');
-    # Base runners
-    my %baseLabel = (first => '1st', second => '2nd', third => '3rd');
-    my @bases;
-    my $off = $linescore->{offense} // {};
-    for my $b (qw(first second third)) {
-      push @bases, $off->{$b}{fullName} . " ($baseLabel{$b})" if $off->{$b};
-    }
-    if (@bases == 3) {
-      push @statusParts, "Bases loaded: " . join(", ", @bases);
-    } elsif (@bases > 0) {
-      push @statusParts, "Runners: " . join(", ", @bases);
-    }
-  }
-
+  push @parts, teamScoreStr($g->{away}, $aScore, $aScore > $hScore)
+             . " @ " . teamScoreStr($g->{home}, $hScore, $hScore > $aScore);
   my $sep = " \x{00B7} ";
   my $CHAR_BUDGET = 450;
 
@@ -405,8 +401,9 @@ sub renderLiveGame {
 
   my $msg = join($sep, @parts);
   $msg .= $sep . join($sep, @statusParts) if @statusParts;
-  $msg .= $sep . "Series: " . $sStr if $sStr;
 
+  # last play (plays scan first, situation fallback)
+  $lastPlay = $sit->{lastPlay}{text} if !defined $lastPlay && $sit->{lastPlay}{text};
   if ($lastPlay) {
     my $used  = utf8_len($msg) + utf8_len($sep . "Last: ");
     if ($username eq getEggdropUID()) {
@@ -429,34 +426,82 @@ sub renderLiveGame {
   print $msg . "\n";
 }
 
-sub renderFinalGame {
-  my ($game, $feed, $prefix) = @_;
+sub renderPreviewGame {
+  my ($g, $prefix) = @_;
 
-  my $away  = $game->{teams}{away}{team} // {};
-  my $home  = $game->{teams}{home}{team} // {};
-  my $aScore = $game->{teams}{away}{score} // 0;
-  my $hScore = $game->{teams}{home}{score} // 0;
+  my $time = fmtStartTime($g->{short});
 
-  my $winner = $aScore > $hScore ? $away : $home;
-  my $loser  = $aScore > $hScore ? $home : $away;
-
-  my $decisions = ($feed && $feed->{liveData}) ? ($feed->{liveData}{decisions} // {}) : {};
-  my $wpName = $decisions->{winner}{fullName} // '';
-  my $lpName = $decisions->{loser}{fullName}  // '';
-  my $svName = $decisions->{save}{fullName}   // '';
-
-  my $pLabel = playoffLabel($game);
-  my $sStr   = seriesStr($game);
+  my @probs;
+  foreach my $c (sort { ($a->{homeAway} // '') cmp ($b->{homeAway} // '') }
+                 @{$g->{comp}{competitors} // []}) {
+    push @probs, probString($c->{probables}[0] // {});
+  }
+  @probs = grep { $_ } @probs;
 
   my $sep = " \x{00B7} ";
-  my $CHAR_BUDGET = 450;
-
   my @parts;
   push @parts, "\x{26BE}";
   push @parts, $prefix if $prefix;
-  push @parts, $pLabel if $pLabel;
-  push @parts, teamScoreStr($away, $aScore, $aScore > $hScore)
-             . " @ " . teamScoreStr($home, $hScore, $hScore > $aScore);
+  push @parts, teamColor(tabbr($g->{away})) . " @ " . teamColor(tabbr($g->{home}));
+  push @parts, "$time ET" if $time;
+  push @parts, "(" . join(" vs. ", @probs) . ")" if @probs == 2;
+
+  print join($sep, @parts) . "\n";
+}
+
+sub renderSuspendedGame {
+  my ($g, $prefix) = @_;
+
+  my $detail = $g->{detail};
+  my $statusLabel;
+  if ($detail =~ /^Delayed/) {
+    $statusLabel = 'Delayed';
+  } elsif ($detail =~ /^(Postponed|Suspended)/) {
+    $statusLabel = $1;
+  } else {
+    $statusLabel = $detail || 'SUSPENDED';
+  }
+
+  my $aScore = score($g->{away});
+  my $hScore = score($g->{home});
+
+  my $sep = " \x{00B7} ";
+  my @parts;
+  push @parts, "\x{26BE}";
+  push @parts, $prefix if $prefix;
+  if ($aScore > 0 || $hScore > 0) {
+    push @parts, teamScoreStr($g->{away}, $aScore, $aScore > $hScore)
+               . " @ " . teamScoreStr($g->{home}, $hScore, $hScore > $aScore);
+  } else {
+    push @parts, teamColor(tabbr($g->{away})) . " @ " . teamColor(tabbr($g->{home}));
+  }
+  push @parts, yellow($statusLabel);
+
+  print join($sep, @parts) . "\n";
+}
+
+sub renderFinalGame {
+  my ($g, $sum, $prefix) = @_;
+
+  my $aScore = score($g->{away});
+  my $hScore = score($g->{home});
+
+  # pitching decisions
+  my ($wpName, $lpName, $svName);
+  foreach my $fa (@{$sum->{header}{competitions}[0]{status}{featuredAthletes} // []}) {
+    my $role = $fa->{name} // '';
+    my $n    = $fa->{athlete}{displayName} // '';
+    $wpName = $n if $role eq 'winningPitcher';
+    $lpName = $n if $role eq 'losingPitcher';
+    $svName = $n if $role eq 'savingPitcher';
+  }
+
+  my $sep = " \x{00B7} ";
+  my @parts;
+  push @parts, "\x{26BE}";
+  push @parts, $prefix if $prefix;
+  push @parts, teamScoreStr($g->{away}, $aScore, $aScore > $hScore)
+             . " @ " . teamScoreStr($g->{home}, $hScore, $hScore > $aScore);
   push @parts, "FINAL";
 
   my @detail;
@@ -465,185 +510,20 @@ sub renderFinalGame {
   push @detail, "SV: $svName" if $svName;
   push @parts, join(" ", @detail) if @detail;
 
-  push @parts, "Series: " . $sStr if $sStr;
-
-  my $msg = join($sep, @parts);
-
-  # Top performers (3 stars of the game) — fit on same line
-  my $topPerf = ($feed && $feed->{liveData}) ? ($feed->{liveData}{boxscore}{topPerformers} // []) : [];
-  if (@$topPerf) {
-    my @stars;
-    for my $tp (@$topPerf) {
-      my $name = $tp->{player}{person}{fullName} // '';
-      next unless $name;
-      my $summary = $tp->{player}{stats}{pitching}{summary}
-                 // $tp->{player}{stats}{batting}{summary}
-                 // '';
-      push @stars, $summary ? "$name ($summary)" : $name;
-    }
-
-    if (@stars && $username eq getEggdropUID()) {
-      # Trim stars to fit the IRC budget
-      while (@stars > 1 && utf8_len($msg . $sep . "\x{2605} " . join($sep, @stars)) > $CHAR_BUDGET) {
-        pop @stars;
-      }
-    }
-    $msg .= $sep . "\x{2605} " . join($sep, @stars) if @stars;
-  }
-
-  print $msg . "\n";
-}
-
-sub renderPreviewGame {
-  my ($game, $prefix) = @_;
-
-  my $away  = $game->{teams}{away}{team} // {};
-  my $home  = $game->{teams}{home}{team} // {};
-  my $aAbbr = $away->{abbreviation} // '???';
-  my $hAbbr = $home->{abbreviation} // '???';
-  my $time  = fmtTime($game->{gameDate} // '');
-
-  my $awayPitcher = $game->{teams}{away}{probablePitcher} // {};
-  my $homePitcher = $game->{teams}{home}{probablePitcher} // {};
-  my $awayProb = $awayPitcher->{fullName} // '';
-  my $homeProb = $homePitcher->{fullName} // '';
-  my $awayERA  = getPitcherERA($awayPitcher->{id}) if $awayPitcher->{id};
-  my $homeERA  = getPitcherERA($homePitcher->{id}) if $homePitcher->{id};
-
-  my $pLabel = playoffLabel($game);
-
-  my $sep = " \x{00B7} ";
-  my @parts;
-  push @parts, "\x{26BE}";
-  push @parts, $prefix if $prefix;
-  push @parts, $pLabel if $pLabel;
-  push @parts, teamColor($aAbbr) . " @ " . teamColor($hAbbr);
-  push @parts, $time if $time;
-
-  my @probParts;
-  push @probParts, $awayERA ? "$awayProb ($awayERA)" : $awayProb if $awayProb;
-  push @probParts, $homeERA ? "$homeProb ($homeERA)" : $homeProb if $homeProb;
-  push @parts, join(" vs. ", @probParts) if @probParts == 2;
-
   print join($sep, @parts) . "\n";
 }
 
-sub renderSuspendedGame {
-  my ($game, $prefix) = @_;
-
-  my $away  = $game->{teams}{away}{team} // {};
-  my $home  = $game->{teams}{home}{team} // {};
-  my $aAbbr = $away->{abbreviation} // '???';
-  my $hAbbr = $home->{abbreviation} // '???';
-
-  my $detail = $game->{status}{detailedState} // '';
-  my $reason = $game->{status}{reason} // '';
-  my $statusLabel;
-  if ($detail eq 'Delayed Start') {
-    $statusLabel = $reason ? "Delayed ($reason)" : "Delayed Start";
-  } else {
-    $statusLabel = $reason ? "$detail ($reason)" : ($detail || 'SUSPENDED');
-  }
-  my $resume = $game->{rescheduleDate} // '';
-  my $resumeStr = $resume ? "Resume " . fmtDate($resume) . " " . fmtTime($resume) : '';
-
-  my $pLabel = playoffLabel($game);
-  my $sStr   = seriesStr($game);
-
-  my $sep = " \x{00B7} ";
-  my @parts;
-  push @parts, "\x{26BE}";
-  push @parts, $prefix if $prefix;
-  push @parts, $pLabel if $pLabel;
-  my $aScore = $game->{teams}{away}{score} // 0;
-  my $hScore = $game->{teams}{home}{score} // 0;
-  if ($aScore > 0 || $hScore > 0) {
-    push @parts, teamScoreStr($away, $aScore, $aScore > $hScore)
-               . " @ " . teamScoreStr($home, $hScore, $hScore > $aScore);
-  } else {
-    push @parts, teamColor($aAbbr) . " @ " . teamColor($hAbbr);
-  }
-  push @parts, yellow($statusLabel);
-  push @parts, $resumeStr if $resumeStr;
-  push @parts, "Series: " . $sStr if $sStr;
-
-  print join($sep, @parts) . "\n";
-}
-
-sub getStandingsLine {
-  my ($abbrev, $teamId) = @_;
-
-  my $name = $abbrevName{$abbrev} // $abbrev;
-  my $standUrl = "https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&season=$year";
-  my $standData = fetchJSON($standUrl, "standings");
-  return '' unless $standData && $standData->{records};
-
-  foreach my $rec (@{$standData->{records}}) {
-    my $divId = $rec->{division}{id} // 0;
-    foreach my $trec (@{$rec->{teamRecords} // []}) {
-      if (($trec->{team}{id} // 0) == $teamId) {
-        my $lr = $trec->{leagueRecord} // {};
-        my $wins    = $lr->{wins}   // 0;
-        my $losses  = $lr->{losses} // 0;
-        my $divRank = $trec->{divisionRank} // '';
-        my $gb      = $trec->{divisionGamesBack} // '0';
-        my $divName = $divName{$divId} // '';
-        my $record  = sprintf("%0.3f", ($wins / ($wins + $losses)));
-        $record =~ s/^0//;
-
-        my $sep = " \x{00B7} ";
-        my $line = teamColor($abbrev, $name) . " ($wins-$losses)";
-
-        if ($divRank && $divName) {
-          if ($divRank eq '1') {
-            $line .= $sep . green("1st in $divName") . " ($record)"
-          } else {
-            my $ord = $divRank . ($divRank eq '2' ? 'nd' : $divRank eq '3' ? 'rd' : 'th');
-            $line .= $sep . "$ord in $divName" . ($gb && $gb ne '-' ? " ($record, $gb GB)" : " ($record)");
-
-            # Wildcard standing
-            my $wcRank = $trec->{wildCardRank} // '';
-            my $wcGB   = $trec->{wildCardGamesBack} // '';
-            if ($wcRank && $wcGB ne '') {
-              if ($wcGB eq '-' || $wcGB =~ /^\+/) {
-                # In a wildcard spot
-                my $wcStr = "WC$wcRank";
-                if ($wcGB =~ /^\+(\d+\.?\d*)/) {
-                  $wcStr .= " (+$1 GA)";
-                }
-                $line .= $sep . green($wcStr);
-              } else {
-                # Outside looking in
-                $line .= $sep . "$wcGB GB of WC";
-              }
-            }
-          }
-        }
-        return $line;
-      }
-    }
-  }
-  return '';
-}
 
 sub renderNextGame {
   my ($abbrev, $teamId, $prefix) = @_;
 
-  my $nextUrl = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=$teamId&season=$year&hydrate=team,probablePitcher";
-  my $nextData = fetchJSON($nextUrl, "next_$teamId");
-
-  # Find next game (first future game after today)
-  my ($nextGame, $nextDate);
-  my $dates = $nextData ? ($nextData->{dates} // []) : [];
-  foreach my $de (@$dates) {
-    my $d = $de->{date} // '';
-    next unless $d gt $today;
-    my $games = $de->{games} // [];
-    if (@$games) {
-      $nextGame = $games->[0];
-      $nextDate = $d;
-      last;
-    }
+  my $nextData = fetchJSON("$API/teams/$teamId/schedule?season=$year", "next_$teamId");
+  my $nextGame;
+  foreach my $ev (@{$nextData->{events} // []}) {
+    my $g = getGame($ev);
+    next unless $g->{state} ne 'post' && $g->{date} gt $today;
+    $nextGame = $g;
+    last;
   }
 
   my $sep = " \x{00B7} ";
@@ -652,148 +532,47 @@ sub renderNextGame {
     return;
   }
 
-  my $away  = $nextGame->{teams}{away}{team} // {};
-  my $home  = $nextGame->{teams}{home}{team} // {};
-  my $aAbbr = $away->{abbreviation} // '???';
-  my $hAbbr = $home->{abbreviation} // '???';
+  my $aAbbr = tabbr($nextGame->{away});
+  my $hAbbr = tabbr($nextGame->{home});
   my $opp   = $aAbbr eq $abbrev ? $hAbbr : $aAbbr;
   my $at    = $aAbbr eq $abbrev ? "@" : "vs";
-  my $date  = fmtDateShort($nextDate);
-  my $tStr  = '';
-  if ($nextGame->{gameDate}) {
-    $tStr = fmtTime($nextGame->{gameDate});
+  my $date  = fmtDateShort($nextGame->{date});
+  my $time  = fmtStartTime($nextGame->{short});
+
+  my @probs;
+  foreach my $c (@{$nextGame->{comp}{competitors} // []}) {
+    push @probs, probString($c->{probables}[0] // {});
   }
-  my $awayPitcher = $nextGame->{teams}{away}{probablePitcher} // {};
-  my $homePitcher = $nextGame->{teams}{home}{probablePitcher} // {};
-  my $awayProb = $awayPitcher->{fullName} // '';
-  my $homeProb = $homePitcher->{fullName} // '';
-  my $awayERA  = getPitcherERA($awayPitcher->{id}) if $awayPitcher->{id};
-  my $homeERA  = getPitcherERA($homePitcher->{id}) if $homePitcher->{id};
+  @probs = grep { $_ } @probs;
 
   my @parts;
   push @parts, "\x{26BE}";
   push @parts, $prefix if $prefix;
-  push @parts, "Next: $at $opp $date" . ($tStr ? " $tStr" : "");
-
-  my @probParts;
-  push @probParts, $awayERA ? "$awayProb ($awayERA)" : $awayProb if $awayProb;
-  push @probParts, $homeERA ? "$homeProb ($homeERA)" : $homeProb if $homeProb;
-  push @parts, "(" . join(" vs. ", @probParts) . ")" if @probParts == 2;
+  push @parts, "Next: $at $opp $date" . ($time ? " $time ET" : "");
+  push @parts, "(" . join(" vs. ", @probs) . ")" if @probs == 2;
 
   print join($sep, @parts) . "\n";
-}
-
-# --- player lookup ---
-sub lookupPlayer {
-  my ($query) = @_;
-
-  my $enc = uri_escape_utf8($query);
-  my $searchUrl = "https://statsapi.mlb.com/api/v1/people/search?names=$enc&activeStatus=Yes";
-  my $searchData = fetchJSON($searchUrl, "player_search_$enc");
-
-  return undef unless $searchData && $searchData->{people} && @{$searchData->{people}};
-  return $searchData->{people}[0];
-}
-
-sub renderPlayerStats {
-  my ($player) = @_;
-
-  my $playerId = $player->{id};
-  my $name     = $player->{fullName};
-  my $posType  = $player->{primaryPosition}{type} // '';
-  my $isTwoWay = ($posType eq 'Two-Way Player');
-
-  my $sep = " \x{00B7} ";
-
-  # Fetch stats
-  my ($hitSplits, $pitchSplits);
-  if ($isTwoWay || $posType ne 'Pitcher') {
-    my $hitUrl  = "https://statsapi.mlb.com/api/v1/people/$playerId/stats?stats=season&season=$year&group=hitting";
-    my $hitData = fetchJSON($hitUrl, "player_stats_${playerId}_${year}_hitting");
-    $hitSplits = $hitData ? ($hitData->{stats}[0]{splits} // []) : [];
-  }
-  if ($isTwoWay || $posType eq 'Pitcher') {
-    my $pitchUrl  = "https://statsapi.mlb.com/api/v1/people/$playerId/stats?stats=season&season=$year&group=pitching";
-    my $pitchData = fetchJSON($pitchUrl, "player_stats_${playerId}_${year}_pitching");
-    $pitchSplits = $pitchData ? ($pitchData->{stats}[0]{splits} // []) : [];
-  }
-
-  # Get team from whichever stats we have
-  my $splits = $hitSplits || $pitchSplits || [];
-  my $teamId   = $splits->[0]{team}{id} // 0;
-  my $teamAbbr = $teamIdToAbbr{$teamId} // '';
-  my $teamName = $teamAbbr ? $abbrevName{$teamAbbr} // $teamAbbr : '';
-
-  my @parts;
-  push @parts, "\x{26BE}";
-  push @parts, bold($name);
-  push @parts, teamColor($teamAbbr, $teamName) if $teamAbbr;
-
-  if ($isTwoWay || $posType ne 'Pitcher') {
-    if ($hitSplits && @$hitSplits) {
-      my $s = $hitSplits->[0]{stat} // {};
-      push @parts, "Bat: G:" . ($s->{gamesPlayed} // 0);
-      push @parts, "AVG:" . ($s->{avg} // '.000');
-      push @parts, "HR:" . ($s->{homeRuns} // 0);
-      push @parts, "RBI:" . ($s->{rbi} // 0);
-      push @parts, "OPS:" . ($s->{ops} // '.000');
-      push @parts, "SB:" . ($s->{stolenBases} // 0);
-    }
-  }
-
-  if ($isTwoWay || $posType eq 'Pitcher') {
-    if ($pitchSplits && @$pitchSplits) {
-      my $s = $pitchSplits->[0]{stat} // {};
-      push @parts, "Pit: G:" . ($s->{gamesPitched} // $s->{gamesPlayed} // 0);
-      push @parts, "W-L:" . ($s->{wins} // 0) . "-" . ($s->{losses} // 0);
-      push @parts, "ERA:" . ($s->{era} // '0.00');
-      push @parts, "K:" . ($s->{strikeOuts} // 0);
-      push @parts, "WHIP:" . ($s->{whip} // '0.00');
-      push @parts, "IP:" . ($s->{inningsPitched} // '0.0');
-    }
-  }
-
-  if (!@parts || @parts <= 3) {
-    push @parts, "No $year stats";
-  }
-
-  my $msg = join($sep, @parts);
-
-  my $CHAR_BUDGET = 450;
-  if ($username eq getEggdropUID() && utf8_len($msg) > $CHAR_BUDGET) {
-    $msg = substr($msg, 0, $CHAR_BUDGET - 3);
-    $msg =~ s/\S+$//;
-    $msg =~ s/\s+$//;
-    $msg .= "...";
-  }
-
-  print "$msg\n";
 }
 
 # --- main ---
 if (!defined($input) || $input eq '') {
   # No team specified — show today's games, as many as fit on one line
-  my $url = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=$today&hydrate=linescore,team,seriesStatus";
-  my $data = fetchJSON($url, "all_$today");
-  my $games = $data->{dates}[0]{games} // [] if $data && $data->{dates} && @{$data->{dates}};
+  my $data = fetchJSON("$API/scoreboard?dates=$todayC", "all_$today");
+  my $events = $data ? ($data->{events} // []) : [];
 
-  if (!$games || !@$games) {
+  if (!$events || !@$events) {
     print "\x{26BE} No MLB games scheduled for today.\n";
     exit 0;
   }
 
-  # Sort: live/delayed first, then final, then preview
+  my @games = map { getGame($_) } @$events;
+
+  # Sort: live first, then final, then upcoming
   my @sorted = sort {
-    my $sa = $a->{status}{abstractGameState} // '';
-    my $da = $a->{status}{detailedState} // '';
-    my $sb = $b->{status}{abstractGameState} // '';
-    my $db = $b->{status}{detailedState} // '';
-    my $pa = ($sa eq 'Live' || $da =~ /Delayed|Suspended/) ? 0 :
-             $sa eq 'Final' ? 1 : 2;
-    my $pb = ($sb eq 'Live' || $db =~ /Delayed|Suspended/) ? 0 :
-             $sb eq 'Final' ? 1 : 2;
+    my $pa = $a->{state} eq 'in' ? 0 : $a->{state} eq 'post' ? 1 : 2;
+    my $pb = $b->{state} eq 'in' ? 0 : $b->{state} eq 'post' ? 1 : 2;
     $pa <=> $pb;
-  } @$games;
+  } @games;
 
   my $CHAR_BUDGET = 450;
   my $bar = " | ";
@@ -806,36 +585,30 @@ if (!defined($input) || $input eq '') {
     $msg = "";
   }
 
-  foreach my $game (@sorted) {
-    my $state  = $game->{status}{abstractGameState} // '';
-    my $detail = $game->{status}{detailedState} // '';
-    my $away   = $game->{teams}{away}{team} // {};
-    my $home   = $game->{teams}{home}{team} // {};
-    my $aAbbr  = $away->{abbreviation} // '???';
-    my $hAbbr  = $home->{abbreviation} // '???';
-    my $aScore = $game->{teams}{away}{score} // 0;
-    my $hScore = $game->{teams}{home}{score} // 0;
-    my $linescore = $game->{linescore} // {};
-    my $inning    = $linescore->{currentInning} // 0;
-    my $half      = $linescore->{inningState} // '';
+  foreach my $g (@sorted) {
+    my $state  = $g->{state};
+    my $detail = $g->{detail};
+    my $aAbbr  = tabbr($g->{away});
+    my $hAbbr  = tabbr($g->{home});
+    my $aScore = score($g->{away});
+    my $hScore = score($g->{home});
 
     my $snippet;
-    if ($detail =~ /^(Postponed|Suspended|Delayed|Delayed Start)$/) {
-      my $label = $detail eq 'Delayed Start' ? 'Delayed'
-                : $detail eq 'Delayed'       ? 'Delayed'
-                : $detail;
+    if ($detail =~ /Postponed|Suspended|Delayed/) {
+      my ($label) = $detail =~ /(Postponed|Suspended|Delayed)/;
       $snippet = teamColor($aAbbr) . " @ " . teamColor($hAbbr) . " " . yellow($label);
-    } elsif ($state eq 'Live') {
-      my $inn = $half eq 'Top'    ? "↑$inning" :
-                $half eq 'Bottom' ? "↓$inning" :
+    } elsif ($state eq 'in') {
+      my ($half, $inning) = parseInning($detail);
+      my $inn = $half eq 'Top'    ? "\x{2191}$inning" :
+                $half eq 'Bottom' ? "\x{2193}$inning" :
                 $half eq 'Middle' ? "Mid$inning" :
+                $half eq 'End'    ? "End$inning" :
                 $inning ? "$inning" : 'Live';
       $snippet = teamColor($aAbbr) . "($aScore) @ " . teamColor($hAbbr) . "($hScore) " . yellow($inn);
-    } elsif ($state eq 'Final') {
+    } elsif ($state eq 'post') {
       $snippet = teamColor($aAbbr) . "($aScore) @ " . teamColor($hAbbr) . "($hScore) F";
-    } elsif ($state eq 'Preview') {
-      my $time = fmtTime($game->{gameDate} // '');
-      $time =~ s/^(\d+):(\d+)\s*(.).*/$1:$2\L$3/;  # 7:40 PM ET → 7:40p
+    } elsif ($state eq 'pre') {
+      my $time = fmtStartTime($g->{short});
       $snippet = teamColor($aAbbr) . " @ " . teamColor($hAbbr);
       $snippet .= " $time" if $time;
     } else {
@@ -867,63 +640,58 @@ unless ($team) {
 }
 
 unless ($team) {
-  # Try player lookup
-  my $player = lookupPlayer($input);
-  if ($player) {
-    renderPlayerStats($player);
-    exit 0;
-  }
-
-  print "No team or player found for '$input'. Use team name, 3-letter code, or player name.\n";
+  print "No team found for '$input'. Use a team name or 3-letter code.\n";
   exit 0;
 }
 
 my ($abbrev, $teamId) = @$team;
 
-# Fetch standings for team-specific queries
-my $standingsPrefix = getStandingsLine($abbrev, $teamId);
-
-# Fetch today's schedule for this team
-my $schedUrl = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=$today&teamId=$teamId&hydrate=linescore,team,seriesStatus,probablePitcher";
-my $sched = fetchJSON($schedUrl, "sched_${teamId}_$today");
-
+# Fetch today's games for this team
+my $sb = fetchJSON("$API/scoreboard?dates=$todayC", "all_$today");
 my @games;
-if ($sched && $sched->{dates} && @{$sched->{dates}}) {
-  @games = @{$sched->{dates}[0]{games} // []};
+foreach my $ev (@{$sb->{events} // []}) {
+  my $g = getGame($ev);
+  push @games, $g if tabbr($g->{away}) eq $abbrev || tabbr($g->{home}) eq $abbrev;
 }
 
 if (@games == 0) {
-  renderNextGame($abbrev, $teamId, $standingsPrefix);
+  # off day — standings from the next game's summary
+  my $nextData = fetchJSON("$API/teams/$teamId/schedule?season=$year", "next_$teamId");
+  my $nextId = '';
+  foreach my $ev (@{$nextData->{events} // []}) {
+    my $g = getGame($ev);
+    next unless $g->{state} ne 'post' && $g->{date} gt $today;
+    $nextId = $g->{id};
+    last;
+  }
+  my $prefix = getStandingsPrefix($abbrev, $teamId, $nextId);
+  renderNextGame($abbrev, $teamId, $prefix);
   exit 0;
 }
 
-# Render each game (handles doubleheaders)
-foreach my $game (@games) {
-  my $state = $game->{status}{abstractGameState} // '';
-  my $detail = $game->{status}{detailedState} // '';
+# Standings prefix (from the first game's summary — any recent event works)
+my $standingsPrefix = getStandingsPrefix($abbrev, $teamId, $games[0]{id});
 
-  if ($detail =~ /^(Postponed|Suspended|Delayed|Delayed Start)$/) {
-    renderSuspendedGame($game, $standingsPrefix);
+# Render each game (handles doubleheaders)
+foreach my $g (@games) {
+  my $state  = $g->{state};
+  my $detail = $g->{detail};
+
+  if ($detail =~ /Postponed|Suspended|Delayed/) {
+    renderSuspendedGame($g, $standingsPrefix);
     next;
   }
 
-  if ($state eq 'Live') {
-    my $gamePk = $game->{gamePk};
-    my $feed = fetchJSON(
-      "https://statsapi.mlb.com/api/v1.1/game/$gamePk/feed/live",
-      "feed_$gamePk"
-    );
-    renderLiveGame($game, $feed);
-  } elsif ($state eq 'Final') {
-    my $gamePk = $game->{gamePk};
-    my $feed = fetchJSON(
-      "https://statsapi.mlb.com/api/v1.1/game/$gamePk/feed/live",
-      "feed_$gamePk"
-    );
-    renderFinalGame($game, $feed, $standingsPrefix);
+  if ($state eq 'in' || $state eq 'post') {
+    my $sum = fetchJSON("$API/summary?event=$g->{id}", "sum_$g->{id}");
+    if ($state eq 'in') {
+      renderLiveGame($g, $sum);
+    } else {
+      renderFinalGame($g, $sum, $standingsPrefix);
+    }
   } else {
-    # Preview / Scheduled / Pre-Game
-    renderPreviewGame($game, $standingsPrefix);
+    # Preview / Scheduled
+    renderPreviewGame($g, $standingsPrefix);
   }
 }
 
