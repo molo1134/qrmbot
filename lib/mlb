@@ -346,6 +346,17 @@ sub renderLiveGame {
       $names{$id} = $p->{athlete}{fullName} // '';
     }
   }
+  # boxscore covers everyone who has played, including relief pitchers;
+  # rosters alone are just the starting lineups
+  foreach my $t (@{$sum->{boxscore}{players} // []}) {
+    foreach my $st (@{$t->{statistics} // []}) {
+      foreach my $a (@{$st->{athletes} // []}) {
+        my $id = $a->{athlete}{id};
+        next unless defined $id;
+        $names{$id} = $a->{athlete}{displayName} if $a->{athlete}{displayName};
+      }
+    }
+  }
 
   # current matchup
   my $offAbbr = $half eq 'Top' ? tabbr($g->{away}) :
@@ -368,20 +379,19 @@ sub renderLiveGame {
     push @statusParts, "Count: $balls-$strikes, $outs out" . ($outs != 1 ? 's' : '');
   }
 
-  # base runners: latest play listing them
+  # base runners: situation carries the live state; scanning plays goes
+  # stale once a new batter comes up
   my @plays = @{$sum->{plays} // []};
-  my (%runners, $lastPlay);
+  my $lastPlay;
   foreach my $p (reverse @plays) {
     $lastPlay = $p->{text} if !defined $lastPlay && $p->{text};
-    foreach my $part (@{$p->{participants} // []}) {
-      my $t = $part->{type} // '';
-      next unless $t =~ /^on(First|Second|Third)$/;
-      my $id = $part->{athlete}{id} // next;
-      $runners{$t} = $names{$id} // '';
-    }
-    last if keys %runners;
   }
   my %baseLabel = (onFirst => '1st', onSecond => '2nd', onThird => '3rd');
+  my %runners;
+  foreach my $k (keys %baseLabel) {
+    my $pid = $sit->{$k}{playerId};
+    $runners{$k} = $names{$pid} // '' if defined $pid;
+  }
   my @bases = map { "$runners{$_} ($baseLabel{$_})" }
               grep { $runners{$_} } qw(onFirst onSecond onThird);
   if (@bases == 3) {
