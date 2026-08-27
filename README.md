@@ -37,6 +37,7 @@ As tested on Debian:
 * `libmath-round-perl`
 * `libtext-csv-perl`
 * `liburi-perl`
+* `liburi-encode-perl`
 * `libdbd-sqlite3-perl`
 * `libdbi-perl`
 * `libsqlite3-0`
