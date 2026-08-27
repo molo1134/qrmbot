@@ -13,6 +13,7 @@ use lib dirname(realpath(__FILE__));
 use Colors;
 use Util;
 
+use URI::Encode qw(uri_encode);
 use JSON qw( decode_json );
 use File::Temp qw(tempfile);
 use strict;
