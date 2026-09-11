@@ -261,8 +261,9 @@ sub displayStation {
   $old = yellow(" [old]") if $ts < ($now - (30*60));  # 30 min
   $old = red(" [old]") if $ts < ($now - (120*60));    # 2 hour
 
-  print "$loc ($grid): ", colorByCPM($cpm, "$cpm"), " CPM; ", colorByCPM($acpm, "$acpm"), " Avg.CPM; ";
-  print colorByuSvhr($sv, "$sv"), " µSv/hr; at ", strftime("%Y-%m-%d %H%Mz", gmtime($ts)), $old;
+  print "$loc ($grid): ", colorByCPM($cpm, "$cpm"), " CPM; ", colorByCPM($acpm, "$acpm"), " Avg.CPM;";
+  print " ", colorByuSvhr($sv, "$sv"), " µSv/hr;" if $sv > 0.0;
+  print " at ", strftime("%Y-%m-%d %H%Mz", gmtime($ts)), $old;
   print " -- $device", ((defined $tube and length($tube) > 0) ? " ($tube)" : "");
   print " -- by $user" if defined $user and length($user) > 0;
   print " -- " , floor($dist), " km ", azToNEWS($bearing), " from ", coordToGrid($mylat, $mylon), "\n";
