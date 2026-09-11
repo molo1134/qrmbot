@@ -111,7 +111,6 @@ if (not -e $cachefile) {
 our $headerOpt = "-H 'Accept: */*' " .
   "-H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0' " .
   "-H 'Accept-Language: en-US,en;q=0.5' " .
-  "-H 'Accept-Encoding: br, gzip, deflate, zstd' " .
   "-H 'DNT: 1' " .
   "-H 'Referer: http://www.gmcmap.com/index.asp' ";
 
@@ -136,7 +135,7 @@ sub refreshData {
     my $url = "http://www.gmcmap.com/ajaxm.asp?OffSet=${offset}&Limit=${limit}&dataRange=1&timeZone=0";
     #print "$url\n";
 
-    open(HTTP, '-|', "curl --stderr - --compressed --max-time 60 -s -k -L $headerOpt '$url'");
+    open(HTTP, '-|', "curl --stderr - --max-time 60 -s -k -L $headerOpt '$url'");
     local $/;   # read entire file -- FIXME: potentially memory hungry
     my $html = <HTTP>;
     close(HTTP);
@@ -278,7 +277,7 @@ sub displayHist {
   #print "$url\n";
 
   our $headerOpt;
-  open(HTTP, '-|', "curl --stderr - --compressed --max-time 60 -s -k -L $headerOpt '$url'");
+  open(HTTP, '-|', "curl --stderr - --max-time 60 -s -k -L $headerOpt '$url'");
   #local $/;   # read entire file -- FIXME: potentially memory hungry
   #my $html = <HTTP>;
 
