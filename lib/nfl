@@ -483,17 +483,20 @@ if (!$sched || !$sched->{events} || !@{$sched->{events}}) {
   exit 0;
 }
 
-# schedule events are chronological; pick live, then last final, then next pre
+# schedule events are chronological; pick live, then last final, then next pre.
+# ESPN dates carry a time ("2026-09-13T17:00Z"), so compare date-only prefixes
+# or a game that goes final today is treated as being in the future.
 my ($liveGame, $lastGame, $nextGame);
 foreach my $ev (@{$sched->{events}}) {
   my $g = getGame($ev);
+  my $d = substr($g->{date}, 0, 10);
   if ($g->{state} eq 'in') {
     refreshScores($g) if scoresMissing($g);
     $liveGame = $g;
-  } elsif ($g->{state} eq 'post' && $g->{date} le $today) {
+  } elsif ($g->{state} eq 'post' && $d le $today) {
     refreshScores($g) if scoresMissing($g);
     $lastGame = $g;
-  } elsif ($g->{state} ne 'post' && $g->{date} ge $today && !defined $nextGame) {
+  } elsif ($g->{state} ne 'post' && $d ge $today && !defined $nextGame) {
     $nextGame = $g;
   }
 }
