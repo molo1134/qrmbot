@@ -279,6 +279,11 @@ proc friday { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
 		return
 	}
+	set day_of_week [clock format [clock seconds] -timezone :UTC -format %w]
+	if [ 5 != $day_of_week ] then {
+		putchan $chan "nope"
+		return
+	}
 	putchan $chan "Fri-Yay! https://www.youtube.com/watch?v=kfVsfOSbJY0"
 }
 
