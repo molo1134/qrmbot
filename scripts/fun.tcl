@@ -280,7 +280,7 @@ proc friday { nick host hand chan text} {
 		return
 	}
 	set day_of_week [clock format [clock seconds] -timezone :UTC -format %w]
-	if [ 5 != $day_of_week ] then {
+	if { 5 != $day_of_week } then {
 		putchan $chan "nope"
 		return
 	}
