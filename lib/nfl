@@ -443,15 +443,23 @@ if (!defined($input) || $input eq '') {
   my $CHAR_BUDGET = 450;
   my $bar = " \x{00B7} ";
   my $msg = "\x{1F3C8} ";
+  my $output = "";
 
   foreach my $g (@sorted) {
     my $snippet = gameSnippet($g);
     my $candidate = $msg . ($msg eq "\x{1F3C8} " ? "" : $bar) . $snippet;
-    last if utf8_len($candidate) > $CHAR_BUDGET;
+    if (utf8_len($candidate) > $CHAR_BUDGET) {
+      # wrap to a new message instead of dropping the remaining games
+      $output .= $msg . "\n";
+      $msg = "\x{1F3C8} " . $snippet;
+      next;
+    }
     $msg = $candidate;
   }
 
-  print "$msg\n";
+  $output .= $msg;
+
+  print "$output\n";
   exit 0;
 }
 
