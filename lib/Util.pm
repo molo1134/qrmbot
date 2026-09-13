@@ -621,7 +621,7 @@ sub updateCty {
   my $updateUrl = undef;
 
   #print "$rssURL\n";
-  open (RSS, '-|', "curl -s -k -L --max-time 4 --retry 1 '$rssURL'");
+  open (RSS, '-|', "curl -4 -s -k -L --max-time 4 --retry 1 '$rssURL'");
   binmode(RSS, ":utf8");
   while(<RSS>) {
     chomp;
@@ -633,13 +633,13 @@ sub updateCty {
     }
   }
   close(RSS);
-  print "warning: unable to retrieve cty.dat feed" if !defined $updateUrl;
+  print "warning: unable to retrieve cty.dat feed\n" if !defined $updateUrl;
 
   my $zipurl = undef;
   $done = 0;
   if (defined $updateUrl) {
     #print "$updateUrl\n";
-    open (UPD, '-|', "curl -s -k -L --max-time 4 --retry 1 '$updateUrl'");
+    open (UPD, '-|', "curl -4 -s -k -L --max-time 4 --retry 1 '$updateUrl'");
     binmode (UPD, ":utf8");
     while (<UPD>) {
       chomp;
@@ -656,7 +656,7 @@ sub updateCty {
     #print "$zipurl\n";
     my (undef, $tmpfile) = tempfile();
     #print "$tmpfile\n";
-    system "curl --max-time 20 -s -f -k -L -o $tmpfile '$zipurl'";
+    system "curl -4 --max-time 20 -s -f -k -L -o $tmpfile '$zipurl'";
     my (undef, undef, undef, undef, undef, undef, undef, $size, undef, undef, undef, undef, undef) = stat $tmpfile;
     if ($size == 0) {
       print "warning: unable to retrieve $zipurl\n"
@@ -665,7 +665,7 @@ sub updateCty {
     }
     unlink $tmpfile
   } else {
-    print "warning: unable to retrieve cty.dat zip";
+    print "warning: unable to retrieve cty.dat zip\n";
   }
 }
 
