@@ -1359,6 +1359,8 @@ sub doImgur {
   my $desc = $data->{description};
   if (defined $desc) {
     $desc = unescape($desc);
+    $desc = decodeEntities($desc);
+    $desc =~ s/[\n\r]+/ /g;
     if (length $desc > 100) {
       $desc = substr($desc, 0, 100) . "…";
     }
