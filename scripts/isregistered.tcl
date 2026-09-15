@@ -149,6 +149,8 @@ proc scan_channel_on_join {nick uhost hand chan} {
     set current_users [chanlist $chan]
     set delay $regdelay
 
+    putlog "number of channel members: [llength $current_users]"
+
     foreach user $current_users {
       # Skip the bot itself so it doesn't scan its own profile
       if {$user eq $botnick} { continue }
