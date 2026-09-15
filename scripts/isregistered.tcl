@@ -6,30 +6,43 @@
 
 if { ${net-type} == 2 } {
   # only for undernet type networks
-  bind join - * who_onjoin
-  bind nick - * who_nickchange
+  bind join - * reg_onjoin
+  bind nick - * reg_nickchange
   bind raw - 352 rpl_whoreply
+  bind msgm - "*is not registered*" nickserv_notreg
+  bind msgm - "Information on *" nickserv_reg
 }
 
 # wait this long after a rename or a join to check status
-set whodelay 65
+set regdelay 65
 
 # init
 if { [info exist registerednicks] == 0 } {
   set registerednicks {}
 }
 
-proc who_onjoin {nick uhost hand chan} {
-  global whodelay
-  putlog "join: $chan $nick"
-  utimer $whodelay "putserv {WHO $nick}"
+proc discover_nick_reg_timer {nick} {
+  global regdelay
+
+  if [string equal -nocase "$reg_nick_detect_mode" "who_r"] then {
+    utimer $regdelay "putserv {WHO $nick}"
+  } elseif [string equal -nocase "$reg_nick_detect_mode" "nickserv_info"]
+    utimer $regdelay "putserv {PRIVMSG nickserv :info $nick}"
+  }
 }
 
-proc who_nickchange {nick uhost hand chan newnick} {
-  global whodelay
+proc reg_onjoin {nick uhost hand chan} {
+  global reg_nick_detect_mode
+  putlog "join: $chan $nick"
+
+  discover_nick_reg_timer "$nick"
+}
+
+proc reg_nickchange {nick uhost hand chan newnick} {
   putlog "nick change: $chan $nick $newnick"
   delFromRegistered "$nick"
-  utimer $whodelay "putserv {WHO $newnick}"
+
+  discover_nick_reg_timer "$nick"
 }
 
 proc rpl_whoreply {from cmd text} {
@@ -78,3 +91,27 @@ proc isRegistered {nick} {
   return $retval
 }
 
+proc nickserv_notreg { nick host hand text } {
+  if ![string equal -nocase "$nick" "nickserv"] then { return }
+  set text [sanitize_string [string trim "${text}"]]
+  set text [regsub -all {[\x00-\x1F]} "${text}" ""]
+  set returnedNick [lindex $mystring 0]
+
+  putlog "nickserv_notreg: $returnedNick is not registered"
+  return
+}
+
+proc nickserv_reg { nick host hand text } {
+  global registerednicks
+  if ![string equal -nocase "$nick" "nickserv"] then { return }
+  set text [sanitize_string [string trim "${text}"]]
+  set text [regsub -all {[\x00-\x1F]} "${text}" ""]
+  set returnedNick [lindex $mystring 2]
+
+  putlog "nickserv_reg: $returnedNick is registered"
+
+  if { [lsearch -exact $registerednicks "$returnedNick"] == -1 } {
+    lappend registerednicks "$returnedNick"
+    putlog "noted registered nick: $returnedNick"
+  }
+}
