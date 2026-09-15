@@ -91,7 +91,7 @@ proc isRegistered {nick} {
   return $retval
 }
 
-proc nickserv_notreg { nick host hand text } {
+proc nickserv_notreg { nick host hand text dest } {
   putlog "nickserv_notreg: called"
   if ![string equal -nocase "$nick" "nickserv"] then { return }
   set text [sanitize_string [string trim "${text}"]]
@@ -102,7 +102,7 @@ proc nickserv_notreg { nick host hand text } {
   return
 }
 
-proc nickserv_reg { nick host hand text } {
+proc nickserv_reg { nick host hand text dest } {
   global registerednicks
   putlog "nickserv_reg: called"
   if ![string equal -nocase "$nick" "nickserv"] then { return }
