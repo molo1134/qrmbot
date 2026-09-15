@@ -26,7 +26,7 @@ proc discover_nick_reg_timer {nick} {
 
   if [string equal -nocase "$reg_nick_detect_mode" "who_r"] then {
     utimer $regdelay "putserv {WHO $nick}"
-  } elseif [string equal -nocase "$reg_nick_detect_mode" "nickserv_info"]
+  } elseif [string equal -nocase "$reg_nick_detect_mode" "nickserv_info"] then {
     utimer $regdelay "putserv {PRIVMSG nickserv :info $nick}"
   }
 }
