@@ -115,3 +115,16 @@ proc nickserv_reg { nick host hand text } {
     putlog "noted registered nick: $returnedNick"
   }
 }
+
+
+bind flud - * ignore_nickserv_flood
+proc ignore_nickserv_flood {nick uhost hand type chan} {
+    # Check if the flooding nickname matches the one you want to ignore
+    if {[string tolower $nick] == [string tolower "nickserv"]} {
+        # Return 1 to suppress/ignore the flood penalty
+        return 1
+    }
+
+    # Return 0 to allow normal anti-flood punishment for everyone else
+    return 0
+}
