@@ -54,16 +54,26 @@ proc http_msg { nick host hand text } {
 
 # TODO FIXME XXX: add a blacklist of users that we don't process.
 # Add spaceweatherbot to the blacklist
-
+#
+# For a limited set of channels, do this in eggdrop.conf before this script is
+# sourced:
+#
+# set links_announce_chans {"#hamradio" "#hamradio-social"}
+#
 proc http_pub { nick host hand chan text } {
 	global linkbin
 	global net-type
+	global links_announce_chans
+
+        if {[info exists links_announce_chans] && [llength $links_announce_chans] > 0} {
+	  if {[lsearch -exact -nocase $links_announce_chans $chan] == -1} {
+	    # Channel is not in the allowed list
+	    return
+	  }
+	}
 
 	if { ${net-type} == 2 && ! [isRegistered "$nick"] } { return }
-
-	if [string equal -nocase "SpaceWeatherBot" "$nick"] then {
-	  return
-	}
+	if [string equal -nocase "SpaceWeatherBot" "$nick"] then { return }
 
 	set params [sanitize_url [string trim "${text}"]]
 	putlog "http pub: $nick $host $hand $chan $params"
