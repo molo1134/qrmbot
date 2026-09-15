@@ -135,30 +135,41 @@ proc ignore_nickserv_flood {nick uhost hand type chan} {
 bind join - * scan_channel_on_join
 proc scan_channel_on_join {nick uhost hand chan} {
   global botnick
-  global regdelay
   global reg_nick_detect_mode
+  set delay_seconds 15
 
   # if nickserv_info is not the mode, then skip this
   if ![string equal -nocase "$reg_nick_detect_mode" "nickserv_info"] then { return 0 }
 
   # Check if the nickname joining is actually the bot itself
   if {$nick eq $botnick} {
-    putlog "Bot joined $chan. Starting user scan..."
+    putlog "Bot joined $chan. Starting user scan after $delay_seconds seconds..."
 
-    # the list of all nicknames currently in the channel
-    set current_users [chanlist $chan]
-    set delay $regdelay
+    utimer $delay_seconds [list delayed_scan $chan]
+  }
+  return 0
+}
 
-    putlog "number of channel members: [llength $current_users]"
+proc delayed_scan {chan} {
+  global botnick
+  global regdelay
 
-    foreach user $current_users {
-      # Skip the bot itself so it doesn't scan its own profile
-      if {$user eq $botnick} { continue }
+  # Ensure the bot is still actually in the channel before scanning
+  if {![validchan $chan] || ![onchan $botnick $chan]} { return 0 }
 
-      # add a timer to check whether the nick is registered via nickserv
-      utimer $delay "putserv {PRIVMSG nickserv :info $user}"
-      set delay [expr $delay + 2]
-    }
+  # the list of all nicknames currently in the channel
+  set current_users [chanlist $chan]
+  set delay $regdelay
+
+  putlog "number of members on $chan: [llength $current_users]"
+
+  foreach user $current_users {
+    # Skip the bot itself so it doesn't scan its own profile
+    if {$user eq $botnick} { continue }
+
+    # add a timer to check whether the nick is registered via nickserv
+    utimer $delay "putserv {PRIVMSG nickserv :info $user}"
+    set delay [expr $delay + 2]
   }
   return 0
 }
