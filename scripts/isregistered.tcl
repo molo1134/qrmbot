@@ -96,7 +96,7 @@ proc nickserv_notreg { nick host hand text dest } {
   if ![string equal -nocase "$nick" "nickserv"] then { return }
   set text [sanitize_string [string trim "${text}"]]
   set text [regsub -all {[\x00-\x1F]} "${text}" ""]
-  set returnedNick [lindex $mystring 0]
+  set returnedNick [lindex $text 0]
 
   putlog "nickserv_notreg: $returnedNick is not registered"
   return
@@ -108,7 +108,7 @@ proc nickserv_reg { nick host hand text dest } {
   if ![string equal -nocase "$nick" "nickserv"] then { return }
   set text [sanitize_string [string trim "${text}"]]
   set text [regsub -all {[\x00-\x1F]} "${text}" ""]
-  set returnedNick [lindex $mystring 2]
+  set returnedNick [lindex $text 2]
 
   putlog "nickserv_reg: $returnedNick is registered"
 
