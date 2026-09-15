@@ -9,8 +9,8 @@ if { ${net-type} == 2 } {
   bind join - * reg_onjoin
   bind nick - * reg_nickchange
   bind raw - 352 rpl_whoreply
-  bind msgm - "*is not registered*" nickserv_notreg
-  bind msgm - "Information on *" nickserv_reg
+  bind notc - "*is not registered*" nickserv_notreg
+  bind notc - "Information on *" nickserv_reg
 }
 
 # wait this long after a rename or a join to check status
