@@ -23,6 +23,7 @@ if { [info exist registerednicks] == 0 } {
 
 proc discover_nick_reg_timer {nick} {
   global regdelay
+  global reg_nick_detect_mode
 
   if [string equal -nocase "$reg_nick_detect_mode" "who_r"] then {
     utimer $regdelay "putserv {WHO $nick}"
@@ -32,7 +33,6 @@ proc discover_nick_reg_timer {nick} {
 }
 
 proc reg_onjoin {nick uhost hand chan} {
-  global reg_nick_detect_mode
   putlog "join: $chan $nick"
 
   discover_nick_reg_timer "$nick"
