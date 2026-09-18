@@ -116,10 +116,10 @@ while ($i <= $#ARGV) {
     doImgur($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://wireless2\.fcc\.gov/UlsApp/ApplicationSearch/.*\?applID=|) {
     doFccApp($ARGV[$i]);
-  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?ae7q\.com/query/list/GenLicAvail.php\?REGION=([0-9]+)|) {
-    doAe7qRegion($2);
-  } elsif ($ARGV[$i] =~ m|^https?://(www\.)?ae7q\.com/query/data/CallHistory\.php\?CALL=([A-Z0-9]+)|) {
-    doAe7qCall($2);
+  } elsif ($ARGV[$i] =~ m!^https?://((www\.)?ae7q\.com|callinfo\.w5yi-vec\.org)/query/list/GenLicAvail.php\?REGION=([0-9]+)!) {
+    doAe7qRegion($3);
+  } elsif ($ARGV[$i] =~ m!^https?://((www\.)?ae7q\.com|callinfo\.w5yi-vec\.org)/query/data/CallHistory\.php\?CALL=([A-Z0-9]+)!) {
+    doAe7qCall($3);
   } elsif ($ARGV[$i] =~ m|^https?://.*zoom\.us/j/[0-9]+|) {
     # noop
   } elsif ($ARGV[$i] =~ m|^https?://(.*?)(/web)?/@[a-z0-9_.-]+(@[a-z0-9_.-]+)?/[0-9]+|i) {
