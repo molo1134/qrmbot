@@ -1344,7 +1344,8 @@ sub doImgur {
   my $j = from_json($json);
   my $data = $j->{data};
 
-  if (defined $j->{detail} and $j->{detail} =~ /concurrency limit reached/) {
+  if (defined $j->{detail} and
+      ($j->{detail} =~ /concurrency limit reached/ or $j->{detail} =~ /quota limit reached/)) {
     # scrapingant fail; retry without scrapingant
     $scrapingant_key = undef;
     #print("retry...\n");
