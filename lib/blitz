@@ -78,19 +78,30 @@ my $ua = "User-Agent: bo-android-352";
 my $ct = "Content-Type: text/json";
 
 my $in_north_america =
-      $mylat >= 5   && $mylat <= 85  &&   # roughly from Central America to Arctic
-      $mylon >= -170 && $mylon <= -50;    # roughly from Alaska to Greenland/east coast
+      $mylat >= 5.0   && $mylat <= 85.0  &&   # roughly from Central America to Arctic
+      $mylon >= -170.0 && $mylon <= -50.0;    # roughly from Alaska to Greenland/east coast
+my $in_europe =
+      $mylat >= 35.0 && $mylat <= 70.0 &&     # roughly from North Africa to northern parts of Norway
+      $mylon >= -15.0 && $mylon <= 40.0;      # roughly from Irish coast to eastern Ukraine
 
 my $req;
-# prefer the north america grid because we can do raster length of 5km instead of 25km
+# prefer the north america or europe grid because we can do raster size of 5km instead of 25km
 # TODO: support for 5km grid in other regions
-if ($in_north_america) {
+if ($in_north_america or $in_europe) {
+  my $reg;
+  $reg = 1 if $in_europe;
+  $reg = 3 if $in_north_america;
   # params: interval duration, raster base length, interval offset, region, count threshold
-  $req = '{"jsonrpc":"2.0","id":1,"method":"get_strikes_grid","params": [15,5000,0,3,0]}'; # North America only
+  $req = '{"jsonrpc":"2.0","id":1,"method":"get_strikes_grid","params": [15,5000,0,'.$reg.',0]}';
 } else {
   # params: interval duration, raster base length, interval offset, count threshold
   $req = '{"jsonrpc":"2.0","id":1,"method":"get_global_strikes_grid","params":[15,25000,0,0]}';
 }
+
+# Note: It seems that the `get_local_strikes_grid` might be ideal as it would
+# only be local alerts, but it doesn't handle 5° grid boundaries at all.  So if
+# you were in Philadelphia, just southwest of the 40N 75W point, your tile
+# would not include strikes 10 miles (16 km) to the north or east.
 
 local $/;   # read entire file -- FIXME: potentially memory hungry
 #print("curl --max-time 10 -s -k -L -H \"${ua}\" -H \"${ct}\" --data '${req}' $url\n");
