@@ -74,31 +74,40 @@ if (defined $geo and (not isNumeric($mylat) or not isNumeric($mylon))) {
 }
 
 my $url = "http://bo-service.tryb.de/";
-my $ua = "User-Agent: bo-android-270";
+my $ua = "User-Agent: bo-android-352";
 my $ct = "Content-Type: text/json";
 
-# params: interval duration, raster base length, interval offset, region, count threshold
-#my $req = '{"id":0,"method":"get_strikes_grid","params": [15,5000,0,3,0]}'; # North America only
+my $in_north_america =
+      $mylat >= 5   && $mylat <= 85  &&   # roughly from Central America to Arctic
+      $mylon >= -170 && $mylon <= -50;    # roughly from Alaska to Greenland/east coast
 
-# params: interval duration, raster base length, interval offset, count threshold
-my $req = '{"id":0,"method":"get_global_strikes_grid","params":[15,5000,0,0]}';
-
+my $req;
+# prefer the north america grid because we can do raster length of 5km instead of 25km
+# TODO: support for 5km grid in other regions
+if ($in_north_america) {
+  # params: interval duration, raster base length, interval offset, region, count threshold
+  $req = '{"jsonrpc":"2.0","id":1,"method":"get_strikes_grid","params": [15,5000,0,3,0]}'; # North America only
+} else {
+  # params: interval duration, raster base length, interval offset, count threshold
+  $req = '{"jsonrpc":"2.0","id":1,"method":"get_global_strikes_grid","params":[15,25000,0,0]}';
+}
 
 local $/;   # read entire file -- FIXME: potentially memory hungry
 #print("curl --max-time 10 -s -k -L -H \"${ua}\" -H \"${ct}\" --data '${req}' $url\n");
 open (JSON, '-|', "curl --max-time 10 -s -k -L -H \"${ua}\" -H \"${ct}\" --data '${req}' $url");
 my $json = <JSON>;
 close(JSON);
+#print "$json\n";
 my $j = decode_json($json) or die "parse error: $json\n";
 
-our $xd = $j->[0]->{'xd'}; # longitude delta
-our $yd = $j->[0]->{'yd'}; # latitude delta
-our $x0 = $j->[0]->{'x0'}; # longitude start
-our $y1 = $j->[0]->{'y1'}; # latitude start
-our $xc = $j->[0]->{'xc'}; # num longitude bins
-our $yc = $j->[0]->{'yc'}; # num latitude bins
-our $t = $j->[0]->{'t'};   # reference timestamp
-our $dt = $j->[0]->{'dt'}; # time window?
+our $xd = $j->{result}->{'xd'}; # longitude delta
+our $yd = $j->{result}->{'yd'}; # latitude delta
+our $x0 = $j->{result}->{'x0'}; # longitude start
+our $y1 = $j->{result}->{'y1'}; # latitude start
+our $xc = $j->{result}->{'xc'}; # num longitude bins
+our $yc = $j->{result}->{'yc'}; # num latitude bins
+our $t = $j->{result}->{'t'};   # reference timestamp
+our $dt = $j->{result}->{'dt'}; # time window?
 
 # not sure why this is necessary - should be returned by the server.
 $y1 = $x0 = 0.0 if $req =~ /get_global_strikes_grid/;
@@ -108,7 +117,7 @@ my $ts = Time::Piece->strptime($t, "%Y%m%dT%H:%M:%S")->epoch;
 my $mindist = 20000.0;
 my $closest = undef;
 
-foreach my $r (@{$j->[0]->{'r'}}) {
+foreach my $r (@{$j->{result}->{'r'}}) {
   my @r = @{$r};
   my ($longIndex, $latIndex, $count, $timedelta) = @r;
   my $lat = getLatFromIndex($latIndex);
