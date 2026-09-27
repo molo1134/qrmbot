@@ -470,6 +470,10 @@ unless ($team) {
   $team = $teammap{$stripped};
 }
 
+if ($input eq 'birds') {
+  print "fuck the birds\n";
+  exit 0;
+}
 unless ($team) {
   print "Unknown team: $input\n";
   exit 0;
