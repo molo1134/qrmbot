@@ -1307,6 +1307,22 @@ or common nickname (`phils`, `phillies`). Team aliases (e.g. `!phillies`,
 Covers live games (score, inning, count, batter vs. pitcher), final games
 (score, WP, LP), postponed/suspended games, and off days (standings + next game).
 
+During the postseason the regular-season division standing is replaced by the
+playoff series standing, phrased from the team you asked about:
+
+```
+    <W1AW> !mlb braves
+    <qrm> ⚾ · NL Wild Card: Braves lead series 1-0 · PHI (3) @ ATL 5 · FINAL · W: Dylan Lee L: Jhoan Duran
+
+    <W1AW> !mlb phillies
+    <qrm> ⚾ · NL Wild Card: Phillies trail series 0-1 · PHI (3) @ ATL 5 · FINAL · W: Dylan Lee L: Jhoan Duran
+```
+
+A finished series reads `Braves win series 3-1`, or names the winner and adds
+`Braves eliminated` when the team you asked about lost. The channel-wide
+scoreboard tags postseason games with the series score (`Series ATL 1-0`, or
+`Series tied 1-1`); series that haven't started are left untagged.
+
 Data source: https://site.web.api.espn.com/apis/site/v2/sports/baseball/mlb/
 
 ### `!wc` -- World Cup 2026 scores, schedule, and group standings
