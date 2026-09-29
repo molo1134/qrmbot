@@ -152,6 +152,22 @@ sub fixAbbr {
   return $abbrFix{$a} // $a;
 }
 
+# ESPN round codes for the postseason. Anything unrecognized falls back to
+# a plain "Playoffs" so a format change degrades instead of printing a code.
+my %roundName = (
+  ALWC => 'AL Wild Card',              NLWC => 'NL Wild Card',
+  ALDS => 'AL Division Series',        NLDS => 'NL Division Series',
+  ALCS => 'AL Championship Series',    NLCS => 'NL Championship Series',
+  WS   => 'World Series',
+);
+
+# team id → abbrev, for tagging series on the channel-wide scoreboard
+my %idToAbbr;
+foreach my $alias (keys %teammap) {
+  my ($a, $id) = @{$teammap{$alias}};
+  $idToAbbr{$id} = $a;
+}
+
 # mirc extended color codes: https://anti.teamidiot.de/static/nei/*/extended_mirc_color_proposal.html
 my %teamIdToColorCodes = (
   #Team           xterm FG (256)    xterm BG (256)    mIRC FG (index)   mIRC BG (index)
@@ -327,6 +343,102 @@ sub getStandingsPrefix {
     }
   }
   return '';
+}
+
+# --- playoff series helpers ---
+# A summary lists every series between the two teams (preseason, regular
+# season, current, playoff) so match on type rather than position.
+sub getPlayoffSeries {
+  my $sum = shift // {};
+  foreach my $s (@{$sum->{seasonseries} // []}) {
+    return $s if ($s->{type} // '') eq 'playoff';
+  }
+  return undef;
+}
+
+# series wins per team id, counted from the individual game results. The
+# seriesScore string is not used: which side of it maps to which team is
+# undocumented, whereas the winner flag on each game is unambiguous.
+sub seriesWins {
+  my $series = shift // {};
+  my %wins;
+  foreach my $ev (@{$series->{events} // []}) {
+    foreach my $c (@{$ev->{competitors} // []}) {
+      my $id = $c->{team}{id} // next;
+      $wins{$id}++ if $c->{winner};
+    }
+  }
+  return \%wins;
+}
+
+# "NL Wild Card: Braves lead series 1-0"
+# Returns '' in the regular season so the caller can fall back to the
+# division standing.
+sub getSeriesPrefix {
+  my ($abbrev, $teamId, $eventId) = @_;
+  return '' unless $eventId;
+  my $series = getPlayoffSeries(fetchJSON("$API/summary?event=$eventId", "sum_$eventId"));
+  return '' unless $series;
+
+  my $wins  = seriesWins($series);
+  my $mine  = $wins->{$teamId} // 0;
+  my $theirs = 0;
+  $theirs += $_ for values %$wins;
+  $theirs -= $mine;
+  $theirs = 0 if $theirs < 0;
+
+  my $oppAbbr = '';
+  foreach my $c (@{$series->{events}[0]{competitors} // []}) {
+    my $id = $c->{team}{id} // '';
+    next if $id eq "$teamId";
+    $oppAbbr = fixAbbr($c->{team}{abbreviation} // '') || ($idToAbbr{$id} // '');
+  }
+
+  my $round = $roundName{$series->{round} // ''} // 'Playoffs';
+  my $name  = $abbrevName{$abbrev} // $abbrev;
+
+  if ($series->{completed}) {
+    return "$round: " . green("$name win series $mine-$theirs") if $mine > $theirs;
+    my $oppName = $abbrevName{$oppAbbr} // $oppAbbr;
+    $oppName = $name if $oppName eq '';   # never print a blank winner
+    return "$round: " . red("$oppName win series $theirs-$mine, $name eliminated");
+  }
+  return "$round: series starts" if $mine == 0 && $theirs == 0;
+  return "$round: " . green("$name lead series $mine-$theirs") if $mine > $theirs;
+  return "$round: " . red("$name trail series $mine-$theirs")   if $mine < $theirs;
+  return "$round: series tied $mine-$theirs";
+}
+
+# compact series tag for the channel-wide scoreboard, e.g. "Series ATL 1-0".
+# The scoreboard already carries wins per team, so this costs no request.
+sub seriesTag {
+  my $g = shift // {};
+  my $series = $g->{comp}{series} // return '';
+  return '' unless ($series->{type} // '') eq 'playoff';
+
+  my %w;
+  foreach my $c (@{$series->{competitors} // []}) {
+    $w{$c->{id} // ''} = $c->{wins} // 0;
+  }
+  my @ids = keys %w;
+  return '' unless @ids;
+  my ($leadId) = sort { $w{$b} <=> $w{$a} } @ids;
+  my $top = $w{$leadId} // 0;
+  return '' if $top == 0;   # series hasn't started, nothing worth adding
+  my $other = 0;
+  foreach my $id (@ids) { $other = $w{$id} if $id ne $leadId }
+  return "Series tied $top-$other" if $top == $other;
+  my $abbr = $idToAbbr{$leadId} // '';
+  return '' unless $abbr ne '';
+  return "Series $abbr $top-$other";
+}
+
+# playoff series line if there is one, else the regular-season standing
+sub getContextPrefix {
+  my ($abbrev, $teamId, $eventId) = @_;
+  my $series = getSeriesPrefix($abbrev, $teamId, $eventId);
+  return $series if $series ne '';
+  return getStandingsPrefix($abbrev, $teamId, $eventId);
 }
 
 # --- game rendering ---
@@ -626,6 +738,10 @@ if (!defined($input) || $input eq '') {
       $snippet .= " $state" if $state;
     }
 
+    # postseason series standing
+    my $tag = seriesTag($g);
+    $snippet .= " " . yellow($tag) if $tag ne '';
+
     my $candidate = $msg . ($msg eq "\x{26BE} " ? "" : $bar) . $snippet;
     if ($username eq getEggdropUID() and utf8_len($candidate) > $CHAR_BUDGET) {
       # utf8_len() only useful for irc
@@ -665,22 +781,46 @@ foreach my $ev (@{$sb->{events} // []}) {
 }
 
 if (@games == 0) {
-  # off day — standings from the next game's summary
+  # off day — series/standings from the next game's summary
   my $nextData = fetchJSON("$API/teams/$teamId/schedule?season=$year", "next_$teamId");
-  my $nextId = '';
+  my ($nextId, $lastId) = ('', '');
   foreach my $ev (@{$nextData->{events} // []}) {
     my $g = getGame($ev);
-    next unless $g->{state} ne 'post' && $g->{date} gt $today;
-    $nextId = $g->{id};
-    last;
+    if ($g->{state} ne 'post' && $g->{date} gt $today) {
+      $nextId = $g->{id};
+      last;
+    }
+    $lastId = $g->{id} if $g->{date} le $today;
   }
-  my $prefix = getStandingsPrefix($abbrev, $teamId, $nextId);
+
+  # The team schedule only carries the team's current series, so a team
+  # knocked out a round or more ago comes back with no events at all. In the
+  # postseason, walk back over the last week of scoreboards for its final
+  # game so the series result is still reportable.
+  my $inPostseason = (($sb->{leagues}[0]{season}{type}{name} // '') eq 'Postseason');
+  if ($nextId eq '' && $lastId eq '' && $inPostseason) {
+    foreach my $back (1 .. 8) {
+      my $dayC = strftime("%Y%m%d", localtime(time() - 86400 * $back));
+      my $day  = strftime("%Y-%m-%d", localtime(time() - 86400 * $back));
+      my $past = fetchJSON("$API/scoreboard?dates=$dayC", "all_$day");
+      foreach my $ev (@{$past->{events} // []}) {
+        my $g = getGame($ev);
+        $lastId = $g->{id} if tabbr($g->{away}) eq $abbrev || tabbr($g->{home}) eq $abbrev;
+      }
+      last if $lastId ne '';   # one day's events, so the first hit is the last game
+    }
+  }
+
+  # an eliminated team has no next game, so fall back to its most recent one
+  # to still report how the series ended
+  my $prefix = getContextPrefix($abbrev, $teamId, $nextId || $lastId);
   renderNextGame($abbrev, $teamId, $prefix);
   exit 0;
 }
 
-# Standings prefix (from the first game's summary — any recent event works)
-my $standingsPrefix = getStandingsPrefix($abbrev, $teamId, $games[0]{id});
+# Context prefix (series line in the postseason, division standing otherwise) —
+# taken from the first game's summary, since any event from the same series works
+my $standingsPrefix = getContextPrefix($abbrev, $teamId, $games[0]{id});
 
 # Render each game (handles doubleheaders)
 foreach my $g (@games) {

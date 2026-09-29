@@ -90,12 +90,36 @@ if (!defined $appid) {
 my $detail_url = "https://store.steampowered.com/api/appdetails?appids=${appid}&l=english&cc=US";
 my $detail_j   = fetchJSON($detail_url);
 
-if (!defined $detail_j || !$detail_j->{$appid}{success} || !defined $detail_j->{$appid}{data}) {
+# The appdetails response is normally keyed by the requested appid, but Steam
+# sometimes returns a different top-level key (e.g. a related DLC appid) even
+# though the payload is for the requested app. Match on the embedded
+# steam_appid, falling back to the sole entry in the response.
+my $detail_entry;
+if (defined $detail_j) {
+  if (defined $detail_j->{$appid}) {
+    $detail_entry = $detail_j->{$appid};
+  } else {
+    foreach my $k (keys %{$detail_j}) {
+      my $cand = $detail_j->{$k};
+      if (defined $cand->{data} && defined $cand->{data}{steam_appid}
+          && $cand->{data}{steam_appid} == $appid) {
+        $detail_entry = $cand;
+        last;
+      }
+    }
+    if (!defined $detail_entry) {
+      my @entries = values %{$detail_j};
+      $detail_entry = $entries[0] if scalar(@entries) == 1;
+    }
+  }
+}
+
+if (!defined $detail_entry || !$detail_entry->{success} || !defined $detail_entry->{data}) {
   print "error: could not retrieve details for appid $appid\n";
   exit $exitnonzeroonerror;
 }
 
-my $data = $detail_j->{$appid}{data};
+my $data = $detail_entry->{data};
 my $name = $data->{name};
 
 # Price
