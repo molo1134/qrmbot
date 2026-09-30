@@ -776,15 +776,19 @@ proc amcorn_pub { nick host hand chan text } {
 	if [string equal "#amateurradio" $chan] then {
 		return
 	}
-	global amcornbin
-	set param [sanitize_string [string trim "${text}"]]
-	putlog "amcorn pub: $nick $host $hand $chan $param"
-	set fd [open "|${amcornbin} ${param}" r]
-	fconfigure $fd -encoding utf-8
-	while {[gets $fd line] >= 0} {
-		putchan $chan "$line"
+	if [ expr (rand()*100) <= 1 ] then {
+		putchan $chan "https://i.imgur.com/HHieAJu.mp4"
+	} else {
+		global amcornbin
+		set param [sanitize_string [string trim "${text}"]]
+		putlog "amcorn pub: $nick $host $hand $chan $param"
+		set fd [open "|${amcornbin} ${param}" r]
+		fconfigure $fd -encoding utf-8
+		while {[gets $fd line] >= 0} {
+			putchan $chan "$line"
+		}
+		close $fd
 	}
-	close $fd
 }
 
 set argpesobin "/home/eggdrop/bin/argpeso"
