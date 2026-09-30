@@ -757,6 +757,11 @@ if (!defined($input) || $input eq '') {
   print "$output\n";
   exit 0;
 }
+# --- Ensure accurate bird coverage ---
+if ($input =~ /^(birds|brd)$/) {
+  print "fuck the birds\n";
+  exit 0;
+}
 
 # --- team lookup ---
 my $team = $teammap{$input};
