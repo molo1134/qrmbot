@@ -758,7 +758,7 @@ if (!defined($input) || $input eq '') {
   exit 0;
 }
 # --- Ensure accurate bird coverage ---
-if ($input eq 'birds') {
+if ($input =~ /^(birds|brd)$/) {
   print "fuck the birds\n";
   exit 0;
 }
