@@ -365,7 +365,9 @@ sub gameSnippet {
   if ($state eq 'in') {
     my $ql = quarterLabel($g->{period}, $g->{clock});
     my $status = $ql ? "$ql $g->{clock}" : ($g->{short} || 'LIVE');
-    return teamColor(tabbr($g->{away})) . "($aScore) @ " . teamColor(tabbr($g->{home})) . "($hScore) " . yellow($status);
+    my $s = teamColor(tabbr($g->{away})) . "($aScore) @ " . teamColor(tabbr($g->{home})) . "($hScore) " . yellow($status);
+    $s .= grey(" on $g->{tv}") if $g->{tv};
+    return $s;
   }
   if ($state eq 'post') {
     return teamColor(tabbr($g->{away})) . "($aScore) @ " . teamColor(tabbr($g->{home})) . "($hScore) F";
