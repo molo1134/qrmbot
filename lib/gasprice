@@ -240,12 +240,12 @@ sub stationDetail {
   my $stationReq = "{\"id\":$id,\"fuelTypeId\":\"$fuelId\"}";
 
   local $/;   # read entire file -- FIXME: potentially memory hungry
-  open (JSON, '-|', "$curl_impersonate_path -X POST --compressed --max-time 10 -s -k -L  -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0' -H '${ct}' --data '${stationReq}' $stationUrl");
+  open (JSON, '-|', "$curl_impersonate_path -X POST --compressed --max-time 10 -s -k -L  -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0' -H '${ct}' -H 'X-Requested-With: XMLHttpRequest' --data '${stationReq}' $stationUrl");
   my $stationJson = <JSON>;
   close(JSON);
   #print $stationJson, "\n";
   if ($stationJson =~ /(Cloudflare|challenge-error-text)/) {
-    print "Error: unable to retrieve station details\n" if $cloudflareError == 0;
+    print "Error: unable to retrieve station details (Cloudflare)\n" if $cloudflareError == 0;
     $cloudflareError = 1;
     return undef;
   }
