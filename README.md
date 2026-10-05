@@ -42,11 +42,21 @@ As tested on Debian:
 * `libdbi-perl`
 * `libsqlite3-0`
 
-If using the `stock` command, the `curl-impersonate` fork/patch is needed to
-emulate the TLS handshake of an actual browser to work around TLS
-fingerprinting:
+If using the `stock`, `debt`, `gasprice` or `linksummary` commands, the
+`curl-impersonate` fork/patch is needed to emulate the TLS handshake of an
+actual browser to work around TLS fingerprinting:
 
 * [curl-impersonate](https://github.com/lwthiker/curl-impersonate)
+
+To work around Cloudflare and similar protection layers, some requests make
+use of the [srapingant](https://scrapingant.com/) service.  Their free tier
+allows 10,000 API credits per month.  The following commands can make use of
+the scrapingant key: `adsb`, `amcon`, `debt`, and `linksummary`.  Place the
+key in `$HOME/.qrmbot/keys/scrapingantkey` with contents formatted like this:
+
+```perl
+    our $scrapingant_key="0123456789abcdef0123456789abcdef"; 
+```
 
 ### Building `libastro-satpass-perl`
 
@@ -81,7 +91,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/keys/google` -- keys for Google APIs (geocoding, translation)
 * `$HOME/.qrmbot/keys/imgur` -- API key for [imgur.com](https://imgur.com/)
 * `$HOME/.qrmbot/keys/omdbapi` -- API key for [omdbapi.com](https://www.omdbapi.com/)
-* `$HOME/.qrmbot/keys/scrapingantkey` -- API key for [scrapingant.com](https://scrapingant.com/) (optional, used as a fallback for `linksummary`)
+* `$HOME/.qrmbot/keys/scrapingantkey` -- API key for [scrapingant.com](https://scrapingant.com/)
 
 ## Cache files / state
 
