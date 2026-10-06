@@ -100,6 +100,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/cache/cty.dat` -- cached DXCC data from [country-files.com](http://www.country-files.com/)
 * `$HOME/.qrmbot/cache/dmr-id-repeaters.csv` -- cache of DMR repeater IDs
 * `$HOME/.qrmbot/cache/dmr-id-users.csv` -- cache of DMR user IDs
+* `$HOME/.qrmbot/cache/gasprice/` -- cache of gas station details
 * `$HOME/.qrmbot/cache/hamspots.cookies` -- HTTP cookies for hamspots.net session
 * `$HOME/.qrmbot/cache/icao-types` -- cache of ICAO aircraft type data
 * `$HOME/.qrmbot/cache/lotw-dates.txt` -- cached LOTW upload dates

@@ -239,18 +239,63 @@ sub stationDetail {
   my $stationUrl = "https://www.gasbuddy.com/gaspricemap/station";
   my $stationReq = "{\"id\":$id,\"fuelTypeId\":\"$fuelId\"}";
 
-  local $/;   # read entire file -- FIXME: potentially memory hungry
-  open (JSON, '-|', "$curl_impersonate_path -X POST --compressed --max-time 10 -s -k -L  -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0' -H '${ct}' -H 'X-Requested-With: XMLHttpRequest' --data '${stationReq}' $stationUrl");
-  my $stationJson = <JSON>;
-  close(JSON);
-  #print $stationJson, "\n";
-  if ($stationJson =~ /(Cloudflare|challenge-error-text)/) {
-    print "Error: unable to retrieve station details (Cloudflare)\n" if $cloudflareError == 0;
-    $cloudflareError = 1;
+  if (not isNumeric($id)) {
+    print "Error: id is not numeric\n";
     return undef;
   }
-  my $detail = decode_json($stationJson) or die "parse error: $stationJson\n";
-  return $detail;
+
+  my $stationJson = undef;
+  my $cachedir = $ENV{HOME} . "/.qrmbot/cache/gasprice/";
+  my $cachefile = $cachedir . $id;
+  my $maxage = 60*60*24*30; # 30 days
+
+  if (not -d $cachedir) {
+    print "making cache directory..\n";
+    system ("mkdir -p $cachedir\n");
+    if (not -d $cachedir) {
+      print "warning: unable to make cache directory $cachedir\n";
+    }
+  }
+
+  # check if cache is invalid: zero size or too old
+  # if so, delete the cache
+  if (-e $cachefile) {
+    my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $cachefile if -e $cachefile;
+    my $now = time();
+    my $age = $now - $mtime;
+    if ($size == 0 or $age > $maxage) {
+      unlink $cachefile;
+    }
+  }
+
+  if (-e $cachefile) {
+    #print "reading $cachefile\n";
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    open(CACHE, "<", $cachefile);
+    $stationJson = <CACHE>;
+    close(CACHE);
+  } else {
+    #print "loading from $stationUrl\n";
+    local $/;   # read entire file -- FIXME: potentially memory hungry
+    open (JSON, '-|', "$curl_impersonate_path -X POST --compressed --max-time 10 -s -k -L  -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0' -H '${ct}' -H 'X-Requested-With: XMLHttpRequest' --data '${stationReq}' $stationUrl");
+    $stationJson = <JSON>;
+    close(JSON);
+    if ($stationJson =~ /(Cloudflare|challenge-error-text)/) {
+      print "Error: unable to retrieve station details (Cloudflare)\n" if $cloudflareError == 0;
+      $cloudflareError = 1;
+      return undef;
+    }
+    #print "writing cache file $cachefile\n";
+    open(CACHE, ">", $cachefile);
+    print CACHE $stationJson;
+    close(CACHE);
+  }
+  if (defined $stationJson) {
+    #print("defined\n");
+    my $detail = decode_json($stationJson) or die "parse error: $stationJson\n";
+    return $detail;
+  }
+  return undef;
 }
 
 # warehouse clubs sell only to members, so their price is not one that everyone
