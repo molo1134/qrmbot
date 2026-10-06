@@ -55,7 +55,7 @@ the scrapingant key: `adsb`, `amcon`, `debt`, and `linksummary`.  Place the
 key in `$HOME/.qrmbot/keys/scrapingantkey` with contents formatted like this:
 
 ```perl
-    our $scrapingant_key="0123456789abcdef0123456789abcdef"; 
+    our $scrapingant_key="0123456789abcdef0123456789abcdef";
 ```
 
 ### Building `libastro-satpass-perl`
