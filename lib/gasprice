@@ -304,8 +304,8 @@ sub stationDetail {
 sub isClub {
   my ($name) = @_;
   return 0 if not defined $name;
-  return $name =~ /(?: costco
-                     | \bsam['\x{2019}]?s \s+ club\b
+  return $name =~ /(?: \bcostco\b
+                     | \bsam['\x{2019}]?s\s+club\b
                      | \bbj['\x{2019}]?s\b
                      )/xi;
 }
