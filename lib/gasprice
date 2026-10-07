@@ -62,6 +62,16 @@ while ($i <= $#ARGV) {
     $i++;
     next;
   }
+  if ($ARGV[$i] =~ /^--fuel$/i) {
+    $i++;
+    $fuelId = $ARGV[$i];
+    if (not isNumeric($fuelId)) {
+      print "error: invalid fuel\n";
+      exit 1;
+    }
+    $i++;
+    next;
+  }
   if (isNumeric($ARGV[$i]) and length($ARGV[$i]) != 5) {
     # not a zip code, must be a distance
     $dist = $ARGV[$i];
