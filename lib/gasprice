@@ -34,8 +34,8 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 my $geo = undef;
 my $query = undef;
 
-my $fuelId = 1; # TODO
-my $dist = 5;
+my $fuelId = 1; # 1 = regular; 2 = mid; 3 = premium; 4 = diesel
+my $dist = 5;   # km
 my $maxClubLookups = 4; # cap the station lookups spent skipping warehouse clubs
 
 my $curl_impersonate = "curl-impersonate-chrome";
@@ -54,6 +54,16 @@ while ($i <= $#ARGV) {
   if (!defined($geo) and $ARGV[$i] =~ /^--geo$/i) {
     $i++;
     $geo = $ARGV[$i];
+    $i++;
+    next;
+  }
+  if ($ARGV[$i] =~ /^--mid(grade)?$/i) {
+    $fuelId = 2;
+    $i++;
+    next;
+  }
+  if ($ARGV[$i] =~ /^--premium$/i) {
+    $fuelId = 3;
     $i++;
     next;
   }
@@ -88,9 +98,9 @@ while ($i <= $#ARGV) {
 
 if (not defined $query and not defined $geo) {
   if ($username eq getEggdropUID()) {
-    print "usage: !gas <grid>|<lat>,<lon>|<qth>\n";
+    print "usage: !gas [--mid] [--premium] <grid>|<lat>,<lon>|<qth>\n";
   } else {
-    print "usage: $0 <grid>|<lat>,<lon>|<qth>\n";
+    print "usage: $0 [--mid] [--premium] <grid>|<lat>,<lon>|<qth>\n";
   }
   exit $exitnonzeroonerror;
 }
