@@ -338,12 +338,6 @@ proc really { nick host hand chan text} {
 	}
 }
 
-bind pub - !monke robface
-bind pub - !robface robface
-proc robface { nick host hand chan text} {
-	return
-}
-
 bind pub - !rick rickface
 proc rickface { nick host hand chan text} {
 	if [string equal "#amateurradio" $chan] then {
