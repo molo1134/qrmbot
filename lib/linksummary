@@ -1907,7 +1907,7 @@ sub do302 {
   binmode(HTTP, ":utf8");
   my $r = undef;
   while(<HTTP>) {
-    $r = $1 if /^location:\s+(.*)$/
+    $r = $1 if /^location:\s+(.*)$/i;
   }
   close(HTTP);
   return $r;
