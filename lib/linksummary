@@ -55,6 +55,8 @@ $highlight = "irc" if $username eq getEggdropUID();
 my $i = 0;
 while ($i <= $#ARGV) {
 
+  RESTART:
+
   $ARGV[$i] =~ s/'//g; # sanitize
   our $deamped = 0;
 
@@ -107,6 +109,15 @@ while ($i <= $#ARGV) {
     doAmazon($ARGV[$i]);
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?xkcd.com/(\d+)/?$|) {
     doXkcd($2);
+  } elsif ($ARGV[$i] =~ m|^https?://maps\.app\.goo\.gl/[A-Za-z0-9]+|i) {
+    my $r = do302($ARGV[$i]);
+    if (defined $r) {
+      $ARGV[$i] = $r;
+      goto RESTART;
+    } else {
+      print "unable to process 302: $ARGV[$i]\n";
+      exit 0;
+    }
   } elsif ($ARGV[$i] =~ m|^https?://(www\.)?google.com/maps/.*@([0-9.-]+),([0-9.-]+)|i) {
     doQth($2,$3);
   } elsif ($ARGV[$i] =~ m|^https?://goo\.gl/maps/|i or
@@ -1888,4 +1899,16 @@ sub is_executable_in_path {
     }
   }
   return 0;
+}
+
+sub do302 {
+  my $url = shift;
+  open(HTTP, '-|', "curl --max-time $timeout -I -k -s '$url'");
+  binmode(HTTP, ":utf8");
+  my $r = undef;
+  while(<HTTP>) {
+    $r = $1 if /^location:\s+(.*)$/
+  }
+  close(HTTP);
+  return $r;
 }
