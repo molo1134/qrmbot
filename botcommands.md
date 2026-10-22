@@ -83,7 +83,7 @@
  * `!imdb` -- movie info
  * `!steam` -- Steam game info (name, price, rating, description)
  * `!book` -- book info from Open Library (title, author, year, rating, description)
- * `!nhl` -- NHL scores: live game or last/next game for a team (e.g. `!nhl flyers`, `!flyers`)
+ * `!nhl` -- NHL scores and playoff standing: live game, last/next game, and division/wild-card position for a team (e.g. `!nhl flyers`, `!flyers`)
  * `!mlb` -- MLB scores: live game, next game, or standings for a team (e.g. `!mlb phillies`, `!phillies`)
  * `!wc` -- World Cup 2026 scores: today's matches, team info, or group standings (e.g. `!wc usa`, `!wc group d`, `!usa`)
  * `!nfl` -- NFL scores: live game or last/next game for a team (e.g. `!nfl eagles`, `!eagles`)
@@ -1275,6 +1275,45 @@ Example:
     < qrm> 📊 Final scores: 1. W1AW: 2 | 2. KD9ABC: 1
     < qrm> 🏆 Winner: W1AW! Elmer of the day! 73!
 ```
+
+### `!nhl` -- NHL scores, schedule, and playoff standing
+
+Usage:
+```
+    !nhl [team]
+```
+
+Examples:
+```
+    <W1AW> !nhl flyers
+    <qrm> 🏒 Last (Oct 21): PHI 3 at BUF 1 (Final) · Next (Oct 24): ANA at PHI — 1:00 PM ET
+    <qrm> 📊 PHI (3-6-3, 9 pts) · 6th in Metropolitan · 8th in East WC race, 3 pts back of WC2 (WC2 has 1 game in hand)
+
+    <W1AW> !canes
+    <qrm> 🏒 Last (Oct 20): CAR 6 at VAN 3 (Final) · Next (Oct 22): CAR at EDM — 9:00 PM ET
+    <qrm> 📊 CAR (8-2-1, 17 pts) · 1st in Metropolitan · 1st in East
+
+    <W1AW> !nhl
+    <qrm> 🏒 NSH @ BOS 7:00p · NYR @ TOR 7:00p · SJS @ OTT 7:00p
+```
+
+Without arguments, shows today's games (live first, then finals, then upcoming)
+as many as fit on one line.
+
+The second line summarizes the team's regular-season standing: record, points,
+division rank, and playoff position. Top-three teams in each division show their
+conference seed; wild-card teams are labeled `WC1`/`WC2`; teams outside the
+bracket show their position in the wild-card race and how many points back of
+the second wild card they are, including games in hand. Late in the season,
+clinch and elimination indicators are added (`clinched division`, `eliminated`).
+The standings line is omitted during the playoffs, where the series score is
+shown instead.
+
+Team name can be full name (`flyers`, `bruins`), abbreviation (`phi`, `bos`),
+or common nickname (`pens`, `habs`). Team aliases (e.g. `!flyers`, `!bruins`,
+`!penguins`) also work directly.
+
+Data source: https://api-web.nhle.com/v1/
 
 ### `!mlb` -- MLB scores and schedule lookup
 
