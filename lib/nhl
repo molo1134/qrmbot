@@ -246,6 +246,117 @@ sub fmtStartTime {
   return sprintf("%d:%02d %s ET", $h, $m, $ap);
 }
 
+sub fetchJSON {
+  my $url = shift // '';
+  return undef unless $url;
+  my $ua = "Mozilla/5.0 (compatible; qrmbot)";
+  open(my $fh, '-|', "curl --max-time 10 -s -k -L -A \"$ua\" '$url'");
+  local $/;
+  my $raw = <$fh>;
+  close($fh);
+  return undef unless defined $raw && $raw =~ /^\s*\{/;
+  return decode_json($raw);
+}
+
+sub ordinal {
+  my $n = shift // 0;
+  return "${n}th" if $n % 100 >= 11 && $n % 100 <= 13;
+  return "${n}st" if $n % 10 == 1;
+  return "${n}nd" if $n % 10 == 2;
+  return "${n}rd" if $n % 10 == 3;
+  return "${n}th";
+}
+
+sub plural {
+  my ($n, $word) = @_;
+  return "$n $word" . ($n == 1 ? '' : 's');
+}
+
+# Playoff-race summary: record, points, division/conference seed, and (for
+# teams outside the bracket) how far back of the second wild card they are.
+sub getStandingsLine {
+  my $abbrev = shift // '';
+  my $data = fetchJSON("https://api-web.nhle.com/v1/standings/now");
+  return '' unless $data && ref($data->{standings}) eq 'ARRAY';
+
+  my $team;
+  foreach my $t (@{$data->{standings}}) {
+    if (($t->{teamAbbrev}{default} // '') eq $abbrev) { $team = $t; last; }
+  }
+  return '' unless $team;
+
+  my $confAbbrev = $team->{conferenceAbbrev} // '';
+  my $confShort  = ($confAbbrev eq 'W') ? 'West' : 'East';
+  my $div        = $team->{divisionName}      // 'their division';
+  my $divSeq     = $team->{divisionSequence}  // 0;
+  my $confSeq    = $team->{conferenceSequence} // 0;
+  my $wcSeq      = $team->{wildcardSequence}  // 0;
+  my $pts        = $team->{points}            // 0;
+  my $gp         = $team->{gamesPlayed}       // 0;
+  my $w          = $team->{wins}              // 0;
+  my $l          = $team->{losses}            // 0;
+  my $otl        = $team->{otLosses}          // 0;
+
+  my @parts = ("\x{1F4CA} " . bold($abbrev) . " ($w-$l-$otl, $pts pts)");
+
+  # Top 3 in each division make the playoffs; the next two per conference
+  # are wild cards. wildcardSequence is 0 for teams already in a top-3 spot.
+  if ($divSeq >= 1 && $divSeq <= 3) {
+    push @parts, green(ordinal($divSeq) . " in $div");
+    push @parts, ordinal($confSeq) . " in $confShort" if $confSeq >= 1;
+  } elsif ($wcSeq >= 1 && $wcSeq <= 2) {
+    push @parts, ordinal($divSeq) . " in $div" if $divSeq >= 1;
+    push @parts, green("WC$wcSeq in $confShort");
+  } else {
+    push @parts, ordinal($divSeq) . " in $div" if $divSeq >= 1;
+
+    # the second wild card is the playoff cut line
+    my $wc2;
+    foreach my $t (@{$data->{standings}}) {
+      next unless ($t->{conferenceAbbrev} // '') eq $confAbbrev;
+      if (($t->{wildcardSequence} // 0) == 2) { $wc2 = $t; last; }
+    }
+
+    my $race = $wcSeq >= 1
+      ? ordinal($wcSeq) . " in $confShort WC race"
+      : ordinal($confSeq) . " in $confShort";
+
+    if ($wc2) {
+      my $diff = ($wc2->{points} // 0) - $pts;
+      my $gih  = ($wc2->{gamesPlayed} // 0) - $gp;
+      if ($diff > 0) {
+        $race .= ", " . plural($diff, 'pt') . " back of WC2";
+      } elsif ($diff == 0) {
+        $race .= ", tied with WC2";
+      }
+      if ($gih > 0) {
+        $race .= " (" . plural($gih, 'game') . " in hand)";
+      } elsif ($gih < 0) {
+        $race .= " (WC2 has " . plural(-$gih, 'game') . " in hand)";
+      }
+    }
+    push @parts, yellow($race);
+  }
+
+  # Late in the season the API tags teams that have clinched or been
+  # eliminated ("x" wild card, "y" division, "z" conference, "p" Presidents'
+  # Trophy, "e" eliminated).
+  my $clinch = $team->{clinchIndicator} // '';
+  if ($clinch eq 'e') {
+    push @parts, red("eliminated");
+  } elsif ($clinch eq 'y') {
+    push @parts, green("clinched division");
+  } elsif ($clinch eq 'z') {
+    push @parts, green("clinched conference");
+  } elsif ($clinch eq 'p') {
+    push @parts, green("Presidents' Trophy");
+  } elsif ($clinch eq 'x') {
+    push @parts, green("clinched");
+  }
+
+  return join(" \x{00B7} ", @parts);
+}
+
 sub teamScore {
   my ($team, $win) = @_;
   my $abbr  = $team->{abbrev} // '???';
@@ -382,6 +493,19 @@ if (defined $liveGame) {
   }
 } else {
   print "No recent or upcoming games found for $abbrev.\n";
+}
+
+# Skip the regular-season standings line during the playoffs — the series
+# score shown above is the relevant context then.
+my $playoffs = 0;
+foreach my $g ($liveGame, $lastGame, $nextGame) {
+  next unless defined $g;
+  $playoffs = 1 if ($g->{gameType} // 2) == 3;
+}
+
+unless ($playoffs) {
+  my $standings = getStandingsLine($abbrev);
+  print "$standings\n" if $standings;
 }
 
 exit 0;
