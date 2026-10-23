@@ -107,6 +107,7 @@ $ sudo dpkg -i ../libastro-satpass-perl_0.077-1_all.deb
 * `$HOME/.qrmbot/cache/mlb/` -- cache of MLB Stats API responses
 * `$HOME/.qrmbot/cache/mostwanted.txt` -- cached DXCC "most wanted" data from [clublog.org](http://clublog.org/)
 * `$HOME/.qrmbot/cache/qrz.cookies` -- HTTP cookies for qrz.com session
+* `$HOME/.qrmbot/cache/rdap-dns.json` -- cached IANA RDAP bootstrap registry; safe to remove
 * `$HOME/.qrmbot/cache/radmon.txt` -- cached rad monitor data; safe to remove
 * `$HOME/.qrmbot/cache/spot_timestamps` -- used for spots monitor mode; safe to remove
 * `$HOME/.qrmbot/cache/trivia_token.txt` -- cached OpenTDB session token for `!trivia`
