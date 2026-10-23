@@ -1,0 +1,470 @@
+#!/usr/bin/perl -w
+#
+# Look up domain registration data using RDAP (RFC 9082/9083), falling back to
+# a traditional WHOIS query when RDAP has no answer.
+#
+# 2-clause BSD license.
+# Copyright (c) 2026 molo1134@github. All rights reserved.
+#
+# The authoritative RDAP service for a domain's TLD is found using the IANA
+# RDAP bootstrap registry, which is cached locally.  No API key is required.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use JSON::PP qw( decode_json );
+use Encode qw( decode FB_CROAK );
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+my $isBot = $username eq getEggdropUID();
+
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $isBot;
+
+# eggdrop doesn't split args on spaces
+@ARGV = split(' ', join(' ', @ARGV));
+@ARGV = map { decode("UTF-8", $_, FB_CROAK) } @ARGV;
+
+my $usage = $isBot ? "usage: !rdap <domain>" : "usage: $0 <domain>";
+
+if ($#ARGV < 0 or length($ARGV[0]) == 0) {
+  print "$usage\n";
+  exit $exitnonzeroonerror;
+}
+
+if ($#ARGV > 0) {
+  print "one domain per lookup; $usage\n";
+  exit $exitnonzeroonerror;
+}
+
+my $domain = lc $ARGV[0];
+
+# accept a pasted url or address: strip scheme, path, port, trailing dot
+$domain =~ s{^[a-z][a-z0-9+.-]*://}{};
+$domain =~ s{[/?#].*$}{};
+$domain =~ s{^.*@}{};
+$domain =~ s{:\d+$}{};
+$domain =~ s{\.$}{};
+$domain =~ s/^\s+|\s+$//g;
+
+# validate as a hostname, allowing non-ascii (idn) labels
+my $check = $domain;
+$check =~ s/[^\x00-\x7f]/a/g;
+if ($check !~ /^[a-z0-9-]+(\.[a-z0-9-]+)+$/) {
+  print red($domain) . ": not a domain name; $usage\n";
+  exit $exitnonzeroonerror;
+}
+
+my $bootstrapUrl = "https://data.iana.org/rdap/dns.json";
+my $cacheDir = $ENV{'HOME'} . "/.qrmbot/cache";
+my $bootstrapFile = $cacheDir . "/rdap-dns.json";
+my $bootstrapMaxAge = 604800;	# 1 week -- like cty.dat
+my $httpTimeout = 8;
+my $useragent = "Mozilla/5.0 (compatible; qrmbot)";
+my $whoisTimeout = 10;
+
+#### helpers
+
+sub findBinary {
+  my ($name, @paths) = @_;
+  foreach my $p (@paths) {
+    return $p if -x $p;
+  }
+  my $found = `command -v $name 2>/dev/null`;
+  chomp $found if defined $found;
+  return $found if defined $found and length $found and -x $found;
+  return undef;
+}
+
+my $whoisBin = findBinary("whois", qw(/usr/bin/whois /usr/local/bin/whois /bin/whois));
+my $timeoutBin = findBinary("timeout", qw(/usr/bin/timeout /bin/timeout /usr/local/bin/timeout));
+
+# percent-encode a domain for use as a url path segment; the RDAP path segment
+# may contain non-ascii (idn) labels, so encode utf-8 bytes as %XX
+sub uriEscape {
+  my $s = shift;
+  utf8::encode($s) if utf8::is_utf8($s);
+  $s =~ s/([^A-Za-z0-9\-._~])/sprintf("%%%02X", ord($1))/ge;
+  return $s;
+}
+
+sub ensureCacheDir {
+  return 1 if -d $cacheDir;
+  system("mkdir -p $cacheDir\n");
+  return -d $cacheDir;
+}
+
+# returns (http_status_code, body); code is undef if the request failed
+sub fetchUrl {
+  my $url = shift;
+
+  open(my $fh, '-|', "curl -s -k -L --max-time $httpTimeout " .
+       "-A \"$useragent\" -w '\\n__HTTP_CODE__%{http_code}' " .
+       shellQuote($url));
+  return (undef, undef) unless defined $fh;
+  # read raw bytes -- decode_json() expects utf-8 encoded bytes
+  local $/;
+  my $out = <$fh>;
+  close($fh);
+
+  return (undef, undef) unless defined $out and length $out;
+  my ($body, $code) = $out =~ /^(.*)\n__HTTP_CODE__(\d{3})\s*$/s;
+  return (undef, $out) unless defined $code;
+  return ($code, $body);
+}
+
+sub parseJson {
+  my $body = shift;
+  return undef unless defined $body and $body =~ /^\s*[\{\[]/;
+  my $j = eval { decode_json($body) };
+  return $j;
+}
+
+#### rdap bootstrap registry: tld -> rdap base url
+
+sub loadBootstrap {
+  if (-e $bootstrapFile) {
+    my $mtime = (stat $bootstrapFile)[9];
+    if (defined $mtime and (time - $mtime) < $bootstrapMaxAge) {
+      return readBootstrap();
+    }
+  }
+
+  my ($code, $body) = fetchUrl($bootstrapUrl);
+  my $j = (defined $code and $code eq "200") ? parseJson($body) : undef;
+  if (defined $j and ref $j->{services} eq "ARRAY") {
+    if (ensureCacheDir() and open(my $out, ">", $bootstrapFile)) {
+      print $out $body;
+      close($out);
+    }
+    return $j;
+  }
+
+  # fetch failed or was unusable -- fall back to whatever is cached
+  return readBootstrap();
+}
+
+sub readBootstrap {
+  open(my $fh, "<", $bootstrapFile) or return undef;
+  local $/;
+  my $body = <$fh>;
+  close($fh);
+  my $j = parseJson($body);
+  return undef unless defined $j and ref $j->{services} eq "ARRAY";
+  return $j;
+}
+
+sub tldToBaseUrl {
+  my $boot = shift;
+  my %base;
+
+  foreach my $svc (@{$boot->{services}}) {
+    next unless ref $svc eq "ARRAY" and @$svc == 2;
+    my ($tlds, $urls) = @$svc;
+    next unless ref $tlds eq "ARRAY" and ref $urls eq "ARRAY" and @$urls;
+
+    my ($base) = grep { defined and m{^https://}i } @$urls;
+    $base = $urls->[0] unless defined $base;
+    next unless defined $base and length $base;
+    $base .= "/" unless $base =~ m{/$};
+
+    foreach my $tld (@$tlds) {
+      next unless defined $tld;
+      $base{lc $tld} = $base unless exists $base{lc $tld};
+    }
+  }
+
+  return \%base;
+}
+
+#### formatting helpers
+
+# "2026-10-23T13:42:21.597Z" -> "2026-10-23"
+sub fmtDate {
+  my $iso = shift;
+  return undef unless defined $iso;
+  return "$1-$2-$3" if $iso =~ /^(\d{4})-(\d{1,2})-(\d{1,2})/;
+  return undef;
+}
+
+# whois dates come in many shapes: 2026-08-10, 2026.08.10, 10-Aug-2026, ...
+sub fmtWhoisDate {
+  my $v = shift;
+  return undef unless defined $v;
+
+  return sprintf("%04d-%02d-%02d", $1, $2, $3)
+    if $v =~ /(\d{4})-(\d{1,2})-(\d{1,2})/;
+  return sprintf("%04d-%02d-%02d", $1, $2, $3)
+    if $v =~ m{(\d{4})[./](\d{1,2})[./](\d{1,2})};
+  if ($v =~ /(\d{1,2})-([A-Za-z]{3})-(\d{4})/) {
+    my $month = monthNameToNum(ucfirst lc $2);
+    return sprintf("%04d-%02d-%02d", $3, $month, $1) if defined $month;
+  }
+  return undef;
+}
+
+sub clip {
+  my ($s, $len) = @_;
+  return $s unless defined $s and length($s) > $len;
+  $s = substr($s, 0, $len - 3);
+  $s =~ s/\s+\S*$//;	# don't cut mid-word
+  return $s . "...";
+}
+
+sub registrarPart {
+  my $name = shift;
+  return undef unless defined $name and length $name;
+  $name =~ s/\s+/ /g;
+  $name =~ s/^\s+|\s+$//g;
+  return undef unless length $name;
+  return undef if $name =~ /^(redacted|none|not disclosed)$/i;
+  return grey("registrar: ") . clip($name, 60);
+}
+
+sub datePart {
+  my ($label, $date) = @_;
+  return undef unless defined $date and length $date;
+  return grey("$label: ") . $date;
+}
+
+# at most 3 nameservers, then a count of the rest
+sub nameserverPart {
+  my @ns = @_;
+  return undef unless @ns;
+  my $extra = @ns - 3;
+  @ns = @ns[0 .. 2] if @ns > 3;
+  my $str = join(", ", @ns);
+  $str .= " +$extra more" if $extra > 0;
+  return grey("ns: ") . $str;
+}
+
+sub eventDate {
+  my ($j, $action) = @_;
+  foreach my $ev (@{$j->{events} || []}) {
+    next unless ref $ev eq "HASH" and defined $ev->{eventAction};
+    next unless lc $ev->{eventAction} eq $action;
+    return $ev->{eventDate};
+  }
+  return undef;
+}
+
+sub entityByRole {
+  my ($j, $role) = @_;
+  foreach my $e (@{$j->{entities} || []}) {
+    next unless ref $e eq "HASH" and ref $e->{roles} eq "ARRAY";
+    foreach my $r (@{$e->{roles}}) {
+      return $e if defined $r and lc $r eq $role;
+    }
+  }
+  return undef;
+}
+
+# values for a vcard property ("fn", "org", ...), skipping redactions
+sub vcardValues {
+  my ($e, $field) = @_;
+  my @vals;
+
+  return @vals unless ref $e eq "HASH";
+  return @vals unless ref $e->{vcardArray} eq "ARRAY";
+  return @vals unless ref $e->{vcardArray}[1] eq "ARRAY";
+
+  foreach my $prop (@{$e->{vcardArray}[1]}) {
+    next unless ref $prop eq "ARRAY" and @$prop >= 4;
+    next unless defined $prop->[0] and lc $prop->[0] eq lc $field;
+
+    my $val = $prop->[3];
+    $val = join(", ", grep { defined and length } @$val) if ref $val eq "ARRAY";
+    next unless defined $val and length $val;
+    next if $val =~ /^(redacted|none|not disclosed)/i;	# privacy redaction
+
+    push @vals, $val;
+  }
+
+  return @vals;
+}
+
+sub entityName {
+  my $e = shift;
+  my ($fn)  = vcardValues($e, "fn");
+  my ($org) = vcardValues($e, "org");
+  return $fn if defined $fn;
+  return $org;
+}
+
+#### rdap lookup; returns (parts, notfound)
+
+sub rdapLookup {
+  my ($domain, $baseUrls) = @_;
+  my @parts;
+
+  my ($tld) = $domain =~ /\.([^.]+)$/;
+  return (\@parts, 0) unless defined $tld;
+
+  my $base = $baseUrls->{lc $tld};
+  return (\@parts, 0) unless defined $base;
+
+  my $url = $base . "domain/" . uriEscape($domain);
+  my ($code, $body) = fetchUrl($url);
+  return (\@parts, 0) unless defined $code;
+
+  my $j = parseJson($body);
+
+  # some registries answer with a domain object for an unregistered name (and
+  # sometimes with a 404 status code alongside it), so trust the body first
+  if (not defined $j or not defined $j->{ldhName}) {
+    return (\@parts, ($code =~ /^(404|410)$/ ? 1 : 0));
+  }
+
+  my @status = grep { defined } @{$j->{status} || []};
+  my $free = grep { /^(free|available)$/i } @status;
+  if ($free and not defined eventDate($j, "registration")) {
+    return (\@parts, 1);
+  }
+
+  my $registrar = entityByRole($j, "registrar");
+  push @parts, registrarPart(defined $registrar ? entityName($registrar) : undef);
+
+  push @parts, datePart("registered", fmtDate(eventDate($j, "registration")));
+
+  my $expires = eventDate($j, "expiration");
+  $expires = eventDate($j, "expiry") unless defined $expires;
+  push @parts, datePart("expires", fmtDate($expires));
+
+  my @ns;
+  foreach my $n (@{$j->{nameservers} || []}) {
+    next unless ref $n eq "HASH";
+    my $nsname = $n->{ldhName};
+    next unless defined $nsname and length $nsname;
+    $nsname = lc $nsname;
+    $nsname =~ s/\.$//;
+    push @ns, $nsname;
+  }
+  push @parts, nameserverPart(@ns);
+
+  return ([grep { defined } @parts], 0);
+}
+
+#### traditional whois lookup, used only when rdap has nothing to say
+
+sub whoisText {
+  my $domain = shift;
+
+  my $cmd = "";
+  $cmd .= shellQuote($timeoutBin) . " $whoisTimeout " if defined $timeoutBin;
+  $cmd .= shellQuote($whoisBin) . " " . shellQuote($domain) . " 2>/dev/null";
+
+  open(my $fh, '-|', $cmd) or return undef;
+  my @lines;
+  while (my $line = <$fh>) {
+    push @lines, $line;
+    last if @lines >= 5000;
+  }
+  close($fh);
+  return join("", @lines);
+}
+
+sub whoisLookup {
+  my $domain = shift;
+  my @parts;
+
+  return (\@parts, 0) unless defined $whoisBin;
+
+  my $raw = whoisText($domain);
+  return (\@parts, 0) unless defined $raw and length $raw;
+
+  # whois output encoding varies between registries; prefer utf-8, else latin-1
+  # (decode() consumes its source string, so decode from separate copies)
+  my $bytes = $raw;
+  my $text = eval { decode("UTF-8", $bytes, FB_CROAK) };
+  $text = decode("ISO-8859-1", $raw) unless defined $text;
+
+  my $notfound = ($text =~ /(no match for|no entries found|no data found|domain not found|no such domain|not found in (the )?database|%%\s*not found|status:\s*(free|available)\b|\bis (free|available)\b|(object )?does not exist|not been registered|no information available)/i) ? 1 : 0;
+
+  my ($registrar, $created, $expires);
+  my @ns;
+
+  my @lines = split /\r?\n/, $text;
+  my $i = 0;
+  while ($i <= $#lines) {
+    my $norm = $lines[$i];
+    $norm =~ s/^\s*\[([^\]]+)\]\s*/$1: /;	# "[Name Server] x" -> "Name Server: x"
+
+    my ($key, $val) = $norm =~ /^\s*([A-Za-z][A-Za-z0-9 ._-]*?)\s*:\s*(.*?)\s*$/;
+    if (not defined $key) { $i++; next; }
+    my $k = lc $key;
+
+    if (not defined $registrar and
+        $k =~ /^(sponsoring )?registrar( name| organization)?$/) {
+      $registrar = $val if length $val;
+    } elsif (not defined $created and
+        $k =~ /^(creation date|created|created on|created date|registration date|registration time|domain registration date|record created on|registered|registered on)$/) {
+      $created = fmtWhoisDate($val);
+    } elsif (not defined $expires and
+        $k =~ /^(registry expiry date|registrar registration expiration date|expiration date|expiry date|expires|expires on|expiration time|domain expiration date|paid-till|expire date)$/) {
+      $expires = fmtWhoisDate($val);
+    } elsif ($k =~ /^(name servers?|nameservers?|nserver|ns|dns server)$/) {
+      if (length $val) {
+        push @ns, $val;
+      } else {
+        # jp-style: nameservers on the following indented lines
+        while ($i + 1 <= $#lines and
+               $lines[$i+1] =~ /^\s+\S/ and
+               $lines[$i+1] !~ /^\s*[A-Za-z][A-Za-z0-9 ._-]*?\s*:/) {
+          $i++;
+          push @ns, $lines[$i];
+        }
+      }
+    }
+    $i++;
+  }
+
+  my %seen;
+  my @clean;
+  foreach my $raw (@ns) {
+    my $n = lc $raw;
+    $n =~ s/^\s+|\s+$//g;
+    $n =~ s/\s.*$//;		# drop ip addresses and comments
+    $n =~ s/\.$//;
+    next unless $n =~ /^[a-z0-9][a-z0-9.-]*$/;
+    next if $seen{$n}++;
+    push @clean, $n;
+  }
+
+  push @parts, registrarPart($registrar);
+  push @parts, datePart("registered", $created);
+  push @parts, datePart("expires", $expires);
+  push @parts, nameserverPart(@clean);
+
+  return ([grep { defined } @parts], $notfound);
+}
+
+#### main
+
+my $boot = loadBootstrap();
+my $baseUrls = defined $boot ? tldToBaseUrl($boot) : {};
+
+my ($parts, $notfound) = rdapLookup($domain, $baseUrls);
+if (not @$parts) {
+  # rdap had nothing usable -- try whois, but keep a "not registered" verdict
+  my ($wparts, $wnotfound) = whoisLookup($domain);
+  $parts = $wparts if @$wparts;
+  $notfound = 1 if not @$wparts and $wnotfound;
+}
+
+if (@$parts) {
+  print bold($domain) . ": " . join("; ", @$parts) . "\n";
+} elsif ($notfound) {
+  print bold($domain) . ": " . grey("not registered") . "\n";
+} else {
+  print bold($domain) . ": " . grey("no registration data found") . "\n";
+}
+
+exit 0;
