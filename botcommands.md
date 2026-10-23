@@ -83,6 +83,7 @@
  * `!imdb` -- movie info
  * `!steam` -- Steam game info (name, price, rating, description)
  * `!book` -- book info from Open Library (title, author, year, rating, description)
+ * `!rdap` `!whois` -- domain registration lookup via RDAP (registrar, dates, nameservers)
  * `!nhl` -- NHL scores and playoff standing: live game, last/next game, and division/wild-card position for a team (e.g. `!nhl flyers`, `!flyers`)
  * `!mlb` -- MLB scores: live game, next game, or standings for a team (e.g. `!mlb phillies`, `!phillies`)
  * `!wc` -- World Cup 2026 scores: today's matches, team info, or group standings (e.g. `!wc usa`, `!wc group d`, `!usa`)
@@ -1152,6 +1153,55 @@ Example:
           French Polynesia: FO/F6HCM to Jan 20; Indonesia: YB5 to Feb 01;
 ```
 
+## Internet-related commands:
+
+### `!rdap` `!whois` -- domain registration lookup via RDAP
+
+Usage:
+
+```
+    !rdap <domain>
+```
+
+`!whois` is an alias for `!rdap`.  Looks up registration data for a domain
+using [RDAP](https://www.icann.org/rdap), the structured successor to WHOIS.
+The authoritative RDAP server is found for the domain's TLD using the IANA
+bootstrap registry, which is cached locally for a week.  The domain may be
+given bare or pasted as a URL; only one domain per command is accepted.
+
+The reply is a single line containing the registrar, registration date,
+expiration date, and nameservers.  Fields that a registry does not publish
+(for example SIDN does not publish expiry dates for `.nl`) are simply omitted.
+
+If RDAP has no answer -- no RDAP service for the TLD, a query failure, or an
+unregistered domain -- the lookup falls back silently to a traditional WHOIS
+query, so a reply is always given.
+
+Examples:
+
+```
+    <molo1134> !rdap example.com
+    <qrm> example.com: registrar: RESERVED-Internet Assigned Numbers Authority;
+          registered: 1995-08-14; expires: 2027-08-13; ns:
+          elliott.ns.cloudflare.com, hera.ns.cloudflare.com
+
+    <molo1134> !whois example.io
+    <qrm> example.io: registrar: NameCheap, Inc.; registered: 2011-11-22;
+          expires: 2027-11-22; ns: ns1.digitalocean.com,
+          ns2.digitalocean.com, ns3.digitalocean.com
+
+    <molo1134> !rdap example.de
+    <qrm> example.de: ns: ns1078.ui-dns.biz, ns1078.ui-dns.com,
+          ns1078.ui-dns.de +1 more
+
+    <molo1134> !rdap qrmbot-zzz123.com
+    <qrm> qrmbot-zzz123.com: not registered
+```
+
+Data source: https://data.iana.org/rdap/ (bootstrap registry); the queries
+themselves go to the registry's own RDAP server, or to its WHOIS service on
+port 43 when RDAP has no answer.
+
 ## Geophysical-related commands:
 
 ### `!wx` `!wxfull` -- show current weather conditions
@@ -1582,4 +1632,5 @@ account and set your origin.  Note: **only decimal degrees are accepted for !set
 * aprs: http://aprs.fi/
 * Sats: http://www.amsat.org/amsat/ftp/keps/current/nasabare.txt
 * Cryptocurrency prices: https://coinmarketcap.com/api/
+* RDAP bootstrap registry: https://data.iana.org/rdap/
 
