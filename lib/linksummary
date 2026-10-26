@@ -1787,7 +1787,8 @@ sub doGithub {
     $output .= " " . darkRed("[fork]") if $j->{fork};
     $output .= ": " . italic($j->{description})
       if defined $j->{description} and $j->{description} ne "";
-    $output .= " -- first commit $firstcommit;";
+    $output .= " -- created: ". substr($j->{created_at},0,10) . ";";
+    $output .= " first commit $firstcommit;";
     $output .= " updated " . substr($j->{pushed_at},0,10) . ";";
     $output .= " commits: $commits;" if defined $commits;
     $output .= " $j->{forks}⑂" if $j->{forks} > 0;
@@ -1804,6 +1805,7 @@ sub doGithub {
       ($commits, $firstcommit) = getGithubCommitCountAndFirstCommit(split ('/', $j->{source}{full_name}));
 
       $output .= " -- origin repo: https://github.com/$j->{source}{full_name}";
+      $output .= " created: ". substr($j->{source}{created_at},0,10) . ";";
       $output .= " first commit: $firstcommit;";
       $output .= " updated " . substr($j->{source}{pushed_at},0,10) . ";";
       $output .= " commits: $commits;" if defined $commits;
