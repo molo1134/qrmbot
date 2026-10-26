@@ -1690,6 +1690,10 @@ sub gh_repoUsesAi {
                 "ai-context.md",
                 "copilot-instructions.md",
                 "AGENTS.md",
+                "SKILL.md",
+                ".codex",
+                ".agents",
+                "PROJECT-MEMORY.txt",
                 ".copilot-config.json" );
 
 
@@ -1714,7 +1718,7 @@ sub gh_repoUsesAi {
   my $gitignore = gh_getFileContents($repo, $branch, ".gitignore");
   if (defined $gitignore and $gitignore ne "") {
     foreach my $f (@files) {
-      if ($gitignore =~ m|$f|i) {
+      if (index($gitignore, $f) != -1) {
         #print "FOUND GITIGNORE: $f\n";
         $isVibe = 1;
         return $isVibe if $isVibe;
