@@ -191,6 +191,37 @@ if ($output =~ /\["([0-9-]+\s+[0-9:]+)",\s*"([0-9-]+\s+[0-9:]+)"\]/) {
   $rec{lastqso} = $2;
 }
 
+$url = "https://clublog.org/last10_iframe.php?call=${call}&limit=1";
+local $/;   # read entire file -- FIXME: potentially memory hungry
+open(HTTP, '-|', "curl -k -L --max-time 10 --retry 1 -s '$url'");
+my $output = <HTTP>;
+close(HTTP);
+
+foreach my $line (split( /\n/, $output)) {
+  $rec{worked} = $1 if $line =~ m|'>([0-9]+)</a></td>\s*$|i;
+  $rec{confirmed} = $1 if $line =~ m|'>([0-9]+)</td>\s*$|i;
+  if (not defined $rec{last_qso_call} and
+      $line =~ m|<td style='padding-left:5px;padding-right:5px;border-right:1px solid gray;'>([A-Z0-9]+)</td>|) {
+    $rec{last_qso_call} = $1;
+    next;
+  }
+  if (defined $rec{last_qso_call} and not defined $rec{last_qso_date} and
+      $line =~ m|<td style='padding-left:5px;padding-right:5px;border-right:1px solid gray;'>([0-9]{4}-[0-9]{2}-[0-9]{2})</td>|) {
+    $rec{last_qso_date} = $1;
+    next;
+  }
+  if (defined $rec{last_qso_date} and not defined $rec{last_qso_band} and
+      $line =~ m|<td style='padding-left:5px;padding-right:5px;border-right:1px solid gray;'>([0-9A-Z]+)</td>|i) {
+    $rec{last_qso_band} = $1;
+    next;
+  }
+  if (defined $rec{last_qso_band} and not defined $rec{last_qso_mode} and
+      $line =~ m|<td style='padding-left:5px;padding-right:5px;border-right:1px solid gray;'>([0-9A-Z- ]+)</td>|i) {
+    $rec{last_qso_mode} = $1;
+    next;
+  }
+}
+
 # firstqso 1995-08-09 23:09:00
 # lastqso 2018-07-01 13:09:00
 # lastupload 2018-08-16 22:53:01
@@ -209,6 +240,11 @@ print "no clublog logs" if not defined $start and not defined $end;
 print "; last upload $upload" if defined $upload;
 print "; " . bold("OQRS") if $rec{oqrs} eq "true" or $rec{oqrs} == 1;
 print "; grid $rec{locator}" if defined $rec{locator};
+print "; DXCC: ", bold("$rec{worked} worked") if defined $rec{worked};
+print bold(" $rec{confirmed} confirmed") if defined $rec{confirmed};
+print "; Last QSO: $rec{last_qso_call} $rec{last_qso_band} $rec{last_qso_mode} on $rec{last_qso_date}"
+  if defined $rec{last_qso_call} and defined $rec{last_qso_date}
+    and defined $rec{last_qso_band} and defined $rec{last_qso_mode};
 print "\n";
 
 exit 0;
