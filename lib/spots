@@ -541,7 +541,7 @@ sub doRBN {
   }
 
   foreach my $s (keys %{$j->{spots}}) {
-    my ($de, $freq, $dx, $snr, $wpm, $datetime, $age, undef, undef, $mode, undef, $ts) = @{$j->{spots}->{$s}};
+    my ($de, $freq, $dx, $snr, $wpm, $datetime, $age, undef, undef, $mode, $ts) = @{$j->{spots}->{$s}};
     my $cmt = "$snr dB, $wpm wpm";
     $cmt = "$modes{$mode} $cmt" if defined $mode;
 
