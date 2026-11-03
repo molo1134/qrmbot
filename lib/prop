@@ -93,7 +93,7 @@ foreach my $k (keys %{$mode_to_params{$mode}}) {
 
 # txgos/rxgos = "gain offset" relative to isotropic.
 # So +2.16 dBi = 0 dBd (dipole with optimal azimuth).
-my $continental_url = "https://prop.kc2g.com/hfprop/bestband.json?txpow=100&txgos=2.16&rxgos=2.16&$locs&hours_ahead=0&$params";
+my $continental_url = "https://prop.kc2g.com/hfprop/bestband.json?txpow=100&txgos=2.16&rxgos=2.16&hours_ahead=0&$locs&$params";
 #print "$continental_url\n";
 
 # TODO FIXME: cache it
@@ -121,7 +121,7 @@ for(my $i = 0; $i < scalar @{$j->{locations}}; $i++) {
   }
 }
 
-print "to→│ NA │ SA │ EU │ AS │ OC │ AF │ AN │\n";
+print "to→│ NA │ SA │ EU │ AS │ OC │ AF │ AN │ ($mode)\n";
 print "fm↓╞════╪════╪════╪════╪════╪════╪════╡\n";
 
 foreach my $c ("NA", "SA", "EU", "AS", "OC", "AF", "AN") {

@@ -215,7 +215,7 @@ Example:
 
 ```
     <molo1134> !prop
-    <qrm> to→│ NA │ SA │ EU │ AS │ OC │ AF │ AN │
+    <qrm> to→│ NA │ SA │ EU │ AS │ OC │ AF │ AN │ (SSB)
     <qrm> fm↓╞════╪════╪════╪════╪════╪════╪════╡
     <qrm> NA │+15m│-15m│-20m│-20m│-15m│-15m│-15m│
     <qrm> SA │ 15m│+12m│-20m│-30m│ xx │ 15m│-17m│
@@ -240,7 +240,7 @@ In the above example, AF to OC is ` 40m` but OC to AF is `-30m`.
 Position chosen for each continent is based on an estimated weighted mean
 center of population.  For propagation estimates within a continent, a second
 location is chosen that is 3000 km away from the origin (one F-layer hop).  So
-NA to NA is `+15m`.
+NA to NA is `+15m` in the above example.
 
 Bands with a `+` are expecting good conditions (> 70% circuit reliability) and
 are colored green.  Bands with a `-` are expecting difficult conditions (10% <
