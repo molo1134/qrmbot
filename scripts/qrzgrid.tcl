@@ -43,6 +43,9 @@ bind msg - !elev msg_elev
 bind pub - !bands bands
 bind msg - !bands msg_bands
 
+bind pub - !bands pub_prop
+bind msg - !bands msg_prop
+
 bind pub - !solar solar
 bind msg - !solar msg_solar
 
@@ -220,6 +223,7 @@ set drivebin "/home/eggdrop/bin/drivetime"
 set tzbin "/home/eggdrop/bin/timezone"
 set elevbin "/home/eggdrop/bin/elev"
 set bandsbin "/home/eggdrop/bin/bands"
+set propbin "/home/eggdrop/bin/prop"
 set xraybin "/home/eggdrop/bin/xray"
 set forecastbin "/home/eggdrop/bin/solarforecast"
 set longtermforecastbin "/home/eggdrop/bin/longtermforecast"
@@ -658,7 +662,29 @@ proc msg_bands {nick uhand handle input} {
 	}
 	close $fd
 }
-##
+
+proc pub_prop { nick host hand chan text } {
+	global propbin
+	putlog "prop pub: $nick $host $hand $chan $text"
+	set fd [open "|${propbin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc msg_prop {nick uhand handle input} {
+	global propbin
+	putlog "prop msg: $nick $uhand $handle $input"
+	set fd [open "|${propbin}" r]
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
 proc solar { nick host hand chan text } {
 	global bandsbin
 	putlog "solar pub: $nick $host $hand $chan $text"

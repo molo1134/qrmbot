@@ -1,0 +1,97 @@
+#!/usr/bin/perl -w
+#
+# Report propagation, as predicted by KC2G
+#
+# Copyright (c) 2026 molo1134@github.  All rights reserved.
+
+use strict;
+use utf8;
+use feature 'unicode_strings';
+binmode(STDOUT, ":utf8");
+
+use File::Basename;
+use Cwd 'realpath';
+use lib dirname(realpath(__FILE__));
+use Colors;
+use Util;
+
+use Math::Round;
+use JSON qw( decode_json );
+
+my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
+# change this to 0 to always exit with success
+our $exitnonzeroonerror = 1;
+$exitnonzeroonerror = 0 if $username eq getEggdropUID();
+
+# center by population weighted average
+my %continent_ctr_locs = (
+  "NA" => "33.566,-93.758",  # https://www.reddit.com/r/geography/comments/1edld62/where_is_the_population_center_of_canada_us_and/lf85xrz/
+  "SA" => "-15.4,-56.8",     # AI result based on weights from: https://en.wikipedia.org/wiki/List_of_South_American_metropolitan_areas_by_population
+  "EU" => "48.9,13.1",       # AI result based on weights from  https://en.wikipedia.org/wiki/List_of_metropolitan_areas_in_Europe
+  "AS" => "24.26,101.62",    # AI result based on weights from  https://en.wikipedia.org/wiki/List_of_metropolitan_areas_in_Asia
+  "OC" => "-22.4,150.0",     # AI result
+  "AF" => "5.3,21.5",        # AI result
+  "AN" => "-77.846323,166.668235"  # McMurdo Station
+);
+
+my $locs = "";
+foreach my $c (sort keys %continent_ctr_locs) {
+  $locs .= "&" if $locs ne "";
+  $locs .= "loc=$continent_ctr_locs{$c}";
+}
+#print $locs, "\n";
+my $continental_url = "https://prop.kc2g.com/hfprop/bestband.json?txpow=100&txgos=2.16&rxgos=2.16&$locs&hours_ahead=0";
+#print "$continental_url\n";
+
+open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$continental_url'");
+local $/;   # read entire file -- FIXME: potentially memory hungry
+my $json = <HTTP>;
+close(HTTP);
+#print "$json\n";
+if (not $json =~ /^\s*{/) {
+  print "error while retrieving data: $json\n";
+  exit $exitnonzeroonerror;
+}
+#print $json, "\n";
+my $j = decode_json($json);
+
+my %json_continent_to_index_map;
+for(my $i = 0; $i < scalar @{$j->{locations}}; $i++) {
+  my $loc = $j->{locations}[$i]{loc};
+  foreach my $c (keys %continent_ctr_locs) {
+    if ($continent_ctr_locs{$c} eq $loc) {
+      $json_continent_to_index_map{$c} = $i;
+    }
+  }
+}
+
+print "to→│ NA │ SA │ EU │ AS │ OC │ AF │ AN │\n";
+print "fm↓╞════╪════╪════╪════╪════╪════╪════╡\n";
+
+foreach my $c ("NA", "SA", "EU", "AS", "OC", "AF", "AN") {
+  print("$c |");
+  my $ci = $json_continent_to_index_map{$c};
+  foreach my $d ("NA", "SA", "EU", "AS", "OC", "AF", "AN") {
+    my ($val, $bcr, $i) = (undef, undef, undef);
+    my $di = $json_continent_to_index_map{$d};
+    if (not defined $j->{best}[$ci][$di]) {
+      print grey(" xx ");
+    } else {
+      $val = $j->{best}[$ci][$di]{band};
+      $bcr = $j->{best}[$ci][$di]{bcr};
+      if ($bcr >= 70.0) {
+        $i = "+";
+        print green("$i$val");
+      } elsif ($bcr < 70.0 and $bcr > 30.0) {
+        $i = " ";
+        print yellow("$i$val");
+      } elsif ($bcr <= 30.0) {
+        $i = "-";
+        print red("$i$val");
+      }
+    }
+    print "│";
+  }
+  print "\n";
+}
+
