@@ -23,6 +23,23 @@ my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
+my $mode = "SSB";
+
+# eggdrop doesn't split args on spaces
+@ARGV=split(' ', join(' ',@ARGV));
+
+my $i = 0;
+while ($i <= $#ARGV) {
+  if (lc($ARGV[$i]) eq "--ft8") {
+    $mode = "FT8";
+  } elsif (lc($ARGV[$i]) eq "--cw") {
+    $mode = "CW";
+  } elsif (lc($ARGV[$i]) eq "--ssb") {
+    $mode = "SSB"; #redundant, SSB is default
+  }
+  $i++;
+}
+
 # center by population weighted average
 my %continent_ctr_locs = (
   "NA" => "33.566,-93.758",  # https://www.reddit.com/r/geography/comments/1edld62/where_is_the_population_center_of_canada_us_and/lf85xrz/
@@ -34,14 +51,45 @@ my %continent_ctr_locs = (
   "AN" => "-77.846323,166.668235"  # McMurdo Station
 );
 
+# "bw" (bandwidth) defaults to 3000 for SSB
+# "snrr" (SNR required) defaults to 6 for SSB
+my %mode_to_params = (
+  "SSB" => {
+    "bw" => 3000,
+    "snrr" => 6
+  },
+  "FT8" => {
+    "bw" => 50,
+    "snrr" => -3
+  },
+  "CW" => {
+    "bw" => 500,
+    "snrr" => 0,
+  }
+);
+
 my $locs = "";
 foreach my $c (sort keys %continent_ctr_locs) {
   $locs .= "&" if $locs ne "";
   $locs .= "loc=$continent_ctr_locs{$c}";
 }
 #print $locs, "\n";
-my $continental_url = "https://prop.kc2g.com/hfprop/bestband.json?txpow=100&txgos=2.16&rxgos=2.16&$locs&hours_ahead=0";
+
+my $params = "";
+foreach my $k (keys %{$mode_to_params{$mode}}) {
+  my $v = $mode_to_params{$mode}{$k};
+  $params .= "&" if $params ne "";
+  $params .= "$k=$v";
+}
+print $params, "\n";
+
+# txgos/rxgos = "gain offset" relative to isotropic.
+# So +2.16 dBi = 0 dBd (dipole with optimal azimuth).
+my $continental_url = "https://prop.kc2g.com/hfprop/bestband.json?txpow=100&txgos=2.16&rxgos=2.16&$locs&hours_ahead=0&$params";
 #print "$continental_url\n";
+
+# TODO FIXME: cache it
+# Alternative: rate limit
 
 open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$continental_url'");
 local $/;   # read entire file -- FIXME: potentially memory hungry
