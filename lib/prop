@@ -69,7 +69,7 @@ print "to→│ NA │ SA │ EU │ AS │ OC │ AF │ AN │\n";
 print "fm↓╞════╪════╪════╪════╪════╪════╪════╡\n";
 
 foreach my $c ("NA", "SA", "EU", "AS", "OC", "AF", "AN") {
-  print("$c |");
+  print("$c │");
   my $ci = $json_continent_to_index_map{$c};
   foreach my $d ("NA", "SA", "EU", "AS", "OC", "AF", "AN") {
     my ($val, $bcr, $i) = (undef, undef, undef);
