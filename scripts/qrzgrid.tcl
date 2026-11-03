@@ -43,8 +43,8 @@ bind msg - !elev msg_elev
 bind pub - !bands bands
 bind msg - !bands msg_bands
 
-bind pub - !bands pub_prop
-bind msg - !bands msg_prop
+bind pub - !prop pub_prop
+bind msg - !prop msg_prop
 
 bind pub - !solar solar
 bind msg - !solar msg_solar
