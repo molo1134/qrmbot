@@ -40,6 +40,32 @@ while ($i <= $#ARGV) {
   $i++;
 }
 
+my $cachedir = $ENV{HOME} . "/.qrmbot/cache";
+my $cachefile = $cachedir . "/prop-$mode.json";
+my $needProp = 0;
+my $maxAge = 60 * 15; # (15 minutes)
+
+if (not -d $cachedir) {
+  print "making cache directory..\n";
+  system ("mkdir -p $cachedir\n");
+  if (not -d $cachedir) {
+    print "unable to make cache directory $cachedir\n";
+  }
+}
+
+$needProp = 1 if not -e $cachefile;
+
+if ($needProp == 0) {
+  my $now = time;
+  my (undef, undef, undef, undef, undef, undef, undef, $size, undef, $mtime, undef, undef, undef) = stat $cachefile;
+  if (defined $mtime) {
+    my $age = $now - $mtime;
+    $needProp = 1 if $age > $maxAge or $size == 0;
+  } else {
+    $needProp = 1;
+  }
+}
+
 my %loc_map = (
   # continent center by population weighted average
   "NA" => "33.566,-93.758",  # https://www.reddit.com/r/geography/comments/1edld62/where_is_the_population_center_of_canada_us_and/lf85xrz/
@@ -96,20 +122,33 @@ foreach my $k (keys %{$mode_to_params{$mode}}) {
 my $continental_url = "https://prop.kc2g.com/hfprop/bestband.json?txpow=100&txgos=2.16&rxgos=2.16&hours_ahead=0&$locs&$params";
 #print "$continental_url\n";
 
-# TODO FIXME: cache it
-# Alternative: rate limit
+my $json = undef;
 
-open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$continental_url'");
-local $/;   # read entire file -- FIXME: potentially memory hungry
-my $json = <HTTP>;
-close(HTTP);
-#print "$json\n";
-if (not $json =~ /^\s*{/) {
-  print "error while retrieving data: $json\n";
-  exit $exitnonzeroonerror;
+if ($needProp == 0) {
+  # cache is fresh
+  open(CACHE, '<', $cachefile);
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  $json = <CACHE>;
+  close(CACHE);
+} else {
+  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$continental_url'");
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  $json = <HTTP>;
+  close(HTTP);
+  #print "$json\n";
+  if (not $json =~ /^\s*{/) {
+    print "error while retrieving data: $json\n";
+    exit $exitnonzeroonerror;
+  }
 }
 #print $json, "\n";
 my $j = decode_json($json);
+
+if ($needProp != 0) {
+  open(CACHE, ">", $cachefile);
+  print CACHE $json;
+  close(CACHE);
+}
 
 my %json_continent_to_index_map;
 for(my $i = 0; $i < scalar @{$j->{locations}}; $i++) {
