@@ -665,8 +665,9 @@ proc msg_bands {nick uhand handle input} {
 
 proc pub_prop { nick host hand chan text } {
 	global propbin
-	putlog "prop pub: $nick $host $hand $chan $text"
-	set fd [open "|${propbin}" r]
+	set params [sanitize_string [string trim "${text}"]]
+	putlog "prop pub: $nick $host $hand $chan $params"
+	set fd [open "|${propbin} ${params}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putchan $chan "$line"
@@ -676,8 +677,9 @@ proc pub_prop { nick host hand chan text } {
 
 proc msg_prop {nick uhand handle input} {
 	global propbin
-	putlog "prop msg: $nick $uhand $handle $input"
-	set fd [open "|${propbin}" r]
+	set params [sanitize_string [string trim "${input}"]]
+	putlog "prop msg: $nick $uhand $handle $params"
+	set fd [open "|${propbin} ${params}" r]
 	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] >= 0} {
 		putmsg "$nick" "$line"

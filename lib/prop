@@ -81,7 +81,7 @@ foreach my $k (keys %{$mode_to_params{$mode}}) {
   $params .= "&" if $params ne "";
   $params .= "$k=$v";
 }
-print $params, "\n";
+#print $params, "\n";
 
 # txgos/rxgos = "gain offset" relative to isotropic.
 # So +2.16 dBi = 0 dBd (dipole with optimal azimuth).
