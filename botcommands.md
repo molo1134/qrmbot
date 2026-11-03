@@ -197,6 +197,67 @@ Example:
 
 Data sources: https://hamqsl.com/ ; eSSN and eSFI via https://prop.kc2g.com/
 
+### `!prop` -- display HF "best band" propagation predictions
+
+This estimates the best band for propagation based on current ionospheric
+conditions.  Uses an ionospheric model is built by KC2G based on ionosonde
+data.
+
+Usage:
+
+```
+    !prop [--ssb|--cw|--ft8]
+```
+
+Default is SSB.
+
+Example:
+
+```
+    <molo1134> !prop
+    <qrm> to→│ NA │ SA │ EU │ AS │ OC │ AF │ AN │
+    <qrm> fm↓╞════╪════╪════╪════╪════╪════╪════╡
+    <qrm> NA │+15m│-15m│-20m│-20m│-15m│-15m│-15m│
+    <qrm> SA │ 15m│+12m│-20m│-30m│ xx │ 15m│-17m│
+    <qrm> EU │-30m│-30m│+60m│-40m│-40m│-30m│-30m│
+    <qrm> AS │-30m│-30m│-40m│+40m│ 30m│-30m│-30m│
+    <qrm> OC │-12m│ xx │-40m│ 30m│+30m│-30m│ 30m│
+    <qrm> AF │ 17m│ 15m│+30m│ 30m│ 40m│+12m│ 30m│
+    <qrm> AN │ xx │-15m│-30m│-20m│-30m│-17m│ 20m│
+```
+
+To read this table, use the left column to find your continent.  Then scan
+right to your destination continent.  For example, from South America to Asia,
+scan down to the second row.  Then scan right to the 4th column of values.
+Reading the value of `-30m` indicates that 30m is likely the best band for
+propagation under current conditions.  The `-` indicates that conditions will
+be difficult.
+
+Note that the best band for propagation from A to B may be different from the
+best band for propagation from B to A.  Propagation is not always reciprocal.
+In the above example, AF to OC is ` 40m` but OC to AF is `-30m`.
+
+Position chosen for each continent is based on an estimated weighted mean
+center of population.  For propagation estimates within a continent, a second
+location is chosen that is 3000 km away from the origin (one F-layer hop).  So
+NA to NA is `+15m`.
+
+Bands with a `+` are expecting good conditions (> 70% circuit reliability) and
+are colored green.  Bands with a `-` are expecting difficult conditions (10% <
+x < 30% circuit reliability) and are colored red.  Bands without a `+` or `-`
+have marginal conditions (30% < x < 70% circuit reliability) and are colored
+yellow.  `xx` indicates no HF band had at least 10% circuit reliability.
+
+Assumptions for these calculations:
+
+ * each station has a dipole antenna at 35 ft (10.7 m) above ground, with
+   optimal azimuth
+ * transmitter has 100W output with no loss
+ * receiving station has a typical "residential" noise level
+
+Source: https://prop.kc2g.com/
+
+
 ### `!solar` -- display solar ionospheric conditions
 
 Example:
