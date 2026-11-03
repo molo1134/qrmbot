@@ -170,7 +170,13 @@ sub longest_common_suffix {
 sub print_event {
   my ($event, $event_url) = @_;
   my $title   = $event->{title} // "Unknown";
-  my @markets = grep { !$_->{archived} && !$_->{negRiskOther} } @{$event->{markets} // []};
+  # Skip the placeholder slots the website hides (e.g. "Party A", "Team B"):
+  # they are inactive neg-risk markets with no order book and no prices.
+  # Keep closed markets so resolved events still display.
+  my @markets = grep {
+    !$_->{archived} && !$_->{negRiskOther}
+      && (($_->{active} // 1) || $_->{closed})
+  } @{$event->{markets} // []};
   my $sep     = " \x{00B7} ";
 
   if (@markets == 0) {
@@ -278,16 +284,21 @@ sub print_event {
     my $prices   = decode_json($m->{outcomePrices} // '[0,0]');
     my $entry;
     if (@$outcomes == 2 && lc($outcomes->[0]) eq 'yes') {
-      my $label = $q;
-      if ($strip_pfx && index($q, $prefix) == 0) {
-        $label = substr($label, $pfxlen);
-        $label =~ s/^\s+//;
+      # groupItemTitle is the short label the Polymarket site shows
+      # (e.g. "Democratic Party"); fall back to trimming the question.
+      my $label = $m->{groupItemTitle} // "";
+      if (!length($label)) {
+        $label = $q;
+        if ($strip_pfx && index($q, $prefix) == 0) {
+          $label = substr($label, $pfxlen);
+          $label =~ s/^\s+//;
+        }
+        if ($strip_sfx && length($label) > $sfxlen && substr($label, -$sfxlen) eq $suffix) {
+          $label = substr($label, 0, length($label) - $sfxlen);
+          $label =~ s/\s+$//;
+        }
+        $label = "\x{2026}$label" if $strip_pfx;
       }
-      if ($strip_sfx && length($label) > $sfxlen && substr($label, -$sfxlen) eq $suffix) {
-        $label = substr($label, 0, length($label) - $sfxlen);
-        $label =~ s/\s+$//;
-      }
-      $label = "\x{2026}$label" if $strip_pfx;
       $entry = $sep . $label . " " . color_pct($prices->[0] + 0);
     } else {
       $entry = $sep . outcome_str($m);
