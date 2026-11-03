@@ -40,15 +40,23 @@ while ($i <= $#ARGV) {
   $i++;
 }
 
-# center by population weighted average
-my %continent_ctr_locs = (
+my %loc_map = (
+  # continent center by population weighted average
   "NA" => "33.566,-93.758",  # https://www.reddit.com/r/geography/comments/1edld62/where_is_the_population_center_of_canada_us_and/lf85xrz/
   "SA" => "-15.4,-56.8",     # AI result based on weights from: https://en.wikipedia.org/wiki/List_of_South_American_metropolitan_areas_by_population
   "EU" => "48.9,13.1",       # AI result based on weights from  https://en.wikipedia.org/wiki/List_of_metropolitan_areas_in_Europe
   "AS" => "24.26,101.62",    # AI result based on weights from  https://en.wikipedia.org/wiki/List_of_metropolitan_areas_in_Asia
   "OC" => "-22.4,150.0",     # AI result
   "AF" => "5.3,21.5",        # AI result
-  "AN" => "-77.846323,166.668235"  # McMurdo Station
+  "AN" => "-77.846323,166.668235", # McMurdo Station
+  # below here are stations 3000 km from another station to check for one F layer hop
+  "NA2" => "48.566,-123.892",# 3000km from NA; Port Renfrew, BC, Canada
+  "SA2" => "9.623,-66.9",    # 3000km from SA; Guárico, Venezuela
+  "EU2" => "58.692,56.653",  # 3000km from EU; Perm Krai, Russia
+  "AS2" => "32.857,130.826", # 3000km from AS; Kikuyo, Kikuchi District, Kumamoto, Japan
+  "OC2" => "-33.82,122.177", # 3000km from OC; Merivale WA 6450, Australia
+  "AF2" => "-20.323,30.0",   # 3000km from AF; Zvishavane, Zimbabwe
+  "AN2" => "-71.576,-70.5",  # 3000km from AN; Alexander Island, Antarctica
 );
 
 # "bw" (bandwidth) defaults to 3000 for SSB
@@ -69,9 +77,9 @@ my %mode_to_params = (
 );
 
 my $locs = "";
-foreach my $c (sort keys %continent_ctr_locs) {
+foreach my $c (sort keys %loc_map) {
   $locs .= "&" if $locs ne "";
-  $locs .= "loc=$continent_ctr_locs{$c}";
+  $locs .= "loc=$loc_map{$c}";
 }
 #print $locs, "\n";
 
@@ -106,8 +114,8 @@ my $j = decode_json($json);
 my %json_continent_to_index_map;
 for(my $i = 0; $i < scalar @{$j->{locations}}; $i++) {
   my $loc = $j->{locations}[$i]{loc};
-  foreach my $c (keys %continent_ctr_locs) {
-    if ($continent_ctr_locs{$c} eq $loc) {
+  foreach my $c (keys %loc_map) {
+    if ($loc_map{$c} eq $loc) {
       $json_continent_to_index_map{$c} = $i;
     }
   }
@@ -120,25 +128,27 @@ foreach my $c ("NA", "SA", "EU", "AS", "OC", "AF", "AN") {
   print("$c │");
   my $ci = $json_continent_to_index_map{$c};
   foreach my $d ("NA", "SA", "EU", "AS", "OC", "AF", "AN") {
-    my ($val, $bcr, $i) = (undef, undef, undef);
+    my ($val, $bcr, $ind) = (undef, undef, undef);
     my $di = $json_continent_to_index_map{$d};
     if ($c eq $d) {
-      # TODO: add a 2nd location for each continent
-      print grey(" -- ");
-    } elsif (not defined $j->{best}[$ci][$di]) {
+      # NA->NA would be zero distance;
+      # instead we do NA->NA2, which is 3000km distance (1 F-layer hop).
+      $di = $json_continent_to_index_map{"${d}2"};
+    }
+    if (not defined $j->{best}[$ci][$di]) {
       print grey(" xx ");
     } else {
       $val = $j->{best}[$ci][$di]{band};
       $bcr = $j->{best}[$ci][$di]{bcr};
       if ($bcr >= 70.0) {
-        $i = "+";
-        print green("$i$val");
+        $ind = "+";
+        print green("$ind$val");
       } elsif ($bcr < 70.0 and $bcr > 30.0) {
-        $i = " ";
-        print yellow("$i$val");
+        $ind = " ";
+        print yellow("$ind$val");
       } elsif ($bcr <= 30.0) {
-        $i = "-";
-        print red("$i$val");
+        $ind = "-";
+        print red("$ind$val");
       }
     }
     print "│";
