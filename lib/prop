@@ -74,7 +74,10 @@ foreach my $c ("NA", "SA", "EU", "AS", "OC", "AF", "AN") {
   foreach my $d ("NA", "SA", "EU", "AS", "OC", "AF", "AN") {
     my ($val, $bcr, $i) = (undef, undef, undef);
     my $di = $json_continent_to_index_map{$d};
-    if (not defined $j->{best}[$ci][$di]) {
+    if ($c eq $d) {
+      # TODO: add a 2nd location for each continent
+      print grey(" -- ");
+    } elsif (not defined $j->{best}[$ci][$di]) {
       print grey(" xx ");
     } else {
       $val = $j->{best}[$ci][$di]{band};
