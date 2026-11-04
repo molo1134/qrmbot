@@ -137,7 +137,8 @@ if ($needProp == 0) {
   close(HTTP);
   #print "$json\n";
   if (not $json =~ /^\s*{/) {
-    print "error while retrieving data: $json\n";
+    my @lines = split /\n/, $json;
+    print "error while retrieving data: $lines[0]\n";
     exit $exitnonzeroonerror;
   }
 }
