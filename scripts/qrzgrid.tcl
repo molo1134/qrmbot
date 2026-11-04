@@ -46,6 +46,9 @@ bind msg - !bands msg_bands
 bind pub - !prop pub_prop
 bind msg - !prop msg_prop
 
+bind pub - !zones pub_zones
+bind msg - !zones msg_zones
+
 bind pub - !solar solar
 bind msg - !solar msg_solar
 
@@ -224,6 +227,7 @@ set tzbin "/home/eggdrop/bin/timezone"
 set elevbin "/home/eggdrop/bin/elev"
 set bandsbin "/home/eggdrop/bin/bands"
 set propbin "/home/eggdrop/bin/prop"
+set zonesbin "/home/eggdrop/bin/zones_prop"
 set xraybin "/home/eggdrop/bin/xray"
 set forecastbin "/home/eggdrop/bin/solarforecast"
 set longtermforecastbin "/home/eggdrop/bin/longtermforecast"
@@ -686,6 +690,45 @@ proc msg_prop {nick uhand handle input} {
 	}
 	close $fd
 }
+
+proc pub_zones { nick host hand chan text } {
+	global zonesbin
+	set qth [sanitize_string [string trim "${text}"]]
+	set geo [qrz_getgeo $hand]
+
+	putlog "zones pub: $nick $host $hand $chan $qth $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${zonesbin} ${qth}" r]
+	} else {
+		set fd [open "|${zonesbin} ${qth} --geo $geo" r]
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putchan $chan "$line"
+	}
+	close $fd
+}
+
+proc msg_zones {nick uhand handle input} {
+	global zonesbin
+	set qth [sanitize_string [string trim "${input}"]]
+	set geo [qrz_getgeo $handle]
+
+	putlog "zones msg: $nick $uhand $handle $qth $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${zonesbin} ${qth}" r]
+	} else {
+		set fd [open "|${zonesbin} ${qth} --geo $geo" r]
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
+
 
 proc solar { nick host hand chan text } {
 	global bandsbin
