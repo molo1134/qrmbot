@@ -525,7 +525,7 @@ sub doLogin {
   my $logingeturl = "$baseurl/login/";
   my $nojs;
 
-  open (HTTP, '-|', "$httptool_base $httptool_savecookies $logingeturl");
+  open (HTTP, '-|', "$httptool_base ${httptool_timeout}10 $httptool_savecookies $logingeturl");
   binmode(HTTP, ":utf8");
   while (<HTTP>) {
     #print;
@@ -542,7 +542,7 @@ sub doLogin {
     die "failed to get login information.";
   }
 
-  open (HTTP, '-|', "$httptool_base $httptool_savecookies $httptool_postdata " .
+  open (HTTP, '-|', "$httptool_base ${httptool_timeout}10 $httptool_savecookies $httptool_postdata " .
 		    "'nojs=${nojs}&username=${login_callsign}&password=${login_password}&flush=1' " .
 		    "'$logingeturl'");
   binmode(HTTP, ":utf8");
@@ -584,7 +584,7 @@ sub scrapeXML {
   if ($autoxml > 0) {
     my $auth = decode_base64("aHR0cHM6Ly9ma3Vyei5uZXQvc3R1ZmYvZnVja2luZ3Rva2Vucy50eHQ=");
     local $/; # read entire file
-    open (AUTH, '-|', "$httptool_base ${httptool_timeout}15 '$auth'");
+    open (AUTH, '-|', "$httptool_base ${httptool_timeout}10 '$auth'");
     my @k = split /\n/, <AUTH>;
     close(AUTH);
     $key = $k[int(rand(scalar @k))];
@@ -592,7 +592,7 @@ sub scrapeXML {
 
   if (not defined $key) {
     my $authurl = "https://xmldata.qrz.com/xml/current/?username=$login_callsign;password=$login_password";
-    open (AUTH, '-|', "$httptool_base ${httptool_timeout}15 '$authurl'");
+    open (AUTH, '-|', "$httptool_base ${httptool_timeout}10 '$authurl'");
     binmode(AUTH, ":utf8");
     while (<AUTH>) {
       if (m|<Key>([0-9a-f]+)</Key>|) {
@@ -608,7 +608,7 @@ sub scrapeXML {
   my $aliases;
   #print "$xmlurl\n";
 
-  open (XML, '-|', "$httptool_base ${httptool_timeout}15 '$xmlurl'");
+  open (XML, '-|', "$httptool_base ${httptool_timeout}10 '$xmlurl'");
   binmode(XML, ":utf8");
   while (<XML>) {
     if (/Invalid session key/ and $autoxml == 0) {
@@ -1225,6 +1225,7 @@ sub updateDMRfiles {
 
   $needRptrs = 1 if defined $size and $size < 10000;
 
+  # FIXME use $httptool_base, etc
   system "curl --max-time 10 -s -k -L -o $userFile '$usersUrl'" if $needUsers == 1;
   system "curl --max-time 10 -s -k -L -o $rptrFile '$rptrsUrl'" if $needRptrs == 1;
 
