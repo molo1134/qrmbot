@@ -266,11 +266,12 @@ for (my $z = 1; $z <= 40; $z++) {
     }
   }
   if ($username eq getEggdropUID()) {
-    print "; " unless $z == 40;
+    print "; " unless $z == 20 or $z == 40;
+    print "\n" if $z == 20 or $z == 40;
+    print "Best $mode band from $grid to CQ Zones: " if $z == 20;
   } else {
     print "\n";
   }
 }
-print "\n" if $username eq getEggdropUID();
 
 exit 0;
