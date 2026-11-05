@@ -168,7 +168,7 @@ foreach my $c ("NA", "SA", "EU", "AS", "OC", "AF", "AN") {
   print("$c │");
   my $ci = $json_continent_to_index_map{$c};
   foreach my $d ("NA", "SA", "EU", "AS", "OC", "AF", "AN") {
-    my ($val, $bcr, $ind) = (undef, undef, undef);
+    my ($val, $bcr) = (undef, undef, undef);
     my $di = $json_continent_to_index_map{$d};
     if ($c eq $d) {
       # NA->NA would be zero distance;
@@ -180,15 +180,14 @@ foreach my $c ("NA", "SA", "EU", "AS", "OC", "AF", "AN") {
     } else {
       $val = $j->{best}[$ci][$di]{band};
       $bcr = $j->{best}[$ci][$di]{bcr};
-      if ($bcr >= 70.0) {
-        $ind = "+";
-        print green("$ind$val");
-      } elsif ($bcr < 70.0 and $bcr > 30.0) {
-        $ind = " ";
-        print yellow("$ind$val");
+      if ($bcr >= 85.0) {
+        print green("+$val");
+      } elsif ($bcr < 85.0 and $bcr > 50.0) {
+        print yellow(" $val");
+      } elsif ($bcr <= 50.0 and $bcr > 30.0) {
+        print red("-$val");
       } elsif ($bcr <= 30.0) {
-        $ind = "-";
-        print red("$ind$val");
+        print grey(" xx ");
       }
     }
     print "│";

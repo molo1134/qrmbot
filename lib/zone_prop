@@ -245,7 +245,7 @@ print "\n" if $username ne getEggdropUID();
 
 my $gi = $json_place_to_index_map{$grid};
 for (my $z = 1; $z <= 40; $z++) {
-  my ($val, $bcr, $ind) = (undef, undef, undef);
+  my ($val, $bcr) = (undef, undef, undef);
   my $zi = $json_place_to_index_map{$z};
 
   print bold("$z"), ":";
@@ -255,15 +255,14 @@ for (my $z = 1; $z <= 40; $z++) {
   } else {
     $val = $j->{best}[$gi][$zi]{band};
     $bcr = $j->{best}[$gi][$zi]{bcr};
-    if ($bcr >= 70.0) {
-      $ind = "+";
-      print green("$ind$val");
-    } elsif ($bcr < 70.0 and $bcr > 30.0) {
-      $ind = "";
-      print yellow("$ind$val");
+    if ($bcr >= 85.0) {
+      print green("+$val");
+    } elsif ($bcr < 85.0 and $bcr > 50.0) {
+      print yellow("$val");
+    } elsif ($bcr <= 50.0 and $bcr > 30.0) {
+      print red("-$val");
     } elsif ($bcr <= 30.0) {
-      $ind = "-";
-      print red("$ind$val");
+      print grey("∅"); # empty set
     }
   }
   if ($username eq getEggdropUID()) {
