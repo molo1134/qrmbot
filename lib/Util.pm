@@ -769,6 +769,11 @@ sub scrapeMW {
   close(MWFILE);
 }
 
+# Uses prop.kc2g.com API to predict the current band conditions via ionosode
+# data.  Takes a list of geographic coordinates or grids.  Returns an array of
+# descriptors for each point (in the same order), of the best band from the
+# given origin and whether circuit reliability is strong ("+") or mid, or weak
+# ("-")
 sub propBestBand {
   my $mode = uc shift;
   my $origin = shift;
@@ -777,6 +782,11 @@ sub propBestBand {
   #print "mode: $mode\n";
   #print "origin: $origin\n";
   #print "dests: ", join(",", @{$dests_ref}), "\n";
+
+  if ($mode ne "SSB" and $mode ne "FT8" and $mode ne "CW") {
+    print "error: mode must be SSB, CW or FT8\n";
+    return undef;
+  }
 
   # "bw" (bandwidth) defaults to 3000 for SSB
   # "snrr" (SNR required) defaults to 6 for SSB
