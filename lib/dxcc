@@ -123,6 +123,8 @@ if (defined $ref->{map}->{$term}) {
   if (defined($mylat)) {
     my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
     printf(" -- %.1f km, %.0f° from %s", $dist, $bearing, $localgrid);
+
+    displayPropBestBand("$mylat,$mylon", "$lat,$lon", "SSB");
   }
 
   print "\n";
@@ -144,6 +146,8 @@ if (length($term) >= 3) {
       if (defined($mylat)) {
         my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
         printf(" -- %.1f km, %.0f° from %s", $dist, $bearing, $localgrid);
+
+        displayPropBestBand("$mylat,$mylon", "$lat,$lon", "SSB");
       }
       print "\n";
       exit 0;
@@ -179,6 +183,8 @@ foreach my $rec (@{$ref->{rec}}) {
       if (defined($mylat)) {
 	my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
 	printf(" -- %.1f km, %.0f° from %s", $dist, $bearing, $localgrid);
+
+        displayPropBestBand("$mylat,$mylon", "$lat,$lon", "SSB");
       }
       print "\n";
     } else {
@@ -193,3 +199,21 @@ foreach my $rec (@{$ref->{rec}}) {
 print "$term: no match\n";
 exit $exitnonzeroonerror;
 
+
+sub displayPropBestBand {
+  my $origin = shift;
+  my $dest = shift;
+  my $mode = shift;
+
+  my @dests;
+  push @dests, $dest;
+  my ($prop) = propBestBand($mode, $origin, \@dests);
+  if (defined $prop and $prop ne "") {
+    $prop = red($prop)    if substr($prop, 0, 1) eq "-";
+    $prop = yellow($prop) if substr($prop, 0, 1) eq " ";
+    $prop = green($prop)  if substr($prop, 0, 1) eq "+";
+    print " -- best band now, $mode: ", $prop;
+  } elsif (defined $prop and $prop eq "") {
+    print " -- bands closed"
+  }
+}
