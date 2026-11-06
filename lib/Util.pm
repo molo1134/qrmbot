@@ -12,14 +12,14 @@ use feature 'unicode_strings';
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(decodeEntities stripIrcColors getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum moveFile shortenUrl isNumeric arraysEqual getEggdropUID getDxccDataRef updateCty checkCtyDat checkMW scrapeMW shellQuote);
+@EXPORT = qw(decodeEntities stripIrcColors getFullWeekendInMonth getIterDayInMonth getYearForDate monthNameToNum commify humanNum moveFile shortenUrl isNumeric arraysEqual getEggdropUID getDxccDataRef updateCty checkCtyDat checkMW scrapeMW shellQuote propBestBand);
 
 use URI::Escape;
 use Date::Manip;
 use Math::Round;
 use File::Temp qw(tempfile);
 use File::Copy;
-use JSON qw( from_json );
+use JSON qw( from_json decode_json );
 
 # safely quote a string for use as a single shell argument
 sub shellQuote {
@@ -767,6 +767,119 @@ sub scrapeMW {
   }
 
   close(MWFILE);
+}
+
+sub propBestBand {
+  my $mode = uc shift;
+  my $origin = shift;
+  my $dests_ref = shift;
+
+  #print "mode: $mode\n";
+  #print "origin: $origin\n";
+  #print "dests: ", join(",", @{$dests_ref}), "\n";
+
+  # "bw" (bandwidth) defaults to 3000 for SSB
+  # "snrr" (SNR required) defaults to 6 for SSB
+  my %mode_to_params = (
+    "SSB" => {
+      "bw" => 3000,
+      "snrr" => 6
+    },
+    "FT8" => {
+      "bw" => 50,
+      "snrr" => -3
+    },
+    "CW" => {
+      "bw" => 500,
+      "snrr" => 0,
+    }
+  );
+
+  my %loc_map;
+  for (my $i = 0; $i < scalar @{$dests_ref}; $i++) {
+    my $d = $dests_ref->[$i];
+    $loc_map{$i} = $d;
+  }
+
+  my $locs = "loc=$origin";
+  foreach my $d (@{$dests_ref}) {
+    $locs .= "&" if $locs ne "";
+    $locs .= "loc=$d";
+  }
+
+  my $params = "";
+  foreach my $k (keys %{$mode_to_params{$mode}}) {
+    my $v = $mode_to_params{$mode}{$k};
+    $params .= "&" if $params ne "";
+    $params .= "$k=$v";
+  }
+
+  #print "params: $params\n";
+  #print "locs: $locs\n";
+
+  # txgos/rxgos = "gain offset" relative to isotropic.
+  # So +2.16 dBi = 0 dBd (dipole with optimal azimuth).
+  my $url = "https://prop.kc2g.com/hfprop/bestband.json?txpow=100&txgos=2.16&rxgos=2.16&hours_ahead=0&$locs&$params";
+  my $json = undef;
+  open(HTTP, '-|', "curl --stderr - --max-time 10 -s -k -L '$url'");
+  local $/;   # read entire file -- FIXME: potentially memory hungry
+  $json = <HTTP>;
+  close(HTTP);
+
+  if (not $json =~ /^\s*{/) {
+    my @lines = split /\n/, $json;
+    print "propBestBand: error while retrieving data: $lines[0]\n";
+    return undef;
+  }
+
+  #print $json, "\n";
+  my $j = decode_json($json);
+
+  if (defined $j->{error}) {
+    print "\nerror on json call: ", $j->{error}, "\n";
+    return undef;
+  }
+
+  my %json_place_to_index_map;
+  for(my $i = 0; $i < scalar @{$j->{locations}}; $i++) {
+    my $loc = $j->{locations}[$i]{loc};
+    if ($origin eq $loc) {
+      $json_place_to_index_map{$origin} = $i;
+    } else {
+      foreach my $d (keys %loc_map) {
+        if ($loc_map{$d} eq $loc) {
+          $json_place_to_index_map{$d} = $i;
+          #print "json_place_to_index_map{$d} => $i\n";
+        }
+      }
+    }
+  }
+  #print "--------\n";
+
+  my $oi = $json_place_to_index_map{$origin};
+  my @results;
+  for (my $d = 0; $d < scalar @{$dests_ref}; $d++) {
+    my $di = $json_place_to_index_map{$d};
+    #print "json_place_to_index_map{$d} => $di\n";
+
+    if (not defined $j->{best}[$oi][$di]) {
+      push @results, "";
+    } else {
+      $val = $j->{best}[$oi][$di]{band};
+      $bcr = $j->{best}[$oi][$di]{bcr};
+      if ($bcr >= 85.0) {
+        push @results, "+$val";
+      } elsif ($bcr < 85.0 and $bcr > 50.0) {
+        push @results, " $val";
+      } elsif ($bcr <= 50.0 and $bcr > 30.0) {
+        push @results, "-$val";
+      } elsif ($bcr <= 30.0) {
+        push @results, "";
+      }
+    }
+
+  }
+  return @results;
 }
 
 # always return true
