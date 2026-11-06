@@ -805,16 +805,28 @@ sub propBestBand {
     }
   );
 
-  my %loc_map;
-  for (my $i = 0; $i < scalar @{$dests_ref}; $i++) {
+  for(my $i = 0; $i < scalar @{$dests_ref}; $i++) {
     my $d = $dests_ref->[$i];
-    $loc_map{$i} = $d;
+
+    if ($d =~ m/^[+-]?[0-9]+(\.[0-9]+)?,[+-]?[0-9]+(\.[0-9]+)?$/) {
+      # API doesn't like integers; represent as decimals with 3 decimal precision
+      my ($lat,$lon) = split /,/, $d;
+      $lat = sprintf("%.3f", $lat);
+      $lon = sprintf("%.3f", $lon);
+      $d = $dests_ref->[$i] = "$lat,$lon";
+    }
   }
 
   my $locs = "loc=$origin";
   foreach my $d (@{$dests_ref}) {
     $locs .= "&" if $locs ne "";
     $locs .= "loc=$d";
+  }
+
+  my %loc_map;
+  for (my $i = 0; $i < scalar @{$dests_ref}; $i++) {
+    my $d = $dests_ref->[$i];
+    $loc_map{$i} = $d;
   }
 
   my $params = "";
