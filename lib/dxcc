@@ -184,7 +184,7 @@ foreach my $rec (@{$ref->{rec}}) {
 	my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
 	printf(" -- %.1f km, %.0f° from %s", $dist, $bearing, $localgrid);
 
-        displayPropBestBand("$mylat,$mylon", "$lat,$lon", "SSB");
+        printf(" -- ", renderPropBestBand("$mylat,$mylon", "$lat,$lon", "SSB"));
       }
       print "\n";
     } else {
@@ -200,7 +200,7 @@ print "$term: no match\n";
 exit $exitnonzeroonerror;
 
 
-sub displayPropBestBand {
+sub renderPropBestBand {
   my $origin = shift;
   my $dest = shift;
   my $mode = shift;
@@ -212,8 +212,8 @@ sub displayPropBestBand {
     $prop = red($prop)    if substr($prop, 0, 1) eq "-";
     $prop = yellow($prop) if substr($prop, 0, 1) eq " ";
     $prop = green($prop)  if substr($prop, 0, 1) eq "+";
-    print " -- best band now, $mode: ", $prop;
+    return "best band now, $mode: ", $prop;
   } elsif (defined $prop and $prop eq "") {
-    print " -- bands closed"
+    return "bands closed"
   }
 }
