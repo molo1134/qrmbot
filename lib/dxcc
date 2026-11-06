@@ -124,7 +124,7 @@ if (defined $ref->{map}->{$term}) {
     my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
     printf(" -- %.1f km, %.0f° from %s", $dist, $bearing, $localgrid);
 
-    displayPropBestBand("$mylat,$mylon", "$lat,$lon", "SSB");
+    print(" -- prop: ", renderPropBestBand("$mylat,$mylon", "$lat,$lon", "SSB"));
   }
 
   print "\n";
@@ -147,7 +147,7 @@ if (length($term) >= 3) {
         my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
         printf(" -- %.1f km, %.0f° from %s", $dist, $bearing, $localgrid);
 
-        displayPropBestBand("$mylat,$mylon", "$lat,$lon", "SSB");
+        print(" -- prop: ", renderPropBestBand("$mylat,$mylon", "$lat,$lon", "SSB"));
       }
       print "\n";
       exit 0;
@@ -184,7 +184,7 @@ foreach my $rec (@{$ref->{rec}}) {
 	my ($dist, $bearing) = distBearing($mylat, $mylon, $lat, $lon);
 	printf(" -- %.1f km, %.0f° from %s", $dist, $bearing, $localgrid);
 
-        printf(" -- ", renderPropBestBand("$mylat,$mylon", "$lat,$lon", "SSB"));
+        print(" -- prop: ", renderPropBestBand("$mylat,$mylon", "$lat,$lon", "SSB"));
       }
       print "\n";
     } else {

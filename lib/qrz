@@ -506,6 +506,10 @@ if (defined($lat)) {
     my $localgrid = coordToGrid($mylat, $mylon);
 
     printf(" -- %.1f km, %.0f° from %s", $dist, $bearing, $localgrid);
+
+    print(" -- propagation: ", renderPropBestBand("$mylat,$mylon", "$lat,$lon", "SSB"));
+    print("; ", renderPropBestBand("$mylat,$mylon", "$lat,$lon", "CW"));
+    print("; ", renderPropBestBand("$mylat,$mylon", "$lat,$lon", "FT8"));
   }
 }
 print "\n" if defined($grid) or defined($lat) or $compact eq 1;
@@ -1312,6 +1316,24 @@ sub usage {
     print "usage: $0 [call:]<callsign>|<name>|[grid:]<grid>|<qth>|dmr:<dmrID>\n";
   }
   exit $exitnonzeroonerror;
+}
+
+sub renderPropBestBand {
+  my $origin = shift;
+  my $dest = shift;
+  my $mode = shift;
+
+  my @dests;
+  push @dests, $dest;
+  my ($prop) = propBestBand($mode, $origin, \@dests);
+  if (defined $prop and $prop ne "") {
+    $prop = red($prop)    if substr($prop, 0, 1) eq "-";
+    $prop = yellow($prop) if substr($prop, 0, 1) eq " ";
+    $prop = green($prop)  if substr($prop, 0, 1) eq "+";
+    return "$mode: ", $prop;
+  } elsif (defined $prop and $prop eq "") {
+    return "$mode: bands closed"
+  }
 }
 
 sub uniq {
