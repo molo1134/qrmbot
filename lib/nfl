@@ -13,7 +13,8 @@ use feature 'unicode_strings';
 binmode(STDOUT, ":utf8");
 
 use JSON::PP qw(decode_json);
-use POSIX qw(strftime);
+use POSIX qw(strftime tzset);
+use Time::Local qw(timegm);
 use Encode qw(encode_utf8);
 
 use File::Basename;
@@ -30,7 +31,7 @@ my $API = "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl";
 # NFL schedules use Eastern Time dates — force TZ so !nfl works correctly
 # when the server clock is UTC (otherwise after 8pm ET it rolls to tomorrow)
 $ENV{TZ} = 'America/New_York';
-my $today     = strftime("%Y-%m-%d", localtime);
+tzset();
 my $todayC    = strftime("%Y%m%d", localtime);
 my $year      = strftime("%Y", localtime);
 
@@ -209,11 +210,27 @@ sub fmtDateShort {
   return '';
 }
 
-# "2026-08-15T23:00Z" → "Aug 15"
+# ESPN groups games (and its scoreboard "dates" parameter) by Eastern day.
+# Schedule events carry UTC timestamps, so "2026-11-13T01:15Z" is a 11/12
+# game in ET; convert before querying the scoreboard or comparing dates.
+sub etDate {
+  my $iso = shift // '';
+  return '' unless $iso =~ /^(\d{4})-(\d{2})-(\d{2})/;
+  my ($y, $mon, $d) = ($1, $2, $3);
+  if ($iso =~ /^\d{4}-\d{2}-\d{2}T(\d{2}):(\d{2})(?::(\d{2}))?/) {
+    my $epoch = timegm($3 // 0, $2, $1, $d, $mon - 1, $y);
+    return strftime("%Y%m%d", localtime($epoch));
+  }
+  return "$y$mon$d";
+}
+
+# "2026-08-15T23:00Z" → "Aug 15" (in Eastern time)
 sub fmtDateLong {
   my $d = shift // '';
   return $d unless $d =~ /^(\d{4})-(\d{2})-(\d{2})/;
   my @mon = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+  my $et = etDate($d);
+  return $d unless $et =~ /^(\d{4})(\d{2})(\d{2})$/;
   return $mon[$2 - 1] . " " . int($3);
 }
 
@@ -286,8 +303,9 @@ sub score {
 # real scores from the scoreboard endpoint for the game date
 sub refreshScores {
   my ($g) = @_;
-  return unless $g->{id} && $g->{date} =~ /^(\d{4})-(\d{2})-(\d{2})/;
-  my $data = fetchJSON("$API/scoreboard?dates=$1$2$3");
+  my $date = etDate($g->{date});
+  return unless $g->{id} && $date;
+  my $data = fetchJSON("$API/scoreboard?dates=$date");
   return unless $data && $data->{events};
   foreach my $ev (@{$data->{events}}) {
     next unless ($ev->{id} // '') eq $g->{id};
@@ -495,14 +513,14 @@ if (!$sched || !$sched->{events} || !@{$sched->{events}}) {
 my ($liveGame, $lastGame, $nextGame);
 foreach my $ev (@{$sched->{events}}) {
   my $g = getGame($ev);
-  my $d = substr($g->{date}, 0, 10);
+  my $d = etDate($g->{date});
   if ($g->{state} eq 'in') {
     refreshScores($g) if scoresMissing($g);
     $liveGame = $g;
-  } elsif ($g->{state} eq 'post' && $d le $today) {
+  } elsif ($g->{state} eq 'post' && $d le $todayC) {
     refreshScores($g) if scoresMissing($g);
     $lastGame = $g;
-  } elsif ($g->{state} ne 'post' && $d ge $today && !defined $nextGame) {
+  } elsif ($g->{state} ne 'post' && $d ge $todayC && !defined $nextGame) {
     $nextGame = $g;
   }
 }
@@ -514,8 +532,9 @@ my $prefix = getStandingsPrefix($abbrev, $teamId, $liveGame ? $liveGame->{id}
 if (defined $liveGame) {
   # the schedule endpoint omits down/distance and last play; pull them
   # from the scoreboard for the game's own date
-  if ($liveGame->{date} =~ /^(\d{4})-(\d{2})-(\d{2})/) {
-    my $sb = fetchJSON("$API/scoreboard?dates=$1$2$3");
+  my $liveDate = etDate($liveGame->{date});
+  if ($liveDate) {
+    my $sb = fetchJSON("$API/scoreboard?dates=$liveDate");
     foreach my $ev (@{$sb->{events} // []}) {
       next unless ($ev->{id} // '') eq $liveGame->{id};
       $liveGame->{comp}{situation} = $ev->{competitions}[0]{situation};
