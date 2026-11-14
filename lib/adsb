@@ -173,7 +173,7 @@ if ($apitype eq "reapi") {
 	  if $total == 0 and $url =~ /find_hex/;
   if ($total == 0 and $url =~ /closest/) {
     my $localgrid = coordToGrid($lat, $lon) if defined($lat);
-    print "no planes found near $localgrid\n";
+    print "no aircraft found near $localgrid\n";
   }
   exit $exitnonzeroonerror if $total == 0;
 
@@ -211,6 +211,7 @@ if ($apitype eq "reapi") {
   local $/;   # read entire file -- FIXME: potentially memory hungry
   my $json = <HTTP>;
   close(HTTP);
+  #print "$json\n";
   if (not $json =~ /^\s*{/) {
     print "error1 while retrieving data: from $url : $json\n";
     exit $exitnonzeroonerror;
@@ -231,7 +232,7 @@ if ($apitype eq "reapi") {
 	  if $total == 0 and $url =~ m|/hex/|;
   if ($total == 0 and $url =~ /closest/) {
     my $localgrid = coordToGrid($lat, $lon) if defined($lat);
-    print "no planes found near $localgrid\n";
+    print "no aircraft found near $localgrid\n";
   }
   exit $exitnonzeroonerror if $total == 0;
 
