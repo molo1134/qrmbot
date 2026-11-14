@@ -49,6 +49,9 @@ bind msg - !prop msg_prop
 bind pub - !zones pub_zones
 bind msg - !zones msg_zones
 
+bind pub - !propmap pub_propmap
+bind msg - !propmap msg_propmap
+
 bind pub - !solar solar
 bind msg - !solar msg_solar
 
@@ -729,6 +732,42 @@ proc msg_zones {nick uhand handle input} {
 	close $fd
 }
 
+proc pub_propmap { nick host hand chan text } {
+	global zonesbin
+	set qth [sanitize_string [string trim "${text}"]]
+	set geo [qrz_getgeo $hand]
+
+	putlog "propmap pub: $nick $host $hand $chan $qth $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${zonesbin} --map ${qth}" r]
+	} else {
+		set fd [open "|${zonesbin} --map ${qth} --geo $geo" r]
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg $nick "$line"
+	}
+	close $fd
+}
+proc msg_propmap {nick uhand handle input} {
+	global zonesbin
+	set qth [sanitize_string [string trim "${input}"]]
+	set geo [qrz_getgeo $handle]
+
+	putlog "propmap msg: $nick $uhand $handle $qth $geo"
+
+	if [string equal "" $geo] then {
+		set fd [open "|${zonesbin} --map ${qth}" r]
+	} else {
+		set fd [open "|${zonesbin} --map ${qth} --geo $geo" r]
+	}
+	fconfigure $fd -encoding utf-8
+	while {[gets $fd line] >= 0} {
+		putmsg "$nick" "$line"
+	}
+	close $fd
+}
 
 proc solar { nick host hand chan text } {
 	global bandsbin

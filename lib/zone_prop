@@ -28,6 +28,7 @@ $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 my $mode = "SSB";
 my $geo = undef;
 my $qth = undef;
+my $domap = 0;
 
 @ARGV = map { decode "utf-8", $_ } @ARGV;
 # eggdrop doesn't split args on spaces
@@ -41,7 +42,11 @@ while ($i <= $#ARGV) {
     $i++;
     next;
   }
-  if (lc($ARGV[$i]) eq "--ft8") {
+  if (lc($ARGV[$i]) eq "--map") {
+    $domap = 1;
+    $i++;
+    next;
+  } elsif (lc($ARGV[$i]) eq "--ft8") {
     $mode = "FT8";
     $i++;
     next;
@@ -239,6 +244,60 @@ for(my $i = 0; $i < scalar @{$j->{locations}}; $i++) {
   }
 }
 
+
+my $worldmap =
+ ":::::::::::''  ''::'      '::::::  `:::::::::::::'.:::::::::::::::\n" .
+ ":::::::::' :. :  :         ::::::  :::::::::::.:::':::::::::::::::\n" .
+ "::::::::::  :   :::.       :::::::::::::..::::'     :::: : :::::::\n" .
+ "::::::::    :':  '::' Z040''::::::::::::: :'           '' ':::::::\n" .
+ ":'        : '   :  ::    .::::::::'    '                        .:\n" .
+ ":   Z001    Z002:  .:: .::. ::::'               Z018      Z019 :::\n" .
+ ":. .,.        :::  ':::::::::::.: '       Z017           .:...::::\n" .
+ ":::::::.      '     .:::::Z014''Z015 Z016                :: :::::.\n" .
+ ":::::::Z003 Z004    ':::::::::  '',           Z023  '   .:::::::::\n" .
+ "::::::::.      Z005:::::::::: '':,:Z020    :         '''Z025::::::\n" .
+ "::::::::::Z006  :::Z008:::Z033        Z021        Z024::::::::::::\n" .
+ ":Z031::::::. Z007''::::::::    '  Z034   ::Z022   '::.::::::::::::\n" .
+ ":::::::::::::::. Z009::::::. Z035'     :::::.:.Z026:.Z027:::::::::\n" .
+ ":::::::::::::::: :     ':::::::::   'Z037:::::::: :Z028'::::::::::\n" .
+ "::::::::::::::Z010' Z011:::::::Z036 . :'::::::::::::::' ':::::::::\n" .
+ "::::::::::::::::::''   :::::::::: :' : Z039:::::::Z029   Z030:::::\n" .
+ ":::::::::::::Z012' Z013:::::::::Z038::::::::::::::::       ::Z032:\n" .
+ ":::::::::::::::::. .::::::::::::::::::::::::::::::::::::.':::: :::\n" .
+ ":::::::::::::::::' :::::::::::::::::::::::::::::::::::::::::::::::\n";
+
+my @zoneMapProps;
+if ($domap) {
+  my $gi = $json_place_to_index_map{$grid};
+  for (my $z = 1; $z <= 40; $z++) {
+    my ($bnd, $bcr) = (undef, undef);
+    my $zi = $json_place_to_index_map{$z};
+
+    if (not defined $j->{best}[$gi][$zi]) {
+      $zoneMapProps[$z] = grey("  ∅ "); # empty set
+    } else {
+      $bnd = $j->{best}[$gi][$zi]{band};
+      $bcr = $j->{best}[$gi][$zi]{bcr};
+      if ($bcr >= 85.0) {
+        $zoneMapProps[$z] = green("+$bnd");
+      } elsif ($bcr < 85.0 and $bcr > 50.0) {
+        $zoneMapProps[$z] = yellow(" $bnd");
+      } elsif ($bcr <= 50.0 and $bcr > 30.0) {
+        $zoneMapProps[$z] = red("-$bnd");
+      } elsif ($bcr <= 30.0) {
+        $zoneMapProps[$z] = grey("  ∅ "); # empty set
+      }
+    }
+  }
+
+  print"Best band propagation from $grid to 40 zones:\n";
+  foreach my $l (split /\n/, $worldmap) {
+    $l =~ s/Z([0-9]{3})/$zoneMapProps[$1]/ge;
+    print $l, "\n";
+  }
+
+  exit 0;
+}
 
 print "Best $mode band from $grid to CQ Zones: ";
 print "\n" if $username ne getEggdropUID();
