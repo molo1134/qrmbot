@@ -290,7 +290,7 @@ if ($domap) {
     }
   }
 
-  print"Best band propagation from $grid to 40 zones:\n";
+  print"Best $mode propagation from $grid to CQ Zones:\n";
   foreach my $l (split /\n/, $worldmap) {
     $l =~ s/Z([0-9]{3})/$zoneMapProps[$1]/ge;
     print $l, "\n";
