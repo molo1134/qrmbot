@@ -100,18 +100,6 @@ scrapeMW() if (checkMW() == 1);
 
 my $ref = getDxccDataRef(); # load data
 
-# for debug
-foreach my $rec (@{$ref->{rec}}) {
-  #print "$prefix\n";
-  my ($length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz) = split /\|/,$rec;
-  #print "$length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz\n";
-
-  my $mw = $ref->{mwPfx}->{uc($dxcc)} || $ref->{mwNm}->{uc($name)};
-  if (!defined($mw)) {
-    print "missing MW: $name: $dxcc\n" unless $name =~ /not DXCC/;
-  }
-}
-
 # check if exact prefix found
 if (defined $ref->{map}->{$term}) {
   my ($length, $pattern, $prefix, $dxcc, $cq, $itu, $name, $cont, $lat, $lon, $tz) = split /\|/,$ref->{map}->{$term};
