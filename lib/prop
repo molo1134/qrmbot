@@ -17,6 +17,7 @@ use Util;
 
 use Math::Round;
 use JSON qw( decode_json );
+use URI::Escape;
 
 my $username = $ENV{'USER'} || $ENV{'USERNAME'} || getpwuid($<);
 # change this to 0 to always exit with success
@@ -24,6 +25,7 @@ our $exitnonzeroonerror = 1;
 $exitnonzeroonerror = 0 if $username eq getEggdropUID();
 
 my $mode = "SSB";
+my $contest = 0;
 
 # eggdrop doesn't split args on spaces
 @ARGV=split(' ', join(' ',@ARGV));
@@ -36,12 +38,15 @@ while ($i <= $#ARGV) {
     $mode = "CW";
   } elsif (lc($ARGV[$i]) eq "--ssb") {
     $mode = "SSB"; #redundant, SSB is default
+  } elsif (lc($ARGV[$i]) eq "--contest") {
+    $contest = 1;
   }
   $i++;
 }
 
 my $cachedir = $ENV{HOME} . "/.qrmbot/cache";
 my $cachefile = $cachedir . "/prop-$mode.json";
+$cachefile = $cachedir . "/prop-$mode-contest.json" if $contest;
 my $needProp = 0;
 my $maxAge = 60 * 15; # (15 minutes)
 
@@ -85,6 +90,15 @@ my %loc_map = (
   "AN2" => "-71.576,-70.5",  # 3000km from AN; Alexander Island, Antarctica
 );
 
+my @contest_bands = ("160m", "80m", "40m", "20m", "15m", "10m");
+my $txant_value = "{\"antennas\":{";
+foreach my $b (@contest_bands) {
+  $txant_value .= "\"$b\":{\"type\":\"ISOTROPIC\"},";
+}
+chop $txant_value;
+$txant_value .= "}}";
+$txant_value = uri_escape($txant_value);
+
 # "bw" (bandwidth) defaults to 3000 for SSB
 # "snrr" (SNR required) defaults to 6 for SSB
 my %mode_to_params = (
@@ -115,6 +129,8 @@ foreach my $k (keys %{$mode_to_params{$mode}}) {
   $params .= "&" if $params ne "";
   $params .= "$k=$v";
 }
+$params .= "&" if $params ne "" and $contest;
+$params .= "txant=$txant_value" if $contest;
 #print $params, "\n";
 
 # txgos/rxgos = "gain offset" relative to isotropic.
